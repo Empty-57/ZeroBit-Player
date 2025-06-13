@@ -1,151 +1,211 @@
-// The original content is temporarily commented out to allow generating a self-contained demo - feel free to uncomment later.
-
-// import 'package:flutter/material.dart';
-//
-// void main() {
-//   runApp(const MyApp());
-// }
-//
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-//
-//   // This widget is the root of your application.
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Flutter Demo',
-//       theme: ThemeData(
-//         // This is the theme of your application.
-//         //
-//         // TRY THIS: Try running your application with "flutter run". You'll see
-//         // the application has a purple toolbar. Then, without quitting the app,
-//         // try changing the seedColor in the colorScheme below to Colors.green
-//         // and then invoke "hot reload" (save your changes or press the "hot
-//         // reload" button in a Flutter-supported IDE, or press "r" if you used
-//         // the command line to start the app).
-//         //
-//         // Notice that the counter didn't reset back to zero; the application
-//         // state is not lost during the reload. To reset the state, use hot
-//         // restart instead.
-//         //
-//         // This works for code too, not just values: Most code changes can be
-//         // tested with just a hot reload.
-//         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-//       ),
-//       home: const MyHomePage(title: 'Flutter Demo Home Page'),
-//     );
-//   }
-// }
-//
-// class MyHomePage extends StatefulWidget {
-//   const MyHomePage({super.key, required this.title});
-//
-//   // This widget is the home page of your application. It is stateful, meaning
-//   // that it has a State object (defined below) that contains fields that affect
-//   // how it looks.
-//
-//   // This class is the configuration for the state. It holds the values (in this
-//   // case the title) provided by the parent (in this case the App widget) and
-//   // used by the build method of the State. Fields in a Widget subclass are
-//   // always marked "final".
-//
-//   final String title;
-//
-//   @override
-//   State<MyHomePage> createState() => _MyHomePageState();
-// }
-//
-// class _MyHomePageState extends State<MyHomePage> {
-//   int _counter = 0;
-//
-//   void _incrementCounter() {
-//     setState(() {
-//       // This call to setState tells the Flutter framework that something has
-//       // changed in this State, which causes it to rerun the build method below
-//       // so that the display can reflect the updated values. If we changed
-//       // _counter without calling setState(), then the build method would not be
-//       // called again, and so nothing would appear to happen.
-//       _counter++;
-//     });
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     // This method is rerun every time setState is called, for instance as done
-//     // by the _incrementCounter method above.
-//     //
-//     // The Flutter framework has been optimized to make rerunning build methods
-//     // fast, so that you can just rebuild anything that needs updating rather
-//     // than having to individually change instances of widgets.
-//     return Scaffold(
-//       appBar: AppBar(
-//         // TRY THIS: Try changing the color here to a specific color (to
-//         // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-//         // change color while the other colors stay the same.
-//         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-//         // Here we take the value from the MyHomePage object that was created by
-//         // the App.build method, and use it to set our appbar title.
-//         title: Text(widget.title),
-//       ),
-//       body: Center(
-//         // Center is a layout widget. It takes a single child and positions it
-//         // in the middle of the parent.
-//         child: Column(
-//           // Column is also a layout widget. It takes a list of children and
-//           // arranges them vertically. By default, it sizes itself to fit its
-//           // children horizontally, and tries to be as tall as its parent.
-//           //
-//           // Column has various properties to control how it sizes itself and
-//           // how it positions its children. Here we use mainAxisAlignment to
-//           // center the children vertically; the main axis here is the vertical
-//           // axis because Columns are vertical (the cross axis would be
-//           // horizontal).
-//           //
-//           // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-//           // action in the IDE, or press "p" in the console), to see the
-//           // wireframe for each widget.
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: <Widget>[
-//             const Text('You have pushed the button this many times:'),
-//             Text(
-//               '$_counter',
-//               style: Theme.of(context).textTheme.headlineMedium,
-//             ),
-//           ],
-//         ),
-//       ),
-//       floatingActionButton: FloatingActionButton(
-//         onPressed: _incrementCounter,
-//         tooltip: 'Increment',
-//         child: const Icon(Icons.add),
-//       ), // This trailing comma makes auto-formatting nicer for build methods.
-//     );
-//   }
-// }
-//
+import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:zerobit_player/src/rust/api/simple.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:zerobit_player/HIveCtrl/models/setting_cache_model.dart';
+import 'package:zerobit_player/local_music_page.dart';
+import 'package:zerobit_player/setting_page.dart';
+import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/frb_generated.dart';
+import 'package:zerobit_player/tools/sync_cache.dart';
+import 'package:zerobit_player/window_ctrl.dart';
+import 'package:get/get.dart';
 
-Future<void> main() async {
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'HIveCtrl/adapters/setting_cache_adapter.dart';
+import 'HIveCtrl/models/music_cahce_model.dart';
+import 'app_routes.dart';
+
+
+import 'package:zerobit_player/custom_widgets/custom_widget.dart';
+
+import 'package:window_manager/window_manager.dart';
+
+import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'HIveCtrl/hive_boxes.dart';
+
+import 'HIveCtrl/adapters/music_cache_adapter.dart';
+import 'getxController/music_cache_ctrl.dart';
+import 'getxController/setting_ctrl.dart';
+
+import 'theme_manager.dart';
+
+void main<T>() async {
+
+  // ProcessSignal.sigint.watch().listen((signal) async{
+  //   debugPrint("Received SIGTERM: process is exiting.");
+  //   await setExclusiveMode(exclusive: false);
+  // });
+
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await windowManager.ensureInitialized();
   await RustLib.init();
-  runApp(const MyApp());
+
+  await Hive.initFlutter();
+
+  // await Hive.deleteBoxFromDisk('setting_box');
+
+  Hive.registerAdapter(MusicCacheAdapter());
+  Hive.registerAdapter(SettingCacheAdapter());
+  await Hive.openBox<MusicCache>(HiveBoxes.musicCacheBox);
+  await Hive.openBox<SettingCache>(HiveBoxes.settingCacheBox);
+
+  Get.put(SettingController());
+  Get.put(MusicCacheController());
+
+  await syncCache();
+
+  await loadLib();
+  await initBass();
+
+  // await setExclusiveMode(exclusive: false);
+
+
+  WindowOptions windowOptions = WindowOptions(
+    minimumSize: Size(1000, 750),
+    size: Size(1200, 800),
+    center: true,
+    backgroundColor: Colors.transparent,
+    skipTaskbar: false,
+    titleBarStyle: TitleBarStyle.hidden,
+    title: 'test',
+  );
+  windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.show();
+    await windowManager.focus();
+  });
+
+
+  runApp(const MainFrame());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class _SlideTransition extends CustomTransition {
+  @override
+  Widget buildTransition(
+    BuildContext context,
+    Curve? curve,
+    Alignment? alignment,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: Offset(0.0, 0.1),
+        end: Offset.zero,
+      ).animate(
+        CurvedAnimation(parent: animation, curve: Curves.fastOutSlowIn),
+      ),
+      child: child,
+    );
+  }
+}
+
+class MainFrame extends StatelessWidget {
+  const MainFrame({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(title: const Text('flutter_rust_bridge quickstart')),
-        body: Center(
-          child: Text(
-            'Action: Call Rust `greet("Tom")`\nResult: `${greet(name: "Tom")}`',
+    return GetMaterialApp(
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: themeMode.value == 'dark' ? ThemeMode.dark : ThemeMode.light,
+      transitionDuration: 200.ms,
+      customTransition: _SlideTransition(),
+      debugShowCheckedModeBanner: false,
+      initialRoute: AppRoutes.base,
+      getPages: [
+        GetPage(name: AppRoutes.base, page: () => const HomePage()),
+        GetPage(name: AppRoutes.home, page: () => const LocalMusic()),
+        GetPage(name: AppRoutes.setting, page: () => const Setting()),
+      ],
+    );
+  }
+}
+
+class NestedObserver extends NavigatorObserver {
+  final void Function(String? routeName) onRoutePopped;
+
+  NestedObserver({required this.onRoutePopped});
+
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    super.didPop(route, previousRoute);
+    onRoutePopped(previousRoute?.settings.name);
+  }
+}
+
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  Widget _getNamedPage(String name) {
+    switch (name) {
+      case AppRoutes.home:
+        return LocalMusic();
+      case AppRoutes.setting:
+        return Setting();
+    }
+    return LocalMusic();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainer,
+      ),
+
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const WindowController(),
+          Expanded(
+            flex: 1,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+
+              children: <Widget>[
+                CustomNavigation(
+                  btnList: const [
+                    CustomNavigationBtn(
+                      label: '音乐',
+                      icon: PhosphorIconsLight.musicNoteSimple,
+                      localIndex: 0,
+                    ),
+                    CustomNavigationBtn(
+                      label: '设置',
+                      icon: PhosphorIconsLight.gearSix,
+                      localIndex: 1,
+                    ),
+                  ],
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Navigator(
+                    observers: [
+                      NestedObserver(
+                        onRoutePopped: (name) {
+                          currentNavigationIndex.value = routesMap[name] ?? 0;
+                        },
+                      ),
+                    ],
+                    key: Get.nestedKey(1),
+                    initialRoute: AppRoutes.home,
+                    onGenerateRoute: (settings) {
+                      return GetPageRoute(
+                        settings: settings,
+                        page: () => _getNamedPage(settings.name!),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

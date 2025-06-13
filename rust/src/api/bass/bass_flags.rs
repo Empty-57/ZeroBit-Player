@@ -1,0 +1,26 @@
+pub const BASS_SAMPLE_FLOAT: u32 = 256;
+
+pub const BASS_STREAM_AUTOFREE: u32 = 0x40000;
+pub const BASS_STREAM_DECODE: u32 = 0x200000;
+
+pub const BASS_ASYNCFILE: u32 = 0x40000000;
+pub const BASS_UNICODE: u32 = 0x80000000;
+
+pub const BASS_ATTRIB_VOL: u32 = 2;
+
+pub const BASS_ACTIVE_STOPPED: u32 = 0;
+pub const BASS_ACTIVE_PLAYING: u32 = 1;
+pub const BASS_ACTIVE_STALLED: u32 = 2;
+pub const BASS_ACTIVE_PAUSED: u32 = 3;
+pub const BASS_ACTIVE_PAUSED_DEVICE: u32 = 4;
+
+pub const BASS_POS_BYTE			:u32=0;
+
+pub const BASS_WASAPI_EXCLUSIVE: u32 = 1;
+pub const BASS_WASAPI_AUTOFORMAT: u32 = 2;
+pub const BASS_WASAPI_BUFFER: u32 = 4;
+pub const BASS_WASAPI_EVENT: u32 = 16;
+pub const BASS_WASAPI_SAMPLES: u32 = 32;
+pub const BASS_WASAPI_DITHER: u32 = 64;
+pub const BASS_WASAPI_RAW: u32 = 128;
+pub const BASS_WASAPI_ASYNC: u32 = 0x100;
