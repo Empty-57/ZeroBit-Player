@@ -1,7 +1,7 @@
 use crate::api::bass::bass_flags::*;
 use crate::api::bass::bass_func::*;
 use crate::api::bass::basswasapi_func::*;
-use core::ffi::c_void;
+use core::ffi::{c_void,c_float};
 use libloading::{Library, Symbol};
 use once_cell::sync::Lazy;
 use std::ffi::OsStr;
@@ -21,6 +21,7 @@ struct BassApi {
     init: Symbol<'static, BASS_Init>,
     get_attr: Symbol<'static, BASS_ChannelGetAttribute>,
     set_attr: Symbol<'static, BASS_ChannelSetAttribute>,
+    slide_attr:Symbol<'static,BASS_ChannelSlideAttribute>,
     wasapi_get_info: Symbol<'static, BASS_WASAPI_GetInfo>,
     stream_create: Symbol<'static, BASS_StreamCreateFile>,
     play: Symbol<'static, BASS_ChannelPlay>,
@@ -44,15 +45,14 @@ struct BassApi {
 
 static BASS_API: Lazy<Mutex<Option<BassApi>>> = Lazy::new(|| Mutex::new(None));
 
-static mut FREQ: Option<u32> = Some(44100);
-static mut CHANS: Option<u32> = Some(2);
+static FREQ: Mutex<Option<u32>> = Mutex::new(Some(44100));
+static CHANS: Mutex<Option<u32>> = Mutex::new(Some(2));
 
 const WASAPI_BUFFER: f32 = 0.05;
 
-static mut TARGET_VOLUME: f32 = 1.0;
+static TARGET_VOLUME: Mutex<f32> =  Mutex::new(1.0);
 
-const STEP: u64 = 20;
-const FADE_DURATION: u64 = 500;
+const FADE_DURATION: u32 = 500;
 
 const PLUGIN_NAME: [&str; 8] = [
     "bassflac.dll",
@@ -97,6 +97,10 @@ impl BassApi {
                 .get(b"BASS_ChannelSetAttribute\0")
                 .map_err(|e| e.to_string())?;
 
+            let slide_attr = lib
+                .get(b"BASS_ChannelSlideAttribute\0")
+                .map_err(|e| e.to_string())?;
+            
             let wasapi_get_info = wasapi_lib
                 .get(b"BASS_WASAPI_GetInfo\0")
                 .map_err(|e| e.to_string())?;
@@ -151,6 +155,7 @@ impl BassApi {
                 init,
                 get_attr,
                 set_attr,
+                slide_attr,
                 wasapi_get_info,
                 stream_free,
                 free,
@@ -190,8 +195,8 @@ impl BassApi {
                 Err(format!("BASS failed, error code: {}", err))
             } else {
                 unsafe {
-                    FREQ = Some(info.freq);
-                    CHANS = Some(info.chans);
+                    *FREQ.lock().unwrap() = Some(info.freq);
+                    *CHANS.lock().unwrap() = Some(info.chans);
                     (self.wasapi_free)();
                 }
                 Ok(())
@@ -207,7 +212,7 @@ impl BassApi {
         unsafe {
             (self.wasapi_free)();
         };
-        let result = unsafe { (self.init)(-1, FREQ.unwrap_or(44100), 0, null_mut(), null_mut()) };
+        let result = unsafe { (self.init)(-1, FREQ.lock().unwrap().unwrap_or(44100), 0, null_mut(), null_mut()) };
         unsafe {
             (self.bass_start)();
         };
@@ -242,48 +247,48 @@ impl BassApi {
             Ok(vol)
         }
     }
-
+    
     fn set_volume(&self, mut vol: f32) -> Result<(), String> {
         vol = vol.clamp(0.0, 1.0);
+        *TARGET_VOLUME.lock().unwrap() = vol;
         let ok = unsafe {
-            TARGET_VOLUME = vol;
+            if self.stream_handle==0 {
+            return Ok(());
+        }
             (self.set_attr)(self.stream_handle, BASS_ATTRIB_VOL, vol) //BASS_ATTRIB_VOL:2
         };
         self.or_err_(ok)
     }
 
     fn fade_in(&self) -> Result<(), String> {
-        for i in 1..=STEP {
-            unsafe {
-                let vol = ((i as f32) / (STEP as f32)) * TARGET_VOLUME;
-                if (self.set_attr)(self.stream_handle, BASS_ATTRIB_VOL, vol) == 0 {
-                    break;
-                }
-            }
-            thread::sleep(Duration::from_millis(
-                ((FADE_DURATION as f32) / (STEP as f32)) as u64,
-            ));
+         if self.stream_handle==0 {
+            return Ok(());
+        }
+        unsafe {
+            if ((self.slide_attr)(self.stream_handle,BASS_ATTRIB_VOL,*TARGET_VOLUME.lock().unwrap(),FADE_DURATION)) == 0 {
+                let err_code = (self.error_get_code)();
+            return Err(format!("BASS failed, error code: {}", err_code));
+        }
         }
         Ok(())
     }
 
     fn fade_out(&self) -> Result<(), String> {
-        for i in 1..=STEP {
-            unsafe {
-                let vol = (1.0 - ((i as f32) / (STEP as f32))) * TARGET_VOLUME;
-                if (self.set_attr)(self.stream_handle, BASS_ATTRIB_VOL, vol) == 0 {
-                    break;
-                }
-            }
-            thread::sleep(Duration::from_millis(
-                ((FADE_DURATION as f32) / (STEP as f32)) as u64,
-            ));
+        if self.stream_handle==0 {
+            return Ok(());
+        }
+        unsafe {
+            if ((self.slide_attr)(self.stream_handle,BASS_ATTRIB_VOL,0.0,FADE_DURATION)) == 0 {
+                let err_code = (self.error_get_code)() ;
+            return Err(format!("BASS failed, error code: {}", err_code));
+        }
         }
         Ok(())
     }
 
     fn play_file(&mut self, path: String) -> Result<(), String> {
         self.fade_out()?;
+        thread::sleep(Duration::from_millis(FADE_DURATION as u64));
         self.stream_free();
         let wide: Vec<u16> = OsStr::new(&path)
             .encode_wide()
@@ -306,12 +311,16 @@ impl BassApi {
         }
         self.stream_handle = handle;
         self.resume()?;
+        // self.set_volume(*TARGET_VOLUME.lock().unwrap())?;
         Ok(())
     }
 
     fn resume(&self) -> Result<(), String> {
-        let state = self.get_state();
-        if state == BASS_ACTIVE_PLAYING {
+        if let Some(state) = self.get_state() {
+            if state == BASS_ACTIVE_PLAYING {
+            return Ok(());
+        }
+        }else { 
             return Ok(());
         }
 
@@ -321,35 +330,53 @@ impl BassApi {
     }
 
     fn pause(&self) -> Result<(), String> {
-        let state = self.get_state();
-        if state == BASS_ACTIVE_PAUSED {
+        if let Some(state) = self.get_state() {
+            if state == BASS_ACTIVE_PAUSED {
             return Ok(());
         }
+        }else { 
+            return Ok(());
+        }
+        
         self.fade_out()?;
+        thread::sleep(Duration::from_millis(FADE_DURATION as u64));
         let result = unsafe { (self.pause)(self.stream_handle) };
         self.or_err_(result)
     }
 
     fn stop(&self) -> Result<(), String> {
+        if self.stream_handle==0 {
+            return Ok(());
+        }
+        
         self.fade_out()?;
+        thread::sleep(Duration::from_millis(FADE_DURATION as u64));
         let result = unsafe { (self.stop)(self.stream_handle) };
         self.or_err_(result)
     }
 
     fn toggle(&self) -> Result<(), String> {
-        let state = self.get_state();
-        match state {
+        if let Some(state) = self.get_state() {
+            match state {
             BASS_ACTIVE_STOPPED | BASS_ACTIVE_PAUSED_DEVICE => {
                 unsafe { (self.bass_start)() };
-                self.resume()
+                Ok(self.resume()?)
             }
-            BASS_ACTIVE_PLAYING => self.pause(),
-            BASS_ACTIVE_PAUSED => self.resume(),
+            BASS_ACTIVE_PLAYING => Ok(self.pause()?),
+            BASS_ACTIVE_PAUSED => Ok(self.resume()?),
             _ => Ok(()),
         }
+        }else { 
+            Ok(())
+        }
+        
     }
     
     fn get_pos(&self)-> f64{
+        if self.stream_handle==0 {
+            return 0.0;
+        }
+        
         let pos = unsafe { (self.get_pos)(self.stream_handle,BASS_POS_BYTE) };
         let err_code = unsafe { (self.error_get_code)() };
         if err_code != 0 {
@@ -361,6 +388,10 @@ impl BassApi {
     }
     
     fn set_pos(&self, pos: f64) {
+        if self.stream_handle==0 {
+            return;
+        }
+        
         let bytes=unsafe{(self.sec2bytes)(self.stream_handle,pos)};
         unsafe { (self.set_pos)(self.stream_handle,bytes,BASS_POS_BYTE) };
         let err_code = unsafe { (self.error_get_code)() };
@@ -369,8 +400,12 @@ impl BassApi {
         }
     }
 
-    fn get_state(&self) -> u32 {
-        unsafe { (self.is_active)(self.stream_handle) }
+    fn get_state(&self) -> Option<u32> {
+        if self.stream_handle==0 {
+            None
+        }else { 
+            Some(unsafe { (self.is_active)(self.stream_handle) })
+        }
     }
 
     fn stream_free(&mut self) {
@@ -403,8 +438,8 @@ impl BassApi {
         let result = unsafe {
             (self.wasapi_init)(
                 -1,
-                FREQ.unwrap_or(44100),
-                CHANS.unwrap_or(2),
+                FREQ.lock().unwrap().unwrap_or(44100),
+                CHANS.lock().unwrap().unwrap_or(2),
                 flags,
                 WASAPI_BUFFER,
                 0.0,
@@ -413,9 +448,9 @@ impl BassApi {
             )
         };
 
-        let was_result = unsafe { (self.wasapi_start)() };
-        let err_code = unsafe { (self.error_get_code)() };
-        println!("was_result:{}", err_code);
+        // let was_result = unsafe { (self.wasapi_start)() };
+        // let err_code = unsafe { (self.error_get_code)() };
+        // println!("was_result:{}", err_code);
 
         self.or_err_(result)
     }

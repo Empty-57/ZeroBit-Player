@@ -12,6 +12,7 @@ class SettingCacheAdapter extends TypeAdapter<SettingCache> {
     return SettingCache(
       themeMode: reader.readString(),
       apiIndex: reader.readInt(),
+      volume: reader.readDouble(),
       folders: reader.readStringList(),
     );
   }
@@ -20,6 +21,7 @@ class SettingCacheAdapter extends TypeAdapter<SettingCache> {
   void write(BinaryWriter writer, SettingCache obj) {
     writer.writeString(obj.themeMode);
     writer.writeInt(obj.apiIndex);
+    writer.writeDouble(obj.volume);
     writer.writeStringList(obj.folders);
   }
 }

@@ -42,6 +42,13 @@ void main<T>() async {
   await windowManager.ensureInitialized();
   await RustLib.init();
 
+  try{
+    await loadLib();
+  await initBass();
+  }catch(e){
+    debugPrint(e.toString());
+  }
+
   await Hive.initFlutter();
 
   // await Hive.deleteBoxFromDisk('setting_box');
@@ -56,8 +63,6 @@ void main<T>() async {
 
   await syncCache();
 
-  await loadLib();
-  await initBass();
 
   // await setExclusiveMode(exclusive: false);
 

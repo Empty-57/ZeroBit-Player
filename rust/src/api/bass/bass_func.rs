@@ -30,6 +30,8 @@ pub(crate) type BASS_ChannelGetAttribute = unsafe extern "C" fn(
 pub(crate) type BASS_ChannelSetAttribute =
     unsafe extern "C" fn(handle: c_uint, attrib: c_uint, value: c_float) -> c_int;
 
+pub(crate)type BASS_ChannelSlideAttribute=unsafe extern "C" fn (handle: c_uint, attrib: c_uint, value: c_float, time: c_uint) -> c_int;
+
 pub(crate) type BASS_ChannelPlay = unsafe extern "C" fn(handle: c_uint, restart: c_int) -> c_int;
 pub(crate) type BASS_ChannelPause = unsafe extern "C" fn(handle: c_uint) -> c_int;
 pub(crate) type BASS_ChannelStop = unsafe extern "C" fn(handle: c_uint) -> c_int;

@@ -9,7 +9,22 @@ import '../getxController/music_cache_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 import '../src/rust/api/music_tag_tool.dart';
 
-const _exts = ["flac", "ogg", "mp3"];
+const _exts = [
+  'aac',
+  'ape',
+  'aiff',
+  'aif',
+  'flac',
+  'mp3',
+  'mp4', 'm4a', 'm4b', 'm4p', 'm4v',
+  'mpc',
+  'opus',
+  'ogg',
+  'oga',
+  'spx',
+  'wav',
+  'wv',
+];
 
 Future<void> syncCache() async {
   final audioPaths = <String>[];

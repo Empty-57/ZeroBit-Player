@@ -5,7 +5,7 @@ import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/getxController/music_cache_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
-import 'package:zerobit_player/tools/debounce_extension.dart';
+import 'package:zerobit_player/tools/func_extension.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
@@ -36,19 +36,8 @@ class LocalMusic extends StatelessWidget {
 }
 
 
-Future<void> testInit()async{
-
-
-await playFile(path: r"D:\Miku_Uta\lrcTest\40mP _ 初音未来 - 恋愛裁判.flac");
-await setVolume(vol: 1.0);
-}
-
   @override
   Widget build(BuildContext context) {
-
-
-
-testInit();
 
 
     return Container(
@@ -99,9 +88,9 @@ testInit();
                 mainAxisAlignment: MainAxisAlignment.start,
               ),
               CustomBtn(
-                fn: () async{
-                  await toggle();
-                }.debounce(500),
+                fn: () {
+                  toggle();
+                },
                 label: '功能1',
                 icon: PhosphorIconsLight.code,
                 radius: 4,
