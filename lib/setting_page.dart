@@ -1,69 +1,88 @@
-import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:transparent_image/transparent_image.dart';
-import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
-import 'dart:typed_data';
 
 import 'general_style.dart';
 import 'getxController/setting_ctrl.dart';
 
 final SettingController _settingController = Get.find<SettingController>();
 
-class AsyncCover extends StatelessWidget {
-  const AsyncCover({super.key});
+class ApiDropMenu extends StatelessWidget {
+  const ApiDropMenu({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final double btnW = 148;
+    final double btnH = 40;
 
-    return FutureBuilder<Uint8List?>(
-      future: getCover(
-        path: "D:\\Miku_Uta\\testaudio\\40mP - 心傷モノクローム (单色心伤).flac",
-        sizeFlag: 0,
-      ),
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: FadeInImage(
-              placeholder: MemoryImage(kTransparentImage),
-              image: MemoryImage(snapshot.data!),
-              height: 256,
-              width: 256,
-              fit: BoxFit.cover,
+    final apiMenuList =
+        _settingController.apiMap.entries.map((entry) {
+          return PopupMenuItem<int>(
+            padding: EdgeInsets.zero,
+            value: entry.key,
+            height: 40,
+            child: InkWell(
+              onTap: () {
+                // 记得手动 pop 返回 value
+                Navigator.pop(context, entry.key);
+                _settingController.apiIndex.value = entry.key;
+                _settingController.putCache(isSaveFolders: false);
+              },
+              child: Container(
+                width: btnW,
+                height: 40,
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Center(
+                  child: Text(
+                    entry.value,
+                    style: generalTextStyle(ctx: context, size: 'md'),
+                  ),
+                ),
+              ),
             ),
           );
-        }
-        return Container();
-      },
-    );
-  }
-}
+        }).toList();
 
-class AsyncText extends StatelessWidget {
-  const AsyncText({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<dynamic>(
-      future: getMetadata(
-        path: "D:\\Miku_Uta\\testaudio\\40mP - 心傷モノクローム (单色心伤).flac",
-      ),
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return Text(
-            snapshot.data!.title,
-            style: generalTextStyle(ctx: context, size: 'md'),
+    return Obx(
+      () => CustomBtn(
+        fn: () {
+          final RenderBox renderBox = context.findRenderObject() as RenderBox;
+          final offset = renderBox.localToGlobal(Offset.zero);
+          showMenu(
+            constraints: BoxConstraints(
+              minWidth: btnW, // 约束最小宽度
+              maxWidth: btnW, // 约束最大宽度
+            ),
+            context: context,
+            position: RelativeRect.fromRect(
+              // 定义菜单锚点区域
+              Rect.fromLTWH(
+                offset.dx + (renderBox.size.width - btnW) / 2, // 水平居中
+                offset.dy + 0, // 父组件底部Y坐标
+                btnW, // 菜单宽度
+                0, // 高度由内容决定
+              ),
+              // 屏幕边界约束
+              Offset.zero & MediaQuery.of(context).size,
+            ),
+            items: apiMenuList,
+            elevation: 0,
+            color: Theme.of(context).colorScheme.surfaceContainer,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
           );
-        }
-        return Text(
-          'default',
-          style: generalTextStyle(ctx: context, size: 'md'),
-        );
-      },
+        },
+        icon: PhosphorIconsLight.plugs,
+        label: _settingController.apiMap[_settingController.apiIndex.value],
+        btnHeight: btnH,
+        btnWidth: btnW,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        contentColor: Theme.of(context).colorScheme.onPrimary,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      ),
     );
   }
 }
@@ -73,7 +92,6 @@ class Setting extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return Container(
       alignment: Alignment.centerLeft,
       padding: EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
@@ -86,7 +104,14 @@ class Setting extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 16,
         children: [
-          Text('设置', style: generalTextStyle(ctx: context, size: 28.0)),
+          Text(
+            '设置',
+            style: generalTextStyle(
+              ctx: context,
+              size: 28.0,
+              weight: FontWeight.w400,
+            ),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -104,14 +129,13 @@ class Setting extends StatelessWidget {
                         titleTextStyle: generalTextStyle(
                           ctx: context,
                           size: 20,
-                          weight: FontWeight.w700
+                          weight: FontWeight.w700,
                         ),
 
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.all(Radius.circular(4)),
                         ),
-                        backgroundColor:
-                            Theme.of(context).colorScheme.surface,
+                        backgroundColor: Theme.of(context).colorScheme.surface,
 
                         actionsAlignment: MainAxisAlignment.end,
                         actions: <Widget>[
@@ -140,7 +164,10 @@ class Setting extends StatelessWidget {
                                           children: [
                                             Text(
                                               _settingController.folders[index],
-                                              style: generalTextStyle(ctx: context,size: 'md'),
+                                              style: generalTextStyle(
+                                                ctx: context,
+                                                size: 'md',
+                                              ),
                                             ),
                                             TextButton(
                                               onPressed: () {
@@ -151,11 +178,11 @@ class Setting extends StatelessWidget {
                                                     );
                                               },
                                               child: Tooltip(
-                                                message: "del",
+                                                message: "删除",
                                                 child: Icon(
-                                                PhosphorIconsLight.trash,
-                                                color: Colors.red,
-                                              ),
+                                                  PhosphorIconsLight.trash,
+                                                  color: Colors.red,
+                                                ),
                                               ),
                                             ),
                                           ],
@@ -184,7 +211,8 @@ class Setting extends StatelessWidget {
                                         }
                                       },
                                       backgroundColor: Colors.transparent,
-                                      contentColor: Theme.of(context).colorScheme.primary,
+                                      contentColor:
+                                          Theme.of(context).colorScheme.primary,
                                       btnWidth: 72,
                                       btnHeight: 36,
                                       label: "添加",
@@ -196,7 +224,8 @@ class Setting extends StatelessWidget {
                                             foldersClone;
                                       },
                                       backgroundColor: Colors.transparent,
-                                      contentColor: Theme.of(context).colorScheme.primary,
+                                      contentColor:
+                                          Theme.of(context).colorScheme.primary,
                                       btnWidth: 72,
                                       btnHeight: 36,
                                       label: "取消",
@@ -212,7 +241,8 @@ class Setting extends StatelessWidget {
                                         );
                                       },
                                       backgroundColor: Colors.transparent,
-                                      contentColor: Theme.of(context).colorScheme.primary,
+                                      contentColor:
+                                          Theme.of(context).colorScheme.primary,
                                       btnWidth: 72,
                                       btnHeight: 36,
                                       label: "确定",
@@ -240,8 +270,15 @@ class Setting extends StatelessWidget {
               ),
             ],
           ),
-          const AsyncCover(),
-          const AsyncText(),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text('API源', style: generalTextStyle(ctx: context, size: 'lg')),
+              const ApiDropMenu(),
+            ],
+          ),
         ],
       ),
     );

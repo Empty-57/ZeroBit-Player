@@ -16,7 +16,7 @@ void toggleTheme() {
   themeMode.value =
       themeMode.value == 'dark' ? 'light' : 'dark';
 
-  _settingController.putCache(isSaveFolders: false);
+  _settingController.putCache();
 
   Get.changeThemeMode(themeMode.value == 'dark' ? ThemeMode.dark : ThemeMode.light);
 }
@@ -75,12 +75,14 @@ class ControllerButton extends StatelessWidget {
   final IconData icon;
   final Color? hoverColor;
   final VoidCallback fn;
+  final String? tooltip;
 
   const ControllerButton({
     super.key,
     required this.icon,
     this.hoverColor,
     required this.fn,
+    this.tooltip,
   });
 
   @override
@@ -88,6 +90,7 @@ class ControllerButton extends StatelessWidget {
     return IconButton(
       icon: Icon(icon),
       color: Theme.of(context).colorScheme.onSurface,
+      tooltip: tooltip,
       iconSize: getIconSize(size: 'lg'),
       hoverColor: hoverColor,
       style: ButtonStyle(
@@ -123,6 +126,7 @@ class WindowController extends StatelessWidget {
             fn: () {
               Get.back(id: 1);
             },
+            tooltip: "返回",
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -159,12 +163,14 @@ class WindowController extends StatelessWidget {
                       ? PhosphorIconsLight.moon
                       : PhosphorIconsLight.sun,
               fn: toggleTheme,
+              tooltip: themeMode.value == 'dark'?"暗色主题":"亮色主题",
             ),
           ),
 
           ControllerButton(
             icon: PhosphorIconsLight.minus,
             fn: windowListener.windowMinimize,
+            tooltip: "最小化",
           ),
 
           Obx(
@@ -174,6 +180,7 @@ class WindowController extends StatelessWidget {
                       ? PhosphorIconsLight.cornersIn
                       : PhosphorIconsLight.cornersOut,
               fn: windowListener.toggleMaximize,
+              tooltip: windowListener._isMaximized.value?"还原":"最大化",
             ),
           ),
 
@@ -182,6 +189,7 @@ class WindowController extends StatelessWidget {
             hoverColor:
                 Theme.of(context).colorScheme.secondaryContainer,
             fn: windowListener.windowClose,
+            tooltip: "退出",
           ),
         ],
       ),

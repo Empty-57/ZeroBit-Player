@@ -11,3 +11,15 @@ extension FutureDebounceExtension on Function {
     };
   }
 }
+
+extension DebounceExtension on Function {
+  void Function() debounce({int ms = 500}) {
+    Timer? debounceTimer;
+    return () {
+      if (debounceTimer?.isActive ?? false) debounceTimer?.cancel();
+      debounceTimer = Timer(Duration(milliseconds: ms), () {
+        this();
+      });
+    };
+  }
+}

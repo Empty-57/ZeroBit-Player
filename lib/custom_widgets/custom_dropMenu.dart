@@ -1,26 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:zerobit_player/general_style.dart';
-import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import 'custom_button.dart';
 
-class _DropdownController<T> extends GetxController {
-  final selectedValue = Rx<T?>(null);
-  final selectedKey = '未选择'.obs;
-
-  void updateSelection(T? newValue, String key) {
-    selectedValue.value = newValue;
-    selectedKey.value = key;
-  }
-}
-
 class CustomDropdownMenu<T> extends StatelessWidget {
-  final Map<String, List<T>> itemMap;
+  final Map<int, List<T>> itemMap;
+
+  final void Function(MapEntry<int, List<T>>) fn;
+
+  final String label;
+
   final double? btnWidth;
   final double? btnHeight;
   final double itemWidth;
   final double itemHeight;
+  final double? spacing;
   final IconData? btnIcon;
   final double? radius;
   final MainAxisAlignment? mainAxisAlignment;
@@ -28,8 +23,11 @@ class CustomDropdownMenu<T> extends StatelessWidget {
   const CustomDropdownMenu({
     super.key,
     required this.itemMap,
+    required this.fn,
+    required this.label,
     this.btnWidth,
     this.btnHeight,
+    this.spacing,
     required this.itemWidth,
     required this.itemHeight,
     this.btnIcon,
@@ -39,18 +37,17 @@ class CustomDropdownMenu<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(_DropdownController());
     final menuList =
         itemMap.entries.map((entry) {
-          return PopupMenuItem<T>(
+          return PopupMenuItem<int>(
             padding: EdgeInsets.zero,
-            value: entry.value[0],
+            value: entry.key,
             height: itemHeight,
             child: InkWell(
               onTap: () {
                 // 记得手动 pop 返回 value
-                Navigator.pop(context, entry.value[0]);
-                controller.updateSelection(entry.value[0], entry.key);
+                Navigator.pop(context, entry.key);
+                fn(entry);
               },
 
               child: Container(
@@ -74,7 +71,7 @@ class CustomDropdownMenu<T> extends StatelessWidget {
                             getIconSize(size: 'md'),
                       ),
                     Text(
-                      entry.key,
+                      entry.value[0].toString(),
                       style: generalTextStyle(ctx: context,size: 'md'),
                     ),
                   ],
@@ -84,13 +81,13 @@ class CustomDropdownMenu<T> extends StatelessWidget {
           );
         }).toList();
 
-    return Obx(
-      () => CustomBtn(
+    return CustomBtn(
         fn: () => _createMenu(context, menuList),
         radius: radius!,
         btnHeight: btnHeight,
         btnWidth: btnWidth,
         mainAxisAlignment: mainAxisAlignment,
+        spacing: spacing,
 
         children: [
           if (btnIcon != null)
@@ -104,7 +101,7 @@ class CustomDropdownMenu<T> extends StatelessWidget {
           Expanded(
             flex: 1,
             child: Text(
-              controller.selectedKey.value.toString(),
+              label,
               style: generalTextStyle(ctx: context,size: 'md'),
             ),
           ),
@@ -114,11 +111,10 @@ class CustomDropdownMenu<T> extends StatelessWidget {
             size: getIconSize(size: 'sm'),
           ),
         ],
-      ),
-    );
+      );
   }
 
-  void _createMenu(BuildContext context, List<PopupMenuItem<T>> menuList) {
+  void _createMenu(BuildContext context, List<PopupMenuItem<int>> menuList) {
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final offset = renderBox.localToGlobal(Offset.zero);
     showMenu(

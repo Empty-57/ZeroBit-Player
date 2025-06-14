@@ -1,11 +1,13 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/getxController/music_cache_ctrl.dart';
+import 'package:zerobit_player/getxController/setting_ctrl.dart';
+import 'package:zerobit_player/operate_area.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
-import 'package:zerobit_player/tools/func_extension.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
@@ -17,6 +19,7 @@ import 'dart:typed_data';
 import 'general_style.dart';
 
 final MusicCacheController _musicCacheController = Get.find<MusicCacheController>();
+final SettingController _settingController =Get.find<SettingController>();
 
 class LocalMusic extends StatelessWidget {
   const LocalMusic({super.key});
@@ -61,73 +64,92 @@ class LocalMusic extends StatelessWidget {
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 4,
+                spacing: 8,
                 children: [
                   Text(
                     '音乐',
-                    style: generalTextStyle(ctx: context,size: 28.0),
+                    style: generalTextStyle(ctx: context,size: 28.0,weight: FontWeight.w400),
                   ),
                   Text(
-                    '${_musicCacheController.items.length}首',
+                    '共${_musicCacheController.items.length}首',
                     style: generalTextStyle(ctx: context,size: 'md'),
                   ),
                 ],
               ),
               Expanded(flex: 1, child: Container()),
-              CustomDropdownMenu(
+
+              Obx(()=>CustomDropdownMenu(
                 itemMap: {
-                  '专辑': [1, PhosphorIconsRegular.vinylRecord],
-                  '艺术家': [2, PhosphorIconsRegular.userFocus],
+                  0: [_settingController.sortType[0], PhosphorIconsRegular.textT],
+                  1: [_settingController.sortType[1], PhosphorIconsRegular.vinylRecord],
+                  2: [_settingController.sortType[2], PhosphorIconsRegular.userFocus],
+                  3: [_settingController.sortType[3], PhosphorIconsRegular.clockCountdown],
                 },
+                fn: (entry){
+                  _settingController.sortMap[OperateArea.local]=entry.key;
+                _settingController.putCache();
+                _musicCacheController.itemReSort(type: entry.key);
+                },
+                label: _settingController.sortType[_settingController.sortMap[OperateArea.local] as int]??"未指定",
                 radius: 4,
-                btnWidth: 160,
+                btnWidth: 140,
                 btnHeight: 48,
-                itemWidth: 160,
-                itemHeight: 60,
+                itemWidth: 140,
+                itemHeight: 48,
                 btnIcon: PhosphorIconsLight.funnelSimple,
                 mainAxisAlignment: MainAxisAlignment.start,
-              ),
-              CustomBtn(
+                spacing: 6,
+              )),
+
+              Obx(()=>CustomBtn(
                 fn: () {
-                  toggle();
+                  _settingController.isReverse.value=!_settingController.isReverse.value;
+                  _settingController.putCache();
+                  _musicCacheController.itemReverse();
                 },
-                label: '功能1',
-                icon: PhosphorIconsLight.code,
+                icon: _settingController.isReverse.value?PhosphorIconsLight.arrowDown:PhosphorIconsLight.arrowUp,
                 radius: 4,
                 btnHeight: 48,
-                btnWidth: 128,
+                btnWidth: 48,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                tooltip: _settingController.isReverse.value? '降序':'升序',
+              )
+              ),
+
+              Obx(()=>CustomBtn(
+                fn: () {
+                  _settingController.viewModeMap[OperateArea.local]=!_settingController.viewModeMap[OperateArea.local];
+                  _settingController.putCache();
+                },
+                icon: _settingController.viewModeMap[OperateArea.local]?PhosphorIconsLight.listDashes:PhosphorIconsLight.gridFour,
+                radius: 4,
+                btnHeight: 48,
+                btnWidth: 48,
                 spacing: 4,
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-              ),
-              CustomBtn(
-                fn: () {
-                  resume();
-                },
-                icon: PhosphorIconsLight.sortAscending,
-                radius: 4,
-                btnHeight: 48,
-                btnWidth: 64,
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-              ),
+                tooltip: _settingController.viewModeMap[OperateArea.local]? "列表视图":"表格视图",
+              )),
+
             ],
           ),
+
           Expanded(
             flex: 1,
-            child: Obx(()=>ListView.builder(
+            child:  Obx(()=> _settingController.viewModeMap[OperateArea.local]? ListView.builder(
               itemCount: _musicCacheController.items.length,
               itemExtent: 64,
               cacheExtent: 64 * 2,
               itemBuilder: (context, index) {
+                return GestureDetector(
+                  onSecondaryTapUp: (e){
+                    debugPrint(e.globalPosition.toString());
 
-                return TextButton(
+                  },
+                  child: TextButton(
                   onPressed: () {
                     playFile(path: _musicCacheController.items[index].path);
                     },
                   style: TextButton.styleFrom(
-                    overlayColor:
-                        Theme.of(
-                          context,
-                        ).colorScheme.secondaryContainer,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(4),
                     ),
@@ -180,9 +202,76 @@ class LocalMusic extends StatelessWidget {
                       ),
                     ],
                   ),
+                ),
                 );
               },
-            )),
+            ):GridView.builder(
+              itemCount: _musicCacheController.items.length,
+              cacheExtent: 64 * 2,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: MediaQuery.of(context).size.width<1100?3:4,
+                  mainAxisSpacing: 4.0,
+                  crossAxisSpacing: 8.0,
+                  childAspectRatio: 1.0,
+                  mainAxisExtent: 64,),
+                itemBuilder: (context, index){
+                return GestureDetector(
+                  onSecondaryTapUp: (e){
+                    debugPrint("2");
+
+                  },
+                  child: TextButton(
+                  onPressed: () {
+                    playFile(path: _musicCacheController.items[index].path);
+                    },
+                  style: TextButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    spacing: 16,
+                    children: [
+                      AsyncCover(path: _musicCacheController.items[index].path, index: index),
+                      Expanded(
+                        flex: 1,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _musicCacheController.items[index].title,
+                              softWrap: true,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: generalTextStyle(ctx: context,size: 'md'),
+                            ),
+                            Text(
+                              _musicCacheController.items[index].artist,
+                              softWrap: true,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: generalTextStyle(ctx: context,size: 'sm',opacity: 0.8),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        _formatTime(_musicCacheController.items[index].duration),
+                        softWrap: true,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: generalTextStyle(ctx: context,size: 'sm',opacity: 0.8),
+                      ),
+                    ],
+                  ),
+                ),
+                );
+            }
+            )
+            ),
           ),
         ],
       ),

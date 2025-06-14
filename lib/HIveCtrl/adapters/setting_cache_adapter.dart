@@ -14,6 +14,9 @@ class SettingCacheAdapter extends TypeAdapter<SettingCache> {
       apiIndex: reader.readInt(),
       volume: reader.readDouble(),
       folders: reader.readStringList(),
+      sortMap: reader.readMap(),
+      viewModeMap: reader.readMap(),
+      isReverse: reader.readBool(),
     );
   }
 
@@ -23,5 +26,8 @@ class SettingCacheAdapter extends TypeAdapter<SettingCache> {
     writer.writeInt(obj.apiIndex);
     writer.writeDouble(obj.volume);
     writer.writeStringList(obj.folders);
+    writer.writeMap(obj.sortMap);
+    writer.writeMap(obj.viewModeMap);
+    writer.writeBool(obj.isReverse);
   }
 }

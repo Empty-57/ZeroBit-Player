@@ -1,7 +1,7 @@
 use crate::api::bass::bass_flags::*;
 use crate::api::bass::bass_func::*;
 use crate::api::bass::basswasapi_func::*;
-use core::ffi::{c_void,c_float};
+use core::ffi::c_void;
 use libloading::{Library, Symbol};
 use once_cell::sync::Lazy;
 use std::ffi::OsStr;
@@ -311,7 +311,6 @@ impl BassApi {
         }
         self.stream_handle = handle;
         self.resume()?;
-        // self.set_volume(*TARGET_VOLUME.lock().unwrap())?;
         Ok(())
     }
 

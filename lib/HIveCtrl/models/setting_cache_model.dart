@@ -3,6 +3,9 @@ class SettingCache{
   final int apiIndex;
   final double volume;
   final List<String> folders;
+  final Map sortMap;
+  final Map viewModeMap;
+  final bool isReverse;
 
-  const SettingCache({required this.themeMode,required this.apiIndex,required this.volume,required this.folders});
+  const SettingCache({required this.themeMode,required this.apiIndex,required this.volume,required this.folders,required this.sortMap,required this.viewModeMap,required this.isReverse});
 }

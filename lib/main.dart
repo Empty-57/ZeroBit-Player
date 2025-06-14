@@ -44,7 +44,7 @@ void main<T>() async {
 
   try{
     await loadLib();
-  await initBass();
+    await initBass();
   }catch(e){
     debugPrint(e.toString());
   }

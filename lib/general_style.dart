@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+
+final _fontFamily=Platform.isWindows ? "微软雅黑" : null;
 
 TextStyle generalTextStyle<T>({
   required BuildContext ctx,
@@ -21,6 +25,7 @@ TextStyle generalTextStyle<T>({
   }
 
   return TextStyle(
+    fontFamily: _fontFamily,
     color: color ?? Theme.of(ctx).colorScheme.onSurface.withValues(alpha: opacity??1.0),
     fontSize: fontSize,
     fontWeight: weight ?? FontWeight.w400,

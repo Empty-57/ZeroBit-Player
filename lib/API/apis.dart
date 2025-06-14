@@ -17,8 +17,6 @@ final _dio = Dio();
 
 final SettingController _settingController = Get.find<SettingController>();
 
-final _apiIndex = _settingController.apiIndex;
-
 Future<dynamic> _saveNetCover({required String songPath, required String picUrl,}) async {
   try{
     final pic = await _dio.get(
@@ -218,7 +216,7 @@ Future<List<Map<String, dynamic>>?> _neGetLrcBySearch({required String text,requ
 
 
 Future<dynamic> saveCoverByText({required String text, required String songPath,}) async {
-  switch(_apiIndex.value){
+  switch(_settingController.apiIndex.value){
     case 0:
       return await _qmSaveCoverByText(text: text, songPath: songPath);
     case 1:
@@ -227,7 +225,7 @@ Future<dynamic> saveCoverByText({required String text, required String songPath,
 }
 
 Future<dynamic> getLrcBySearch({required String text,required int offset,required int limit})async{
-    switch(_apiIndex.value){
+    switch(_settingController.apiIndex.value){
     case 0:
       return await _qmGetLrcBySearch(text: text,offset: offset,limit: limit);
     case 1:
