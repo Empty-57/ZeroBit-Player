@@ -60,6 +60,7 @@ void main<T>() async {
 
   Get.put(SettingController());
   Get.put(MusicCacheController());
+  Get.put(ThemeService());
 
   await syncCache();
 
@@ -107,14 +108,16 @@ class _SlideTransition extends CustomTransition {
   }
 }
 
+final ThemeService themeService = Get.find<ThemeService>();
+
 class MainFrame extends StatelessWidget {
   const MainFrame({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
-      theme: lightTheme,
-      darkTheme: darkTheme,
+    return Obx(()=>GetMaterialApp(
+      theme: themeService.lightTheme,
+      darkTheme: themeService.darkTheme,
       themeMode: themeMode.value == 'dark' ? ThemeMode.dark : ThemeMode.light,
       transitionDuration: 200.ms,
       customTransition: _SlideTransition(),
@@ -125,6 +128,7 @@ class MainFrame extends StatelessWidget {
         GetPage(name: AppRoutes.home, page: () => const LocalMusic()),
         GetPage(name: AppRoutes.setting, page: () => const Setting()),
       ],
+    )
     );
   }
 }

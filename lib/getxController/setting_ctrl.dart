@@ -16,9 +16,11 @@ class SettingController extends GetxController {
     OperateArea.local:0
   }.obs;
   final viewModeMap=<dynamic,dynamic>{
-    OperateArea.local:true
+    OperateArea.local:true //列表/表格
   }.obs;
   final isReverse=false.obs;
+
+  final themeColor=0xff27272a.obs;
 
 
   final Map<int,String> apiMap={
@@ -51,6 +53,7 @@ class SettingController extends GetxController {
         OperateArea.local:true //列表/表格
       };
       isReverse.value=cache.isReverse;
+      themeColor.value=cache.themeColor;
     }
 
     // await setVolume(vol: cache?.volume??0.6);
@@ -83,7 +86,8 @@ class SettingController extends GetxController {
           folders: folders,
           sortMap: sortMap,
           viewModeMap: viewModeMap,
-          isReverse: isReverse.value
+          isReverse: isReverse.value,
+          themeColor: themeColor.value,
       ),
       key: _key,
     );

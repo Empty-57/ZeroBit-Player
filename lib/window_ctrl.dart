@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:zerobit_player/theme_manager.dart';
 import 'general_style.dart';
 import 'getxController/setting_ctrl.dart';
 
 
 final SettingController _settingController = Get.find<SettingController>();
-
+final ThemeService _themeService = Get.find<ThemeService>();
 
 var themeMode = _settingController.themeMode;
 
@@ -18,7 +19,7 @@ void toggleTheme() {
 
   _settingController.putCache();
 
-  Get.changeThemeMode(themeMode.value == 'dark' ? ThemeMode.dark : ThemeMode.light);
+  _themeService.setThemeMode();
 }
 
 const double _contorllerBarHeight = 48;
