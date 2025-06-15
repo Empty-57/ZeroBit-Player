@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:zerobit_player/general_style.dart';
+import 'package:zerobit_player/tools/general_style.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import 'custom_button.dart';

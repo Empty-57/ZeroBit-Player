@@ -3,10 +3,10 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:zerobit_player/API/apis.dart';
+import 'package:zerobit_player/getxController/Audio_ctrl.dart';
 import 'package:zerobit_player/getxController/music_cache_ctrl.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
-import 'package:zerobit_player/operate_area.dart';
-import 'package:zerobit_player/src/rust/api/bass.dart';
+import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -16,12 +16,12 @@ import 'package:transparent_image/transparent_image.dart';
 
 import 'dart:typed_data';
 
-import 'HIveCtrl/models/music_cahce_model.dart';
-import 'general_style.dart';
+import '../HIveCtrl/models/music_cahce_model.dart';
+import '../tools/general_style.dart';
 
-final MusicCacheController _musicCacheController =
-    Get.find<MusicCacheController>();
+final MusicCacheController _musicCacheController = Get.find<MusicCacheController>();
 final SettingController _settingController = Get.find<SettingController>();
+final AudioController _audioController =Get.find<AudioController>();
 
 const double _itemHeight = 64.0;
 
@@ -45,7 +45,9 @@ class LocalMusic extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final titleStyle = generalTextStyle(ctx: context, size: 'md');
+    final highLightTitleStyle = generalTextStyle(ctx: context, size: 'md',color: Theme.of(context).colorScheme.primary);
     final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
+    final highLightSubStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8,color: Theme.of(context).colorScheme.primary);
 
     return Container(
       alignment: Alignment.centerLeft,
@@ -193,7 +195,9 @@ class LocalMusic extends StatelessWidget {
                       return _MusicTile(
                         metadata: metadata,
                         titleStyle: titleStyle,
+                        highLightTitleStyle: highLightTitleStyle,
                         subStyle: subStyle,
+                        highLightSubStyle: highLightSubStyle,
                       );
                     },
                   ),
@@ -217,7 +221,9 @@ class LocalMusic extends StatelessWidget {
                       return _MusicTile(
                         metadata: metadata,
                         titleStyle: titleStyle,
+                        highLightTitleStyle: highLightTitleStyle,
                         subStyle: subStyle,
+                        highLightSubStyle: highLightSubStyle,
                       );
                     },
                   ),
@@ -239,12 +245,16 @@ const _borderRadius = BorderRadius.all(Radius.circular(4));
 class _MusicTile extends StatelessWidget {
   final MusicCache metadata;
   final TextStyle titleStyle;
+  final TextStyle highLightTitleStyle;
   final TextStyle subStyle;
+  final TextStyle highLightSubStyle;
 
   const _MusicTile({
     required this.metadata,
     required this.titleStyle,
+    required this.highLightTitleStyle,
     required this.subStyle,
+    required this.highLightSubStyle
   });
 
   @override
@@ -255,7 +265,7 @@ class _MusicTile extends StatelessWidget {
       },
       child: TextButton(
         onPressed: () {
-          playFile(path: metadata.path);
+          _audioController.audioPlay(path: metadata.path);
         },
         style: TextButton.styleFrom(
           shape: RoundedRectangleBorder(borderRadius: _borderRadius),
@@ -272,19 +282,19 @@ class _MusicTile extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  Obx(()=>Text(
                     metadata.title,
                     softWrap: true,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
-                    style: titleStyle,
-                  ),
+                    style:  _audioController.currentPath.value!=metadata.path? titleStyle:highLightTitleStyle,
+                  )),
                   Text(
                     metadata.artist,
                     softWrap: true,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
-                    style: subStyle,
+                    style: _audioController.currentPath.value!=metadata.path? subStyle:highLightSubStyle,
                   ),
                 ],
               ),
@@ -297,7 +307,7 @@ class _MusicTile extends StatelessWidget {
                   softWrap: true,
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
-                  style: subStyle,
+                  style: _audioController.currentPath.value!=metadata.path? subStyle:highLightSubStyle,
                 ),
               ),
             Text(
@@ -305,7 +315,7 @@ class _MusicTile extends StatelessWidget {
               softWrap: true,
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
-              style: subStyle,
+              style: _audioController.currentPath.value!=metadata.path? subStyle:highLightSubStyle,
             ),
           ],
         ),

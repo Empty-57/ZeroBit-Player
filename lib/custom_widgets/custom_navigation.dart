@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:zerobit_player/general_style.dart';
+import 'package:zerobit_player/tools/general_style.dart';
 import 'package:get/get.dart';
 
-import '../app_routes.dart';
+import '../field/app_routes.dart';
 
 
 final currentNavigationIndex = 0.obs;

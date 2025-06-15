@@ -7,8 +7,8 @@ import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
-import 'general_style.dart';
-import 'getxController/setting_ctrl.dart';
+import '../tools/general_style.dart';
+import '../getxController/setting_ctrl.dart';
 
 final SettingController _settingController = Get.find<SettingController>();
 

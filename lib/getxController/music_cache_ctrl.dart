@@ -3,7 +3,7 @@ import 'package:zerobit_player/HIveCtrl/hive_manager.dart';
 import 'package:zerobit_player/HIveCtrl/models/music_cahce_model.dart';
 import 'package:get/get.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
-import 'package:zerobit_player/operate_area.dart';
+import 'package:zerobit_player/field/operate_area.dart';
 
 import '../src/rust/api/music_tag_tool.dart';
 

@@ -3,18 +3,19 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:zerobit_player/HIveCtrl/models/setting_cache_model.dart';
-import 'package:zerobit_player/local_music_page.dart';
-import 'package:zerobit_player/setting_page.dart';
+import 'package:zerobit_player/getxController/Audio_ctrl.dart';
+import 'package:zerobit_player/pages/local_music_page.dart';
+import 'package:zerobit_player/pages/setting_page.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/frb_generated.dart';
 import 'package:zerobit_player/tools/sync_cache.dart';
-import 'package:zerobit_player/window_ctrl.dart';
+import 'package:zerobit_player/components/window_ctrl.dart';
 import 'package:get/get.dart';
 
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'HIveCtrl/adapters/setting_cache_adapter.dart';
 import 'HIveCtrl/models/music_cahce_model.dart';
-import 'app_routes.dart';
+import 'field/app_routes.dart';
 
 
 import 'package:zerobit_player/custom_widgets/custom_widget.dart';
@@ -60,6 +61,7 @@ void main<T>() async {
 
   Get.put(SettingController());
   Get.put(MusicCacheController());
+  Get.put(AudioController());
   Get.put(ThemeService());
 
   await syncCache();
