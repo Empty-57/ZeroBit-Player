@@ -10,10 +10,12 @@ use std::ptr::null_mut;
 use std::sync::Mutex;
 use std::time::Duration;
 use std::{env, iter, thread};
+use crate::api::bass::bass_errs::get_err_info;
 
 pub mod bass_flags;
 pub mod bass_func;
 pub mod basswasapi_func;
+pub mod bass_errs;
 
 struct BassApi {
     _lib: &'static Library,
@@ -185,23 +187,15 @@ impl BassApi {
             (self.wasapi_free)();
         };
         let result = unsafe { (self.wasapi_init)(-1, 0, 0, 0, 0.05, 0.0, None, null_mut()) };
-        if result == 0 {
-            let err = unsafe { (self.error_get_code)() };
-            Err(format!("BASS failed, error code: {}", err))
-        } else {
-            let ok = unsafe { (self.wasapi_get_info)(&mut info) };
-            if ok == 0 {
-                let err = unsafe { (self.error_get_code)() };
-                Err(format!("BASS failed, error code: {}", err))
-            } else {
-                unsafe {
-                    *FREQ.lock().unwrap() = Some(info.freq);
-                    *CHANS.lock().unwrap() = Some(info.chans);
-                    (self.wasapi_free)();
-                }
-                Ok(())
-            }
+        self.or_err_(result)?;
+        let ok = unsafe { (self.wasapi_get_info)(&mut info) };
+        self.or_err_(ok)?;
+        unsafe { 
+            *FREQ.lock().unwrap() = Some(info.freq);
+            *CHANS.lock().unwrap() = Some(info.chans);
+            (self.wasapi_free)(); 
         }
+        Ok(())
     }
 
     fn bass_init(&self) -> Result<(), String> {
@@ -242,7 +236,7 @@ impl BassApi {
             unsafe { (self.get_attr)(self.stream_handle, BASS_ATTRIB_VOL, &mut vol as *mut _) };
         if ok == 0 {
             let err_code = unsafe { (self.error_get_code)() };
-            Err(format!("BASS failed, error code: {}", err_code))
+            Err(get_err_info(err_code).unwrap())
         } else {
             Ok(vol)
         }
@@ -265,12 +259,9 @@ impl BassApi {
             return Ok(());
         }
         unsafe {
-            if ((self.slide_attr)(self.stream_handle,BASS_ATTRIB_VOL,*TARGET_VOLUME.lock().unwrap(),FADE_DURATION)) == 0 {
-                let err_code = (self.error_get_code)();
-            return Err(format!("BASS failed, error code: {}", err_code));
+            let result=(self.slide_attr)(self.stream_handle,BASS_ATTRIB_VOL,*TARGET_VOLUME.lock().unwrap(),FADE_DURATION);
+            self.or_err_(result)
         }
-        }
-        Ok(())
     }
 
     fn fade_out(&self) -> Result<(), String> {
@@ -278,12 +269,9 @@ impl BassApi {
             return Ok(());
         }
         unsafe {
-            if ((self.slide_attr)(self.stream_handle,BASS_ATTRIB_VOL,0.0,FADE_DURATION)) == 0 {
-                let err_code = (self.error_get_code)() ;
-            return Err(format!("BASS failed, error code: {}", err_code));
+            let result=(self.slide_attr)(self.stream_handle,BASS_ATTRIB_VOL,0.0,FADE_DURATION);
+            self.or_err_(result)
         }
-        }
-        Ok(())
     }
 
     fn play_file(&mut self, path: String) -> Result<(), String> {
@@ -305,10 +293,7 @@ impl BassApi {
             )
         };
 
-        if handle == 0 {
-            let err_code = unsafe { (self.error_get_code)() };
-            return Err(format!("BASS failed, error code: {}", err_code));
-        }
+        self.or_err_(handle as i32)?;
         self.stream_handle = handle;
         self.resume()?;
         Ok(())
@@ -417,7 +402,11 @@ impl BassApi {
     fn or_err_(&self, result: i32) -> Result<(), String> {
         if result == 0 {
             let err_code = unsafe { (self.error_get_code)() };
-            Err(format!("BASS failed, error code: {}", err_code))
+            if err_code==0 { 
+                Ok(())
+            }else { 
+                Err(get_err_info(err_code).unwrap_or_else(|| format!("Unknown BASS error | ERR_CODE<{}>", err_code)))
+            }
         } else {
             Ok(())
         }

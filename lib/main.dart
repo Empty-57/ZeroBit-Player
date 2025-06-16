@@ -31,7 +31,7 @@ import 'getxController/setting_ctrl.dart';
 
 import 'theme_manager.dart';
 
-void main<T>() async {
+void main() async {
 
   // ProcessSignal.sigint.watch().listen((signal) async{
   //   debugPrint("Received SIGTERM: process is exiting.");
@@ -77,7 +77,7 @@ void main<T>() async {
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
-    title: 'test',
+    title: 'ZeroBit Player',
   );
   windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.show();

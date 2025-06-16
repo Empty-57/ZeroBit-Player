@@ -270,7 +270,10 @@ class _MusicTile extends StatelessWidget {
         style: TextButton.styleFrom(
           shape: RoundedRectangleBorder(borderRadius: _borderRadius),
         ),
-        child: Row(
+        child: GetBuilder<AudioController>(
+          id: metadata.path,
+            builder: (controller){
+          return Row(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           spacing: _itemSpacing,
@@ -282,13 +285,13 @@ class _MusicTile extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Obx(()=>Text(
+                  Text(
                     metadata.title,
                     softWrap: true,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                     style:  _audioController.currentPath.value!=metadata.path? titleStyle:highLightTitleStyle,
-                  )),
+                  ),
                   Text(
                     metadata.artist,
                     softWrap: true,
@@ -318,7 +321,8 @@ class _MusicTile extends StatelessWidget {
               style: _audioController.currentPath.value!=metadata.path? subStyle:highLightSubStyle,
             ),
           ],
-        ),
+        );
+        }),
       ),
     );
   }
