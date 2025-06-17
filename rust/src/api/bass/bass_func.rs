@@ -51,6 +51,12 @@ pub(crate) type BASS_ChannelBytes2Seconds =
 pub(crate) type BASS_ChannelSeconds2Bytes =
     unsafe extern "C" fn(handle: c_uint, pos: c_double) -> c_ulonglong;
 
+pub(crate) type SYNCPROC =Option<unsafe extern "C" fn(handle: c_uint, channel: c_uint, data: c_uint, user: *mut c_void)>;
+
+pub(crate) type BASS_ChannelSetSync=unsafe extern "C" fn(handle: c_uint, sync_type: c_uint, param: c_ulonglong, proc: SYNCPROC, user: *mut c_void) -> c_uint;
+
+pub(crate) type BASS_ChannelRemoveSync =unsafe extern "C" fn(handle: c_uint, sync: c_uint) -> c_int;
+
 pub type BASS_PluginLoad = unsafe extern "C" fn(
     file: *const c_char, // const char *
     flags: c_uint,       // DWORD

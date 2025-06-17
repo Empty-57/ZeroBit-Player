@@ -6,13 +6,16 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `bass_init`, `fade_in`, `fade_out`, `get_pos`, `get_state`, `get_volume`, `get_wasapi_info`, `load`, `or_err_`, `pause`, `play_file`, `resume`, `set_exclusive_mode`, `set_pos`, `set_volume`, `stop`, `stream_free`, `toggle`
+// These functions are ignored because they are not marked as `pub`: `bass_init`, `fade_in`, `fade_out`, `get_pos`, `get_state`, `get_volume`, `get_wasapi_info`, `load`, `on_end_sync`, `or_err_`, `pause`, `play_file`, `resume`, `set_exclusive_mode`, `set_pos`, `set_sync`, `set_volume`, `stop`, `stream_free`, `toggle`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `BassApi`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `drop`
 
 Future<void> loadLib() => RustLib.instance.api.crateApiBassLoadLib();
 
 Future<void> initBass() => RustLib.instance.api.crateApiBassInitBass();
+
+Stream<int> audioEventStream() =>
+    RustLib.instance.api.crateApiBassAudioEventStream();
 
 Future<void> setExclusiveMode({required bool exclusive}) =>
     RustLib.instance.api.crateApiBassSetExclusiveMode(exclusive: exclusive);

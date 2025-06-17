@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:zerobit_player/HIveCtrl/models/setting_cache_model.dart';
+import 'package:zerobit_player/components/play_bar.dart';
 import 'package:zerobit_player/getxController/Audio_ctrl.dart';
 import 'package:zerobit_player/pages/local_music_page.dart';
 import 'package:zerobit_player/pages/setting_page.dart';
@@ -86,6 +87,22 @@ void main() async {
 
 
   runApp(const MainFrame());
+
+  final AudioController audioController =Get.find<AudioController>();
+
+  try{
+    final audioEvent= audioEventStream();
+
+    audioEvent.listen((data) {
+      if(data==AudioState.stop.index){
+        debugPrint(data.toString());
+        audioController.audioAutoPlay();
+      }
+    });
+  }catch(e){
+    debugPrint(e.toString());
+  }
+
 }
 
 class _SlideTransition extends CustomTransition {
@@ -167,7 +184,9 @@ class HomePage extends StatelessWidget {
         color: Theme.of(context).colorScheme.surfaceContainer,
       ),
 
-      child: Column(
+      child: Stack(
+        children: [
+          Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -216,6 +235,9 @@ class HomePage extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+          const PlayBar(),
         ],
       ),
     );

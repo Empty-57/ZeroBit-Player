@@ -19,8 +19,8 @@ class SettingController extends GetxController {
     OperateArea.local:true //列表/表格
   }.obs;
   final isReverse=false.obs;
-
   final themeColor=0xff27272a.obs;
+  final playMode=0.obs;
 
 
   final Map<int,String> apiMap={
@@ -35,6 +35,12 @@ class SettingController extends GetxController {
     3:'时长',
   };
 
+  final Map<int,String> playModeMap={
+    0:'单曲循环',
+    1:'列表循环',
+    2:'随机播放',
+  };
+
 
   final String _key = 'setting';
   final _settingCacheBox = HiveManager.settingCacheBox;
@@ -44,7 +50,7 @@ class SettingController extends GetxController {
     if (cache != null) {
       themeMode.value = cache.themeMode;
       apiIndex.value=cache.apiIndex;
-      // volume.value=cache.volume;
+      volume.value=cache.volume;
       folders.value = [...cache.folders];
       sortMap.value= cache.sortMap.isNotEmpty? Map<dynamic,dynamic>.of(cache.sortMap):{
         OperateArea.local:0
@@ -54,10 +60,11 @@ class SettingController extends GetxController {
       };
       isReverse.value=cache.isReverse;
       themeColor.value=cache.themeColor;
+      playMode.value=cache.playMode;
     }
 
-    // await setVolume(vol: cache?.volume??0.6);
-    await setVolume(vol: volume.value);
+    // await setVolume(vol: cache?.volume??1.0);
+    await setVolume(vol:1.0);
   }
 
   @override
@@ -80,14 +87,15 @@ class SettingController extends GetxController {
   Future<void> putCache({bool isSaveFolders=false}) async {
     _settingCacheBox.put(
       data: SettingCache(
-          themeMode: themeMode.value,
-          apiIndex: apiIndex.value,
-          volume: volume.value,
-          folders: folders,
-          sortMap: sortMap,
-          viewModeMap: viewModeMap,
-          isReverse: isReverse.value,
-          themeColor: themeColor.value,
+        themeMode: themeMode.value,
+        apiIndex: apiIndex.value,
+        volume: volume.value,
+        folders: folders,
+        sortMap: sortMap,
+        viewModeMap: viewModeMap,
+        isReverse: isReverse.value,
+        themeColor: themeColor.value,
+        playMode: playMode.value,
       ),
       key: _key,
     );

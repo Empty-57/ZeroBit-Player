@@ -18,6 +18,7 @@ class SettingCacheAdapter extends TypeAdapter<SettingCache> {
       viewModeMap: reader.readMap(),
       isReverse: reader.readBool(),
       themeColor: reader.readInt(),
+      playMode: reader.readInt(),
     );
   }
 
@@ -31,5 +32,6 @@ class SettingCacheAdapter extends TypeAdapter<SettingCache> {
     writer.writeMap(obj.viewModeMap);
     writer.writeBool(obj.isReverse);
     writer.writeInt(obj.themeColor);
+    writer.writeInt(obj.playMode);
   }
 }

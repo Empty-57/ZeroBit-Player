@@ -7,6 +7,7 @@ class SettingCache {
   final Map viewModeMap;
   final bool isReverse;
   final int themeColor;
+  final int playMode;
 
   const SettingCache({
     required this.themeMode,
@@ -17,5 +18,6 @@ class SettingCache {
     required this.viewModeMap,
     required this.isReverse,
     required this.themeColor,
+    required this.playMode,
   });
 }

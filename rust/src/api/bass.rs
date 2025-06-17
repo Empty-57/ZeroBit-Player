@@ -1,7 +1,9 @@
+use crate::api::bass::bass_errs::get_err_info;
 use crate::api::bass::bass_flags::*;
 use crate::api::bass::bass_func::*;
 use crate::api::bass::basswasapi_func::*;
-use core::ffi::c_void;
+use crate::frb_generated::StreamSink;
+use core::ffi::{c_uint, c_void};
 use libloading::{Library, Symbol};
 use once_cell::sync::Lazy;
 use std::ffi::OsStr;
@@ -10,7 +12,6 @@ use std::ptr::null_mut;
 use std::sync::Mutex;
 use std::time::Duration;
 use std::{env, iter, thread};
-use crate::api::bass::bass_errs::get_err_info;
 
 pub mod bass_flags;
 pub mod bass_func;
@@ -42,10 +43,13 @@ struct BassApi {
     bass_start: Symbol<'static, BASS_Start>,
     wasapi_start: Symbol<'static, BASS_WASAPI_Start>,
     plugin_load: Symbol<'static, BASS_PluginLoad>,
+    bass_set_sync:Symbol<'static,BASS_ChannelSetSync>,
     stream_handle: u32,
 }
 
 static BASS_API: Lazy<Mutex<Option<BassApi>>> = Lazy::new(|| Mutex::new(None));
+
+static AUDIO_EVENT:Lazy<Mutex<Option<StreamSink<u32>>>>= Lazy::new(|| Mutex::new(None));
 
 static FREQ: Mutex<Option<u32>> = Mutex::new(Some(44100));
 static CHANS: Mutex<Option<u32>> = Mutex::new(Some(2));
@@ -66,6 +70,24 @@ const PLUGIN_NAME: [&str; 8] = [
     "basswebm.dll",
     "bassape.dll",
 ];
+
+const USER_STOPPED: u32 = 0;
+// const USER_PLAYING: u32 = 1;
+// const USER_STALLED: u32 = 2;
+// const USER_PAUSED: u32 = 3;
+// const USER_PAUSED_DEVICE: u32 = 4;
+
+
+unsafe extern "C" fn on_end_sync(
+    handle: c_uint,
+    channel: c_uint,
+    data: c_uint,
+    user: *mut c_void,
+){
+    if let Some(sink) = AUDIO_EVENT.lock().unwrap().as_mut() {
+            let _ = sink.add(USER_STOPPED);
+        }
+}
 
 impl BassApi {
     fn load() -> Result<Self, String> {
@@ -151,6 +173,8 @@ impl BassApi {
 
             let plugin_load = lib.get(b"BASS_PluginLoad\0").map_err(|e| e.to_string())?;
 
+            let bass_set_sync=lib.get(b"BASS_ChannelSetSync\0").map_err(|e| e.to_string())?;
+
             Ok(Self {
                 _lib: lib,
                 _wasapi_lib: wasapi_lib,
@@ -176,6 +200,7 @@ impl BassApi {
                 bass_start,
                 wasapi_start,
                 plugin_load,
+                bass_set_sync,
                 stream_handle: 0,
             })
         }
@@ -273,6 +298,19 @@ impl BassApi {
             self.or_err_(result)
         }
     }
+    
+    fn set_sync(&self,sync_type:u32,call_back:SYNCPROC)-> Result<(), String> {
+        unsafe { 
+            let sync_handle = (self.bass_set_sync)(
+                self.stream_handle, 
+                sync_type, 
+                0, 
+                call_back, 
+                null_mut(), 
+            );
+            self.or_err_(sync_handle as i32)
+        }
+    }
 
     fn play_file(&mut self, path: String) -> Result<(), String> {
         self.fade_out()?;
@@ -295,6 +333,7 @@ impl BassApi {
 
         self.or_err_(handle as i32)?;
         self.stream_handle = handle;
+        self.set_sync(BASS_SYNC_END,Some(on_end_sync))?;
         self.resume()?;
         Ok(())
     }
@@ -462,6 +501,11 @@ pub fn load_lib() -> Result<(), String> {
 #[flutter_rust_bridge::frb]
 pub fn init_bass() -> Result<(), String> {
     BASS_API.lock().unwrap().as_ref().unwrap().bass_init()
+}
+
+#[flutter_rust_bridge::frb]
+pub fn audio_event_stream(sink: StreamSink<u32>){
+    *AUDIO_EVENT.lock().unwrap() = Some(sink);
 }
 
 #[flutter_rust_bridge::frb]
