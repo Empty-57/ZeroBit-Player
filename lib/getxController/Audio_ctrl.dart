@@ -27,31 +27,54 @@ class AudioController extends GetxController{
   late final cacheItems=_musicCacheController.items;
 
   Future<void> audioPlay({required String path})async{
+    final oldPath = currentPath.value;
+  final oldIndex = currentIndex.value;
+  final oldState = currentState.value;
+
+
     try{
       _lastPath=currentPath.value;
     currentPath.value=path;
     currentIndex.value=cacheItems.indexWhere((metadata) => metadata.path == path);
+    currentState.value=AudioState.playing;
+
     update([path,if (_lastPath != null) _lastPath!]);
     await playFile(path: path);
     }catch(e){
+      currentPath.value = oldPath;
+      currentIndex.value = oldIndex;
+      currentState.value = oldState;
+      update([path, if (oldPath != null) oldPath]);
+
       debugPrint(e.toString());
+      currentState.value=AudioState.stop;
       showSnackBar(title: "ERR:",msg: e.toString());
     }
   }
 
   Future<void> audioResume() async{
+    currentState.value=AudioState.playing;
     await resume();
   }
 
   Future<void> audioPause()async{
+    currentState.value=AudioState.pause;
     await pause();
   }
 
   Future<void> audioStop()async{
+    currentState.value=AudioState.stop;
     await stop();
   }
 
   Future<void> audioToggle()async{
+
+    if(currentState.value==AudioState.stop||currentState.value==AudioState.pause){
+      currentState.value=AudioState.playing;
+    }else{
+      currentState.value=AudioState.pause;
+    }
+
     await toggle();
   }
 
