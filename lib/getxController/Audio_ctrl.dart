@@ -18,6 +18,20 @@ class AudioController extends GetxController{
   final currentPath=''.obs;
   final currentIndex=(-1).obs;
   String? _lastPath;
+  final currentMs100=0.0.obs;
+  final progress=0.0.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    ever(currentMs100, (_) {
+      if(currentIndex.value!=-1&&cacheItems.isNotEmpty&&currentIndex.value<cacheItems.length){
+        progress.value=(currentMs100.value/cacheItems[currentIndex.value].duration).clamp(0.0, 1.0);
+      }else{
+        progress.value=0.0;
+      }
+    });
+  }
 
   final currentState=AudioState.stop.obs;
 
@@ -31,7 +45,7 @@ class AudioController extends GetxController{
   final oldIndex = currentIndex.value;
   final oldState = currentState.value;
 
-
+  currentMs100.value=0.0;
     try{
       _lastPath=currentPath.value;
     currentPath.value=path;
@@ -45,6 +59,8 @@ class AudioController extends GetxController{
       currentIndex.value = oldIndex;
       currentState.value = oldState;
       update([path, if (oldPath != null) oldPath]);
+
+      currentMs100.value=0.0;
 
       debugPrint(e.toString());
       currentState.value=AudioState.stop;
@@ -64,6 +80,7 @@ class AudioController extends GetxController{
 
   Future<void> audioStop()async{
     currentState.value=AudioState.stop;
+    currentIndex.value=-1;
     await stop();
   }
 
@@ -94,29 +111,31 @@ class AudioController extends GetxController{
     _settingController.putCache();
   }
 
-  Future<void> audioToPrevious()async{
-    if(currentIndex.value==-1){return;}
-    currentIndex.value--;
-    if(currentIndex.value<0){
-      currentIndex.value=cacheItems.length-1;
-    }
+  Future<void> maybeRandomPlay()async{
     if(_settingController.playMode.value==2){
       currentIndex.value=Random().nextInt(cacheItems.length);
     }
     await audioPlay(path: cacheItems[currentIndex.value].path);
   }
 
+  Future<void> audioToPrevious()async{
+    if(currentIndex.value==-1){return;}
+    currentIndex.value--;
+    if(currentIndex.value<0){
+      currentIndex.value=cacheItems.length-1;
+    }
+
+    await maybeRandomPlay();
+  }
+
   Future<void> audioToNext()async{
     if(currentIndex.value==-1){return;}
-
     currentIndex.value++;
     if(currentIndex.value>cacheItems.length-1){
       currentIndex.value=0;
     }
-    if(_settingController.playMode.value==2){
-      currentIndex.value=Random().nextInt(cacheItems.length);
-    }
-    await audioPlay(path: cacheItems[currentIndex.value].path);
+
+    await maybeRandomPlay();
   }
 
   Future<void> audioAutoPlay()async{
@@ -126,15 +145,10 @@ class AudioController extends GetxController{
         await audioPlay(path: cacheItems[currentIndex.value].path);
         break;
       case 1:
-        currentIndex.value++;
-        if(currentIndex.value>cacheItems.length-1){
-          currentIndex.value=0;
-        }
-        await audioPlay(path: cacheItems[currentIndex.value].path);
+        await audioToNext();
         break;
       case 2:
-        currentIndex.value=Random().nextInt(cacheItems.length);
-        await audioPlay(path: cacheItems[currentIndex.value].path);
+        await maybeRandomPlay();
         break;
     }
   }

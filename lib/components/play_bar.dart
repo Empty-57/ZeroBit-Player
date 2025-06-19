@@ -5,17 +5,19 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
+import 'package:zerobit_player/tools/format_time.dart';
 import 'package:zerobit_player/tools/general_style.dart';
+import 'package:zerobit_player/tools/func_extension.dart';
 
 import '../getxController/Audio_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 
-const double _barWidth = 600;
+const double _barWidth = 700;
 const double _barHeight = 64;
-const double _barWidthHalf = 300;
+const double _barWidthHalf = 350;
 
 const double _bottom = 12;
-const double _navigationWidth = 300;
+const double _navigationWidth = 260;
 
 const double _radius = 6;
 
@@ -41,7 +43,7 @@ final SettingController _settingController = Get.find<SettingController>();
 class _CtrlBtn extends StatelessWidget {
   final String tooltip;
   final IconData icon;
-  final VoidCallback fn;
+  final VoidCallback? fn;
 
   const _CtrlBtn({required this.tooltip, required this.icon, required this.fn});
   @override
@@ -50,7 +52,9 @@ class _CtrlBtn extends StatelessWidget {
       message: tooltip,
       child: TextButton(
         onPressed: () {
-          fn();
+          if (fn != null) {
+            fn!();
+          }
         },
         style: TextButton.styleFrom(
           padding: EdgeInsets.zero,
@@ -68,11 +72,63 @@ class _CtrlBtn extends StatelessWidget {
   }
 }
 
+class _ProgressBar extends StatelessWidget {
+  const _ProgressBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final progressColor=Theme.of(context,).colorScheme.secondaryContainer.withValues(alpha: 0.8);
+
+    return RepaintBoundary(
+      child: Obx(() {
+        return CustomPaint(
+          willChange: true,
+          size: Size(_barWidth, _barHeight),
+          painter: _ProgressPainter(
+            progress: _audioController.progress.value,
+            color: progressColor,
+          ),
+        );
+
+      }),
+    );
+  }
+}
+
+class _ProgressPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  final Paint fgPaint;
+  _ProgressPainter({required this.progress, required this.color}): fgPaint = Paint()
+          ..color = color
+          ..style = PaintingStyle.fill;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+
+    final progressRect = RRect.fromRectAndCorners(
+        Rect.fromLTWH(0, 0, size.width * progress, size.height),
+        topLeft: Radius.circular(_radius),
+        bottomLeft: Radius.circular(_radius),
+      );
+
+      canvas.drawRRect(progressRect, fgPaint);
+  }
+
+  @override
+  bool shouldRepaint(_ProgressPainter oldDelegate) {
+    return oldDelegate.progress != progress || oldDelegate.color != color;
+  }
+}
+
 class PlayBar extends StatelessWidget {
   const PlayBar({super.key});
 
   @override
   Widget build(BuildContext context) {
+
+    final timeTextStyle=generalTextStyle(ctx: context,size: 'sm',color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6));
+
     return Positioned(
       bottom: _bottom,
       right: (context.width - _navigationWidth) / 2 - _barWidthHalf,
@@ -96,19 +152,7 @@ class PlayBar extends StatelessWidget {
                 ],
               ),
             ),
-            Container(
-              width: _barWidth / 2,
-              height: _barHeight,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(_radius),
-                  bottomLeft: Radius.circular(_radius),
-                ),
-                color: Theme.of(
-                  context,
-                ).colorScheme.secondaryContainer.withValues(alpha: 0.8),
-              ),
-            ),
+            const _ProgressBar(),
             TextButton(
               onPressed: () {},
               onHover: (v) {
@@ -129,7 +173,7 @@ class PlayBar extends StatelessWidget {
                 late final AudioState audioState;
 
                 if (_audioController.currentIndex.value != -1 &&
-                    _audioController.cacheItems.isNotEmpty) {
+                    _audioController.cacheItems.isNotEmpty&&_audioController.currentIndex.value<_audioController.cacheItems.length) {
                   final currentMetadata =
                       _audioController.cacheItems[_audioController
                           .currentIndex
@@ -145,6 +189,7 @@ class PlayBar extends StatelessWidget {
                   artist = "39";
                   audioState = AudioState.stop;
                 }
+                debugPrint("upup");
 
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -188,14 +233,9 @@ class PlayBar extends StatelessWidget {
                             softWrap: true,
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
-                            style: generalTextStyle(
-                              ctx: context,
-                              size: 'sm',
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.primary.withValues(alpha: 0.8),
-                            ),
+                            style: timeTextStyle,
                           ),
+
                         ],
                       ),
                     ),
@@ -203,19 +243,81 @@ class PlayBar extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
+                            MenuAnchor(
+                              menuChildren: [
+                                Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: [
+                                    Text(
+                                      (_settingController.volume.value * 100)
+                                          .round()
+                                          .toString(),
+                                      style: generalTextStyle(
+                                        ctx: context,
+                                        size: 'md',
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withValues(alpha: 0.6),
+                                      ),
+                                    ),
+                                    RotatedBox(
+                                      quarterTurns: 3,
+                                      child: Slider(
+                                        min: 0.0,
+                                        max: 1.0,
+                                        value: _settingController.volume.value,
+                                        onChanged: (v) {
+                                          _audioController.audioSetVolume(
+                                            vol: v,
+                                          );
+                                          _settingController.volume.value = v;
+                                        },
+                                        onChangeEnd: (v) {
+                                          _settingController.putCache();
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                              style: MenuStyle(
+                                padding: WidgetStatePropertyAll(
+                                  const EdgeInsets.only(top: 16),
+                                ),
+                              ),
+                              builder: (
+                                _,
+                                MenuController controller,
+                                Widget? child,
+                              ) {
+                                return _CtrlBtn(
+                                  tooltip: "音量",
+                                  icon: PhosphorIconsFill.speakerHigh,
+                                  fn: () {
+                                    if (controller.isOpen) {
+                                      controller.close();
+                                    } else {
+                                      controller.open();
+                                    }
+                                  },
+                                );
+                              },
+                            ),
                             _CtrlBtn(
                               tooltip: "上一首",
                               icon: PhosphorIconsFill.skipBack,
-                              fn: () {
-                                _audioController.audioToPrevious();
-                              },
+                              fn: () async {
+                                await _audioController.audioToPrevious();
+                              }.futureDebounce(ms: 300),
                             ),
                             _CtrlBtn(
                               tooltip: "下一首",
                               icon: PhosphorIconsFill.skipForward,
-                              fn: () {
-                                _audioController.audioToNext();
-                              },
+                              fn: () async {
+                                await _audioController.audioToNext();
+                              }.futureDebounce(ms: 300),
                             ),
                             _CtrlBtn(
                               tooltip:
@@ -246,6 +348,13 @@ class PlayBar extends StatelessWidget {
                         _audioController.audioToggle();
                       },
                     ),
+
+                    Obx(()=>Text(
+                            "${formatTime(totalSeconds: _audioController.currentMs100.value)} / ${_audioController.currentIndex.value!=-1&&_audioController.cacheItems.isNotEmpty&&_audioController.currentIndex.value<_audioController.cacheItems.length? formatTime(totalSeconds: _audioController.cacheItems[_audioController.currentIndex.value].duration):"--:--"}",
+                          style: timeTextStyle,
+                        )
+                    ),
+
                   ],
                 );
               }),

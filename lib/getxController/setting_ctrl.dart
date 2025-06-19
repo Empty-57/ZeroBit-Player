@@ -62,25 +62,13 @@ class SettingController extends GetxController {
       playMode.value=cache.playMode;
     }
 
-    // await setVolume(vol: cache?.volume??1.0);
-    await setVolume(vol:1.0);
+    await setVolume(vol: cache?.volume??1.0);
   }
 
   @override
   void onInit() {
     _initHive();
     super.onInit();
-
-    // debounce(sortMap, (value) {
-    //   debugPrint('sortMap改变：$value');
-    // }, time: Duration(milliseconds: 500)
-    // );
-    //
-    // debounce(isReverse, (value) {
-    //   debugPrint('isReverse改变：$value');
-    // }, time: Duration(milliseconds: 500)
-    // );
-
   }
 
   Future<void> putCache({bool isSaveFolders=false}) async {

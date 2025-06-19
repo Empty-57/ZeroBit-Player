@@ -10,10 +10,10 @@ final currentNavigationIndex = 0.obs;
 
 int _oldIndex = 0;
 
-const double _navigationBtnWidth = 260;
+const double _navigationBtnWidth = 220;
 const double _navigationBtnHeight = 52;
 
-const double _navigationWidth = 300;
+const double _navigationWidth = 260;
 
 const mainRoutes = [AppRoutes.home, AppRoutes.setting];
 

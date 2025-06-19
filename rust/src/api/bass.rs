@@ -9,7 +9,7 @@ use once_cell::sync::Lazy;
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
 use std::ptr::null_mut;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::{env, iter, thread};
 
@@ -50,6 +50,8 @@ struct BassApi {
 static BASS_API: Lazy<Mutex<Option<BassApi>>> = Lazy::new(|| Mutex::new(None));
 
 static AUDIO_EVENT:Lazy<Mutex<Option<StreamSink<u32>>>>= Lazy::new(|| Mutex::new(None));
+
+static PROGRESS_LISTEN:Lazy<Mutex<Option<StreamSink<f64>>>>= Lazy::new(|| Mutex::new(None));
 
 static FREQ: Mutex<Option<u32>> = Mutex::new(Some(44100));
 static CHANS: Mutex<Option<u32>> = Mutex::new(Some(2));
@@ -265,6 +267,26 @@ impl BassApi {
         } else {
             Ok(vol)
         }
+    }
+
+    fn listen_progress(&self) {
+        thread::spawn(move || {
+            let tick = Duration::from_millis(20);
+            if let Some(sink) =PROGRESS_LISTEN.lock().unwrap().as_mut()
+                {
+                    loop {
+
+                        thread::sleep(tick);
+                        if BASS_API.lock().unwrap().as_ref().unwrap().stream_handle==0 {
+                            continue;
+                        }
+                        let pos = BASS_API.lock().unwrap().as_ref().unwrap().get_pos();
+                        let _ = sink.add(pos);
+
+                    }
+                }
+        }
+        );
     }
     
     fn set_volume(&self, mut vol: f32) -> Result<(), String> {
@@ -506,6 +528,12 @@ pub fn init_bass() -> Result<(), String> {
 #[flutter_rust_bridge::frb]
 pub fn audio_event_stream(sink: StreamSink<u32>){
     *AUDIO_EVENT.lock().unwrap() = Some(sink);
+}
+
+#[flutter_rust_bridge::frb]
+pub fn progress_listen(sink: StreamSink<f64>){
+    *PROGRESS_LISTEN.lock().unwrap() = Some(sink);
+    BASS_API.lock().unwrap().as_ref().unwrap().listen_progress();
 }
 
 #[flutter_rust_bridge::frb]

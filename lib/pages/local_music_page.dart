@@ -13,10 +13,12 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import 'package:zerobit_player/custom_widgets/custom_widget.dart';
 import 'package:transparent_image/transparent_image.dart';
+import 'package:zerobit_player/tools/func_extension.dart';
 
 import 'dart:typed_data';
 
 import '../HIveCtrl/models/music_cahce_model.dart';
+import '../tools/format_time.dart';
 import '../tools/general_style.dart';
 
 final MusicCacheController _musicCacheController = Get.find<MusicCacheController>();
@@ -24,20 +26,6 @@ final SettingController _settingController = Get.find<SettingController>();
 final AudioController _audioController =Get.find<AudioController>();
 
 const double _itemHeight = 64.0;
-
-String _formatTime(double totalSeconds) {
-  // 向下取整获取整数秒
-  final int seconds = totalSeconds.floor();
-  // 计算分钟和剩余秒数
-  final int minutes = seconds ~/ 60;
-  final int remainingSeconds = seconds % 60;
-
-  // 格式化为两位数
-  final String minutesStr = minutes.toString().padLeft(2, '0');
-  final String secondsStr = remainingSeconds.toString().padLeft(2, '0');
-
-  return '$minutesStr:$secondsStr';
-}
 
 class LocalMusic extends StatelessWidget {
   const LocalMusic({super.key});
@@ -264,9 +252,9 @@ class _MusicTile extends StatelessWidget {
         debugPrint(e.globalPosition.toString());
       },
       child: TextButton(
-        onPressed: () {
-          _audioController.audioPlay(path: metadata.path);
-        },
+        onPressed: () async{
+          await _audioController.audioPlay(path: metadata.path);
+        }.futureDebounce(ms: 300),
         style: TextButton.styleFrom(
           shape: RoundedRectangleBorder(borderRadius: _borderRadius),
         ),
@@ -314,7 +302,7 @@ class _MusicTile extends StatelessWidget {
                 ),
               ),
             Text(
-              _formatTime(metadata.duration),
+              formatTime(totalSeconds: metadata.duration),
               softWrap: true,
               overflow: TextOverflow.ellipsis,
               maxLines: 1,

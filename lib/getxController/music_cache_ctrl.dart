@@ -13,6 +13,8 @@ class MusicCacheController extends GetxController{
   final _musicCacheBox=HiveManager.musicCacheBox;
   final SettingController _settingController =Get.find<SettingController>();
 
+  final currentScanPath=''.obs;
+
    @override
   void onInit() {
     loadData();

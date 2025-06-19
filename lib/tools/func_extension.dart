@@ -1,7 +1,7 @@
 import 'dart:async';
 
 extension FutureDebounceExtension on Function {
-  void Function() debounce({int ms = 500}) {
+  void Function() futureDebounce({int ms = 500}) {
     Timer? debounceTimer;
     return () async {
       if (debounceTimer?.isActive ?? false) debounceTimer?.cancel();
