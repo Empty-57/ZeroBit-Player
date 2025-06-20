@@ -116,6 +116,7 @@ class LocalMusic extends StatelessWidget {
                     _settingController.sortMap[OperateArea.allMusic] = entry.key;
                     _settingController.putCache();
                     _musicCacheController.itemReSort(type: entry.key);
+                    _audioController.syncCurrentIndex();
                   },
                   label:
                       _settingController.sortType[_settingController
@@ -140,6 +141,7 @@ class LocalMusic extends StatelessWidget {
                         !_settingController.isReverse.value;
                     _settingController.putCache();
                     _musicCacheController.itemReverse();
+                    _audioController.syncCurrentIndex();
                   },
                   icon:
                       _settingController.isReverse.value
@@ -249,13 +251,14 @@ const double _menuHeight = 48;
 const double _menuRadius = 0;
 
 
-List<Widget> _genMenuItems({required BuildContext context, required MenuController menuController,required MusicCache metadata}){
-  final List<Widget> maybeDel=_operateArea.currentFiled.value==OperateArea.allMusic? [Container(
-            height: 0.5,
-            margin: EdgeInsets.symmetric(vertical: 8),
-            width: _menuWidth,
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-          ),
+List<Widget> _genMenuItems({required BuildContext context, required MenuController menuController,required MusicCache metadata,bool renderMaybeDel=false}){
+  final List<Widget> maybeDel=renderMaybeDel? [
+
+    Divider(
+      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+      height: 0.5,
+      thickness: 0.5,
+    ),
           CustomBtn(
             fn: () async{
               menuController.close();

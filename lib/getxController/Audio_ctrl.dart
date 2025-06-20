@@ -29,7 +29,9 @@ class AudioController extends GetxController{
   final SettingController _settingController = Get.find<SettingController>();
   final OperateArea _operateArea=Get.find<OperateArea>();
 
-  late RxList playListCacheItems=Get.find<MusicCacheController>().items;
+  late List playListCacheItems=[...Get.find<MusicCacheController>().items];
+
+  String _hasNextAudioPath='';
 
   @override
   void onInit() {
@@ -45,14 +47,20 @@ class AudioController extends GetxController{
     );
 
     ever(_operateArea.currentFiled, (_){
+
       switch(_operateArea.currentFiled.value){
         case OperateArea.allMusic:
-          playListCacheItems=Get.find<MusicCacheController>().items;
+          playListCacheItems=[...Get.find<MusicCacheController>().items];
           break;
       }
     }
+
     );
 
+  }
+
+  void syncCurrentIndex(){
+    currentIndex.value=playListCacheItems.indexWhere((metadata) => metadata.path == currentPath.value);
   }
 
 
@@ -65,7 +73,7 @@ class AudioController extends GetxController{
     try{
       _lastPath=currentPath.value;
     currentPath.value=path;
-    currentIndex.value=playListCacheItems.indexWhere((metadata) => metadata.path == path);
+    syncCurrentIndex();
     currentState.value=AudioState.playing;
 
     update([path,if (_lastPath != null) _lastPath!]);
@@ -133,6 +141,13 @@ class AudioController extends GetxController{
     if(_settingController.playMode.value==2){
       currentIndex.value=Random().nextInt(playListCacheItems.length);
     }
+
+    if(_hasNextAudioPath!=''){
+      await audioPlay(path: _hasNextAudioPath);
+      _hasNextAudioPath='';
+      return;
+    }
+
     await audioPlay(path: playListCacheItems[currentIndex.value].path);
   }
 
@@ -177,17 +192,20 @@ class AudioController extends GetxController{
     final toIndex = (playListCacheItems.indexWhere((v) => v.path == currentPath.value)+1).clamp(0, playListCacheItems.length);
     playListCacheItems.insert(toIndex, metadata);
 
-    currentIndex.value=playListCacheItems.indexWhere((metadata) => metadata.path == currentPath.value);
+    syncCurrentIndex();
+    showSnackBar(title: "OK", msg: "已添加到下一首播放",duration: Duration(milliseconds: 1000));
+    _hasNextAudioPath=metadata.path;
   }
 
   Future<void> audioRemove({required String filed,required MusicCache metadata})async{
+
     switch(filed){
       case OperateArea.allMusic:
         await HiveManager.musicCacheBox.del(key: metadata.path);
         break;
     }
     playListCacheItems.remove(metadata);
-    currentIndex.value=playListCacheItems.indexWhere((metadata) => metadata.path == currentPath.value);
+    syncCurrentIndex();
 
   }
 
