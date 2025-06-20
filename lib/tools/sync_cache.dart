@@ -83,8 +83,8 @@ Future<void> syncCache() async {
     }
   }
 
-  musicCacheBox.delAll(keyList:removeKeys);
-  musicCacheBox.putAll(data:tagBuffer);
+  await musicCacheBox.delAll(keyList:removeKeys);
+  await musicCacheBox.putAll(data:tagBuffer);
 
   musicCacheController.items.clear();
   musicCacheController.loadData();

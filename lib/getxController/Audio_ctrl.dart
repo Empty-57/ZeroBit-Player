@@ -6,6 +6,9 @@ import 'package:zerobit_player/components/get_snack_bar.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 
+import '../HIveCtrl/hive_manager.dart';
+import '../HIveCtrl/models/music_cahce_model.dart';
+import '../field/operate_area.dart';
 import 'music_cache_ctrl.dart';
 
 enum AudioState{
@@ -21,24 +24,37 @@ class AudioController extends GetxController{
   final currentMs100=0.0.obs;
   final progress=0.0.obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-    ever(currentMs100, (_) {
-      if(currentIndex.value!=-1&&cacheItems.isNotEmpty&&currentIndex.value<cacheItems.length){
-        progress.value=(currentMs100.value/cacheItems[currentIndex.value].duration).clamp(0.0, 1.0);
-      }else{
-        progress.value=0.0;
-      }
-    });
-  }
-
   final currentState=AudioState.stop.obs;
 
   final SettingController _settingController = Get.find<SettingController>();
-  final MusicCacheController _musicCacheController = Get.find<MusicCacheController>();
+  final OperateArea _operateArea=Get.find<OperateArea>();
 
-  late final cacheItems=_musicCacheController.items;
+  late RxList playListCacheItems=Get.find<MusicCacheController>().items;
+
+  @override
+  void onInit() {
+    super.onInit();
+
+    ever(currentMs100, (_) {
+      if(currentIndex.value!=-1&&playListCacheItems.isNotEmpty&&currentIndex.value<playListCacheItems.length){
+        progress.value=(currentMs100.value/playListCacheItems[currentIndex.value].duration).clamp(0.0, 1.0);
+      }else{
+        progress.value=0.0;
+      }
+    }
+    );
+
+    ever(_operateArea.currentFiled, (_){
+      switch(_operateArea.currentFiled.value){
+        case OperateArea.allMusic:
+          playListCacheItems=Get.find<MusicCacheController>().items;
+          break;
+      }
+    }
+    );
+
+  }
+
 
   Future<void> audioPlay({required String path})async{
     final oldPath = currentPath.value;
@@ -49,7 +65,7 @@ class AudioController extends GetxController{
     try{
       _lastPath=currentPath.value;
     currentPath.value=path;
-    currentIndex.value=cacheItems.indexWhere((metadata) => metadata.path == path);
+    currentIndex.value=playListCacheItems.indexWhere((metadata) => metadata.path == path);
     currentState.value=AudioState.playing;
 
     update([path,if (_lastPath != null) _lastPath!]);
@@ -113,46 +129,66 @@ class AudioController extends GetxController{
     _settingController.putCache();
   }
 
-  Future<void> maybeRandomPlay()async{
+  Future<void> _maybeRandomPlay()async{
     if(_settingController.playMode.value==2){
-      currentIndex.value=Random().nextInt(cacheItems.length);
+      currentIndex.value=Random().nextInt(playListCacheItems.length);
     }
-    await audioPlay(path: cacheItems[currentIndex.value].path);
+    await audioPlay(path: playListCacheItems[currentIndex.value].path);
   }
 
   Future<void> audioToPrevious()async{
     if(currentIndex.value==-1){return;}
     currentIndex.value--;
     if(currentIndex.value<0){
-      currentIndex.value=cacheItems.length-1;
+      currentIndex.value=playListCacheItems.length-1;
     }
 
-    await maybeRandomPlay();
+    await _maybeRandomPlay();
   }
 
   Future<void> audioToNext()async{
     if(currentIndex.value==-1){return;}
     currentIndex.value++;
-    if(currentIndex.value>cacheItems.length-1){
+    if(currentIndex.value>playListCacheItems.length-1){
       currentIndex.value=0;
     }
 
-    await maybeRandomPlay();
+    await _maybeRandomPlay();
   }
 
   Future<void> audioAutoPlay()async{
     if(currentIndex.value==-1){return;}
     switch (_settingController.playMode.value){
       case 0:
-        await audioPlay(path: cacheItems[currentIndex.value].path);
+        await audioPlay(path: playListCacheItems[currentIndex.value].path);
         break;
       case 1:
         await audioToNext();
         break;
       case 2:
-        await maybeRandomPlay();
+        await _maybeRandomPlay();
         break;
     }
+  }
+
+  void insertNext({required MusicCache metadata}){
+    if(currentIndex.value==-1||playListCacheItems.length==1||playListCacheItems.isEmpty||playListCacheItems[currentIndex.value]==metadata){return;}
+    playListCacheItems.remove(metadata);
+    final toIndex = (playListCacheItems.indexWhere((v) => v.path == currentPath.value)+1).clamp(0, playListCacheItems.length);
+    playListCacheItems.insert(toIndex, metadata);
+
+    currentIndex.value=playListCacheItems.indexWhere((metadata) => metadata.path == currentPath.value);
+  }
+
+  Future<void> audioRemove({required String filed,required MusicCache metadata})async{
+    switch(filed){
+      case OperateArea.allMusic:
+        await HiveManager.musicCacheBox.del(key: metadata.path);
+        break;
+    }
+    playListCacheItems.remove(metadata);
+    currentIndex.value=playListCacheItems.indexWhere((metadata) => metadata.path == currentPath.value);
+
   }
 
 }

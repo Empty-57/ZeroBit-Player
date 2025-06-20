@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -21,9 +22,12 @@ import '../HIveCtrl/models/music_cahce_model.dart';
 import '../tools/format_time.dart';
 import '../tools/general_style.dart';
 
-final MusicCacheController _musicCacheController = Get.find<MusicCacheController>();
+final MusicCacheController _musicCacheController =
+    Get.find<MusicCacheController>();
 final SettingController _settingController = Get.find<SettingController>();
-final AudioController _audioController =Get.find<AudioController>();
+final AudioController _audioController = Get.find<AudioController>();
+
+final OperateArea _operateArea=Get.find<OperateArea>();
 
 const double _itemHeight = 64.0;
 
@@ -33,9 +37,18 @@ class LocalMusic extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final titleStyle = generalTextStyle(ctx: context, size: 'md');
-    final highLightTitleStyle = generalTextStyle(ctx: context, size: 'md',color: Theme.of(context).colorScheme.primary);
+    final highLightTitleStyle = generalTextStyle(
+      ctx: context,
+      size: 'md',
+      color: Theme.of(context).colorScheme.primary,
+    );
     final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-    final highLightSubStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8,color: Theme.of(context).colorScheme.primary);
+    final highLightSubStyle = generalTextStyle(
+      ctx: context,
+      size: 'sm',
+      opacity: 0.8,
+      color: Theme.of(context).colorScheme.primary,
+    );
 
     return Container(
       alignment: Alignment.centerLeft,
@@ -100,13 +113,13 @@ class LocalMusic extends StatelessWidget {
                     ],
                   },
                   fn: (entry) {
-                    _settingController.sortMap[OperateArea.local] = entry.key;
+                    _settingController.sortMap[OperateArea.allMusic] = entry.key;
                     _settingController.putCache();
                     _musicCacheController.itemReSort(type: entry.key);
                   },
                   label:
                       _settingController.sortType[_settingController
-                              .sortMap[OperateArea.local]
+                              .sortMap[OperateArea.allMusic]
                           as int] ??
                       "未指定",
                   radius: 4,
@@ -143,12 +156,12 @@ class LocalMusic extends StatelessWidget {
               Obx(
                 () => CustomBtn(
                   fn: () {
-                    _settingController.viewModeMap[OperateArea.local] =
-                        !_settingController.viewModeMap[OperateArea.local];
+                    _settingController.viewModeMap[OperateArea.allMusic] =
+                        !_settingController.viewModeMap[OperateArea.allMusic];
                     _settingController.putCache();
                   },
                   icon:
-                      _settingController.viewModeMap[OperateArea.local]
+                      _settingController.viewModeMap[OperateArea.allMusic]
                           ? PhosphorIconsLight.listDashes
                           : PhosphorIconsLight.gridFour,
                   radius: 4,
@@ -157,7 +170,7 @@ class LocalMusic extends StatelessWidget {
                   spacing: 4,
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   tooltip:
-                      _settingController.viewModeMap[OperateArea.local]
+                      _settingController.viewModeMap[OperateArea.allMusic]
                           ? "列表视图"
                           : "表格视图",
                 ),
@@ -166,60 +179,61 @@ class LocalMusic extends StatelessWidget {
           ),
 
           Expanded(
-            child: Obx(
-              ()  {
-                final viewMode = _settingController.viewModeMap[OperateArea.local]!;
-                return Stack(
+            child: Obx(() {
+              final viewMode =
+                  _settingController.viewModeMap[OperateArea.allMusic]!;
+              return Stack(
                 children: [
                   Offstage(
-                    offstage:!viewMode,
+                    offstage: !viewMode,
                     child: ListView.builder(
-                    itemCount: _musicCacheController.items.length,
-                    itemExtent: _itemHeight,
-                    cacheExtent: _itemHeight * 1,
-                    itemBuilder: (context, index) {
-                      final metadata = _musicCacheController.items[index];
+                      itemCount: _musicCacheController.items.length,
+                      itemExtent: _itemHeight,
+                      cacheExtent: _itemHeight * 1,
+                      itemBuilder: (context, index) {
+                        final metadata = _musicCacheController.items[index];
 
-                      return _MusicTile(
-                        metadata: metadata,
-                        titleStyle: titleStyle,
-                        highLightTitleStyle: highLightTitleStyle,
-                        subStyle: subStyle,
-                        highLightSubStyle: highLightSubStyle,
-                      );
-                    },
-                  ),
+                        return _MusicTile(
+                          metadata: metadata,
+                          titleStyle: titleStyle,
+                          highLightTitleStyle: highLightTitleStyle,
+                          subStyle: subStyle,
+                          highLightSubStyle: highLightSubStyle,
+                          menuController: MenuController(),
+                        );
+                      },
+                    ),
                   ),
                   Offstage(
                     offstage: viewMode,
                     child: GridView.builder(
-                    itemCount: _musicCacheController.items.length,
-                    cacheExtent: _itemHeight * 1,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount:
-                          MediaQuery.of(context).size.width < 1100 ? 3 : 4,
-                      mainAxisSpacing: 4.0,
-                      crossAxisSpacing: 8.0,
-                      childAspectRatio: 1.0,
-                      mainAxisExtent: _itemHeight,
-                    ),
-                    itemBuilder: (context, index) {
-                      final metadata = _musicCacheController.items[index];
+                      itemCount: _musicCacheController.items.length,
+                      cacheExtent: _itemHeight * 1,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount:
+                            MediaQuery.of(context).size.width < 1100 ? 3 : 4,
+                        mainAxisSpacing: 4.0,
+                        crossAxisSpacing: 8.0,
+                        childAspectRatio: 1.0,
+                        mainAxisExtent: _itemHeight,
+                      ),
+                      itemBuilder: (context, index) {
+                        final metadata = _musicCacheController.items[index];
 
-                      return _MusicTile(
-                        metadata: metadata,
-                        titleStyle: titleStyle,
-                        highLightTitleStyle: highLightTitleStyle,
-                        subStyle: subStyle,
-                        highLightSubStyle: highLightSubStyle,
-                      );
-                    },
-                  ),
+                        return _MusicTile(
+                          metadata: metadata,
+                          titleStyle: titleStyle,
+                          highLightTitleStyle: highLightTitleStyle,
+                          subStyle: subStyle,
+                          highLightSubStyle: highLightSubStyle,
+                          menuController: MenuController(),
+                        );
+                      },
+                    ),
                   ),
                 ],
               );
-                },
-            ),
+            }),
           ),
         ],
       ),
@@ -230,87 +244,196 @@ class LocalMusic extends StatelessWidget {
 const double _itemSpacing = 16.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 
+const double _menuWidth = 180;
+const double _menuHeight = 48;
+const double _menuRadius = 0;
+
+
+List<Widget> _genMenuItems({required BuildContext context, required MenuController menuController,required MusicCache metadata}){
+  final List<Widget> maybeDel=_operateArea.currentFiled.value==OperateArea.allMusic? [Container(
+            height: 0.5,
+            margin: EdgeInsets.symmetric(vertical: 8),
+            width: _menuWidth,
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+          ),
+          CustomBtn(
+            fn: () async{
+              menuController.close();
+              await _audioController.audioRemove(filed: OperateArea.allMusic,metadata: metadata);
+            },
+            btnHeight: _menuHeight,
+            btnWidth: _menuWidth,
+            radius: _menuRadius,
+            icon: PhosphorIconsLight.trash,
+            label: "删除",
+            mainAxisAlignment: MainAxisAlignment.start,
+            backgroundColor: Colors.transparent,
+          ),]:[];
+
+
+  return <Widget>[
+          CustomBtn(
+            fn: () {
+              _operateArea.currentFiled.value=OperateArea.allMusic;
+            menuController.close();
+            _audioController.audioPlay(path: metadata.path);
+          },
+            btnHeight: _menuHeight,
+            btnWidth: _menuWidth,
+            radius: _menuRadius,
+            icon: PhosphorIconsLight.play,
+            label: "播放",
+            mainAxisAlignment: MainAxisAlignment.start,
+            backgroundColor: Colors.transparent,
+          ),
+
+          CustomBtn(
+            fn: () {
+              menuController.close();
+              _audioController.insertNext(metadata: metadata);
+            },
+            btnHeight: _menuHeight,
+            btnWidth: _menuWidth,
+            radius: _menuRadius,
+            icon: PhosphorIconsLight.arrowBendDownLeft,
+            label: "添加到下一首",
+            mainAxisAlignment: MainAxisAlignment.start,
+            backgroundColor: Colors.transparent,
+          ),
+          CustomBtn(
+            fn: () {
+              menuController.close();
+            },
+            btnHeight: _menuHeight,
+            btnWidth: _menuWidth,
+            radius: _menuRadius,
+            icon: PhosphorIconsLight.pencilSimpleLine,
+            label: "修改元数据",
+            mainAxisAlignment: MainAxisAlignment.start,
+            backgroundColor: Colors.transparent,
+          ),
+          CustomBtn(
+            fn: () {
+              menuController.close();
+              Process.run('explorer.exe', ['/select,', metadata.path]);
+            },
+            btnHeight: _menuHeight,
+            btnWidth: _menuWidth,
+            radius: _menuRadius,
+            icon: PhosphorIconsLight.folderOpen,
+            label: "打开本地资源",
+            mainAxisAlignment: MainAxisAlignment.start,
+            backgroundColor: Colors.transparent,
+          ),
+        ]+maybeDel;
+}
+
 class _MusicTile extends StatelessWidget {
   final MusicCache metadata;
   final TextStyle titleStyle;
   final TextStyle highLightTitleStyle;
   final TextStyle subStyle;
   final TextStyle highLightSubStyle;
+  final MenuController menuController;
 
   const _MusicTile({
     required this.metadata,
     required this.titleStyle,
     required this.highLightTitleStyle,
     required this.subStyle,
-    required this.highLightSubStyle
+    required this.highLightSubStyle,
+    required this.menuController,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onSecondaryTapUp: (e) {
-        debugPrint(e.globalPosition.toString());
+        menuController.open(position: e.localPosition);
       },
-      child: TextButton(
-        onPressed: () async{
-          await _audioController.audioPlay(path: metadata.path);
-        }.futureDebounce(ms: 300),
-        style: TextButton.styleFrom(
-          shape: RoundedRectangleBorder(borderRadius: _borderRadius),
-        ),
-        child: GetBuilder<AudioController>(
-          id: metadata.path,
-            builder: (controller){
-          return Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          spacing: _itemSpacing,
-          children: [
-            _AsyncCover(path: metadata.path, music: metadata),
-            Expanded(
-              flex: 1,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.start,
+      child: MenuAnchor(
+        controller: menuController,
+        consumeOutsideTap: true,
+        menuChildren:_genMenuItems(context: context,menuController: menuController,metadata: metadata),
+
+        child: TextButton(
+          onPressed: () async {
+             _operateArea.currentFiled.value=OperateArea.allMusic;
+            menuController.close();
+            await _audioController.audioPlay(path: metadata.path);
+          }.futureDebounce(ms: 300),
+          style: TextButton.styleFrom(
+            shape: RoundedRectangleBorder(borderRadius: _borderRadius),
+          ),
+          child: GetBuilder<AudioController>(
+            id: metadata.path,
+            builder: (controller) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                spacing: _itemSpacing,
                 children: [
-                  Text(
-                    metadata.title,
-                    softWrap: true,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                    style:  _audioController.currentPath.value!=metadata.path? titleStyle:highLightTitleStyle,
+                  _AsyncCover(path: metadata.path, music: metadata),
+                  Expanded(
+                    flex: 1,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          metadata.title,
+                          softWrap: true,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style:
+                              _audioController.currentPath.value !=
+                                      metadata.path
+                                  ? titleStyle
+                                  : highLightTitleStyle,
+                        ),
+                        Text(
+                          metadata.artist,
+                          softWrap: true,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style:
+                              _audioController.currentPath.value !=
+                                      metadata.path
+                                  ? subStyle
+                                  : highLightSubStyle,
+                        ),
+                      ],
+                    ),
                   ),
+                  if (_settingController.viewModeMap[OperateArea.allMusic])
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        metadata.album,
+                        softWrap: true,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style:
+                            _audioController.currentPath.value != metadata.path
+                                ? subStyle
+                                : highLightSubStyle,
+                      ),
+                    ),
                   Text(
-                    metadata.artist,
+                    formatTime(totalSeconds: metadata.duration),
                     softWrap: true,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
-                    style: _audioController.currentPath.value!=metadata.path? subStyle:highLightSubStyle,
+                    style:
+                        _audioController.currentPath.value != metadata.path
+                            ? subStyle
+                            : highLightSubStyle,
                   ),
                 ],
-              ),
-            ),
-            if (_settingController.viewModeMap[OperateArea.local])
-              Expanded(
-                flex: 2,
-                child: Text(
-                  metadata.album,
-                  softWrap: true,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  style: _audioController.currentPath.value!=metadata.path? subStyle:highLightSubStyle,
-                ),
-              ),
-            Text(
-              formatTime(totalSeconds: metadata.duration),
-              softWrap: true,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-              style: _audioController.currentPath.value!=metadata.path? subStyle:highLightSubStyle,
-            ),
-          ],
-        );
-        }),
+              );
+            },
+          ),
+        ),
       ),
     );
   }

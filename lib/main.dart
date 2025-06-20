@@ -28,6 +28,7 @@ import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'HIveCtrl/hive_boxes.dart';
 
 import 'HIveCtrl/adapters/music_cache_adapter.dart';
+import 'field/operate_area.dart';
 import 'getxController/music_cache_ctrl.dart';
 import 'getxController/setting_ctrl.dart';
 
@@ -57,16 +58,19 @@ void main() async {
   await Hive.initFlutter();
 
   // await Hive.deleteBoxFromDisk('setting_box');
+  // await Hive.deleteBoxFromDisk('music_cache_box');
 
   Hive.registerAdapter(MusicCacheAdapter());
   Hive.registerAdapter(SettingCacheAdapter());
   await Hive.openBox<MusicCache>(HiveBoxes.musicCacheBox);
   await Hive.openBox<SettingCache>(HiveBoxes.settingCacheBox);
 
+  Get.put(OperateArea());
   Get.put(SettingController());
   Get.put(MusicCacheController());
   Get.put(AudioController());
   Get.put(ThemeService());
+
 
   await syncCache();
 

@@ -9,7 +9,6 @@ import 'package:zerobit_player/tools/format_time.dart';
 import 'package:zerobit_player/tools/general_style.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
 
-import '../HIveCtrl/models/music_cahce_model.dart';
 import '../getxController/Audio_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 
@@ -80,6 +79,10 @@ class _ProgressBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final progressColor=Theme.of(context,).colorScheme.secondaryContainer.withValues(alpha: 0.8);
 
+    final fgPaint=Paint()
+          ..color = progressColor
+          ..style = PaintingStyle.fill;
+
     return RepaintBoundary(
       child: Obx(() {
         return CustomPaint(
@@ -88,6 +91,7 @@ class _ProgressBar extends StatelessWidget {
           painter: _ProgressPainter(
             progress: _audioController.progress.value,
             color: progressColor,
+            fgPaint: fgPaint,
           ),
         );
 
@@ -100,9 +104,7 @@ class _ProgressPainter extends CustomPainter {
   final double progress;
   final Color color;
   final Paint fgPaint;
-  _ProgressPainter({required this.progress, required this.color}): fgPaint = Paint()
-          ..color = color
-          ..style = PaintingStyle.fill;
+  const _ProgressPainter({required this.progress, required this.color,required this.fgPaint});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -175,9 +177,9 @@ class PlayBar extends StatelessWidget {
                 late final String duration;
 
                 if (_audioController.currentIndex.value != -1 &&
-                    _audioController.cacheItems.isNotEmpty&&_audioController.currentIndex.value<_audioController.cacheItems.length) {
+                    _audioController.playListCacheItems.isNotEmpty&&_audioController.currentIndex.value<_audioController.playListCacheItems.length) {
                   final currentMetadata =
-                      _audioController.cacheItems[_audioController
+                      _audioController.playListCacheItems[_audioController
                           .currentIndex
                           .value];
                   src = currentMetadata.src ?? kTransparentImage;

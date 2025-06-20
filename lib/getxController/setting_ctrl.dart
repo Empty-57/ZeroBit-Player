@@ -12,10 +12,10 @@ class SettingController extends GetxController {
   final volume=1.0.obs;
   final folders = <String>[].obs;
   final sortMap=<dynamic,dynamic>{
-    OperateArea.local:0
+    OperateArea.allMusic:0
   }.obs;
   final viewModeMap=<dynamic,dynamic>{
-    OperateArea.local:true //列表/表格
+    OperateArea.allMusic:true //列表/表格
   }.obs;
   final isReverse=false.obs;
   final themeColor=0xff27272a.obs;
@@ -52,10 +52,10 @@ class SettingController extends GetxController {
       volume.value=cache.volume;
       folders.value = [...cache.folders];
       sortMap.value= cache.sortMap.isNotEmpty? Map<dynamic,dynamic>.of(cache.sortMap):{
-        OperateArea.local:0
+        OperateArea.allMusic:0
       };
       viewModeMap.value=cache.viewModeMap.isNotEmpty? Map<dynamic,dynamic>.of(cache.viewModeMap):{
-        OperateArea.local:true //列表/表格
+        OperateArea.allMusic:true //列表/表格
       };
       isReverse.value=cache.isReverse;
       themeColor.value=cache.themeColor;

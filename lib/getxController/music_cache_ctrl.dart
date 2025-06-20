@@ -23,7 +23,7 @@ class MusicCacheController extends GetxController{
 
   void loadData(){
     items.value=_musicCacheBox.getAll();
-    itemReSort(type: _settingController.sortMap[OperateArea.local]);
+    itemReSort(type: _settingController.sortMap[OperateArea.allMusic]);
     if(_settingController.isReverse.value){
       itemReverse();
     }
