@@ -5,11 +5,12 @@ import 'package:get/get.dart';
 import 'package:zerobit_player/HIveCtrl/models/music_cahce_model.dart';
 
 import '../HIveCtrl/hive_manager.dart';
+import '../getxController/Audio_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 import '../src/rust/api/music_tag_tool.dart';
 
-const _exts = [
+const _supportedExts = [
   'aac',
   'ape',
   'aiff',
@@ -31,6 +32,7 @@ Future<void> syncCache() async {
   final musicCacheBox = HiveManager.musicCacheBox;
   final SettingController settingController = Get.find<SettingController>();
   final MusicCacheController musicCacheController = Get.find<MusicCacheController>();
+  final AudioController audioController = Get.find<AudioController>();
 
   final folders=settingController.folders;
 
@@ -41,7 +43,7 @@ Future<void> syncCache() async {
         if (entity is File) {
           final path = entity.path;
           final ext = path.toLowerCase().split('.').last;
-          if (_exts.contains(ext)) {
+          if (_supportedExts.contains(ext)) {
             audioPaths.add(path);
           }
         }
@@ -69,6 +71,9 @@ Future<void> syncCache() async {
         sampleRate: metaData.sampleRate,
         path: metaData.path,
       );
+
+      musicCacheController.currentScanPath.value=path;
+
     }
   }
 
@@ -83,4 +88,9 @@ Future<void> syncCache() async {
 
   musicCacheController.items.clear();
   musicCacheController.loadData();
+
+  audioController.audioPause();
+  audioController.currentIndex.value=-1;
+  musicCacheController.currentScanPath.value='';
+
 }

@@ -69,11 +69,13 @@ class AudioController extends GetxController{
   }
 
   Future<void> audioResume() async{
+    if(currentIndex.value==-1){return;}
     currentState.value=AudioState.playing;
     await resume();
   }
 
   Future<void> audioPause()async{
+    if(currentIndex.value==-1){return;}
     currentState.value=AudioState.pause;
     await pause();
   }
@@ -85,7 +87,7 @@ class AudioController extends GetxController{
   }
 
   Future<void> audioToggle()async{
-
+    if(currentIndex.value==-1){return;}
     if(currentState.value==AudioState.stop||currentState.value==AudioState.pause){
       currentState.value=AudioState.playing;
     }else{

@@ -86,7 +86,7 @@ unsafe extern "C" fn on_end_sync(
     data: c_uint,
     user: *mut c_void,
 ){
-    if let Some(sink) = AUDIO_EVENT.lock().unwrap().as_mut() {
+    if let Some(sink) = AUDIO_EVENT.lock().unwrap().as_ref() {
             let _ = sink.add(USER_STOPPED);
         }
 }
@@ -272,7 +272,7 @@ impl BassApi {
     fn listen_progress(&self) {
         thread::spawn(move || {
             let tick = Duration::from_millis(20);
-            if let Some(sink) =PROGRESS_LISTEN.lock().unwrap().as_mut()
+            if let Some(sink) =PROGRESS_LISTEN.lock().unwrap().clone().as_ref()
                 {
                     loop {
 
@@ -284,7 +284,7 @@ impl BassApi {
                         let _ = sink.add(pos);
 
                     }
-                }
+                } 
         }
         );
     }

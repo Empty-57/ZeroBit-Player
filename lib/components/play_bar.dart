@@ -9,6 +9,7 @@ import 'package:zerobit_player/tools/format_time.dart';
 import 'package:zerobit_player/tools/general_style.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
 
+import '../HIveCtrl/models/music_cahce_model.dart';
 import '../getxController/Audio_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 
@@ -171,6 +172,7 @@ class PlayBar extends StatelessWidget {
                 late final String title;
                 late final String artist;
                 late final AudioState audioState;
+                late final String duration;
 
                 if (_audioController.currentIndex.value != -1 &&
                     _audioController.cacheItems.isNotEmpty&&_audioController.currentIndex.value<_audioController.cacheItems.length) {
@@ -183,11 +185,14 @@ class PlayBar extends StatelessWidget {
                   artist = currentMetadata.artist;
 
                   audioState = _audioController.currentState.value;
+
+                  duration= formatTime(totalSeconds: currentMetadata.duration);
                 } else {
                   src = kTransparentImage;
                   title = "ZeroBit Player";
                   artist = "39";
                   audioState = AudioState.stop;
+                  duration= "--:--";
                 }
                 debugPrint("upup");
 
@@ -235,7 +240,6 @@ class PlayBar extends StatelessWidget {
                             maxLines: 1,
                             style: timeTextStyle,
                           ),
-
                         ],
                       ),
                     ),
@@ -350,7 +354,7 @@ class PlayBar extends StatelessWidget {
                     ),
 
                     Obx(()=>Text(
-                            "${formatTime(totalSeconds: _audioController.currentMs100.value)} / ${_audioController.currentIndex.value!=-1&&_audioController.cacheItems.isNotEmpty&&_audioController.currentIndex.value<_audioController.cacheItems.length? formatTime(totalSeconds: _audioController.cacheItems[_audioController.currentIndex.value].duration):"--:--"}",
+                            "${formatTime(totalSeconds: _audioController.currentMs100.value)} / $duration",
                           style: timeTextStyle,
                         )
                     ),
