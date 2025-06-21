@@ -302,9 +302,13 @@ impl BassApi {
     }
 
     fn fade_in(&self) -> Result<(), String> {
-         if self.stream_handle==0 {
+         let ok = unsafe {
+            if self.stream_handle==0 {
             return Ok(());
         }
+            (self.set_attr)(self.stream_handle, BASS_ATTRIB_VOL, 0.0) //BASS_ATTRIB_VOL:2
+        };
+        self.or_err_(ok)?;
         unsafe {
             let result=(self.slide_attr)(self.stream_handle,BASS_ATTRIB_VOL,*TARGET_VOLUME.lock().unwrap(),FADE_DURATION);
             self.or_err_(result)
@@ -312,11 +316,16 @@ impl BassApi {
     }
 
     fn fade_out(&self) -> Result<(), String> {
-        if self.stream_handle==0 {
+        let ok = unsafe {
+            if self.stream_handle==0 {
             return Ok(());
         }
+            (self.set_attr)(self.stream_handle, BASS_ATTRIB_VOL, *TARGET_VOLUME.lock().unwrap()) //BASS_ATTRIB_VOL:2
+        };
+        self.or_err_(ok)?;
         unsafe {
             let result=(self.slide_attr)(self.stream_handle,BASS_ATTRIB_VOL,0.0,FADE_DURATION);
+            thread::sleep(Duration::from_millis(FADE_DURATION as u64));
             self.or_err_(result)
         }
     }
@@ -336,7 +345,6 @@ impl BassApi {
 
     fn play_file(&mut self, path: String) -> Result<(), String> {
         self.fade_out()?;
-        thread::sleep(Duration::from_millis(FADE_DURATION as u64));
         self.stream_free();
         let wide: Vec<u16> = OsStr::new(&path)
             .encode_wide()
@@ -384,7 +392,6 @@ impl BassApi {
         }
         
         self.fade_out()?;
-        thread::sleep(Duration::from_millis(FADE_DURATION as u64));
         let result = unsafe { (self.pause)(self.stream_handle) };
         self.or_err_(result)
     }
@@ -395,7 +402,6 @@ impl BassApi {
         }
         
         self.fade_out()?;
-        thread::sleep(Duration::from_millis(FADE_DURATION as u64));
         let result = unsafe { (self.stop)(self.stream_handle) };
         self.or_err_(result)
     }
@@ -432,17 +438,16 @@ impl BassApi {
         }
     }
     
-    fn set_pos(&self, pos: f64) {
+    fn set_pos(&self, pos: f64)  -> Result<(), String>{
         if self.stream_handle==0 {
-            return;
+            return Ok(());
         }
-        
+        self.fade_out()?;
         let bytes=unsafe{(self.sec2bytes)(self.stream_handle,pos)};
         unsafe { (self.set_pos)(self.stream_handle,bytes,BASS_POS_BYTE) };
+        self.fade_in()?;
         let err_code = unsafe { (self.error_get_code)() };
-        if err_code != 0 {
-            println!("BASS failed, error code: {}", err_code);
-        }
+        self.or_err_(err_code)
     }
 
     fn get_state(&self) -> Option<u32> {
@@ -572,7 +577,7 @@ pub fn get_position() -> f64 {
 }
 
 #[flutter_rust_bridge::frb]
-pub fn set_position(pos: f64) {
+pub fn set_position(pos: f64)-> Result<(), String> {
     BASS_API.lock().unwrap().as_ref().unwrap().set_pos(pos)
 }
 

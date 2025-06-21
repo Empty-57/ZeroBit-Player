@@ -3,5 +3,5 @@ class OperateArea extends GetxController{
   static const allMusic = 'allMusic';
 
 
-  final currentFiled=''.obs;
+  final currentFiled=OperateArea.allMusic.obs;
 }

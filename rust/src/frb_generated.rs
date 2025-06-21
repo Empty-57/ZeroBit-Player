@@ -582,10 +582,8 @@ fn wire__crate__api__bass__set_position_impl(
             let api_pos = <f64>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
-                transform_result_sse::<_, ()>((move || {
-                    let output_ok = Result::<_, ()>::Ok({
-                        crate::api::bass::set_position(api_pos);
-                    })?;
+                transform_result_sse::<_, String>((move || {
+                    let output_ok = crate::api::bass::set_position(api_pos)?;
                     Ok(output_ok)
                 })())
             }

@@ -89,8 +89,8 @@ Future<void> syncCache() async {
   musicCacheController.items.clear();
   musicCacheController.loadData();
 
-  audioController.audioPause();
-  audioController.currentIndex.value=-1;
+  audioController.syncPlayListCacheItems();
+  audioController.syncCurrentIndex();
   musicCacheController.currentScanPath.value='';
 
 }

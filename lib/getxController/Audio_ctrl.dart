@@ -28,34 +28,49 @@ class AudioController extends GetxController{
 
   final SettingController _settingController = Get.find<SettingController>();
   final OperateArea _operateArea=Get.find<OperateArea>();
+  final MusicCacheController _musicCacheController = Get.find<MusicCacheController>();
 
-  late List playListCacheItems=[...Get.find<MusicCacheController>().items];
 
-  String _hasNextAudioPath='';
+  late List playListCacheItems=[..._musicCacheController.items];
+
+  MusicCache? _hasNextAudioMetadata;
+
+  void syncPlayListCacheItems(){
+    switch(_operateArea.currentFiled.value){
+        case OperateArea.allMusic:
+          playListCacheItems=[..._musicCacheController.items];
+          break;
+      }
+  }
 
   @override
   void onInit() {
     super.onInit();
 
     ever(currentMs100, (_) {
+
       if(currentIndex.value!=-1&&playListCacheItems.isNotEmpty&&currentIndex.value<playListCacheItems.length){
         progress.value=(currentMs100.value/playListCacheItems[currentIndex.value].duration).clamp(0.0, 1.0);
       }else{
         progress.value=0.0;
+        currentMs100.value=0.0;
       }
+
     }
     );
 
     ever(_operateArea.currentFiled, (_){
-
-      switch(_operateArea.currentFiled.value){
-        case OperateArea.allMusic:
-          playListCacheItems=[...Get.find<MusicCacheController>().items];
-          break;
-      }
+      syncPlayListCacheItems();
     }
 
     );
+
+    ever(currentIndex, (_)async{
+      if(currentIndex.value==-1){
+        currentPath.value='';
+        update([currentPath.value,if (_lastPath != null) _lastPath!]);
+      }
+    });
 
   }
 
@@ -64,7 +79,7 @@ class AudioController extends GetxController{
   }
 
 
-  Future<void> audioPlay({required String path})async{
+  Future<void> audioPlay({required MusicCache metadata})async{
     final oldPath = currentPath.value;
   final oldIndex = currentIndex.value;
   final oldState = currentState.value;
@@ -72,17 +87,23 @@ class AudioController extends GetxController{
   currentMs100.value=0.0;
     try{
       _lastPath=currentPath.value;
-    currentPath.value=path;
+    currentPath.value=metadata.path;
+
+    if(!playListCacheItems.any((v)=>v.path==metadata.path)){
+      playListCacheItems.add(metadata);
+    }
+
+
     syncCurrentIndex();
     currentState.value=AudioState.playing;
 
-    update([path,if (_lastPath != null) _lastPath!]);
-    await playFile(path: path);
+    update([metadata.path,if (_lastPath != null) _lastPath!]);
+    await playFile(path: metadata.path);
     }catch(e){
       currentPath.value = oldPath;
       currentIndex.value = oldIndex;
       currentState.value = oldState;
-      update([path, if (oldPath != null) oldPath]);
+      update([metadata.path, if (oldPath != null) oldPath]);
 
       currentMs100.value=0.0;
 
@@ -93,21 +114,34 @@ class AudioController extends GetxController{
   }
 
   Future<void> audioResume() async{
-    if(currentIndex.value==-1){return;}
+    if(currentIndex.value==-1||currentState.value==AudioState.playing){return;}
     currentState.value=AudioState.playing;
-    await resume();
+    try{
+      await resume();
+    }catch(e){
+      showSnackBar(title: "ERR", msg: e.toString());
+    }
+
   }
 
   Future<void> audioPause()async{
-    if(currentIndex.value==-1){return;}
+    if(currentIndex.value==-1||currentState.value==AudioState.pause){return;}
     currentState.value=AudioState.pause;
-    await pause();
+    try{
+      await pause();
+    }catch(e){
+      showSnackBar(title: "ERR", msg: e.toString());
+    }
   }
 
   Future<void> audioStop()async{
     currentState.value=AudioState.stop;
     currentIndex.value=-1;
-    await stop();
+    try{
+      await stop();
+    }catch(e){
+      showSnackBar(title: "ERR", msg: e.toString());
+    }
   }
 
   Future<void> audioToggle()async{
@@ -117,16 +151,39 @@ class AudioController extends GetxController{
     }else{
       currentState.value=AudioState.pause;
     }
-
-    await toggle();
+try{
+      await toggle();
+    }catch(e){
+      showSnackBar(title: "ERR", msg: e.toString());
+    }
   }
 
   Future<double> audioGetVolume()async{
-    return await getVolume();
+    try{
+      return await getVolume();
+    }catch(e){
+      showSnackBar(title: "ERR", msg: e.toString());
+      return 0.0;
+    }
+
   }
 
   Future<void> audioSetVolume({required double vol})async{
-    await setVolume(vol: vol);
+    try{
+      await setVolume(vol: vol);
+    }catch(e){
+      showSnackBar(title: "ERR", msg: e.toString());
+    }
+  }
+
+  Future<void> audioSetPositon({required double pos})async{
+    if(currentIndex.value==-1){return;}
+    try{
+      await setPosition(pos: pos);
+      await audioResume();
+    }catch(e){
+      showSnackBar(title: "ERR", msg: e.toString());
+    }
   }
 
   void changePlayMode(){
@@ -142,13 +199,13 @@ class AudioController extends GetxController{
       currentIndex.value=Random().nextInt(playListCacheItems.length);
     }
 
-    if(_hasNextAudioPath!=''){
-      await audioPlay(path: _hasNextAudioPath);
-      _hasNextAudioPath='';
+    if(_hasNextAudioMetadata!=null){
+      await audioPlay(metadata: _hasNextAudioMetadata!);
+      _hasNextAudioMetadata=null;
       return;
     }
 
-    await audioPlay(path: playListCacheItems[currentIndex.value].path);
+    await audioPlay(metadata: playListCacheItems[currentIndex.value]);
   }
 
   Future<void> audioToPrevious()async{
@@ -175,7 +232,7 @@ class AudioController extends GetxController{
     if(currentIndex.value==-1){return;}
     switch (_settingController.playMode.value){
       case 0:
-        await audioPlay(path: playListCacheItems[currentIndex.value].path);
+        await audioPlay(metadata: playListCacheItems[currentIndex.value]);
         break;
       case 1:
         await audioToNext();
@@ -194,7 +251,7 @@ class AudioController extends GetxController{
 
     syncCurrentIndex();
     showSnackBar(title: "OK", msg: "已添加到下一首播放",duration: Duration(milliseconds: 1000));
-    _hasNextAudioPath=metadata.path;
+    _hasNextAudioMetadata=metadata;
   }
 
   Future<void> audioRemove({required String filed,required MusicCache metadata})async{

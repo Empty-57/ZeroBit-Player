@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:zerobit_player/API/apis.dart';
+import 'package:zerobit_player/components/floating_button.dart';
 import 'package:zerobit_player/getxController/Audio_ctrl.dart';
 import 'package:zerobit_player/getxController/music_cache_ctrl.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
@@ -22,8 +23,7 @@ import '../HIveCtrl/models/music_cahce_model.dart';
 import '../tools/format_time.dart';
 import '../tools/general_style.dart';
 
-final MusicCacheController _musicCacheController =
-    Get.find<MusicCacheController>();
+final MusicCacheController _musicCacheController = Get.find<MusicCacheController>();
 final SettingController _settingController = Get.find<SettingController>();
 final AudioController _audioController = Get.find<AudioController>();
 
@@ -184,11 +184,15 @@ class LocalMusic extends StatelessWidget {
             child: Obx(() {
               final viewMode =
                   _settingController.viewModeMap[OperateArea.allMusic]!;
+              final ScrollController scrollControllerList=ScrollController();
+              final ScrollController scrollControllerGrid=ScrollController();
+
               return Stack(
                 children: [
                   Offstage(
                     offstage: !viewMode,
                     child: ListView.builder(
+                      controller: scrollControllerList,
                       itemCount: _musicCacheController.items.length,
                       itemExtent: _itemHeight,
                       cacheExtent: _itemHeight * 1,
@@ -209,11 +213,12 @@ class LocalMusic extends StatelessWidget {
                   Offstage(
                     offstage: viewMode,
                     child: GridView.builder(
+                      controller: scrollControllerGrid,
                       itemCount: _musicCacheController.items.length,
                       cacheExtent: _itemHeight * 1,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount:
-                            MediaQuery.of(context).size.width < 1100 ? 3 : 4,
+                            context.width < 1100 ? 3 : 4,
                         mainAxisSpacing: 4.0,
                         crossAxisSpacing: 8.0,
                         childAspectRatio: 1.0,
@@ -233,6 +238,7 @@ class LocalMusic extends StatelessWidget {
                       },
                     ),
                   ),
+                  FloatingButton(scrollControllerList: scrollControllerList,scrollControllerGrid: scrollControllerGrid,),
                 ],
               );
             }),
@@ -279,7 +285,7 @@ List<Widget> _genMenuItems({required BuildContext context, required MenuControll
             fn: () {
               _operateArea.currentFiled.value=OperateArea.allMusic;
             menuController.close();
-            _audioController.audioPlay(path: metadata.path);
+            _audioController.audioPlay(metadata: metadata);
           },
             btnHeight: _menuHeight,
             btnWidth: _menuWidth,
@@ -363,7 +369,7 @@ class _MusicTile extends StatelessWidget {
           onPressed: () async {
              _operateArea.currentFiled.value=OperateArea.allMusic;
             menuController.close();
-            await _audioController.audioPlay(path: metadata.path);
+            await _audioController.audioPlay(metadata: metadata);
           }.futureDebounce(ms: 300),
           style: TextButton.styleFrom(
             shape: RoundedRectangleBorder(borderRadius: _borderRadius),
