@@ -51,7 +51,7 @@ return data.title;
      items.assignAll(items.reversed.toList());
   }
 
-  void putMetadata({required String path,required int index,required EditableMetadata data})async{
+  Future<void> putMetadata({required String path,required int index,required EditableMetadata data})async{
      await editTags(path: path, data: data);
      final newMetadata = await getMetadata(path: path);
      final newCache=MusicCache(
@@ -64,7 +64,7 @@ return data.title;
         sampleRate: newMetadata.sampleRate,
         path: newMetadata.path,
       );
-     _musicCacheBox.put(data: newCache, key: path);
+     await _musicCacheBox.put(data: newCache, key: path);
      items[index]=newCache;
   }
 }

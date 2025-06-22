@@ -2,11 +2,16 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:zerobit_player/HIveCtrl/adapters/user_playlist_adapter.dart';
 import 'package:zerobit_player/HIveCtrl/models/setting_cache_model.dart';
+import 'package:zerobit_player/HIveCtrl/models/user_playlist_model.dart';
 import 'package:zerobit_player/components/play_bar.dart';
 import 'package:zerobit_player/getxController/Audio_ctrl.dart';
+import 'package:zerobit_player/getxController/user_playlist_ctrl.dart';
 import 'package:zerobit_player/pages/local_music_page.dart';
+import 'package:zerobit_player/pages/playlist_page.dart';
 import 'package:zerobit_player/pages/setting_page.dart';
+import 'package:zerobit_player/pages/user_playlists_page.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/frb_generated.dart';
 import 'package:zerobit_player/tools/sync_cache.dart';
@@ -57,19 +62,23 @@ void main() async {
 
   await Hive.initFlutter();
 
-  // await Hive.deleteBoxFromDisk('setting_box');
-  // await Hive.deleteBoxFromDisk('music_cache_box');
+  // await Hive.deleteBoxFromDisk(HiveBoxes.musicCacheBox);
+  // await Hive.deleteBoxFromDisk(HiveBoxes.settingCacheBox);
+  // await Hive.deleteBoxFromDisk(HiveBoxes.userPlayListCacheBox);
 
   Hive.registerAdapter(MusicCacheAdapter());
   Hive.registerAdapter(SettingCacheAdapter());
+  Hive.registerAdapter(UserPlayListAdapter());
   await Hive.openBox<MusicCache>(HiveBoxes.musicCacheBox);
   await Hive.openBox<SettingCache>(HiveBoxes.settingCacheBox);
+  await Hive.openBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
 
   Get.put(OperateArea());
   Get.put(SettingController());
   Get.put(MusicCacheController());
   Get.put(AudioController());
   Get.put(ThemeService());
+  Get.put(UserPlayListController());
 
 
   await syncCache();
@@ -160,6 +169,8 @@ class MainFrame extends StatelessWidget {
         GetPage(name: AppRoutes.base, page: () => const HomePage()),
         GetPage(name: AppRoutes.home, page: () => const LocalMusic()),
         GetPage(name: AppRoutes.setting, page: () => const Setting()),
+        GetPage(name: AppRoutes.userPlayList, page: () => const UserPlayList()),
+        GetPage(name: AppRoutes.playList, page: () => const PlayList(args: null,)),
       ],
     )
     );
@@ -181,12 +192,16 @@ class NestedObserver extends NavigatorObserver {
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  Widget _getNamedPage(String name) {
+  Widget _getNamedPage({required String name,required Object? args}) {
     switch (name) {
       case AppRoutes.home:
-        return LocalMusic();
+        return const LocalMusic();
+      case AppRoutes.userPlayList:
+        return const UserPlayList();
       case AppRoutes.setting:
-        return Setting();
+        return const Setting();
+      case AppRoutes.playList:
+        return PlayList(args:args);
     }
     return LocalMusic();
   }
@@ -220,9 +235,14 @@ class HomePage extends StatelessWidget {
                       localIndex: 0,
                     ),
                     CustomNavigationBtn(
+                      label: '歌单',
+                      icon: PhosphorIconsLight.playlist,
+                      localIndex: 1,
+                    ),
+                    CustomNavigationBtn(
                       label: '设置',
                       icon: PhosphorIconsLight.gearSix,
-                      localIndex: 1,
+                      localIndex: 2,
                     ),
                   ],
                 ),
@@ -241,7 +261,7 @@ class HomePage extends StatelessWidget {
                     onGenerateRoute: (settings) {
                       return GetPageRoute(
                         settings: settings,
-                        page: () => _getNamedPage(settings.name!),
+                        page: () => _getNamedPage(name: settings.name!,args: settings.arguments),
                       );
                     },
                   ),

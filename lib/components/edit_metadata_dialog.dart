@@ -90,6 +90,7 @@ class EditMetadataDialog extends StatelessWidget {
                   width: _metadataDialogW,
                   height: _metadataDialogH,
                   child: Column(
+                    spacing: 8,
                     children: [
                       Expanded(
                         child: SingleChildScrollView(
@@ -270,7 +271,7 @@ class EditMetadataDialog extends StatelessWidget {
                                             src: src.value,
                                           );
                                         }
-                                        _musicCacheController.putMetadata(
+                                        await _musicCacheController.putMetadata(
                                           path: metadata.path,
                                           index: currentIndex,
                                           data: EditableMetadata(

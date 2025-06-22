@@ -15,12 +15,13 @@ const double _navigationBtnHeight = 52;
 
 const double _navigationWidth = 260;
 
-const mainRoutes = [AppRoutes.home, AppRoutes.setting];
+const mainRoutes = [AppRoutes.home, AppRoutes.userPlayList,AppRoutes.setting];
 
 const Map<String, int> routesMap = {
   AppRoutes.home: 0,
   '/': 0,
-  AppRoutes.setting: 1,
+  AppRoutes.userPlayList:1,
+  AppRoutes.setting: 2,
 };
 
 class CustomNavigationBtn extends StatelessWidget {

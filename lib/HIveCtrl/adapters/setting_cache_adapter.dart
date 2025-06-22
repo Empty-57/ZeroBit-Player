@@ -1,7 +1,7 @@
 import 'package:zerobit_player/HIveCtrl/models/setting_cache_model.dart';
 import 'package:hive_ce/hive.dart';
 
-import '../hive_typs.dart';
+import '../hive_types.dart';
 
 class SettingCacheAdapter extends TypeAdapter<SettingCache> {
   @override

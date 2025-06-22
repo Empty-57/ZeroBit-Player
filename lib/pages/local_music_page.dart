@@ -84,7 +84,7 @@ class LocalMusic extends StatelessWidget {
                   ),
                   Obx(
                     () => Text(
-                      '共${_musicCacheController.items.length}首',
+                      '共${_musicCacheController.items.length}首音乐',
                       style: generalTextStyle(ctx: context, size: 'md'),
                     ),
                   ),
