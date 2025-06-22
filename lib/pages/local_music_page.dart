@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:zerobit_player/API/apis.dart';
@@ -20,14 +19,16 @@ import 'package:zerobit_player/tools/func_extension.dart';
 import 'dart:typed_data';
 
 import '../HIveCtrl/models/music_cahce_model.dart';
+import '../components/edit_metadata_dialog.dart';
 import '../tools/format_time.dart';
 import '../tools/general_style.dart';
 
-final MusicCacheController _musicCacheController = Get.find<MusicCacheController>();
+final MusicCacheController _musicCacheController =
+    Get.find<MusicCacheController>();
 final SettingController _settingController = Get.find<SettingController>();
 final AudioController _audioController = Get.find<AudioController>();
 
-final OperateArea _operateArea=Get.find<OperateArea>();
+final OperateArea _operateArea = Get.find<OperateArea>();
 
 const double _itemHeight = 64.0;
 
@@ -113,7 +114,8 @@ class LocalMusic extends StatelessWidget {
                     ],
                   },
                   fn: (entry) {
-                    _settingController.sortMap[OperateArea.allMusic] = entry.key;
+                    _settingController.sortMap[OperateArea.allMusic] =
+                        entry.key;
                     _settingController.putCache();
                     _musicCacheController.itemReSort(type: entry.key);
                     _audioController.syncCurrentIndex();
@@ -184,8 +186,8 @@ class LocalMusic extends StatelessWidget {
             child: Obx(() {
               final viewMode =
                   _settingController.viewModeMap[OperateArea.allMusic]!;
-              final ScrollController scrollControllerList=ScrollController();
-              final ScrollController scrollControllerGrid=ScrollController();
+              final ScrollController scrollControllerList = ScrollController();
+              final ScrollController scrollControllerGrid = ScrollController();
 
               return Stack(
                 children: [
@@ -217,8 +219,7 @@ class LocalMusic extends StatelessWidget {
                       itemCount: _musicCacheController.items.length,
                       cacheExtent: _itemHeight * 1,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount:
-                            context.width < 1100 ? 3 : 4,
+                        crossAxisCount: context.width < 1100 ? 3 : 4,
                         mainAxisSpacing: 4.0,
                         crossAxisSpacing: 8.0,
                         childAspectRatio: 1.0,
@@ -238,7 +239,10 @@ class LocalMusic extends StatelessWidget {
                       },
                     ),
                   ),
-                  FloatingButton(scrollControllerList: scrollControllerList,scrollControllerGrid: scrollControllerGrid,),
+                  FloatingButton(
+                    scrollControllerList: scrollControllerList,
+                    scrollControllerGrid: scrollControllerGrid,
+                  ),
                 ],
               );
             }),
@@ -249,6 +253,7 @@ class LocalMusic extends StatelessWidget {
   }
 }
 
+
 const double _itemSpacing = 16.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 
@@ -256,85 +261,81 @@ const double _menuWidth = 180;
 const double _menuHeight = 48;
 const double _menuRadius = 0;
 
-
-List<Widget> _genMenuItems({required BuildContext context, required MenuController menuController,required MusicCache metadata,bool renderMaybeDel=false}){
-  final List<Widget> maybeDel=renderMaybeDel? [
-
-    Divider(
-      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-      height: 0.5,
-      thickness: 0.5,
-    ),
-          CustomBtn(
-            fn: () async{
-              menuController.close();
-              await _audioController.audioRemove(filed: OperateArea.allMusic,metadata: metadata);
-            },
-            btnHeight: _menuHeight,
-            btnWidth: _menuWidth,
-            radius: _menuRadius,
-            icon: PhosphorIconsLight.trash,
-            label: "删除",
-            mainAxisAlignment: MainAxisAlignment.start,
-            backgroundColor: Colors.transparent,
-          ),]:[];
-
+List<Widget> _genMenuItems({required BuildContext context, required MenuController menuController, required MusicCache metadata, bool renderMaybeDel = false,}) {
+  final List<Widget> maybeDel =
+      renderMaybeDel
+          ? [
+            Divider(
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.8),
+              height: 0.5,
+              thickness: 0.5,
+            ),
+            CustomBtn(
+              fn: () async {
+                menuController.close();
+                await _audioController.audioRemove(
+                  filed: OperateArea.allMusic,
+                  metadata: metadata,
+                );
+              },
+              btnHeight: _menuHeight,
+              btnWidth: _menuWidth,
+              radius: _menuRadius,
+              icon: PhosphorIconsLight.trash,
+              label: "删除",
+              mainAxisAlignment: MainAxisAlignment.start,
+              backgroundColor: Colors.transparent,
+            ),
+          ]
+          : [];
 
   return <Widget>[
-          CustomBtn(
-            fn: () {
-              _operateArea.currentFiled.value=OperateArea.allMusic;
+        CustomBtn(
+          fn: () {
+            _operateArea.currentFiled.value = OperateArea.allMusic;
             menuController.close();
             _audioController.audioPlay(metadata: metadata);
           },
-            btnHeight: _menuHeight,
-            btnWidth: _menuWidth,
-            radius: _menuRadius,
-            icon: PhosphorIconsLight.play,
-            label: "播放",
-            mainAxisAlignment: MainAxisAlignment.start,
-            backgroundColor: Colors.transparent,
-          ),
+          btnHeight: _menuHeight,
+          btnWidth: _menuWidth,
+          radius: _menuRadius,
+          icon: PhosphorIconsLight.play,
+          label: "播放",
+          mainAxisAlignment: MainAxisAlignment.start,
+          backgroundColor: Colors.transparent,
+        ),
 
-          CustomBtn(
-            fn: () {
-              menuController.close();
-              _audioController.insertNext(metadata: metadata);
-            },
-            btnHeight: _menuHeight,
-            btnWidth: _menuWidth,
-            radius: _menuRadius,
-            icon: PhosphorIconsLight.arrowBendDownLeft,
-            label: "添加到下一首",
-            mainAxisAlignment: MainAxisAlignment.start,
-            backgroundColor: Colors.transparent,
-          ),
-          CustomBtn(
-            fn: () {
-              menuController.close();
-            },
-            btnHeight: _menuHeight,
-            btnWidth: _menuWidth,
-            radius: _menuRadius,
-            icon: PhosphorIconsLight.pencilSimpleLine,
-            label: "修改元数据",
-            mainAxisAlignment: MainAxisAlignment.start,
-            backgroundColor: Colors.transparent,
-          ),
-          CustomBtn(
-            fn: () {
-              menuController.close();
-              Process.run('explorer.exe', ['/select,', metadata.path]);
-            },
-            btnHeight: _menuHeight,
-            btnWidth: _menuWidth,
-            radius: _menuRadius,
-            icon: PhosphorIconsLight.folderOpen,
-            label: "打开本地资源",
-            mainAxisAlignment: MainAxisAlignment.start,
-            backgroundColor: Colors.transparent,
-          ),
-        ]+maybeDel;
+        CustomBtn(
+          fn: () {
+            menuController.close();
+            _audioController.insertNext(metadata: metadata);
+          },
+          btnHeight: _menuHeight,
+          btnWidth: _menuWidth,
+          radius: _menuRadius,
+          icon: PhosphorIconsLight.arrowBendDownLeft,
+          label: "添加到下一首",
+          mainAxisAlignment: MainAxisAlignment.start,
+          backgroundColor: Colors.transparent,
+        ),
+        EditMetadataDialog(menuController: menuController, metadata: metadata),
+        CustomBtn(
+          fn: () {
+            menuController.close();
+            Process.run('explorer.exe', ['/select,', metadata.path]);
+          },
+          btnHeight: _menuHeight,
+          btnWidth: _menuWidth,
+          radius: _menuRadius,
+          icon: PhosphorIconsLight.folderOpen,
+          label: "打开本地资源",
+          mainAxisAlignment: MainAxisAlignment.start,
+          backgroundColor: Colors.transparent,
+        ),
+      ] +
+      maybeDel;
 }
 
 class _MusicTile extends StatelessWidget {
@@ -363,11 +364,15 @@ class _MusicTile extends StatelessWidget {
       child: MenuAnchor(
         controller: menuController,
         consumeOutsideTap: true,
-        menuChildren:_genMenuItems(context: context,menuController: menuController,metadata: metadata),
+        menuChildren: _genMenuItems(
+          context: context,
+          menuController: menuController,
+          metadata: metadata,
+        ),
 
         child: TextButton(
           onPressed: () async {
-             _operateArea.currentFiled.value=OperateArea.allMusic;
+            _operateArea.currentFiled.value = OperateArea.allMusic;
             menuController.close();
             await _audioController.audioPlay(metadata: metadata);
           }.futureDebounce(ms: 300),
@@ -450,8 +455,7 @@ class _MusicTile extends StatelessWidget {
 
 const double _coverSize = 48.0;
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
-final double _dpr = Get.mediaQuery.devicePixelRatio;
-final int _coverRenderSize = (_coverSize * _dpr).ceil();
+const int _coverSmallRenderSize = 150;
 
 class _AsyncCover extends StatelessWidget {
   final String path;
@@ -465,8 +469,8 @@ class _AsyncCover extends StatelessWidget {
         placeholder: MemoryImage(kTransparentImage),
         image: ResizeImage(
           MemoryImage(music.src!),
-          width: _coverRenderSize,
-          height: _coverRenderSize,
+          width: _coverSmallRenderSize,
+          height: _coverSmallRenderSize,
         ),
         height: _coverSize,
         width: _coverSize,

@@ -283,6 +283,7 @@ class PlayBar extends StatelessWidget {
                     height: 28,
                     radius: 4,
                   ),
+                  mouseCursor: WidgetStateProperty.all(SystemMouseCursors.resizeLeftRight),
                 ),
                 child: Obx(() {
                   late final double duration;
