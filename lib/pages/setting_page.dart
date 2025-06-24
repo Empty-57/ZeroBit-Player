@@ -1,4 +1,3 @@
-import 'package:convert/convert.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,12 +6,14 @@ import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
+import '../getxController/Audio_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../tools/general_style.dart';
 import '../getxController/setting_ctrl.dart';
 
 final SettingController _settingController = Get.find<SettingController>();
 final MusicCacheController _musicCacheController = Get.find<MusicCacheController>();
+final AudioController _audioController = Get.find<AudioController>();
 
 class _FolderManagerDialog extends StatelessWidget {
   const _FolderManagerDialog();
@@ -264,6 +265,7 @@ class _ColorPicker extends StatelessWidget {
     return CustomBtn(
       fn: () {
         showDialog(
+          barrierDismissible: true,
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
@@ -415,6 +417,19 @@ class Setting extends StatelessWidget {
               const _ColorPicker(),
             ],
           ),
+
+
+          Expanded(child: ListView.builder(
+            itemCount: _audioController.playListCacheItems.length,
+              itemExtent: 48,
+              cacheExtent: 48*1,
+              itemBuilder: (context, index){
+            return Text(_audioController.playListCacheItems[index].path,style: generalTextStyle(ctx: context),);
+          }
+          )
+          ),
+
+
         ],
       ),
     );

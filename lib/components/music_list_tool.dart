@@ -1,0 +1,328 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:zerobit_player/API/apis.dart';
+import 'package:zerobit_player/getxController/Audio_ctrl.dart';
+import 'package:zerobit_player/getxController/setting_ctrl.dart';
+import 'package:zerobit_player/field/operate_area.dart';
+import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
+import 'package:get/get.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+
+import 'package:zerobit_player/custom_widgets/custom_widget.dart';
+import 'package:transparent_image/transparent_image.dart';
+import 'package:zerobit_player/tools/func_extension.dart';
+import 'package:zerobit_player/tools/general_style.dart';
+
+import 'dart:typed_data';
+
+import '../HIveCtrl/models/music_cahce_model.dart';
+import '../components/edit_metadata_dialog.dart';
+import '../field/audio_source.dart';
+import '../getxController/user_playlist_ctrl.dart';
+import '../tools/format_time.dart';
+
+const double _itemSpacing = 16.0;
+const _borderRadius = BorderRadius.all(Radius.circular(4));
+
+const double _menuWidth = 180;
+const double _menuHeight = 48;
+const double _menuRadius = 0;
+
+final SettingController _settingController = Get.find<SettingController>();
+final AudioController _audioController = Get.find<AudioController>();
+
+final AudioSource _audioSource = Get.find<AudioSource>();
+
+List<Widget> _genMenuItems({
+  required BuildContext context,
+  required MenuController menuController,
+  required MusicCache metadata,
+  required String userKey,
+  required int index,
+  bool renderMaybeDel = false,
+}) {
+  final List<Widget> playList =
+      _audioController.allUserKey.map((v) {
+        return MenuItemButton(
+          onPressed: () {
+            _audioController.addToPlayList(metadata: metadata, userKey: v);
+          },
+          child: Center(child: Text(v.split(playListTagSuffix)[0])),
+        );
+      }).toList();
+
+  final List<Widget> maybeDel =
+      renderMaybeDel
+          ? [
+            Divider(
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.8),
+              height: 0.5,
+              thickness: 0.5,
+            ),
+            CustomBtn(
+              fn: () async {
+                menuController.close();
+                await _audioController.audioRemove(
+                  userKey: userKey,
+                  metadata: metadata,
+                );
+              },
+              btnHeight: _menuHeight,
+              btnWidth: _menuWidth,
+              radius: _menuRadius,
+              icon: PhosphorIconsLight.trash,
+              label: "删除",
+              mainAxisAlignment: MainAxisAlignment.start,
+              backgroundColor: Colors.transparent,
+            ),
+          ]
+          : [];
+
+  return <Widget>[
+        CustomBtn(
+          fn: () {
+            _audioSource.currentAudioSource.value = userKey;
+            menuController.close();
+            _audioController.audioPlay(metadata: metadata);
+          },
+          btnHeight: _menuHeight,
+          btnWidth: _menuWidth,
+          radius: _menuRadius,
+          icon: PhosphorIconsLight.play,
+          label: "播放",
+          mainAxisAlignment: MainAxisAlignment.start,
+          backgroundColor: Colors.transparent,
+        ),
+
+        CustomBtn(
+          fn: () {
+            menuController.close();
+            _audioController.insertNext(metadata: metadata);
+          },
+          btnHeight: _menuHeight,
+          btnWidth: _menuWidth,
+          radius: _menuRadius,
+          icon: PhosphorIconsLight.arrowBendDownLeft,
+          label: "添加到下一首",
+          mainAxisAlignment: MainAxisAlignment.start,
+          backgroundColor: Colors.transparent,
+        ),
+        EditMetadataDialog(menuController: menuController, metadata: metadata,index:index),
+
+        SubmenuButton(
+          style: ButtonStyle(
+            padding: WidgetStateProperty.all(
+              EdgeInsets.symmetric(horizontal: _itemSpacing),
+            ),
+          ),
+          menuChildren: playList,
+          leadingIcon: Icon(
+            PhosphorIconsLight.plus,
+            size: getIconSize(size: 'md'),
+          ),
+          child: const Text('添加到歌单'),
+        ),
+
+        CustomBtn(
+          fn: () {
+            menuController.close();
+            Process.run('explorer.exe', ['/select,', metadata.path]);
+          },
+          btnHeight: _menuHeight,
+          btnWidth: _menuWidth,
+          radius: _menuRadius,
+          icon: PhosphorIconsLight.folderOpen,
+          label: "打开本地资源",
+          mainAxisAlignment: MainAxisAlignment.start,
+          backgroundColor: Colors.transparent,
+        ),
+      ] +
+      maybeDel;
+}
+
+class MusicTile extends StatelessWidget {
+  final MusicCache metadata;
+  final TextStyle titleStyle;
+  final TextStyle highLightTitleStyle;
+  final TextStyle subStyle;
+  final TextStyle highLightSubStyle;
+  final MenuController menuController;
+  final String audioSource;
+  final int index;
+
+  const MusicTile({
+    super.key,
+    required this.metadata,
+    required this.titleStyle,
+    required this.highLightTitleStyle,
+    required this.subStyle,
+    required this.highLightSubStyle,
+    required this.menuController,
+    required this.audioSource,
+    required this.index,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onSecondaryTapUp: (e) {
+        menuController.open(position: e.localPosition);
+      },
+      child: MenuAnchor(
+        controller: menuController,
+        consumeOutsideTap: true,
+        menuChildren: _genMenuItems(
+          context: context,
+          menuController: menuController,
+          metadata: metadata,
+          userKey: audioSource,
+          index: index,
+          renderMaybeDel: audioSource == AudioSource.allMusic ? false : true,
+        ),
+
+        child: TextButton(
+          onPressed: () async {
+            _audioSource.currentAudioSource.value = audioSource;
+            menuController.close();
+            await _audioController.audioPlay(metadata: metadata);
+          }.futureDebounce(ms: 300),
+          style: TextButton.styleFrom(
+            shape: RoundedRectangleBorder(borderRadius: _borderRadius),
+          ),
+          child: GetBuilder<AudioController>(
+            id: metadata.path,
+            builder: (controller) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                spacing: _itemSpacing,
+                children: [
+                  AsyncCover(path: metadata.path, music: metadata),
+                  Expanded(
+                    flex: 1,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          metadata.title,
+                          softWrap: true,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style:
+                              _audioController.currentPath.value !=
+                                      metadata.path
+                                  ? titleStyle
+                                  : highLightTitleStyle,
+                        ),
+                        Text(
+                          metadata.artist,
+                          softWrap: true,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style:
+                              _audioController.currentPath.value !=
+                                      metadata.path
+                                  ? subStyle
+                                  : highLightSubStyle,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_settingController.viewModeMap[OperateArea.playList])
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        metadata.album,
+                        softWrap: true,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style:
+                            _audioController.currentPath.value != metadata.path
+                                ? subStyle
+                                : highLightSubStyle,
+                      ),
+                    ),
+                  Text(
+                    formatTime(totalSeconds: metadata.duration),
+                    softWrap: true,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style:
+                        _audioController.currentPath.value != metadata.path
+                            ? subStyle
+                            : highLightSubStyle,
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+const double _coverSize = 48.0;
+const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
+const int _coverSmallRenderSize = 150;
+
+class AsyncCover extends StatelessWidget {
+  final String path;
+  final MusicCache music;
+  const AsyncCover({super.key, required this.path, required this.music});
+
+  Widget _renderCover() {
+    return ClipRRect(
+      borderRadius: _coverBorderRadius,
+      child: FadeInImage(
+        placeholder: MemoryImage(kTransparentImage),
+        image: ResizeImage(
+          MemoryImage(music.src!),
+          width: _coverSmallRenderSize,
+          height: _coverSmallRenderSize,
+        ),
+        height: _coverSize,
+        width: _coverSize,
+        fit: BoxFit.cover,
+      ),
+    );
+  }
+
+  Future<Uint8List?> _loadCover() async {
+    final coverData = await getCover(path: path, sizeFlag: 0);
+    if (coverData == null) {
+      final title = music.title;
+      final artist = music.artist.isNotEmpty ? ' - ${music.artist}' : '';
+      final coverData_ = await saveCoverByText(
+        text: title + artist,
+        songPath: path,
+      );
+      if (coverData_ != null && coverData_.isNotEmpty) {
+        return Uint8List.fromList(coverData_);
+      }
+    }
+    return coverData;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return music.src == null
+        ? FutureBuilder<Uint8List?>(
+          future: _loadCover(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              music.src = snapshot.data!;
+
+              return _renderCover();
+            }
+            return SizedBox(height: _coverSize, width: _coverSize);
+          },
+        )
+        : _renderCover();
+  }
+}

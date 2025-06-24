@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
+import '../HIveCtrl/hive_manager.dart';
+import '../field/audio_source.dart';
 import '../field/operate_area.dart';
 import '../getxController/Audio_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
+import '../getxController/play_list_ctrl.dart';
 import '../tools/general_style.dart';
 
 
@@ -19,7 +22,9 @@ final MusicCacheController _musicCacheController = Get.find<MusicCacheController
 
 final AudioController _audioController = Get.find<AudioController>();
 
-final OperateArea _operateArea=Get.find<OperateArea>();
+final AudioSource _audioSource=Get.find<AudioSource>();
+
+final _userPlayListCacheBox=HiveManager.userPlayListCacheBox;
 
 class _FloatingBtn extends StatelessWidget {
   final String tooltip;
@@ -78,10 +83,14 @@ class FloatingButton extends StatelessWidget{
 
               int index=0;
 
-              switch(_operateArea.currentFiled.value){
+              switch(_audioSource.currentAudioSource.value){
                 case OperateArea.allMusic:
                   index=_musicCacheController.items.indexWhere((metadata) => metadata.path == _audioController.currentPath.value);
                   break;
+              }
+
+              if(_audioController.allUserKey.contains(_audioSource.currentAudioSource.value)){
+                index=PlayListController.items.indexWhere((v)=>v.path==_audioController.currentPath.value);
               }
 
               double targetOffsetList = (index * _itemHeight - middleOffset).clamp(0.0, scrollControllerList.position.maxScrollExtent,);

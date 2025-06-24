@@ -10,6 +10,7 @@ import '../API/apis.dart';
 import '../HIveCtrl/models/music_cahce_model.dart';
 import '../custom_widgets/custom_button.dart';
 import '../getxController/music_cache_ctrl.dart';
+import '../getxController/play_list_ctrl.dart';
 import '../src/rust/api/music_tag_tool.dart';
 import '../tools/format_time.dart';
 import '../tools/general_style.dart';
@@ -24,20 +25,22 @@ const double _menuWidth = 180;
 const double _menuHeight = 48;
 const double _menuRadius = 0;
 
-final MusicCacheController _musicCacheController = Get.find<MusicCacheController>();
+final MusicCacheController _musicCacheController =
+    Get.find<MusicCacheController>();
 
 class EditMetadataDialog extends StatelessWidget {
   final MenuController menuController;
   final MusicCache metadata;
+  final int index;
   const EditMetadataDialog({
     super.key,
     required this.menuController,
     required this.metadata,
+    required this.index,
   });
 
   @override
   Widget build(BuildContext context) {
-
     return CustomBtn(
       fn: () {
         menuController.close();
@@ -67,10 +70,6 @@ class EditMetadataDialog extends StatelessWidget {
             var src = Uint8List(0).obs;
 
             var isSave = false.obs;
-
-            final currentIndex = _musicCacheController.items.indexWhere(
-              (v) => v.path == metadata.path,
-            );
 
             return AlertDialog(
               title: Text(metadata.title),
@@ -214,7 +213,7 @@ class EditMetadataDialog extends StatelessWidget {
                                             coverData_,
                                           );
                                           _musicCacheController
-                                              .items[currentIndex]
+                                              .items[index]
                                               .src = null;
                                         }
                                         isSave.value = false;
@@ -271,9 +270,9 @@ class EditMetadataDialog extends StatelessWidget {
                                             src: src.value,
                                           );
                                         }
-                                        await _musicCacheController.putMetadata(
+                                        MusicCache newCache= await _musicCacheController.putMetadata(
                                           path: metadata.path,
-                                          index: currentIndex,
+                                          index: _musicCacheController.items.indexWhere((v)=>v.path==metadata.path),
                                           data: EditableMetadata(
                                             title: titleCtrl.text,
                                             artist: artistCtrl.text,
@@ -281,6 +280,9 @@ class EditMetadataDialog extends StatelessWidget {
                                             genre: genreCtrl.text,
                                           ),
                                         );
+
+                                        PlayListController.syncMetadata(index: index,newCache: newCache);
+
                                         isSave.value = false;
                                         Navigator.pop(context, 'actions');
                                       },

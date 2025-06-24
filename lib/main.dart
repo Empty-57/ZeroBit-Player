@@ -6,6 +6,7 @@ import 'package:zerobit_player/HIveCtrl/adapters/user_playlist_adapter.dart';
 import 'package:zerobit_player/HIveCtrl/models/setting_cache_model.dart';
 import 'package:zerobit_player/HIveCtrl/models/user_playlist_model.dart';
 import 'package:zerobit_player/components/play_bar.dart';
+import 'package:zerobit_player/field/audio_source.dart';
 import 'package:zerobit_player/getxController/Audio_ctrl.dart';
 import 'package:zerobit_player/getxController/user_playlist_ctrl.dart';
 import 'package:zerobit_player/pages/local_music_page.dart';
@@ -73,12 +74,14 @@ void main() async {
   await Hive.openBox<SettingCache>(HiveBoxes.settingCacheBox);
   await Hive.openBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
 
+  Get.put(AudioSource());
+  Get.put(UserPlayListController());
   Get.put(OperateArea());
   Get.put(SettingController());
   Get.put(MusicCacheController());
   Get.put(AudioController());
   Get.put(ThemeService());
-  Get.put(UserPlayListController());
+
 
 
   await syncCache();
