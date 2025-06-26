@@ -234,7 +234,7 @@ class PlayList extends StatelessWidget {
           Expanded(
             child: Obx(() {
               final viewMode =
-                  _settingController.viewModeMap[OperateArea.allMusic]!;
+                  _settingController.viewModeMap[OperateArea.playList]!;
               final ScrollController scrollControllerList = ScrollController();
               final ScrollController scrollControllerGrid = ScrollController();
 
