@@ -195,7 +195,7 @@ class NestedObserver extends NavigatorObserver {
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  Widget _getNamedPage({required String name,required Object? args}) {
+  Widget _getNamedPage({required String name}) {
     switch (name) {
       case AppRoutes.home:
         return const LocalMusic();
