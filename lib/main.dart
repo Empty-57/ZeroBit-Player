@@ -204,7 +204,7 @@ class HomePage extends StatelessWidget {
       case AppRoutes.setting:
         return const Setting();
       case AppRoutes.playList:
-        return PlayList(args:args);
+        return PlayList();
     }
     return LocalMusic();
   }
