@@ -264,7 +264,7 @@ class HomePage extends StatelessWidget {
                     onGenerateRoute: (settings) {
                       return GetPageRoute(
                         settings: settings,
-                        page: () => _getNamedPage(name: settings.name!,args: settings.arguments),
+                        page: () => _getNamedPage(name: settings.name!),
                       );
                     },
                   ),
