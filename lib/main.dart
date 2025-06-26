@@ -173,7 +173,7 @@ class MainFrame extends StatelessWidget {
         GetPage(name: AppRoutes.home, page: () => const LocalMusic()),
         GetPage(name: AppRoutes.setting, page: () => const Setting()),
         GetPage(name: AppRoutes.userPlayList, page: () => const UserPlayList()),
-        GetPage(name: AppRoutes.playList, page: () => const PlayList(args: null,)),
+        GetPage(name: AppRoutes.playList, page: () => const PlayList()),
       ],
     )
     );
