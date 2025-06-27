@@ -277,7 +277,7 @@ class AudioController extends GetxController {
     if (currentIndex.value == -1 ||
         playListCacheItems.length == 1 ||
         playListCacheItems.isEmpty ||
-        playListCacheItems[currentIndex.value] == metadata) {
+        playListCacheItems[currentIndex.value].path == metadata.path) {
       return;
     }
     playListCacheItems.remove(metadata);
