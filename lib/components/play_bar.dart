@@ -9,7 +9,7 @@ import 'package:zerobit_player/tools/format_time.dart';
 import 'package:zerobit_player/tools/general_style.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
 
-import '../getxController/Audio_ctrl.dart';
+import '../getxController/audio_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 
 const double _barWidth = 700;

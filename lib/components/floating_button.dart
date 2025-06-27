@@ -4,7 +4,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../field/audio_source.dart';
 import '../field/operate_area.dart';
-import '../getxController/Audio_ctrl.dart';
+import '../getxController/audio_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../getxController/play_list_ctrl.dart';
 import '../tools/general_style.dart';

@@ -42,6 +42,7 @@ dependencies:
   dio: ^5.8.0+1
   convert: ^3.1.2
   flutter_colorpicker: ^1.1.0
+  palette_generator: ^0.3.3+7
   flutter_rust_bridge: 2.10.0
   rust_lib_zerobit_player:
     path: rust_builder

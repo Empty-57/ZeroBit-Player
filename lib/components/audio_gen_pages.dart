@@ -6,7 +6,7 @@ import 'package:zerobit_player/field/operate_area.dart';
 
 import '../custom_widgets/custom_button.dart';
 import '../custom_widgets/custom_dropMenu.dart';
-import '../getxController/Audio_ctrl.dart';
+import '../getxController/audio_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 import '../tools/audio_ctrl_mixin.dart';
 import '../tools/general_style.dart';

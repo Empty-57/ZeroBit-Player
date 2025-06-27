@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:zerobit_player/API/apis.dart';
-import 'package:zerobit_player/getxController/Audio_ctrl.dart';
+import 'package:zerobit_player/getxController/audio_ctrl.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:get/get.dart';
@@ -46,7 +46,7 @@ List<Widget> _genMenuItems({
       _audioController.allUserKey.map((v) {
         return MenuItemButton(
           onPressed: () {
-            _audioController.addToPlayList(metadata: metadata, userKey: v);
+            _audioController.addToAudioList(metadata: metadata, userKey: v);
           },
           child: Center(child: Text(v.split(playListTagSuffix)[0])),
         );

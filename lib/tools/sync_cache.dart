@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:zerobit_player/HIveCtrl/models/music_cahce_model.dart';
 
 import '../HIveCtrl/hive_manager.dart';
-import '../getxController/Audio_ctrl.dart';
+import '../getxController/audio_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 import '../src/rust/api/music_tag_tool.dart';

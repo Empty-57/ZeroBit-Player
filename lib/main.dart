@@ -7,7 +7,7 @@ import 'package:zerobit_player/HIveCtrl/models/setting_cache_model.dart';
 import 'package:zerobit_player/HIveCtrl/models/user_playlist_model.dart';
 import 'package:zerobit_player/components/play_bar.dart';
 import 'package:zerobit_player/field/audio_source.dart';
-import 'package:zerobit_player/getxController/Audio_ctrl.dart';
+import 'package:zerobit_player/getxController/audio_ctrl.dart';
 import 'package:zerobit_player/getxController/user_playlist_ctrl.dart';
 import 'package:zerobit_player/pages/local_music_page.dart';
 import 'package:zerobit_player/pages/playlist_page.dart';
