@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
-import '../HIveCtrl/hive_manager.dart';
 import '../field/audio_source.dart';
 import '../field/operate_area.dart';
 import '../getxController/Audio_ctrl.dart';
