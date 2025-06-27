@@ -338,7 +338,7 @@ class _ColorPicker extends StatelessWidget {
                         CustomBtn(
                           fn: () {
                             Navigator.pop(context, 'action');
-                            _settingController.themeColor.value = thtmeColor_;
+                            _settingController.themeColor.value = themeColor_;
                             _settingController.putCache();
                           },
                           backgroundColor: Colors.transparent,
