@@ -337,7 +337,7 @@ class AudioController extends GetxController {
           _userPlayListCacheBox.get(key: userKey)!.pathList;
       newList.remove(metadata.path);
 
-      PlayListController.items.removeWhere((v) => v.path == metadata.path);
+      PlayListController.audioListItems.removeWhere((v) => v.path == metadata.path);
       _userPlayListCacheBox.put(
         data: UserPlayListCache(pathList: newList, userKey: userKey),
         key: userKey,
