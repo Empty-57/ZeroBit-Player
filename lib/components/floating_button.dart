@@ -87,7 +87,7 @@ class FloatingButton extends StatelessWidget{
               }
 
               if(_audioController.allUserKey.contains(_audioSource.currentAudioSource.value)){
-                index=PlayListController.items.indexWhere((v)=>v.path==_audioController.currentPath.value);
+                index=PlayListController.audioListItems.indexWhere((v)=>v.path==_audioController.currentPath.value);
               }
 
               double targetOffsetList = (index * _itemHeight - middleOffset).clamp(0.0, scrollControllerList.position.maxScrollExtent,);
