@@ -235,7 +235,7 @@ class MusicTile extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (_settingController.viewModeMap[OperateArea.playList])
+                  if (_settingController.viewModeMap[operateArea])
                     Expanded(
                       flex: 2,
                       child: Text(
