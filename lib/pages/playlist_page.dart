@@ -258,6 +258,7 @@ class PlayList extends StatelessWidget {
                           highLightSubStyle: highLightSubStyle,
                           menuController: MenuController(),
                           audioSource: userArgs.userKey,
+                          operateArea: OperateArea.playList,
                           index: index,
                         );
                       },
