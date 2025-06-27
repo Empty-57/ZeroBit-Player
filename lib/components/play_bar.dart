@@ -16,7 +16,7 @@ const double _barWidth = 700;
 const double _barHeight = 64;
 const double _barWidthHalf = 350;
 
-const double _bottom = 16;
+const double _bottom = 4;
 const double _navigationWidth = 260;
 
 const double _radius = 6;
