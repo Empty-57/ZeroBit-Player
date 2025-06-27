@@ -265,6 +265,7 @@ class HomePage extends StatelessWidget {
                       return GetPageRoute(
                         settings: settings,
                         page: () => _getNamedPage(name: settings.name!),
+                        maintainState: false,
                       );
                     },
                   ),
