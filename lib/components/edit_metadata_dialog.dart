@@ -281,7 +281,7 @@ class EditMetadataDialog extends StatelessWidget {
                                           ),
                                         );
 
-                                        PlayListController.syncMetadata(index: index,newCache: newCache);
+                                        PlayListController.audioListSyncMetadata(index: index,newCache: newCache);
 
                                         isSave.value = false;
                                         Navigator.pop(context, 'actions');
