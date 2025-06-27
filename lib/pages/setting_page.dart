@@ -260,7 +260,7 @@ class _ColorPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextEditingController hexController = TextEditingController();
-    int thtmeColor_ = _settingController.themeColor.value;
+    int themeColor_ = _settingController.themeColor.value;
 
     return CustomBtn(
       fn: () {
