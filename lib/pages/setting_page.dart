@@ -316,7 +316,7 @@ class _ColorPicker extends StatelessWidget {
                       hexInputBar: false,
                       hexInputController: hexController,
                       onColorChanged: (Color color) {
-                        thtmeColor_ = color.toARGB32();
+                        themeColor_ = color.toARGB32();
                       },
                     ),
 
