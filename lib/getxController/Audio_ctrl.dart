@@ -34,7 +34,7 @@ class AudioController extends GetxController {
 
   final _userPlayListCacheBox = HiveManager.userPlayListCacheBox;
 
-  late List playListCacheItems = [..._musicCacheController.items];
+  late List<MusicCache> playListCacheItems = [..._musicCacheController.items];
 
   MusicCache? _hasNextAudioMetadata;
 
