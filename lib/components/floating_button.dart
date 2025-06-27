@@ -24,8 +24,6 @@ final AudioController _audioController = Get.find<AudioController>();
 
 final AudioSource _audioSource=Get.find<AudioSource>();
 
-final _userPlayListCacheBox=HiveManager.userPlayListCacheBox;
-
 class _FloatingBtn extends StatelessWidget {
   final String tooltip;
   final IconData icon;
