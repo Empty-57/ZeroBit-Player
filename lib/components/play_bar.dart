@@ -338,6 +338,7 @@ class PlayBar extends StatelessWidget {
                 Container(
                   width: _barWidth,
                   height: _barHeight,
+                  margin: EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(_radius),
                     color: Theme.of(context).colorScheme.surfaceContainer,
