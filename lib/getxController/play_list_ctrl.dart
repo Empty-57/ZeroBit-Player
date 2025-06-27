@@ -1,10 +1,8 @@
-import 'dart:typed_data';
-
-import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/HIveCtrl/models/music_cahce_model.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
+import 'package:zerobit_player/tools/audio_ctrl_mixin.dart';
 
 import '../HIveCtrl/hive_manager.dart';
 import '../HIveCtrl/models/user_playlist_model.dart';
@@ -15,17 +13,21 @@ import 'music_cache_ctrl.dart';
 final MusicCacheController _musicCacheController =
     Get.find<MusicCacheController>();
 
-class PlayListController extends GetxController {
+class PlayListController extends GetxController with AudioControllerGenClass {
   final UserPlayListCache userArgs;
   PlayListController({required this.userArgs});
-
-  static final items = <MusicCache>[].obs;
 
   final _userPlayListCacheBox = HiveManager.userPlayListCacheBox;
 
   final SettingController _settingController = Get.find<SettingController>();
 
-  static final headCover =kTransparentImage.obs;
+  @override
+  final headCover =kTransparentImage.obs;
+
+  static final audioListItems = <MusicCache>[].obs;
+
+  @override
+  RxList<MusicCache> get items => audioListItems;
 
   @override
   void onInit() {
@@ -45,7 +47,7 @@ class PlayListController extends GetxController {
   }
 
   void _loadData() async{
-    items.value =
+    audioListItems.value =
         _musicCacheController.items
             .where((v) => userArgs.pathList.contains(v.path))
             .toList();
@@ -62,20 +64,13 @@ class PlayListController extends GetxController {
       itemReverse();
     }
 
-    if(items.isNotEmpty){
+    if(audioListItems.isNotEmpty){
       headCover.value=await getCover(
-      path: items[0].path,
+      path: audioListItems[0].path,
       sizeFlag: 1,
     )??kTransparentImage;
     }
 
-  }
-
-  Future<Uint8List?> getHeadCover(){
-    return getCover(
-      path: items[0].path,
-      sizeFlag: 1,
-    );
   }
 
   String _getSortType({required int type, required MusicCache data}) {
@@ -92,8 +87,9 @@ class PlayListController extends GetxController {
     return data.title;
   }
 
+  @override
   void itemReSort({required int type}) {
-    items.sort(
+    audioListItems.sort(
       (a, b) => _getSortType(
         type: type,
         data: a,
@@ -101,26 +97,14 @@ class PlayListController extends GetxController {
     );
   }
 
+  @override
   void itemReverse() {
-    items.assignAll(items.reversed.toList());
+    audioListItems.assignAll(audioListItems.reversed.toList());
   }
 
-  Future<void> putMetadata({
-    required String path,
-    required int index,
-    required EditableMetadata data,
-  }) async {
-    final newCache = await _musicCacheController.putMetadata(
-      path: path,
-      index: index,
-      data: data,
-    );
-    items[index] = newCache;
-  }
 
-  static void syncMetadata({required int index, required MusicCache newCache,}){
-    PlayListController.items[index] = newCache;
+ static void audioListSyncMetadata({required int index, required MusicCache newCache,}){
+    audioListItems[index] = newCache;
   }
-
 
 }

@@ -3,10 +3,13 @@ import 'package:zerobit_player/HIveCtrl/models/music_cahce_model.dart';
 import 'package:get/get.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
 import 'package:zerobit_player/field/operate_area.dart';
-
 import '../src/rust/api/music_tag_tool.dart';
+import '../tools/audio_ctrl_mixin.dart';
 
-class MusicCacheController extends GetxController {
+
+class MusicCacheController extends GetxController with AudioControllerGenClass {
+
+  @override
   final items = <MusicCache>[].obs;
 
   final _musicCacheBox = HiveManager.musicCacheBox;
@@ -42,6 +45,7 @@ class MusicCacheController extends GetxController {
     return data.title;
   }
 
+  @override
   void itemReSort({required int type}) {
     items.sort(
       (a, b) => _getSortType(
@@ -51,6 +55,7 @@ class MusicCacheController extends GetxController {
     );
   }
 
+  @override
   void itemReverse() {
     items.assignAll(items.reversed.toList());
   }

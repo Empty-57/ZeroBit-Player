@@ -216,20 +216,10 @@ Future<List<Map<String, dynamic>>?> _neGetLrcBySearch({required String text,requ
 
 
 Future<dynamic> saveCoverByText({required String text, required String songPath,}) async {
-  switch(_settingController.apiIndex.value){
-    case 0:
-      return await _qmSaveCoverByText(text: text, songPath: songPath);
-    case 1:
-      return await _neSaveCoverByText(text: text, songPath: songPath);
-  }
+  return await[_qmSaveCoverByText,_neSaveCoverByText][_settingController.apiIndex.value](text: text, songPath: songPath);
 }
 
 Future<dynamic> getLrcBySearch({required String text,required int offset,required int limit})async{
-    switch(_settingController.apiIndex.value){
-    case 0:
-      return await _qmGetLrcBySearch(text: text,offset: offset,limit: limit);
-    case 1:
-      return await _neGetLrcBySearch(text: text,offset: offset,limit: limit);
-  }
+  return await[_qmGetLrcBySearch,_neGetLrcBySearch][_settingController.apiIndex.value](text: text,offset: offset,limit: limit);
 }
 
