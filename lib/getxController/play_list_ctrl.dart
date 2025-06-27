@@ -24,6 +24,8 @@ class PlayListController extends GetxController {
 
   final SettingController _settingController = Get.find<SettingController>();
 
+  static final headCover =kTransparentImage.obs;
+
   @override
   void onInit() {
     super.onInit();
