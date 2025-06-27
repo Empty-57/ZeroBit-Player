@@ -295,7 +295,7 @@ class AudioController extends GetxController {
     _hasNextAudioMetadata = metadata;
   }
 
-  void addToPlayList({required MusicCache metadata, required String userKey}) {
+  void addToAudioList({required MusicCache metadata, required String userKey}) {
     if (allUserKey.contains(userKey)) {
       List<String> newList = _userPlayListCacheBox.get(key: userKey)!.pathList;
 
