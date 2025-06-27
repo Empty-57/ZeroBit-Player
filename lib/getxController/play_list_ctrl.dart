@@ -43,7 +43,7 @@ class PlayListController extends GetxController {
     );
   }
 
-  void _loadData() {
+  void _loadData() async{
     items.value =
         _musicCacheController.items
             .where((v) => userArgs.pathList.contains(v.path))
