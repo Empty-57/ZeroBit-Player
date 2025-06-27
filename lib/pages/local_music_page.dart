@@ -199,6 +199,7 @@ class LocalMusic extends StatelessWidget {
                           highLightSubStyle: highLightSubStyle,
                           menuController: MenuController(),
                           audioSource: AudioSource.allMusic,
+                          operateArea: OperateArea.allMusic,
                           index: index,
                         );
                       },
