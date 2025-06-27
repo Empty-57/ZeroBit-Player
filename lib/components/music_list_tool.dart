@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/getxController/Audio_ctrl.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
-import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
