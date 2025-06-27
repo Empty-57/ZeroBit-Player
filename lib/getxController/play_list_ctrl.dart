@@ -60,6 +60,14 @@ class PlayListController extends GetxController {
     if (_settingController.isReverse.value) {
       itemReverse();
     }
+
+    if(items.isNotEmpty){
+      headCover.value=await getCover(
+      path: items[0].path,
+      sizeFlag: 1,
+    )??kTransparentImage;
+    }
+
   }
 
   Future<Uint8List?> getHeadCover(){
