@@ -28,6 +28,7 @@ class PlayListController extends GetxController {
 
   @override
   void onInit() {
+    headCover.value=kTransparentImage;
     super.onInit();
     _loadData();
   }
