@@ -163,6 +163,7 @@ class MusicTile extends StatelessWidget {
     required this.highLightSubStyle,
     required this.menuController,
     required this.audioSource,
+    required this.operateArea,
     required this.index,
   });
 
