@@ -152,6 +152,7 @@ class MusicTile extends StatelessWidget {
   final TextStyle highLightSubStyle;
   final MenuController menuController;
   final String audioSource;
+  final String operateArea;
   final int index;
 
   const MusicTile({
