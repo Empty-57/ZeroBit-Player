@@ -22,6 +22,7 @@ class SettingController extends GetxController {
   final isReverse=false.obs;
   final themeColor=0xff27272a.obs;
   final playMode=0.obs;
+  final dynamicThemeColor=true.obs;
 
 
   final Map<int,String> apiMap={
@@ -64,6 +65,7 @@ class SettingController extends GetxController {
       isReverse.value=cache.isReverse;
       themeColor.value=cache.themeColor;
       playMode.value=cache.playMode;
+      dynamicThemeColor.value=cache.dynamicThemeColor;
     }
 
     await setVolume(vol: cache?.volume??1.0);
@@ -87,6 +89,7 @@ class SettingController extends GetxController {
         isReverse: isReverse.value,
         themeColor: themeColor.value,
         playMode: playMode.value,
+        dynamicThemeColor: dynamicThemeColor.value,
       ),
       key: _key,
     );

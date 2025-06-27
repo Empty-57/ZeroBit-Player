@@ -366,11 +366,17 @@ class _ColorPicker extends StatelessWidget {
   }
 }
 
+final isb=true.obs;
 class Setting extends StatelessWidget {
   const Setting({super.key});
 
   @override
   Widget build(BuildContext context) {
+
+    WidgetStateProperty<Color?> switchTrackColor = WidgetStateProperty<Color?>.fromMap(
+      <WidgetStatesConstraint, Color>{WidgetState.selected: Theme.of(context).colorScheme.primary},
+    );
+
     return Container(
       alignment: Alignment.centerLeft,
       padding: EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
@@ -415,6 +421,27 @@ class Setting extends StatelessWidget {
             children: <Widget>[
               Text('主题色', style: generalTextStyle(ctx: context, size: 'lg')),
               const _ColorPicker(),
+            ],
+          ),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              Text('动态主题色', style: generalTextStyle(ctx: context, size: 'lg')),
+              Material(
+                color: Colors.transparent,
+                child: Obx(()=>Switch(
+                value: _settingController.dynamicThemeColor.value,
+                trackColor: switchTrackColor,
+                thumbColor:  WidgetStatePropertyAll(Theme.of(context).colorScheme.surface) ,
+                onChanged: (bool value) {
+                  _settingController.dynamicThemeColor.value=value;
+                  _settingController.putCache();
+                },
+              ),
+                ),
+              )
             ],
           ),
 

@@ -2,12 +2,15 @@ import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
+import 'package:palette_generator/palette_generator.dart';
+import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/HIveCtrl/models/user_playlist_model.dart';
 import 'package:zerobit_player/components/get_snack_bar.dart';
 import 'package:zerobit_player/getxController/play_list_ctrl.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
 import 'package:zerobit_player/getxController/user_playlist_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
+import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 
 import '../HIveCtrl/hive_manager.dart';
 import '../HIveCtrl/models/music_cahce_model.dart';
@@ -86,8 +89,32 @@ class AudioController extends GetxController {
       if (currentIndex.value == -1) {
         currentPath.value = '';
         update([currentPath.value, if (_lastPath != null) _lastPath!]);
+        return;
+      }
+      if(_settingController.dynamicThemeColor.value){
+        await _setThemeColor4Cover();
       }
     });
+  }
+
+  Future<void> _setThemeColor4Cover() async {
+    final src =
+        playListCacheItems[currentIndex.value].src ??
+        await getCover(
+          path: playListCacheItems[currentIndex.value].path,
+          sizeFlag: 0,
+        ) ??
+        kTransparentImage;
+    final PaletteGenerator generator = await PaletteGenerator.fromImageProvider(
+      MemoryImage(src),
+      size: Size(150, 150),
+    );
+
+    if (generator.dominantColor != null) {
+      _settingController.themeColor.value =
+          generator.dominantColor!.color.toARGB32();
+      _settingController.putCache();
+    }
   }
 
   void syncCurrentIndex() {
@@ -300,7 +327,11 @@ class AudioController extends GetxController {
       List<String> newList = _userPlayListCacheBox.get(key: userKey)!.pathList;
 
       if (newList.contains(metadata.path)) {
-        showSnackBar(title: "WARNING", msg: "歌单 ${userKey.split(playListTagSuffix)[0]} 存在重复歌曲！",duration: Duration(milliseconds: 1000));
+        showSnackBar(
+          title: "WARNING",
+          msg: "歌单 ${userKey.split(playListTagSuffix)[0]} 存在重复歌曲！",
+          duration: Duration(milliseconds: 1000),
+        );
 
         return;
       }
@@ -314,11 +345,16 @@ class AudioController extends GetxController {
 
       _userPlayListController.initHive();
 
-    if (!playListCacheItems.any((v) => v.path == metadata.path)) {
-      playListCacheItems.add(metadata);
-      syncCurrentIndex();
-    }
-    showSnackBar(title: "OK", msg: "已将 ${metadata.title} 添加到歌单 ${userKey.split(playListTagSuffix)[0]}",duration: Duration(milliseconds: 1000));
+      if (!playListCacheItems.any((v) => v.path == metadata.path)) {
+        playListCacheItems.add(metadata);
+        syncCurrentIndex();
+      }
+      showSnackBar(
+        title: "OK",
+        msg:
+            "已将 ${metadata.title} 添加到歌单 ${userKey.split(playListTagSuffix)[0]}",
+        duration: Duration(milliseconds: 1000),
+      );
     }
   }
 
@@ -337,14 +373,21 @@ class AudioController extends GetxController {
           _userPlayListCacheBox.get(key: userKey)!.pathList;
       newList.remove(metadata.path);
 
-      PlayListController.audioListItems.removeWhere((v) => v.path == metadata.path);
+      PlayListController.audioListItems.removeWhere(
+        (v) => v.path == metadata.path,
+      );
       _userPlayListCacheBox.put(
         data: UserPlayListCache(pathList: newList, userKey: userKey),
         key: userKey,
       );
       playListCacheItems.remove(metadata);
-    syncCurrentIndex();
-    showSnackBar(title: "OK", msg: "已将 ${metadata.title} 从歌单 ${userKey.split(playListTagSuffix)[0]}删除！",duration: Duration(milliseconds: 1000));
+      syncCurrentIndex();
+      showSnackBar(
+        title: "OK",
+        msg:
+            "已将 ${metadata.title} 从歌单 ${userKey.split(playListTagSuffix)[0]}删除！",
+        duration: Duration(milliseconds: 1000),
+      );
     }
   }
 }

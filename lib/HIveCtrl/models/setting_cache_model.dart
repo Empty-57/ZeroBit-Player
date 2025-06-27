@@ -8,6 +8,7 @@ class SettingCache {
   final bool isReverse;
   final int themeColor;
   final int playMode;
+  final bool dynamicThemeColor;
 
   const SettingCache({
     required this.themeMode,
@@ -19,5 +20,6 @@ class SettingCache {
     required this.isReverse,
     required this.themeColor,
     required this.playMode,
+    required this.dynamicThemeColor,
   });
 }
