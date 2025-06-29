@@ -85,11 +85,7 @@ class AudioController extends GetxController {
 
     ever(currentIndex, (_) async {
       if (currentIndex.value == -1) {
-        currentPath.value = '';
         return;
-      }
-      if (_settingController.dynamicThemeColor.value) {
-        await _setThemeColor4Cover();
       }
     });
   }
@@ -139,6 +135,10 @@ class AudioController extends GetxController {
 
       update([metadata.path, if (_lastPath != null) _lastPath!]);
       await playFile(path: metadata.path);
+
+      if (_settingController.dynamicThemeColor.value) {
+        await _setThemeColor4Cover();
+      }
     } catch (e) {
       currentPath.value = oldPath;
       currentIndex.value = oldIndex;
@@ -272,8 +272,10 @@ class AudioController extends GetxController {
     if (currentIndex.value == -1) {
       return;
     }
-    currentIndex.value++;
-    if (currentIndex.value > playListCacheItems.length - 1) {
+
+    if (currentIndex.value < playListCacheItems.length - 1) {
+      currentIndex.value++;
+    } else {
       currentIndex.value = 0;
     }
 
@@ -299,9 +301,12 @@ class AudioController extends GetxController {
 
   void insertNext({required MusicCache metadata}) {
     if (currentIndex.value == -1 ||
-        playListCacheItems.length == 1 ||
-        playListCacheItems.isEmpty ||
         playListCacheItems[currentIndex.value].path == metadata.path) {
+      showSnackBar(
+        title: "WARNING",
+        msg: "无效操作！",
+        duration: Duration(milliseconds: 1000),
+      );
       return;
     }
     playListCacheItems.remove(metadata);
@@ -339,9 +344,11 @@ class AudioController extends GetxController {
       key: userKey,
     );
 
-    if (!playListCacheItems.any((v) => v.path == metadata.path)) {
-      playListCacheItems.add(metadata);
-      syncCurrentIndex();
+    if (_audioSource.currentAudioSource.value == userKey) {
+      if (!playListCacheItems.any((v) => v.path == metadata.path)) {
+        playListCacheItems.add(metadata);
+        syncCurrentIndex();
+      }
     }
 
     showSnackBar(
@@ -363,7 +370,7 @@ class AudioController extends GetxController {
 
     selectedList.removeWhere((v) => newList.contains(v.path));
 
-    final l=selectedList.length;
+    final l = selectedList.length;
 
     newList.addAll(selectedList.map((v) => v.path));
 
@@ -376,13 +383,14 @@ class AudioController extends GetxController {
       (v) => playListCacheItems.any((p) => p.path == v.path),
     );
 
-    playListCacheItems.addAll(selectedList);
-    syncCurrentIndex();
+    if (_audioSource.currentAudioSource.value == userKey) {
+      playListCacheItems.addAll(selectedList);
+      syncCurrentIndex();
+    }
 
     showSnackBar(
       title: "OK",
-      msg:
-          "已将去重后的 $l 首歌添加到歌单 ${userKey.split(playListTagSuffix)[0]}",
+      msg: "已将去重后的 $l 首歌添加到歌单 ${userKey.split(playListTagSuffix)[0]}",
       duration: Duration(milliseconds: 1000),
     );
   }
@@ -409,8 +417,12 @@ class AudioController extends GetxController {
         data: UserPlayListCache(pathList: newList, userKey: userKey),
         key: userKey,
       );
-      playListCacheItems.remove(metadata);
-      syncCurrentIndex();
+
+      if (_audioSource.currentAudioSource.value == userKey) {
+        playListCacheItems.remove(metadata);
+        syncCurrentIndex();
+      }
+
       showSnackBar(
         title: "OK",
         msg:
@@ -420,32 +432,38 @@ class AudioController extends GetxController {
     }
   }
 
-  void audioRemoveAll({required String userKey, required List<MusicCache> removeList}){
+  void audioRemoveAll({
+    required String userKey,
+    required List<MusicCache> removeList,
+  }) {
     if (!allUserKey.contains(userKey)) {
       return;
     }
     List<String> newList = _userPlayListCacheBox.get(key: userKey)!.pathList;
 
-    newList.removeWhere((v)=>removeList.any((p)=>p.path==v));
+    newList.removeWhere((v) => removeList.any((p) => p.path == v));
 
     _userPlayListCacheBox.put(
       data: UserPlayListCache(pathList: newList, userKey: userKey),
       key: userKey,
     );
 
-    playListCacheItems.removeWhere((v)=>removeList.any((p)=>p.path==v.path));
-    syncCurrentIndex();
+    if (_audioSource.currentAudioSource.value == userKey) {
+      playListCacheItems.removeWhere(
+        (v) => removeList.any((p) => p.path == v.path),
+      );
+      syncCurrentIndex();
+    }
 
     PlayListController.audioListItems.removeWhere(
-        (v) => removeList.any((p)=>p.path==v.path),
-      );
+      (v) => removeList.any((p) => p.path == v.path),
+    );
 
     showSnackBar(
-        title: "OK",
-        msg:
-            "已将去重后的 ${removeList.length} 首歌从歌单 ${userKey.split(playListTagSuffix)[0]}删除！",
-        duration: Duration(milliseconds: 1000),
-      );
+      title: "OK",
+      msg:
+          "已将去重后的 ${removeList.length} 首歌从歌单 ${userKey.split(playListTagSuffix)[0]}删除！",
+      duration: Duration(milliseconds: 1000),
+    );
   }
-
 }

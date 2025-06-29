@@ -23,6 +23,8 @@ const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 
 const int _coverBigRenderSize = 800;
 
+const double btnHeight=48;
+
 final SettingController _settingController = Get.find<SettingController>();
 final AudioController _audioController = Get.find<AudioController>();
 
@@ -159,9 +161,8 @@ class AudioGenPages extends StatelessWidget{
                               .sortMap[operateArea]
                           as int] ??
                       "未指定",
-                  radius: 4,
                   btnWidth: 140,
-                  btnHeight: 48,
+                  btnHeight: btnHeight,
                   itemWidth: 140,
                   itemHeight: 48,
                   btnIcon: PhosphorIconsLight.funnelSimple,
@@ -176,12 +177,12 @@ class AudioGenPages extends StatelessWidget{
                     _audioController.audioRemoveAll(userKey: audioSource, removeList: [...selectedList]);
                   },
                   icon: PhosphorIconsLight.trash,
-                  radius: 4,
-                  btnHeight: 48,
+                  btnHeight: btnHeight,
                   btnWidth: 48,
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                     contentColor: Colors.red,
                     tooltip: "删除所选项",
+                      iconSize: 'lg',
                 );
                   }
 
@@ -198,11 +199,11 @@ class AudioGenPages extends StatelessWidget{
               _audioController.addAllToAudioList(selectedList: [...selectedList], userKey: v);
             },
             btnWidth: 160,
-            btnHeight: 48,
-            radius: 4,
+            btnHeight: btnHeight,
             label: v.split(playListTagSuffix)[0],
             mainAxisAlignment: MainAxisAlignment.center,
             backgroundColor: Colors.transparent,
+          iconSize: 'lg',
           );
       }).toList(),
                     controller: playListMenuController,
@@ -211,11 +212,11 @@ class AudioGenPages extends StatelessWidget{
                     playListMenuController.open();
                   },
                   icon: PhosphorIconsLight.plus,
-                  radius: 4,
-                  btnHeight: 48,
+                  btnHeight: btnHeight,
                   btnWidth: 160,
                     label: "添加到歌单",
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      iconSize: 'lg',
                 ),
                   ):CustomBtn(
                   fn: () {
@@ -229,11 +230,11 @@ class AudioGenPages extends StatelessWidget{
                       _settingController.isReverse.value
                           ? PhosphorIconsLight.arrowDown
                           : PhosphorIconsLight.arrowUp,
-                  radius: 4,
-                  btnHeight: 48,
+                  btnHeight: btnHeight,
                   btnWidth: 48,
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   tooltip: _settingController.isReverse.value ? '降序' : '升序',
+                  iconSize: 'lg',
                 ),
               ),
 
@@ -249,11 +250,11 @@ class AudioGenPages extends StatelessWidget{
                       selectedList.isNotEmpty
                           ? PhosphorIconsLight.selectionSlash
                           : PhosphorIconsLight.selectionAll,
-                  radius: 4,
-                  btnHeight: 48,
+                  btnHeight: btnHeight,
                   btnWidth: 48,
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   tooltip: selectedList.isNotEmpty ? '清空选择' : '全选',
+                iconSize: 'lg',
                 ):CustomBtn(
                   fn: () {
                     _settingController.viewModeMap[operateArea] =
@@ -273,6 +274,7 @@ class AudioGenPages extends StatelessWidget{
                       _settingController.viewModeMap[operateArea]
                           ? "列表视图"
                           : "表格视图",
+                iconSize: 'lg',
                 )),
 
               Obx(
@@ -285,11 +287,11 @@ class AudioGenPages extends StatelessWidget{
                       isMulSelect.value
                           ? PhosphorIconsLight.xSquare
                           : PhosphorIconsLight.selection,
-                  radius: 4,
-                  btnHeight: 48,
+                  btnHeight: btnHeight,
                   btnWidth: 48,
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   tooltip: isMulSelect.value ? '退出多选' : '多选模式',
+                  iconSize: 'lg',
                 ),
               ),
 
