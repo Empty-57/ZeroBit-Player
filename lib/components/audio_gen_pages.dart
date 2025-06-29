@@ -275,6 +275,7 @@ class AudioGenPages extends StatelessWidget{
                   FloatingButton(
                     scrollControllerList: scrollControllerList,
                     scrollControllerGrid: scrollControllerGrid,
+                    operateArea: operateArea,
                   ),
                 ],
               );
