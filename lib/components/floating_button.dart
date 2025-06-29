@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
-import '../field/audio_source.dart';
 import '../field/operate_area.dart';
 import '../getxController/audio_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
@@ -20,7 +19,6 @@ final MusicCacheController _musicCacheController =
 
 final AudioController _audioController = Get.find<AudioController>();
 
-final AudioSource _audioSource = Get.find<AudioSource>();
 
 class _FloatingBtn extends StatelessWidget {
   final String tooltip;
@@ -118,8 +116,6 @@ class FloatingButton extends StatelessWidget {
                   (Get.height - _itemHeight - offset) / 2;
 
               final int index = _getIndex();
-
-              debugPrint(index.toString());
 
               double targetOffsetList = (index * _itemHeight - middleOffset)
                   .clamp(0.0, scrollControllerList.position.maxScrollExtent);

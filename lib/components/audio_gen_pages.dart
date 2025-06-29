@@ -225,6 +225,7 @@ class AudioGenPages extends StatelessWidget{
                       itemCount: controller.items.length,
                       itemExtent: _itemHeight,
                       cacheExtent: _itemHeight * 1,
+                      padding: EdgeInsets.only(bottom: _itemHeight*2),
                       itemBuilder: (context, index) {
                         final metadata = controller.items[index];
 
@@ -255,6 +256,7 @@ class AudioGenPages extends StatelessWidget{
                         childAspectRatio: 1.0,
                         mainAxisExtent: _itemHeight,
                       ),
+                      padding: EdgeInsets.only(bottom: _itemHeight*2),
                       itemBuilder: (context, index) {
                         final metadata = controller.items[index];
 
