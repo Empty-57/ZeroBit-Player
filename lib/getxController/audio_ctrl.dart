@@ -329,7 +329,7 @@ class AudioController extends GetxController {
       if (newList.contains(metadata.path)) {
         showSnackBar(
           title: "WARNING",
-          msg: "歌单 ${userKey.split(playListTagSuffix)[0]} 存在重复歌曲！",
+          msg: "歌单 ${userKey.split(playListTagSuffix)[0]} 存在重复歌曲 ${metadata.title} ！",
           duration: Duration(milliseconds: 1000),
         );
 
