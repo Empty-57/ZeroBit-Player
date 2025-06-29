@@ -3,8 +3,8 @@ import 'package:zerobit_player/HIveCtrl/models/user_playlist_model.dart';
 import 'package:zerobit_player/components/get_snack_bar.dart';
 
 import '../HIveCtrl/hive_manager.dart';
+import '../tools/tag_suffix.dart';
 
-const String playListTagSuffix = '<!！@#￥>user';
 
 class UserPlayListController extends GetxController {
   final items = <UserPlayListCache>[].obs;

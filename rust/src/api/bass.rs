@@ -1,4 +1,4 @@
-use crate::api::bass::bass_errs::get_err_info;
+use crate::api::bass::bass_errs::{get_err_info, BASS_ERROR_HANDLE};
 use crate::api::bass::bass_flags::*;
 use crate::api::bass::bass_func::*;
 use crate::api::bass::basswasapi_func::*;
@@ -208,7 +208,7 @@ impl BassApi {
         }
     }
 
-    fn get_wasapi_info(&self) -> Result<(), String> {
+    fn get_wasapi_info(&mut self) -> Result<(), String> {
         let mut info = BASS_WASAPI_INFO::default();
         unsafe {
             (self.wasapi_free)();
@@ -225,7 +225,7 @@ impl BassApi {
         Ok(())
     }
 
-    fn bass_init(&self) -> Result<(), String> {
+    fn bass_init(&mut self) -> Result<(), String> {
         unsafe {
             (self.free)();
         };
@@ -280,7 +280,7 @@ impl BassApi {
                         if BASS_API.lock().unwrap().as_ref().unwrap().stream_handle==0 {
                             continue;
                         }
-                        let pos = BASS_API.lock().unwrap().as_ref().unwrap().get_pos();
+                        let pos = BASS_API.lock().unwrap().as_mut().unwrap().get_pos();
                         let _ = sink.add(pos);
 
                     }
@@ -289,7 +289,7 @@ impl BassApi {
         );
     }
     
-    fn set_volume(&self, mut vol: f32) -> Result<(), String> {
+    fn set_volume(&mut self, mut vol: f32) -> Result<(), String> {
         vol = vol.clamp(0.0, 1.0);
         *TARGET_VOLUME.lock().unwrap() = vol;
         let ok = unsafe {
@@ -301,7 +301,7 @@ impl BassApi {
         self.or_err_(ok)
     }
 
-    fn fade_in(&self) -> Result<(), String> {
+    fn fade_in(&mut self) -> Result<(), String> {
          let ok = unsafe {
             if self.stream_handle==0 {
             return Ok(());
@@ -315,7 +315,7 @@ impl BassApi {
         }
     }
 
-    fn fade_out(&self) -> Result<(), String> {
+    fn fade_out(&mut self) -> Result<(), String> {
         let ok = unsafe {
             if self.stream_handle==0 {
             return Ok(());
@@ -330,7 +330,7 @@ impl BassApi {
         }
     }
     
-    fn set_sync(&self,sync_type:u32,call_back:SYNCPROC)-> Result<(), String> {
+    fn set_sync(&mut self, sync_type:u32, call_back:SYNCPROC) -> Result<(), String> {
         unsafe { 
             let sync_handle = (self.bass_set_sync)(
                 self.stream_handle, 
@@ -368,7 +368,7 @@ impl BassApi {
         Ok(())
     }
 
-    fn resume(&self) -> Result<(), String> {
+    fn resume(&mut self) -> Result<(), String> {
         if let Some(state) = self.get_state() {
             if state == BASS_ACTIVE_PLAYING {
             return Ok(());
@@ -382,7 +382,7 @@ impl BassApi {
         self.or_err_(result)
     }
 
-    fn pause(&self) -> Result<(), String> {
+    fn pause(&mut self) -> Result<(), String> {
         if let Some(state) = self.get_state() {
             if state == BASS_ACTIVE_PAUSED {
             return Ok(());
@@ -396,7 +396,7 @@ impl BassApi {
         self.or_err_(result)
     }
 
-    fn stop(&self) -> Result<(), String> {
+    fn stop(&mut self) -> Result<(), String> {
         if self.stream_handle==0 {
             return Ok(());
         }
@@ -406,7 +406,7 @@ impl BassApi {
         self.or_err_(result)
     }
 
-    fn toggle(&self) -> Result<(), String> {
+    fn toggle(&mut self) -> Result<(), String> {
         if let Some(state) = self.get_state() {
             match state {
             BASS_ACTIVE_STOPPED | BASS_ACTIVE_PAUSED_DEVICE => {
@@ -423,7 +423,7 @@ impl BassApi {
         
     }
     
-    fn get_pos(&self)-> f64{
+    fn get_pos(&mut self) -> f64{
         if self.stream_handle==0 {
             return 0.0;
         }
@@ -431,6 +431,9 @@ impl BassApi {
         let pos = unsafe { (self.get_pos)(self.stream_handle,BASS_POS_BYTE) };
         let err_code = unsafe { (self.error_get_code)() };
         if err_code != 0 {
+            if err_code==BASS_ERROR_HANDLE { 
+                    self.stream_free();
+                }
             println!("BASS failed, error code: {}", err_code);
             0.0
         }else { 
@@ -438,7 +441,7 @@ impl BassApi {
         }
     }
     
-    fn set_pos(&self, pos: f64)  -> Result<(), String>{
+    fn set_pos(&mut self, pos: f64) -> Result<(), String>{
         if self.stream_handle==0 {
             return Ok(());
         }
@@ -465,12 +468,16 @@ impl BassApi {
         }
     }
 
-    fn or_err_(&self, result: i32) -> Result<(), String> {
+    fn or_err_(&mut self, result: i32) -> Result<(), String> {
         if result == 0 {
             let err_code = unsafe { (self.error_get_code)() };
             if err_code==0 { 
                 Ok(())
             }else { 
+                if err_code==BASS_ERROR_HANDLE { 
+                    self.stream_free();
+                }
+                
                 Err(get_err_info(err_code).unwrap_or_else(|| format!("Unknown BASS error | ERR_CODE<{}>", err_code)))
             }
         } else {
@@ -479,7 +486,7 @@ impl BassApi {
     }
 
     ///有大问题
-    fn set_exclusive_mode(&self, exclusive: bool) -> Result<(), String> {
+    fn set_exclusive_mode(&mut self, exclusive: bool) -> Result<(), String> {
         unsafe {
             (self.wasapi_free)();
         };
@@ -527,7 +534,7 @@ pub fn load_lib() -> Result<(), String> {
 
 #[flutter_rust_bridge::frb]
 pub fn init_bass() -> Result<(), String> {
-    BASS_API.lock().unwrap().as_ref().unwrap().bass_init()
+    BASS_API.lock().unwrap().as_mut().unwrap().bass_init()
 }
 
 #[flutter_rust_bridge::frb]
@@ -546,7 +553,7 @@ pub fn set_exclusive_mode(exclusive: bool) -> Result<(), String> {
     BASS_API
         .lock()
         .unwrap()
-        .as_ref()
+        .as_mut()
         .unwrap()
         .set_exclusive_mode(exclusive)
 }
@@ -558,32 +565,32 @@ pub fn play_file(path: String) -> Result<(), String> {
 
 #[flutter_rust_bridge::frb]
 pub fn resume() -> Result<(), String> {
-    BASS_API.lock().unwrap().as_ref().unwrap().resume()
+    BASS_API.lock().unwrap().as_mut().unwrap().resume()
 }
 
 #[flutter_rust_bridge::frb]
 pub fn pause() -> Result<(), String> {
-    BASS_API.lock().unwrap().as_ref().unwrap().pause()
+    BASS_API.lock().unwrap().as_mut().unwrap().pause()
 }
 
 #[flutter_rust_bridge::frb]
 pub fn stop() -> Result<(), String> {
-    BASS_API.lock().unwrap().as_ref().unwrap().stop()
+    BASS_API.lock().unwrap().as_mut().unwrap().stop()
 }
 
 #[flutter_rust_bridge::frb]
 pub fn get_position() -> f64 {
-    BASS_API.lock().unwrap().as_ref().unwrap().get_pos()
+    BASS_API.lock().unwrap().as_mut().unwrap().get_pos()
 }
 
 #[flutter_rust_bridge::frb]
 pub fn set_position(pos: f64)-> Result<(), String> {
-    BASS_API.lock().unwrap().as_ref().unwrap().set_pos(pos)
+    BASS_API.lock().unwrap().as_mut().unwrap().set_pos(pos)
 }
 
 #[flutter_rust_bridge::frb]
 pub fn toggle() -> Result<(), String> {
-    BASS_API.lock().unwrap().as_ref().unwrap().toggle()
+    BASS_API.lock().unwrap().as_mut().unwrap().toggle()
 }
 
 #[flutter_rust_bridge::frb]
@@ -593,5 +600,5 @@ pub fn get_volume() -> Result<f32, String> {
 
 #[flutter_rust_bridge::frb]
 pub fn set_volume(vol: f32) -> Result<(), String> {
-    BASS_API.lock().unwrap().as_ref().unwrap().set_volume(vol)
+    BASS_API.lock().unwrap().as_mut().unwrap().set_volume(vol)
 }

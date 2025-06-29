@@ -19,8 +19,8 @@ import 'dart:typed_data';
 import '../HIveCtrl/models/music_cahce_model.dart';
 import '../components/edit_metadata_dialog.dart';
 import '../field/audio_source.dart';
-import '../getxController/user_playlist_ctrl.dart';
 import '../tools/format_time.dart';
+import '../tools/tag_suffix.dart';
 
 const double _itemSpacing = 16.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
@@ -153,6 +153,8 @@ class MusicTile extends StatelessWidget {
   final String audioSource;
   final String operateArea;
   final int index;
+  final RxBool isMulSelect;
+  final RxList<MusicCache> selectedList;
 
   const MusicTile({
     super.key,
@@ -165,6 +167,8 @@ class MusicTile extends StatelessWidget {
     required this.audioSource,
     required this.operateArea,
     required this.index,
+    required this.isMulSelect,
+    required this.selectedList,
   });
 
   @override
@@ -185,25 +189,35 @@ class MusicTile extends StatelessWidget {
           renderMaybeDel: audioSource == AudioSource.allMusic ? false : true,
         ),
 
-        child: TextButton(
+        child: Obx((){
+          return TextButton(
           onPressed: () async {
+
+            if(isMulSelect.value){
+              if(selectedList.any((v)=>v.path==metadata.path)){
+                selectedList.removeWhere((v)=>v.path==metadata.path);
+              }else{
+                selectedList.add(metadata);
+              }
+              return;
+            }
+
             _audioSource.currentAudioSource.value = audioSource;
             menuController.close();
             await _audioController.audioPlay(metadata: metadata);
-          }.futureDebounce(ms: 300),
+          }.futureDebounce(ms: isMulSelect.value?10:300),
+
           style: TextButton.styleFrom(
             shape: RoundedRectangleBorder(borderRadius: _borderRadius),
+            backgroundColor: selectedList.any((v)=>v.path==metadata.path)? Theme.of(context).colorScheme.secondaryContainer:null,
           ),
-          child: GetBuilder<AudioController>(
-            id: metadata.path,
-            builder: (controller) {
-              return Row(
+          child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 spacing: _itemSpacing,
                 children: [
                   AsyncCover(path: metadata.path, music: metadata),
-                  Expanded(
+                  Obx(()=>Expanded(
                     flex: 1,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -233,9 +247,9 @@ class MusicTile extends StatelessWidget {
                         ),
                       ],
                     ),
-                  ),
+                  )),
                   if (_settingController.viewModeMap[operateArea])
-                    Expanded(
+                    Obx(()=>Expanded(
                       flex: 2,
                       child: Text(
                         metadata.album,
@@ -247,8 +261,8 @@ class MusicTile extends StatelessWidget {
                                 ? subStyle
                                 : highLightSubStyle,
                       ),
-                    ),
-                  Text(
+                    )),
+                  Obx(()=>Text(
                     formatTime(totalSeconds: metadata.duration),
                     softWrap: true,
                     overflow: TextOverflow.ellipsis,
@@ -257,12 +271,12 @@ class MusicTile extends StatelessWidget {
                         _audioController.currentPath.value != metadata.path
                             ? subStyle
                             : highLightSubStyle,
-                  ),
+                  )),
                 ],
-              );
-            },
-          ),
-        ),
+              ),
+        );
+
+        }),
       ),
     );
   }

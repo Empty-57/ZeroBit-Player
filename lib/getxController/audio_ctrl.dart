@@ -8,13 +8,13 @@ import 'package:zerobit_player/HIveCtrl/models/user_playlist_model.dart';
 import 'package:zerobit_player/components/get_snack_bar.dart';
 import 'package:zerobit_player/getxController/play_list_ctrl.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
-import 'package:zerobit_player/getxController/user_playlist_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 
 import '../HIveCtrl/hive_manager.dart';
 import '../HIveCtrl/models/music_cahce_model.dart';
 import '../field/audio_source.dart';
+import '../tools/tag_suffix.dart';
 import 'music_cache_ctrl.dart';
 
 enum AudioState { stop, playing, pause }
@@ -88,7 +88,7 @@ class AudioController extends GetxController {
         currentPath.value = '';
         return;
       }
-      if(_settingController.dynamicThemeColor.value){
+      if (_settingController.dynamicThemeColor.value) {
         await _setThemeColor4Cover();
       }
     });
@@ -320,37 +320,71 @@ class AudioController extends GetxController {
   }
 
   void addToAudioList({required MusicCache metadata, required String userKey}) {
-    if (allUserKey.contains(userKey)) {
-      List<String> newList = _userPlayListCacheBox.get(key: userKey)!.pathList;
-
-      if (newList.contains(metadata.path)) {
-        showSnackBar(
-          title: "WARNING",
-          msg: "歌单 ${userKey.split(playListTagSuffix)[0]} 存在重复歌曲 ${metadata.title} ！",
-          duration: Duration(milliseconds: 1000),
-        );
-
-        return;
-      }
-
-      newList.add(metadata.path);
-
-      _userPlayListCacheBox.put(
-        data: UserPlayListCache(pathList: newList, userKey: userKey),
-        key: userKey,
-      );
-
-      if (!playListCacheItems.any((v) => v.path == metadata.path)) {
-        playListCacheItems.add(metadata);
-        syncCurrentIndex();
-      }
+    if (!allUserKey.contains(userKey)) {
+      return;
+    }
+    List<String> newList = _userPlayListCacheBox.get(key: userKey)!.pathList;
+    if (newList.contains(metadata.path)) {
       showSnackBar(
-        title: "OK",
+        title: "WARNING",
         msg:
-            "已将 ${metadata.title} 添加到歌单 ${userKey.split(playListTagSuffix)[0]}",
+            "歌单 ${userKey.split(playListTagSuffix)[0]} 存在重复歌曲 ${metadata.title} ！",
         duration: Duration(milliseconds: 1000),
       );
+      return;
     }
+    newList.add(metadata.path);
+    _userPlayListCacheBox.put(
+      data: UserPlayListCache(pathList: newList, userKey: userKey),
+      key: userKey,
+    );
+
+    if (!playListCacheItems.any((v) => v.path == metadata.path)) {
+      playListCacheItems.add(metadata);
+      syncCurrentIndex();
+    }
+
+    showSnackBar(
+      title: "OK",
+      msg: "已将 ${metadata.title} 添加到歌单 ${userKey.split(playListTagSuffix)[0]}",
+      duration: Duration(milliseconds: 1000),
+    );
+  }
+
+  void addAllToAudioList({
+    required List<MusicCache> selectedList,
+    required String userKey,
+  }) {
+    if (!allUserKey.contains(userKey)) {
+      return;
+    }
+
+    List<String> newList = _userPlayListCacheBox.get(key: userKey)!.pathList;
+
+    selectedList.removeWhere((v) => newList.contains(v.path));
+
+    final l=selectedList.length;
+
+    newList.addAll(selectedList.map((v) => v.path));
+
+    _userPlayListCacheBox.put(
+      data: UserPlayListCache(pathList: newList, userKey: userKey),
+      key: userKey,
+    );
+
+    selectedList.removeWhere(
+      (v) => playListCacheItems.any((p) => p.path == v.path),
+    );
+
+    playListCacheItems.addAll(selectedList);
+    syncCurrentIndex();
+
+    showSnackBar(
+      title: "OK",
+      msg:
+          "已将去重后的 $l 首歌添加到歌单 ${userKey.split(playListTagSuffix)[0]}",
+      duration: Duration(milliseconds: 1000),
+    );
   }
 
   Future<void> audioRemove({
@@ -385,4 +419,33 @@ class AudioController extends GetxController {
       );
     }
   }
+
+  void audioRemoveAll({required String userKey, required List<MusicCache> removeList}){
+    if (!allUserKey.contains(userKey)) {
+      return;
+    }
+    List<String> newList = _userPlayListCacheBox.get(key: userKey)!.pathList;
+
+    newList.removeWhere((v)=>removeList.any((p)=>p.path==v));
+
+    _userPlayListCacheBox.put(
+      data: UserPlayListCache(pathList: newList, userKey: userKey),
+      key: userKey,
+    );
+
+    playListCacheItems.removeWhere((v)=>removeList.any((p)=>p.path==v.path));
+    syncCurrentIndex();
+
+    PlayListController.audioListItems.removeWhere(
+        (v) => removeList.any((p)=>p.path==v.path),
+      );
+
+    showSnackBar(
+        title: "OK",
+        msg:
+            "已将去重后的 ${removeList.length} 首歌从歌单 ${userKey.split(playListTagSuffix)[0]}删除！",
+        duration: Duration(milliseconds: 1000),
+      );
+  }
+
 }

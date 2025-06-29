@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
+import 'package:zerobit_player/HIveCtrl/models/music_cahce_model.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 
 import '../custom_widgets/custom_button.dart';
@@ -10,6 +11,7 @@ import '../getxController/audio_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 import '../tools/audio_ctrl_mixin.dart';
 import '../tools/general_style.dart';
+import '../tools/tag_suffix.dart';
 import 'floating_button.dart';
 import 'music_list_tool.dart';
 
@@ -23,7 +25,6 @@ const int _coverBigRenderSize = 800;
 
 final SettingController _settingController = Get.find<SettingController>();
 final AudioController _audioController = Get.find<AudioController>();
-
 
 class AudioGenPages extends StatelessWidget{
   final String title;
@@ -53,7 +54,11 @@ class AudioGenPages extends StatelessWidget{
       opacity: 0.8,
       color: Theme.of(context).colorScheme.primary,
     );
+    final isMulSelect=false.obs;
 
+    final selectedList=<MusicCache>[].obs;
+
+    final playListMenuController=MenuController();
 
     return Container(
       alignment: Alignment.centerLeft,
@@ -121,7 +126,9 @@ class AudioGenPages extends StatelessWidget{
               Expanded(flex: 1, child: Container()),
 
               Obx(
-                () => CustomDropdownMenu(
+                (){
+                  if(!isMulSelect.value){
+                    return CustomDropdownMenu(
                   itemMap: {
                     0: [
                       _settingController.sortType[0],
@@ -160,11 +167,57 @@ class AudioGenPages extends StatelessWidget{
                   btnIcon: PhosphorIconsLight.funnelSimple,
                   mainAxisAlignment: MainAxisAlignment.start,
                   spacing: 6,
-                ),
+                );
+                  }
+
+                  if(isMulSelect.value&&operateArea==OperateArea.playList){
+                    return CustomBtn(
+                  fn: () {
+                    _audioController.audioRemoveAll(userKey: audioSource, removeList: [...selectedList]);
+                  },
+                  icon: PhosphorIconsLight.trash,
+                  radius: 4,
+                  btnHeight: 48,
+                  btnWidth: 48,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    contentColor: Colors.red,
+                    tooltip: "删除所选项",
+                );
+                  }
+
+                  return const SizedBox.shrink();
+                },
               ),
 
               Obx(
-                () => CustomBtn(
+                () => isMulSelect.value? MenuAnchor(
+                      menuChildren: _audioController.allUserKey.map((v) {
+        return CustomBtn(
+            fn: () {
+              playListMenuController.close();
+              _audioController.addAllToAudioList(selectedList: [...selectedList], userKey: v);
+            },
+            btnWidth: 160,
+            btnHeight: 48,
+            radius: 4,
+            label: v.split(playListTagSuffix)[0],
+            mainAxisAlignment: MainAxisAlignment.center,
+            backgroundColor: Colors.transparent,
+          );
+      }).toList(),
+                    controller: playListMenuController,
+                    child: CustomBtn(
+                  fn: () {
+                    playListMenuController.open();
+                  },
+                  icon: PhosphorIconsLight.plus,
+                  radius: 4,
+                  btnHeight: 48,
+                  btnWidth: 160,
+                    label: "添加到歌单",
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                ),
+                  ):CustomBtn(
                   fn: () {
                     _settingController.isReverse.value =
                         !_settingController.isReverse.value;
@@ -184,8 +237,24 @@ class AudioGenPages extends StatelessWidget{
                 ),
               ),
 
-              Obx(
-                () => CustomBtn(
+              Obx(()=>isMulSelect.value? CustomBtn(
+                  fn: () {
+                    if(selectedList.isNotEmpty){
+                      selectedList.clear();
+                    }else{
+                      selectedList.value=[...controller.items];
+                    }
+                  },
+                  icon:
+                      selectedList.isNotEmpty
+                          ? PhosphorIconsLight.selectionSlash
+                          : PhosphorIconsLight.selectionAll,
+                  radius: 4,
+                  btnHeight: 48,
+                  btnWidth: 48,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  tooltip: selectedList.isNotEmpty ? '清空选择' : '全选',
+                ):CustomBtn(
                   fn: () {
                     _settingController.viewModeMap[operateArea] =
                         !_settingController.viewModeMap[operateArea];
@@ -204,8 +273,26 @@ class AudioGenPages extends StatelessWidget{
                       _settingController.viewModeMap[operateArea]
                           ? "列表视图"
                           : "表格视图",
+                )),
+
+              Obx(
+                () => CustomBtn(
+                  fn: () {
+                    selectedList.clear();
+                    isMulSelect.value=!isMulSelect.value;
+                  },
+                  icon:
+                      isMulSelect.value
+                          ? PhosphorIconsLight.xSquare
+                          : PhosphorIconsLight.selection,
+                  radius: 4,
+                  btnHeight: 48,
+                  btnWidth: 48,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  tooltip: isMulSelect.value ? '退出多选' : '多选模式',
                 ),
               ),
+
             ],
           ),
 
@@ -239,6 +326,8 @@ class AudioGenPages extends StatelessWidget{
                           audioSource: audioSource,
                           operateArea: operateArea,
                           index: index,
+                          isMulSelect:isMulSelect,
+                          selectedList: selectedList,
                         );
                       },
                     ),
@@ -270,6 +359,8 @@ class AudioGenPages extends StatelessWidget{
                           audioSource: audioSource,
                           operateArea: operateArea,
                           index: index,
+                          isMulSelect:isMulSelect,
+                          selectedList: selectedList,
                         );
                       },
                     ),
