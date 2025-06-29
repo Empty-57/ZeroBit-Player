@@ -86,7 +86,6 @@ class AudioController extends GetxController {
     ever(currentIndex, (_) async {
       if (currentIndex.value == -1) {
         currentPath.value = '';
-        update([currentPath.value, if (_lastPath != null) _lastPath!]);
         return;
       }
       if(_settingController.dynamicThemeColor.value){
