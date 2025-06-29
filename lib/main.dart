@@ -49,6 +49,11 @@ void main() async {
   //   await setExclusiveMode(exclusive: false);
   // });
 
+  if (!await FlutterSingleInstance().isFirstInstance()) {
+    await FlutterSingleInstance().focus();
+    exit(0);
+  }
+
   WidgetsFlutterBinding.ensureInitialized();
 
   await windowManager.ensureInitialized();
