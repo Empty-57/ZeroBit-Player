@@ -12,7 +12,8 @@ import '../tools/general_style.dart';
 import '../getxController/setting_ctrl.dart';
 
 final SettingController _settingController = Get.find<SettingController>();
-final MusicCacheController _musicCacheController = Get.find<MusicCacheController>();
+final MusicCacheController _musicCacheController =
+    Get.find<MusicCacheController>();
 final AudioController _audioController = Get.find<AudioController>();
 
 class _FolderManagerDialog extends StatelessWidget {
@@ -94,65 +95,82 @@ class _FolderManagerDialog extends StatelessWidget {
                           );
                         }),
                       ),
-                      Obx(()=>Text(
+                      Obx(
+                        () => Text(
                           _musicCacheController.currentScanPath.value,
-                        style: generalTextStyle(ctx: context,size: 'md',color: Theme.of(context).colorScheme.primary),
-                      )
+                          style: generalTextStyle(
+                            ctx: context,
+                            size: 'md',
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
                       ),
 
-                      Obx(()=>
-                      Visibility(
-                        visible: _musicCacheController.currentScanPath.value==''?true:false,
+                      Obx(
+                        () => Visibility(
+                          visible:
+                              _musicCacheController.currentScanPath.value == ''
+                                  ? true
+                                  : false,
                           child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        spacing: 8,
-                        children: [
-                          CustomBtn(
-                            fn: () async {
-                              String? selectedDirectory =
-                                  await FilePicker.platform.getDirectoryPath();
-                              if (selectedDirectory != null &&
-                                  !_settingController.folders.contains(
-                                    selectedDirectory,
-                                  )) {
-                                _settingController.folders.add(
-                                  selectedDirectory,
-                                );
-                              }
-                            },
-                            backgroundColor: Colors.transparent,
-                            contentColor: Theme.of(context).colorScheme.primary,
-                            btnWidth: 72,
-                            btnHeight: 36,
-                            label: "添加",
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            spacing: 8,
+                            children: [
+                              CustomBtn(
+                                fn: () async {
+                                  String? selectedDirectory =
+                                      await FilePicker.platform
+                                          .getDirectoryPath();
+                                  if (selectedDirectory != null &&
+                                      !_settingController.folders.contains(
+                                        selectedDirectory,
+                                      )) {
+                                    _settingController.folders.add(
+                                      selectedDirectory,
+                                    );
+                                  }
+                                },
+                                backgroundColor: Colors.transparent,
+                                contentColor:
+                                    Theme.of(context).colorScheme.primary,
+                                btnWidth: 72,
+                                btnHeight: 36,
+                                label: "添加",
+                              ),
+                              CustomBtn(
+                                fn: () {
+                                  Navigator.pop(context, 'cancel');
+                                  _settingController.folders.value =
+                                      foldersClone;
+                                },
+                                backgroundColor: Colors.transparent,
+                                contentColor:
+                                    Theme.of(context).colorScheme.primary,
+                                btnWidth: 72,
+                                btnHeight: 36,
+                                label: "取消",
+                              ),
+                              CustomBtn(
+                                fn: () async {
+                                  foldersClone = [
+                                    ..._settingController.folders,
+                                  ];
+                                  await _settingController.putCache(
+                                    isSaveFolders: true,
+                                  );
+                                  Navigator.pop(context, 'actions');
+                                },
+                                backgroundColor: Colors.transparent,
+                                contentColor:
+                                    Theme.of(context).colorScheme.primary,
+                                btnWidth: 72,
+                                btnHeight: 36,
+                                label: "确定",
+                              ),
+                            ],
                           ),
-                          CustomBtn(
-                            fn: () {
-                              Navigator.pop(context, 'cancel');
-                              _settingController.folders.value = foldersClone;
-                            },
-                            backgroundColor: Colors.transparent,
-                            contentColor: Theme.of(context).colorScheme.primary,
-                            btnWidth: 72,
-                            btnHeight: 36,
-                            label: "取消",
-                          ),
-                          CustomBtn(
-                            fn: () async{
-                              foldersClone = [..._settingController.folders];
-                              await _settingController.putCache(isSaveFolders: true);
-                              Navigator.pop(context, 'actions');
-                            },
-                            backgroundColor: Colors.transparent,
-                            contentColor: Theme.of(context).colorScheme.primary,
-                            btnWidth: 72,
-                            btnHeight: 36,
-                            label: "确定",
-                          ),
-                        ],
-                      )
-                      )
+                        ),
                       ),
                     ],
                   ),
@@ -184,71 +202,41 @@ class _ApiDropMenu extends StatelessWidget {
     const double btnW = 148;
     const double btnH = 40;
 
+    final menuController = MenuController();
     final apiMenuList =
         _settingController.apiMap.entries.map((entry) {
-          return PopupMenuItem<int>(
-            padding: EdgeInsets.zero,
-            value: entry.key,
-            height: 40,
-            child: InkWell(
-              onTap: () {
-                // 记得手动 pop 返回 value
-                Navigator.pop(context, entry.key);
-                _settingController.apiIndex.value = entry.key;
-                _settingController.putCache(isSaveFolders: false);
-              },
-              child: Container(
-                width: btnW,
-                height: 40,
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Center(
-                  child: Text(
-                    entry.value,
-                    style: generalTextStyle(ctx: context, size: 'md'),
-                  ),
-                ),
-              ),
-            ),
+          return CustomBtn(
+            fn: () {
+              _settingController.apiIndex.value = entry.key;
+              _settingController.putCache(isSaveFolders: false);
+              menuController.close();
+            },
+            btnWidth: btnW,
+            btnHeight: btnH,
+            radius: 4,
+            label: entry.value,
+            mainAxisAlignment: MainAxisAlignment.center,
+            backgroundColor: Colors.transparent,
           );
         }).toList();
 
-    return Obx(
-      () => CustomBtn(
-        fn: () {
-          final RenderBox renderBox = context.findRenderObject() as RenderBox;
-          final offset = renderBox.localToGlobal(Offset.zero);
-          showMenu(
-            constraints: BoxConstraints(
-              minWidth: btnW, // 约束最小宽度
-              maxWidth: btnW, // 约束最大宽度
-            ),
-            context: context,
-            position: RelativeRect.fromRect(
-              // 定义菜单锚点区域
-              Rect.fromLTWH(
-                offset.dx + (renderBox.size.width - btnW) / 2, // 水平居中
-                offset.dy + 0, // 父组件底部Y坐标
-                btnW, // 菜单宽度
-                0, // 高度由内容决定
-              ),
-              // 屏幕边界约束
-              Offset.zero & MediaQuery.of(context).size,
-            ),
-            items: apiMenuList,
-            elevation: 0,
-            color: Theme.of(context).colorScheme.surfaceContainer,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4),
-            ),
-          );
-        },
-        icon: PhosphorIconsLight.plugs,
-        label: _settingController.apiMap[_settingController.apiIndex.value],
-        btnHeight: btnH,
-        btnWidth: btnW,
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        contentColor: Theme.of(context).colorScheme.onPrimary,
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return MenuAnchor(
+      menuChildren: apiMenuList,
+      controller: menuController,
+      consumeOutsideTap: true,
+      child: Obx(
+        () => CustomBtn(
+          fn: () {
+            menuController.open();
+          },
+          icon: PhosphorIconsLight.plugs,
+          label: _settingController.apiMap[_settingController.apiIndex.value],
+          btnHeight: btnH,
+          btnWidth: btnW,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          contentColor: Theme.of(context).colorScheme.onPrimary,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        ),
       ),
     );
   }
@@ -366,16 +354,15 @@ class _ColorPicker extends StatelessWidget {
   }
 }
 
-final isb=true.obs;
 class Setting extends StatelessWidget {
   const Setting({super.key});
 
   @override
   Widget build(BuildContext context) {
-
-    WidgetStateProperty<Color?> switchTrackColor = WidgetStateProperty<Color?>.fromMap(
-      <WidgetStatesConstraint, Color>{WidgetState.selected: Theme.of(context).colorScheme.primary},
-    );
+    WidgetStateProperty<Color?> switchTrackColor =
+        WidgetStateProperty<Color?>.fromMap(<WidgetStatesConstraint, Color>{
+          WidgetState.selected: Theme.of(context).colorScheme.primary,
+        });
 
     return Container(
       alignment: Alignment.centerLeft,
@@ -431,32 +418,36 @@ class Setting extends StatelessWidget {
               Text('动态主题色', style: generalTextStyle(ctx: context, size: 'lg')),
               Material(
                 color: Colors.transparent,
-                child: Obx(()=>Switch(
-                value: _settingController.dynamicThemeColor.value,
-                trackColor: switchTrackColor,
-                thumbColor:  WidgetStatePropertyAll(Theme.of(context).colorScheme.surface) ,
-                onChanged: (bool value) {
-                  _settingController.dynamicThemeColor.value=value;
-                  _settingController.putCache();
-                },
-              ),
+                child: Obx(
+                  () => Switch(
+                    value: _settingController.dynamicThemeColor.value,
+                    trackColor: switchTrackColor,
+                    thumbColor: WidgetStatePropertyAll(
+                      Theme.of(context).colorScheme.surface,
+                    ),
+                    onChanged: (bool value) {
+                      _settingController.dynamicThemeColor.value = value;
+                      _settingController.putCache();
+                    },
+                  ),
                 ),
-              )
+              ),
             ],
           ),
 
-
-          Expanded(child: ListView.builder(
-            itemCount: _audioController.playListCacheItems.length,
+          Expanded(
+            child: ListView.builder(
+              itemCount: _audioController.playListCacheItems.length,
               itemExtent: 48,
-              cacheExtent: 48*1,
-              itemBuilder: (context, index){
-            return Text(_audioController.playListCacheItems[index].path,style: generalTextStyle(ctx: context),);
-          }
-          )
+              cacheExtent: 48 * 1,
+              itemBuilder: (context, index) {
+                return Text(
+                  _audioController.playListCacheItems[index].path,
+                  style: generalTextStyle(ctx: context),
+                );
+              },
+            ),
           ),
-
-
         ],
       ),
     );

@@ -8,6 +8,7 @@ import '../HIveCtrl/hive_manager.dart';
 import '../HIveCtrl/models/user_playlist_model.dart';
 import '../field/operate_area.dart';
 import '../src/rust/api/music_tag_tool.dart';
+import '../tools/get_sort_type.dart';
 import 'music_cache_ctrl.dart';
 
 final MusicCacheController _musicCacheController =
@@ -73,27 +74,13 @@ class PlayListController extends GetxController with AudioControllerGenClass {
 
   }
 
-  String _getSortType({required int type, required MusicCache data}) {
-    switch (type) {
-      case 0:
-        return data.title.trim().toLowerCase();
-      case 1:
-        return data.artist.trim().toLowerCase();
-      case 2:
-        return data.album.trim().toLowerCase();
-      case 3:
-        return data.duration.toString().trim().toLowerCase();
-    }
-    return data.title;
-  }
-
   @override
   void itemReSort({required int type}) {
     audioListItems.sort(
-      (a, b) => _getSortType(
+      (a, b) => getSortType(
         type: type,
         data: a,
-      ).compareTo(_getSortType(type: type, data: b)),
+      ).compareTo(getSortType(type: type, data: b)),
     );
   }
 
