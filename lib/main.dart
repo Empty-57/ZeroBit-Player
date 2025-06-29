@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:zerobit_player/HIveCtrl/adapters/user_playlist_adapter.dart';
 import 'package:zerobit_player/HIveCtrl/models/setting_cache_model.dart';
 import 'package:zerobit_player/HIveCtrl/models/user_playlist_model.dart';
