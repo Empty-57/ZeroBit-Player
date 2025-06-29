@@ -343,8 +343,6 @@ class AudioController extends GetxController {
         key: userKey,
       );
 
-      _userPlayListController.initHive();
-
       if (!playListCacheItems.any((v) => v.path == metadata.path)) {
         playListCacheItems.add(metadata);
         syncCurrentIndex();
