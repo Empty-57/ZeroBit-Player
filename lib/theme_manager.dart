@@ -8,7 +8,7 @@ class ThemeService extends GetxService {
 
   final _contrastLevel = 0.0;
   final _dynamicSchemeVariant = DynamicSchemeVariant.tonalSpot;
-  
+
   final _thickness = 8.0;
   final _radius = 8.0;
 
@@ -55,10 +55,5 @@ class ThemeService extends GetxService {
           ? ThemeMode.dark
           : ThemeMode.light,
     );
-  }
-
-  void setFontFamily({required String fontFamily}) {
-    _settingController.fontFamily.value = fontFamily;
-    _settingController.putCache();
   }
 }

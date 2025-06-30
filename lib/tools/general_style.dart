@@ -7,6 +7,7 @@ TextStyle generalTextStyle<T>({
   FontWeight? weight,
   TextDecoration? decoration,
   double? opacity,
+  String? fontFamily,
 }) {
   double fontSize = 14.0;
 
@@ -25,6 +26,7 @@ TextStyle generalTextStyle<T>({
     fontSize: fontSize,
     fontWeight: weight ?? FontWeight.w400,
     decoration: decoration ?? TextDecoration.none,
+    fontFamily: fontFamily,
   );
 }
 

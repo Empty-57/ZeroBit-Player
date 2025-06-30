@@ -357,6 +357,86 @@ class _ColorPicker extends StatelessWidget {
   }
 }
 
+class _FontFamilyDialog extends StatelessWidget{
+  const _FontFamilyDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomBtn(
+      fn: () {
+        showDialog(
+          barrierDismissible: true,
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("选择字体"),
+              titleTextStyle: generalTextStyle(
+                ctx: context,
+                size: 20,
+                weight: FontWeight.w700,
+              ),
+
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(4)),
+              ),
+              backgroundColor: Theme.of(context).colorScheme.surface,
+
+              actionsAlignment: MainAxisAlignment.end,
+              actions: <Widget>[
+                SizedBox(
+                  width: 400,
+                  height: 300,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 8,
+                    children: [
+                      Text("当前字体: ${_settingController.fontFamily.value}",style: generalTextStyle(ctx: context,size: 'md'),),
+                      Expanded(
+                        flex: 1,
+                        child: ListView.builder(
+                            itemCount: _fontsList.length,
+                            itemExtent: 36,
+                            cacheExtent: 36 * 1,
+                            itemBuilder: (context, index) {
+                              return TextButton(
+                                  onPressed: (){
+                                    _settingController.fontFamily.value = _fontsList[index];
+                                    _settingController.putCache();
+                                    Navigator.pop(context);
+                                  },
+                                style: TextButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                                  child: Container(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(_fontsList[index],style: generalTextStyle(ctx: context,size: 'md',fontFamily: _fontsList[index])),
+                                  ),
+                              );
+                            },
+                          ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+      icon: PhosphorIconsLight.textAa,
+      label: '选择字体',
+      btnHeight: 40,
+      btnWidth: 148,
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      contentColor: Theme.of(context).colorScheme.onPrimary,
+    );
+  }
+
+}
+
 class Setting extends StatelessWidget {
   const Setting({super.key});
 
@@ -443,6 +523,15 @@ class Setting extends StatelessWidget {
                   ),
                 ),
               ),
+            ],
+          ),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              Text('字体', style: generalTextStyle(ctx: context, size: 'lg')),
+              const _FontFamilyDialog(),
             ],
           ),
 
