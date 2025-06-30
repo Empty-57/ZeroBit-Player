@@ -12,17 +12,7 @@ final ThemeService _themeService = Get.find<ThemeService>();
 
 var themeMode = _settingController.themeMode;
 
-
-void toggleTheme() {
-  themeMode.value =
-      themeMode.value == 'dark' ? 'light' : 'dark';
-
-  _settingController.putCache();
-
-  _themeService.setThemeMode();
-}
-
-const double _contorllerBarHeight = 48;
+const double _controllerBarHeight = 48;
 
 class _WindowListener extends GetxController with WindowListener {
   final _isMaximized = false.obs;
@@ -114,7 +104,7 @@ class WindowController extends StatelessWidget {
     final windowListener = Get.put(_WindowListener());
 
     return Container(
-      height: _contorllerBarHeight,
+      height: _controllerBarHeight,
       padding: EdgeInsets.only(left: 16, top: 0, right: 4, bottom: 0),
       color: Colors.transparent,
       child: Row(
@@ -160,11 +150,11 @@ class WindowController extends StatelessWidget {
           Obx(
             () => ControllerButton(
               icon:
-                  themeMode.value == 'dark'
+                  _settingController.themeMode.value == 'dark'
                       ? PhosphorIconsLight.moon
                       : PhosphorIconsLight.sun,
-              fn: toggleTheme,
-              tooltip: themeMode.value == 'dark'?"暗色主题":"亮色主题",
+              fn: _themeService.setThemeMode,
+              tooltip: _settingController.themeMode.value == 'dark'?"暗色主题":"亮色主题",
             ),
           ),
 

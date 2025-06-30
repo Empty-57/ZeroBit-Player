@@ -9,22 +9,23 @@ import '../getxController/audio_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 import '../src/rust/api/music_tag_tool.dart';
+import 'package:path/path.dart' as p;
 
 const _supportedExts = [
-  'aac',
-  'ape',
-  'aiff',
-  'aif',
-  'flac',
-  'mp3',
-  'mp4', 'm4a', 'm4b', 'm4p', 'm4v',
-  'mpc',
-  'opus',
-  'ogg',
-  'oga',
-  'spx',
-  'wav',
-  'wv',
+  '.aac',
+  '.ape',
+  '.aiff',
+  '.aif',
+  '.flac',
+  '.mp3',
+  '.mp4', '.m4a', '.m4b', '.m4p', '.m4v',
+  '.mpc',
+  '.opus',
+  '.ogg',
+  '.oga',
+  '.spx',
+  '.wav',
+  '.wv',
 ];
 
 Future<void> syncCache() async {
@@ -41,10 +42,8 @@ Future<void> syncCache() async {
       final d = Directory(dir);
       await for (final entity in d.list(recursive: true)) {
         if (entity is File) {
-          final path = entity.path;
-          final ext = path.toLowerCase().split('.').last;
-          if (_supportedExts.contains(ext)) {
-            audioPaths.add(path);
+          if (_supportedExts.contains(p.extension(entity.path).toLowerCase())) {
+            audioPaths.add(entity.path);
           }
         }
       }

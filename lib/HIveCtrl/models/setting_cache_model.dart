@@ -9,6 +9,7 @@ class SettingCache {
   final int themeColor;
   final int playMode;
   final bool dynamicThemeColor;
+  final String fontFamily;
 
   const SettingCache({
     required this.themeMode,
@@ -21,5 +22,6 @@ class SettingCache {
     required this.themeColor,
     required this.playMode,
     required this.dynamicThemeColor,
+    required this.fontFamily,
   });
 }

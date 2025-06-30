@@ -5,6 +5,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:zerobit_player/src/rust/api/get_fonts.dart';
 
 import '../getxController/audio_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
@@ -15,6 +16,8 @@ final SettingController _settingController = Get.find<SettingController>();
 final MusicCacheController _musicCacheController =
     Get.find<MusicCacheController>();
 final AudioController _audioController = Get.find<AudioController>();
+
+List<String> _fontsList=[];
 
 class _FolderManagerDialog extends StatelessWidget {
   const _FolderManagerDialog();
@@ -357,12 +360,20 @@ class _ColorPicker extends StatelessWidget {
 class Setting extends StatelessWidget {
   const Setting({super.key});
 
+  void _getFonts()async{
+    if(_fontsList.isEmpty){
+      _fontsList=await getFontsList();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     WidgetStateProperty<Color?> switchTrackColor =
         WidgetStateProperty<Color?>.fromMap(<WidgetStatesConstraint, Color>{
           WidgetState.selected: Theme.of(context).colorScheme.primary,
         });
+
+    _getFonts();
 
     return Container(
       alignment: Alignment.centerLeft,

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -11,7 +9,6 @@ class ThemeService extends GetxService {
   final _contrastLevel = 0.0;
   final _dynamicSchemeVariant = DynamicSchemeVariant.tonalSpot;
 
-  final _fontFamily = Platform.isWindows ? "微软雅黑" : null;
   final _thumbColor = Color(0xff3f3f46);
   final _thickness = 8.0;
   final _radius = 8.0;
@@ -29,7 +26,7 @@ class ThemeService extends GetxService {
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      fontFamily: _fontFamily,
+      fontFamily: _settingController.fontFamily.value,
       scrollbarTheme: ScrollbarThemeData(
         thumbColor: WidgetStateProperty.all(_thumbColor),
         thickness: WidgetStatePropertyAll(_thickness),
@@ -48,7 +45,21 @@ class ThemeService extends GetxService {
     scheme: _createColorsScheme(brightness: Brightness.dark),
   );
 
-  void setThemeMode(){
-    Get.changeThemeMode(_settingController.themeMode.value == 'dark' ? ThemeMode.dark : ThemeMode.light);
+  void setThemeMode() {
+    _settingController.themeMode.value =
+        _settingController.themeMode.value == 'dark' ? 'light' : 'dark';
+
+    _settingController.putCache();
+
+    Get.changeThemeMode(
+      _settingController.themeMode.value == 'dark'
+          ? ThemeMode.dark
+          : ThemeMode.light,
+    );
+  }
+
+  void setFontFamily({required String fontFamily}) {
+    _settingController.fontFamily.value = fontFamily;
+    _settingController.putCache();
   }
 }

@@ -20,6 +20,7 @@ class SettingCacheAdapter extends TypeAdapter<SettingCache> {
       themeColor: reader.readInt(),
       playMode: reader.readInt(),
       dynamicThemeColor: reader.readBool(),
+      fontFamily: reader.readString(),
     );
   }
 
@@ -35,5 +36,6 @@ class SettingCacheAdapter extends TypeAdapter<SettingCache> {
     writer.writeInt(obj.themeColor);
     writer.writeInt(obj.playMode);
     writer.writeBool(obj.dynamicThemeColor);
+    writer.writeString(obj.fontFamily);
   }
 }

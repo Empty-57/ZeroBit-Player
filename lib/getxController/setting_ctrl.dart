@@ -23,6 +23,7 @@ class SettingController extends GetxController {
   final themeColor=0xff27272a.obs;
   final playMode=0.obs;
   final dynamicThemeColor=true.obs;
+  final fontFamily="Microsoft YaHei Light".obs;
 
 
   final Map<int,String> apiMap={
@@ -66,6 +67,7 @@ class SettingController extends GetxController {
       themeColor.value=cache.themeColor;
       playMode.value=cache.playMode;
       dynamicThemeColor.value=cache.dynamicThemeColor;
+      fontFamily.value=cache.fontFamily;
     }
 
     await setVolume(vol: cache?.volume??1.0);
@@ -90,6 +92,7 @@ class SettingController extends GetxController {
         themeColor: themeColor.value,
         playMode: playMode.value,
         dynamicThemeColor: dynamicThemeColor.value,
+        fontFamily: fontFamily.value,
       ),
       key: _key,
     );
