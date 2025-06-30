@@ -19,7 +19,7 @@ const double _metadataDialogW = 600;
 const double _metadataDialogH = 400;
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 
-const double _bigCoverSize = 320;
+const double _bigCoverSize = 160;
 const int _coverBigRenderSize = 800;
 const double _menuWidth = 180;
 const double _menuHeight = 48;
