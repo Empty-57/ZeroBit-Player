@@ -18,6 +18,8 @@ const double _barWidthHalf = 350;
 
 const double _bottom = 4;
 const double _navigationWidth = 260;
+const double _navigationWidthSmall = 84;
+const double resViewThresholds= 1100;
 
 const double _radius = 6;
 
@@ -254,7 +256,7 @@ class PlayBar extends StatelessWidget {
 
     return Positioned(
       bottom: _bottom,
-      right: (context.width - _navigationWidth) / 2 - _barWidthHalf,
+      right: (context.width - (context.width>resViewThresholds? _navigationWidth:_navigationWidthSmall)) / 2 - _barWidthHalf,
       child: ClipRRect(
         borderRadius: _coverBorderRadius,
         child: Column(

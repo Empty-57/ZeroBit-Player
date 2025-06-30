@@ -14,6 +14,8 @@ const double _navigationBtnWidth = 220;
 const double _navigationBtnHeight = 52;
 
 const double _navigationWidth = 260;
+const double _navigationWidthSmall = 84;
+const double resViewThresholds= 1100;
 
 const mainRoutes = [AppRoutes.home, AppRoutes.userPlayList,AppRoutes.setting];
 
@@ -89,7 +91,7 @@ class CustomNavigationBtn extends StatelessWidget {
               Expanded(
                 flex: 1,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisAlignment: context.width>resViewThresholds? MainAxisAlignment.start:MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   spacing: 16,
 
@@ -104,7 +106,7 @@ class CustomNavigationBtn extends StatelessWidget {
                           getIconSize(size: 'md'),
                     ),
 
-                    Text(
+                    if(context.width>resViewThresholds) Text(
                       label,
                       style: generalTextStyle(ctx: context,size: 'md'),
                     ),
@@ -156,7 +158,7 @@ class CustomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: _navigationWidth,
+      width: context.width>resViewThresholds? _navigationWidth:_navigationWidthSmall,
       padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainer,

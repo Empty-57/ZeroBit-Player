@@ -24,6 +24,7 @@ const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 const int _coverBigRenderSize = 800;
 
 const double btnHeight=48;
+const double resViewThresholds= 1100;
 
 final SettingController _settingController = Get.find<SettingController>();
 final AudioController _audioController = Get.find<AudioController>();
@@ -341,7 +342,7 @@ class AudioGenPages extends StatelessWidget{
                       itemCount: controller.items.length,
                       cacheExtent: _itemHeight * 1,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: context.width < 1100 ? 3 : 4,
+                        crossAxisCount: context.width < resViewThresholds ? 3 : 4,
                         mainAxisSpacing: 4.0,
                         crossAxisSpacing: 8.0,
                         childAspectRatio: 1.0,
