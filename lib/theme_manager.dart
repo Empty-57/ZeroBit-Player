@@ -27,7 +27,7 @@ class ThemeService extends GetxService {
       colorScheme: scheme,
       fontFamily: _settingController.fontFamily.value,
       scrollbarTheme: ScrollbarThemeData(
-        thumbColor: WidgetStateProperty.all(_thumbColor),
+        thumbColor: WidgetStateProperty.all(scheme.secondaryContainer),
         thickness: WidgetStatePropertyAll(_thickness),
         trackVisibility: WidgetStatePropertyAll(false),
         radius: Radius.circular(_radius),
