@@ -11,7 +11,7 @@ String getSortType({required int type, required MusicCache data}) {
       case 2:
         return PinyinHelper.getShortPinyin(data.album.trim().toLowerCase());
       case 3:
-        return data.duration.toString().trim().toLowerCase();
+        return data.duration.toStringAsFixed(4).padLeft(9,'0');
     }
     return data.title;
   }
