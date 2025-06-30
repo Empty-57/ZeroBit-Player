@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
+import '../getxController/setting_ctrl.dart';
+final SettingController _settingController = Get.find<SettingController>();
 TextStyle generalTextStyle<T>({
   required BuildContext ctx,
   Color? color,
@@ -26,7 +29,7 @@ TextStyle generalTextStyle<T>({
     fontSize: fontSize,
     fontWeight: weight ?? FontWeight.w400,
     decoration: decoration ?? TextDecoration.none,
-    fontFamily: fontFamily,
+    fontFamily: fontFamily??_settingController.fontFamily.value,
   );
 }
 
