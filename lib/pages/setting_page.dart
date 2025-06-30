@@ -514,7 +514,7 @@ class Setting extends StatelessWidget {
                     value: _settingController.dynamicThemeColor.value,
                     trackColor: switchTrackColor,
                     thumbColor: WidgetStatePropertyAll(
-                      Theme.of(context).colorScheme.surface,
+                      Theme.of(context).colorScheme.onPrimary,
                     ),
                     onChanged: (bool value) {
                       _settingController.dynamicThemeColor.value = value;
