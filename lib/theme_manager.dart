@@ -8,8 +8,7 @@ class ThemeService extends GetxService {
 
   final _contrastLevel = 0.0;
   final _dynamicSchemeVariant = DynamicSchemeVariant.tonalSpot;
-
-  final _thumbColor = Color(0xff3f3f46);
+  
   final _thickness = 8.0;
   final _radius = 8.0;
 
