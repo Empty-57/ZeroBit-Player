@@ -14,6 +14,7 @@ const double _radius = 6;
 
 const double _ctrlBtnMinSize = 40.0;
 const double _itemHeight = 64.0;
+const double resViewThresholds= 1100;
 final MusicCacheController _musicCacheController =
     Get.find<MusicCacheController>();
 
