@@ -12,12 +12,12 @@ TextStyle generalTextStyle<T>({
   double? opacity,
   String? fontFamily,
 }) {
-  double fontSize = 14.0;
+  double fontSize = 15.0;
 
-  const Map<String, double> sizeMap = {'sm': 12.0, 'md': 14.0, 'lg': 16.0};
+  const Map<String, double> sizeMap = {'sm': 13.0, 'md': 15.0, 'lg': 17.0,'title':27.5};
 
   if (size is String) {
-    fontSize = sizeMap[size] ?? 14.0;
+    fontSize = sizeMap[size] ?? sizeMap['md']!;
   }
 
   if (size is double||size is int) {
@@ -39,7 +39,7 @@ double getIconSize<T>({T? size}){
   const Map<String, double> sizeMap = {'sm': 18.0, 'md': 20.0, 'lg': 22.0};
 
   if (size is String) {
-    iconSize = sizeMap[size] ?? 20.0;
+    iconSize = sizeMap[size] ?? sizeMap['md']!;
   }
 
   if (size is double) {

@@ -11,6 +11,7 @@ class CustomBtn<T> extends StatelessWidget {
   final double? radius;
   final Color? contentColor;
   final Color? backgroundColor;
+  final Color? overlayColor;
   final double? btnWidth;
   final double? btnHeight;
   final double? spacing;
@@ -29,6 +30,7 @@ class CustomBtn<T> extends StatelessWidget {
     this.radius = 4,
     this.contentColor,
     this.backgroundColor,
+    this.overlayColor,
     this.btnWidth=128,
     this.btnHeight=48,
     this.spacing=8,
@@ -52,6 +54,7 @@ class CustomBtn<T> extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radius!),
           ),
+          overlayColor: overlayColor,
           backgroundColor: backgroundColor??Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 1),
           padding: padding??EdgeInsets.symmetric(horizontal: 16),
           shadowColor: Colors.transparent,

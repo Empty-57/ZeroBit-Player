@@ -112,7 +112,7 @@ class AudioGenPages extends StatelessWidget{
                       title,
                       style: generalTextStyle(
                         ctx: context,
-                        size: 28.0,
+                        size: 'title',
                         weight: FontWeight.w600,
                       ),
                       softWrap: true,

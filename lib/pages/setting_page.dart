@@ -190,8 +190,9 @@ class _FolderManagerDialog extends StatelessWidget {
       icon: PhosphorIconsLight.folder,
       label: '管理',
       btnHeight: 40,
-      btnWidth: 96,
+      btnWidth: 108,
       backgroundColor: Theme.of(context).colorScheme.primary,
+      overlayColor: Theme.of(context).colorScheme.surfaceContainer,
       contentColor: Theme.of(context).colorScheme.onPrimary,
     );
   }
@@ -202,7 +203,7 @@ class _ApiDropMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double btnW = 148;
+    const double btnW = 156;
     const double btnH = 40;
 
     final menuController = MenuController();
@@ -237,6 +238,7 @@ class _ApiDropMenu extends StatelessWidget {
           btnHeight: btnH,
           btnWidth: btnW,
           backgroundColor: Theme.of(context).colorScheme.primary,
+          overlayColor: Theme.of(context).colorScheme.surfaceContainer,
           contentColor: Theme.of(context).colorScheme.onPrimary,
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         ),
@@ -352,6 +354,7 @@ class _ColorPicker extends StatelessWidget {
       btnHeight: 40,
       btnWidth: 120,
       backgroundColor: Theme.of(context).colorScheme.primary,
+      overlayColor: Theme.of(context).colorScheme.surfaceContainer,
       contentColor: Theme.of(context).colorScheme.onPrimary,
     );
   }
@@ -431,6 +434,7 @@ class _FontFamilyDialog extends StatelessWidget{
       btnHeight: 40,
       btnWidth: 148,
       backgroundColor: Theme.of(context).colorScheme.primary,
+      overlayColor: Theme.of(context).colorScheme.surfaceContainer,
       contentColor: Theme.of(context).colorScheme.onPrimary,
     );
   }
@@ -471,7 +475,7 @@ class Setting extends StatelessWidget {
             '设置',
             style: generalTextStyle(
               ctx: context,
-              size: 28.0,
+              size: 'title',
               weight: FontWeight.w600,
             ),
           ),

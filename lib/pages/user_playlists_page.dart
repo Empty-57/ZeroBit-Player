@@ -133,7 +133,7 @@ class UserPlayList extends StatelessWidget {
                     '歌单',
                     style: generalTextStyle(
                       ctx: context,
-                      size: 28.0,
+                      size: 'title',
                       weight: FontWeight.w600,
                     ),
                   ),
@@ -155,7 +155,7 @@ class UserPlayList extends StatelessWidget {
                 label: "新建歌单",
                 icon: PhosphorIconsLight.plus,
                 radius: 4,
-                btnWidth: 128,
+                btnWidth: 148,
                 btnHeight: 48,
               ),
             ],
