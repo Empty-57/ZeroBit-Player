@@ -48,11 +48,3 @@ double getIconSize<T>({T? size}){
 
   return iconSize;
 }
-
-// fontSizeSmall: 12,
-// fontSizeMiddle: 14,
-// fontSizeLarge: 16,
-//
-// iconSizeSmall: 18,
-// iconSizeMiddle: 20,
-// iconSizeLarge: 22,
