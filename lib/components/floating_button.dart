@@ -94,7 +94,7 @@ class FloatingButton extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
-        spacing: 8,
+        spacing: 4,
         children: [
           _FloatingBtn(
             tooltip: '回到顶部',
