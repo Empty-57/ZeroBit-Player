@@ -115,6 +115,9 @@ class AudioGenPages extends StatelessWidget{
                         size: 28.0,
                         weight: FontWeight.w400,
                       ),
+                      softWrap: true,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                     Obx(
                       () => Text(
