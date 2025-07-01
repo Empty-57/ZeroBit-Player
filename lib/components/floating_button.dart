@@ -97,7 +97,7 @@ class FloatingButton extends StatelessWidget {
         spacing: 4,
         children: [
           _FloatingBtn(
-            tooltip: '回到顶部',
+            tooltip: '顶部',
             icon: PhosphorIconsFill.arrowLineUp,
             fn: () {
               scrollControllerGrid.jumpTo(0.0);
