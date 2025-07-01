@@ -32,7 +32,7 @@ class UserPlayList extends StatelessWidget {
           titleTextStyle: generalTextStyle(
             ctx: context,
             size: 20,
-            weight: FontWeight.w700,
+            weight: FontWeight.w600,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(4)),
