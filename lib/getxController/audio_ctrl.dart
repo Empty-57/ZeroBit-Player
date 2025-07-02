@@ -392,10 +392,7 @@ class AudioController extends GetxController {
     );
   }
 
-  Future<void> audioRemove({
-    required String userKey,
-    required MusicCache metadata,
-  }) async {
+  Future<void> audioRemove({required String userKey, required MusicCache metadata,}) async {
     switch (userKey) {
       case AudioSource.allMusic:
         await _musicCacheController.remove(metadata: metadata);
