@@ -44,19 +44,21 @@ class CustomBtn<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip??'',
-      child: TextButton(
+      child: SizedBox(
+        width: btnWidth!,
+        height: btnHeight!,
+        child: TextButton(
         onPressed: () {
           fn();
         },
         style: TextButton.styleFrom(
-          fixedSize: Size(btnWidth!, btnHeight!),
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radius!),
           ),
           overlayColor: overlayColor,
           backgroundColor: backgroundColor??Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 1),
-          padding: padding??EdgeInsets.symmetric(horizontal: 16),
+          padding: padding??EdgeInsets.symmetric(horizontal: 8),
           shadowColor: Colors.transparent,
         ),
 
@@ -86,6 +88,7 @@ class CustomBtn<T> extends StatelessWidget {
                   ),
               ],
         ),
+      ),
       ),
     );
   }

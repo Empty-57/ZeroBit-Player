@@ -11,10 +11,10 @@ final currentNavigationIndex = 0.obs;
 int _oldIndex = 0;
 
 const double _navigationBtnWidth = 220;
-const double _navigationBtnHeight = 52;
+const double _navigationBtnHeight = 48;
 
 const double _navigationWidth = 260;
-const double _navigationWidthSmall = 84;
+const double _navigationWidthSmall = 64;
 const double resViewThresholds= 1100;
 
 const mainRoutes = [AppRoutes.home, AppRoutes.userPlayList,AppRoutes.setting];
@@ -90,7 +90,9 @@ class CustomNavigationBtn extends StatelessWidget {
             children: [
               Expanded(
                 flex: 1,
-                child: Row(
+                child: Tooltip(
+                  message: context.width>resViewThresholds? "":label,
+                  child: Row(
                   mainAxisAlignment: context.width>resViewThresholds? MainAxisAlignment.start:MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   spacing: 16,
@@ -111,6 +113,7 @@ class CustomNavigationBtn extends StatelessWidget {
                       style: generalTextStyle(ctx: context,size: 'md'),
                     ),
                   ],
+                ),
                 ),
               ),
               Container(
