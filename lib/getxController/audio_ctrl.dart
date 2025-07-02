@@ -426,10 +426,7 @@ class AudioController extends GetxController {
     }
   }
 
-  void audioRemoveAll({
-    required String userKey,
-    required List<MusicCache> removeList,
-  }) {
+  void audioRemoveAll({required String userKey, required List<MusicCache> removeList,}) {
     if (!allUserKey.contains(userKey)) {
       return;
     }
