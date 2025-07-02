@@ -19,6 +19,8 @@ final AudioController _audioController = Get.find<AudioController>();
 
 List<String> _fontsList=[];
 
+const double _setBtnHeight= 40;
+
 class _FolderManagerDialog extends StatelessWidget {
   const _FolderManagerDialog();
 
@@ -189,8 +191,9 @@ class _FolderManagerDialog extends StatelessWidget {
       },
       icon: PhosphorIconsLight.folder,
       label: '管理',
-      btnHeight: 40,
-      btnWidth: 108,
+      btnHeight: _setBtnHeight,
+      btnWidth: 96,
+      mainAxisAlignment: MainAxisAlignment.center,
       backgroundColor: Theme.of(context).colorScheme.primary,
       overlayColor: Theme.of(context).colorScheme.surfaceContainer,
       contentColor: Theme.of(context).colorScheme.onPrimary,
@@ -203,8 +206,7 @@ class _ApiDropMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double btnW = 156;
-    const double btnH = 40;
+    const double btnW = 148;
 
     final menuController = MenuController();
     final apiMenuList =
@@ -216,8 +218,7 @@ class _ApiDropMenu extends StatelessWidget {
               menuController.close();
             },
             btnWidth: btnW,
-            btnHeight: btnH,
-            radius: 4,
+            btnHeight: _setBtnHeight,
             label: entry.value,
             mainAxisAlignment: MainAxisAlignment.center,
             backgroundColor: Colors.transparent,
@@ -235,8 +236,9 @@ class _ApiDropMenu extends StatelessWidget {
           },
           icon: PhosphorIconsLight.plugs,
           label: _settingController.apiMap[_settingController.apiIndex.value],
-          btnHeight: btnH,
+          btnHeight: _setBtnHeight,
           btnWidth: btnW,
+          spacing: 4,
           backgroundColor: Theme.of(context).colorScheme.primary,
           overlayColor: Theme.of(context).colorScheme.surfaceContainer,
           contentColor: Theme.of(context).colorScheme.onPrimary,
@@ -351,8 +353,10 @@ class _ColorPicker extends StatelessWidget {
       },
       icon: PhosphorIconsLight.palette,
       label: '取色器',
-      btnHeight: 40,
-      btnWidth: 120,
+      btnHeight: _setBtnHeight,
+      btnWidth: 108,
+      spacing: 6,
+      mainAxisAlignment: MainAxisAlignment.center,
       backgroundColor: Theme.of(context).colorScheme.primary,
       overlayColor: Theme.of(context).colorScheme.surfaceContainer,
       contentColor: Theme.of(context).colorScheme.onPrimary,
@@ -431,8 +435,10 @@ class _FontFamilyDialog extends StatelessWidget{
       },
       icon: PhosphorIconsLight.textAa,
       label: '选择字体',
-      btnHeight: 40,
-      btnWidth: 148,
+      btnHeight: _setBtnHeight,
+      btnWidth: 128,
+      spacing: 6,
+      mainAxisAlignment: MainAxisAlignment.center,
       backgroundColor: Theme.of(context).colorScheme.primary,
       overlayColor: Theme.of(context).colorScheme.surfaceContainer,
       contentColor: Theme.of(context).colorScheme.onPrimary,
@@ -547,7 +553,7 @@ class Setting extends StatelessWidget {
               cacheExtent: 48 * 1,
               itemBuilder: (context, index) {
                 return Text(
-                  _audioController.playListCacheItems[index].path,
+                  _audioController.playListCacheItems[index].title,
                   style: generalTextStyle(ctx: context),
                 );
               },

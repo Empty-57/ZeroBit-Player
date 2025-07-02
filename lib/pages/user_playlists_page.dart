@@ -121,7 +121,7 @@ class UserPlayList extends StatelessWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
             spacing: 8,
             children: [
               Column(
@@ -154,9 +154,9 @@ class UserPlayList extends StatelessWidget {
                 },
                 label: "新建歌单",
                 icon: PhosphorIconsLight.plus,
-                radius: 4,
-                btnWidth: 148,
+                btnWidth: 128,
                 btnHeight: 48,
+                mainAxisAlignment: MainAxisAlignment.center,
               ),
             ],
           ),
