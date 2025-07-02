@@ -362,6 +362,15 @@ class AudioController extends GetxController {
     if (!allUserKey.contains(userKey)) {
       return;
     }
+    
+    if(selectedList.isEmpty){
+      showSnackBar(
+      title: "WARNING",
+      msg: "未选择音频！",
+      duration: Duration(milliseconds: 1000),
+    );
+      return;
+    }
 
     List<String> newList = _userPlayListCacheBox.get(key: userKey)!.pathList;
 
