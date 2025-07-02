@@ -358,10 +358,7 @@ class AudioController extends GetxController {
     );
   }
 
-  void addAllToAudioList({
-    required List<MusicCache> selectedList,
-    required String userKey,
-  }) {
+  void addAllToAudioList({required List<MusicCache> selectedList, required String userKey,}) {
     if (!allUserKey.contains(userKey)) {
       return;
     }
