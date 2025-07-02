@@ -479,7 +479,7 @@ class Setting extends StatelessWidget {
               weight: FontWeight.w600,
             ),
           ),
-          
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
