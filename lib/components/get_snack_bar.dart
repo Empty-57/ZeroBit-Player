@@ -27,7 +27,7 @@ void showSnackBar({
     snackPosition: position,
     duration: duration,
     backgroundColor: backgroundColor!,
-    titleText: Text(title, style: TextStyle(color: textColor, fontSize: 14.0)),
-    messageText: Text(msg, style: TextStyle(color: textColor, fontSize: 12.0)),
+    titleText: Text(title, style: TextStyle(color: textColor, fontSize: 15.0)),
+    messageText: Text(msg, style: TextStyle(color: textColor, fontSize: 13.0)),
   );
 }
