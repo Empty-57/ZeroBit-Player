@@ -305,7 +305,7 @@ class AudioController extends GetxController {
       showSnackBar(
         title: "WARNING",
         msg: "无效操作！",
-        duration: Duration(milliseconds: 1000),
+        duration: Duration(milliseconds: 1500),
       );
       return;
     }
@@ -319,7 +319,7 @@ class AudioController extends GetxController {
     showSnackBar(
       title: "OK",
       msg: "已将 ${metadata.title} 添加到下一首播放",
-      duration: Duration(milliseconds: 1000),
+      duration: Duration(milliseconds: 1500),
     );
     _hasNextAudioMetadata = metadata;
   }
@@ -334,7 +334,7 @@ class AudioController extends GetxController {
         title: "WARNING",
         msg:
             "歌单 ${userKey.split(playListTagSuffix)[0]} 存在重复歌曲 ${metadata.title} ！",
-        duration: Duration(milliseconds: 1000),
+        duration: Duration(milliseconds: 1500),
       );
       return;
     }
@@ -354,7 +354,7 @@ class AudioController extends GetxController {
     showSnackBar(
       title: "OK",
       msg: "已将 ${metadata.title} 添加到歌单 ${userKey.split(playListTagSuffix)[0]}",
-      duration: Duration(milliseconds: 1000),
+      duration: Duration(milliseconds: 1500),
     );
   }
 
@@ -367,7 +367,7 @@ class AudioController extends GetxController {
       showSnackBar(
       title: "WARNING",
       msg: "未选择音频！",
-      duration: Duration(milliseconds: 1000),
+      duration: Duration(milliseconds: 1500),
     );
       return;
     }
@@ -397,7 +397,7 @@ class AudioController extends GetxController {
     showSnackBar(
       title: "OK",
       msg: "已将去重后的 $l 首歌添加到歌单 ${userKey.split(playListTagSuffix)[0]}",
-      duration: Duration(milliseconds: 1000),
+      duration: Duration(milliseconds: 1500),
     );
   }
 
@@ -430,7 +430,7 @@ class AudioController extends GetxController {
         title: "OK",
         msg:
             "已将 ${metadata.title} 从歌单 ${userKey.split(playListTagSuffix)[0]}删除！",
-        duration: Duration(milliseconds: 1000),
+        duration: Duration(milliseconds: 1500),
       );
     }
   }
@@ -444,7 +444,7 @@ class AudioController extends GetxController {
       showSnackBar(
       title: "WARNING",
       msg: "未选择音频！",
-      duration: Duration(milliseconds: 1000),
+      duration: Duration(milliseconds: 1500),
     );
       return;
     }
@@ -473,7 +473,7 @@ class AudioController extends GetxController {
       title: "OK",
       msg:
           "已将去重后的 ${removeList.length} 首歌从歌单 ${userKey.split(playListTagSuffix)[0]}删除！",
-      duration: Duration(milliseconds: 1000),
+      duration: Duration(milliseconds: 1500),
     );
   }
 }
