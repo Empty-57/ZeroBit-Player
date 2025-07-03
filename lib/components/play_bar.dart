@@ -356,7 +356,9 @@ class PlayBar extends StatelessWidget {
                 ),
                 const _ProgressBar(),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: (){
+                    Get.toNamed(AppRoutes.lrcView);
+                  },
                   onHover: (v) {
                     _isBarHover.value = v;
                   },
