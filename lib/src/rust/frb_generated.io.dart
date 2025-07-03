@@ -7,6 +7,7 @@ import 'api/bass.dart';
 import 'api/bass/basswasapi_func.dart';
 import 'api/get_fonts.dart';
 import 'api/music_tag_tool.dart';
+import 'api/smtc.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi' as ffi;

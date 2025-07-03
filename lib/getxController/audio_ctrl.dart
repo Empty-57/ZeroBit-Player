@@ -11,6 +11,7 @@ import 'package:zerobit_player/getxController/play_list_ctrl.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
+import 'package:zerobit_player/src/rust/api/smtc.dart';
 
 import '../HIveCtrl/hive_manager.dart';
 import '../HIveCtrl/models/music_cahce_model.dart';
@@ -102,6 +103,7 @@ class AudioController extends GetxController {
       }
 
       currentCover.value=await getCover(path: currentPath.value, sizeFlag: 1)??kTransparentImage;
+      await smtcUpdateMetadata(title: playListCacheItems[currentIndex.value].title, artist: playListCacheItems[currentIndex.value].artist, album: playListCacheItems[currentIndex.value].album, coverSrc: currentCover.value);
     });
 
   }
@@ -147,6 +149,7 @@ class AudioController extends GetxController {
 
       syncCurrentIndex();
       currentState.value = AudioState.playing;
+      await smtcUpdateState(state: currentState.value.index);
       await playFile(path: metadata.path);
     } catch (e) {
       currentPath.value = oldPath;
@@ -166,6 +169,7 @@ class AudioController extends GetxController {
     }
     currentState.value = AudioState.playing;
     try {
+      await smtcUpdateState(state: currentState.value.index);
       await resume();
     } catch (e) {
       showSnackBar(title: "ERR", msg: e.toString());
@@ -178,6 +182,7 @@ class AudioController extends GetxController {
     }
     currentState.value = AudioState.pause;
     try {
+      await smtcUpdateState(state: currentState.value.index);
       await pause();
     } catch (e) {
       showSnackBar(title: "ERR", msg: e.toString());
@@ -188,6 +193,7 @@ class AudioController extends GetxController {
     currentState.value = AudioState.stop;
     currentIndex.value = -1;
     try {
+      await smtcUpdateState(state: currentState.value.index);
       await stop();
     } catch (e) {
       showSnackBar(title: "ERR", msg: e.toString());
@@ -205,6 +211,7 @@ class AudioController extends GetxController {
       currentState.value = AudioState.pause;
     }
     try {
+      await smtcUpdateState(state: currentState.value.index);
       await toggle();
     } catch (e) {
       showSnackBar(title: "ERR", msg: e.toString());
@@ -275,10 +282,14 @@ class AudioController extends GetxController {
     if (currentIndex.value == -1) {
       return;
     }
-    currentIndex.value--;
+
+    if(_settingController.playMode.value != 2){
+      currentIndex.value--;
     if (currentIndex.value < 0) {
       currentIndex.value = playListCacheItems.length - 1;
     }
+    }
+
 
     await _maybeRandomPlay();
   }
@@ -288,10 +299,14 @@ class AudioController extends GetxController {
       return;
     }
 
-    currentIndex.value++;
+    if(_settingController.playMode.value != 2){
+      currentIndex.value++;
     if (currentIndex.value > playListCacheItems.length - 1) {
       currentIndex.value = 0;
     }
+    }
+
+
 
     await _maybeRandomPlay();
   }

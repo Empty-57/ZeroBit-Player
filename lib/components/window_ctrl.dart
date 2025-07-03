@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:zerobit_player/src/rust/api/smtc.dart';
 import 'package:zerobit_player/theme_manager.dart';
 import '../tools/general_style.dart';
 import '../getxController/setting_ctrl.dart';

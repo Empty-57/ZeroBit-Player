@@ -16,6 +16,7 @@ import 'package:zerobit_player/pages/playlist_page.dart';
 import 'package:zerobit_player/pages/setting_page.dart';
 import 'package:zerobit_player/pages/user_playlists_page.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
+import 'package:zerobit_player/src/rust/api/smtc.dart';
 import 'package:zerobit_player/src/rust/frb_generated.dart';
 import 'package:zerobit_player/tools/sync_cache.dart';
 import 'package:zerobit_player/components/window_ctrl.dart';
@@ -44,6 +45,13 @@ import 'theme_manager.dart';
 
 int count=0;
 
+enum AudioAction{
+  play,
+  pause,
+  next,
+  previous
+}
+
 void main() async {
 
   // ProcessSignal.sigint.watch().listen((signal) async{
@@ -67,6 +75,8 @@ void main() async {
   }catch(e){
     debugPrint(e.toString());
   }
+
+  await initSmtc();
 
   await Hive.initFlutter();
 
@@ -138,6 +148,27 @@ void main() async {
   }catch(e){
     debugPrint(e.toString());
     showSnackBar(title: "ERR:",msg: e.toString());
+  }
+
+  try{
+    smtcControlEvents().listen((data){
+
+      if(data==AudioAction.play.index||data==AudioAction.pause.index){
+        audioController.audioToggle();
+      }
+
+      if(data==AudioAction.next.index){
+        audioController.audioToNext();
+      }
+
+      if(data==AudioAction.previous.index){
+        audioController.audioToPrevious();
+      }
+
+    });
+
+  }catch(e){
+    debugPrint(e.toString());
   }
 
 }

@@ -37,7 +37,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.10.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -741235176;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1072076407;
 
 // Section: executor
 
@@ -389,6 +389,38 @@ fn wire__crate__api__bass__init_bass_impl(
         },
     )
 }
+fn wire__crate__api__smtc__init_smtc_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "init_smtc",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok = crate::api::smtc::init_smtc()?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__bass__load_lib_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -649,6 +681,154 @@ fn wire__crate__api__bass__set_volume_impl(
             move |context| {
                 transform_result_sse::<_, String>((move || {
                     let output_ok = crate::api::bass::set_volume(api_vol)?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__smtc__smtc_clear_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "smtc_clear",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok({
+                        crate::api::smtc::smtc_clear();
+                    })?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__smtc__smtc_control_events_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "smtc_control_events",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_sink =
+                <StreamSink<u32, flutter_rust_bridge::for_generated::SseCodec>>::sse_decode(
+                    &mut deserializer,
+                );
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok({
+                        crate::api::smtc::smtc_control_events(api_sink);
+                    })?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__smtc__smtc_update_metadata_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "smtc_update_metadata",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_title = <String>::sse_decode(&mut deserializer);
+            let api_artist = <String>::sse_decode(&mut deserializer);
+            let api_album = <String>::sse_decode(&mut deserializer);
+            let api_cover_src = <Vec<u8>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
+                    (move || {
+                        let output_ok = crate::api::smtc::smtc_update_metadata(
+                            api_title,
+                            api_artist,
+                            api_album,
+                            api_cover_src,
+                        )?;
+                        Ok(output_ok)
+                    })(),
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__smtc__smtc_update_state_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "smtc_update_state",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_state = <u32>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok = crate::api::smtc::smtc_update_state(api_state)?;
                     Ok(output_ok)
                 })())
             }
@@ -946,16 +1126,21 @@ fn pde_ffi_dispatcher_primary_impl(
         8 => wire__crate__api__bass__get_position_impl(port, ptr, rust_vec_len, data_len),
         9 => wire__crate__api__bass__get_volume_impl(port, ptr, rust_vec_len, data_len),
         10 => wire__crate__api__bass__init_bass_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__bass__load_lib_impl(port, ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__bass__pause_impl(port, ptr, rust_vec_len, data_len),
-        13 => wire__crate__api__bass__play_file_impl(port, ptr, rust_vec_len, data_len),
-        14 => wire__crate__api__bass__progress_listen_impl(port, ptr, rust_vec_len, data_len),
-        15 => wire__crate__api__bass__resume_impl(port, ptr, rust_vec_len, data_len),
-        16 => wire__crate__api__bass__set_exclusive_mode_impl(port, ptr, rust_vec_len, data_len),
-        17 => wire__crate__api__bass__set_position_impl(port, ptr, rust_vec_len, data_len),
-        18 => wire__crate__api__bass__set_volume_impl(port, ptr, rust_vec_len, data_len),
-        19 => wire__crate__api__bass__stop_impl(port, ptr, rust_vec_len, data_len),
-        20 => wire__crate__api__bass__toggle_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__smtc__init_smtc_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__bass__load_lib_impl(port, ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__bass__pause_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire__crate__api__bass__play_file_impl(port, ptr, rust_vec_len, data_len),
+        15 => wire__crate__api__bass__progress_listen_impl(port, ptr, rust_vec_len, data_len),
+        16 => wire__crate__api__bass__resume_impl(port, ptr, rust_vec_len, data_len),
+        17 => wire__crate__api__bass__set_exclusive_mode_impl(port, ptr, rust_vec_len, data_len),
+        18 => wire__crate__api__bass__set_position_impl(port, ptr, rust_vec_len, data_len),
+        19 => wire__crate__api__bass__set_volume_impl(port, ptr, rust_vec_len, data_len),
+        20 => wire__crate__api__smtc__smtc_clear_impl(port, ptr, rust_vec_len, data_len),
+        21 => wire__crate__api__smtc__smtc_control_events_impl(port, ptr, rust_vec_len, data_len),
+        22 => wire__crate__api__smtc__smtc_update_metadata_impl(port, ptr, rust_vec_len, data_len),
+        23 => wire__crate__api__smtc__smtc_update_state_impl(port, ptr, rust_vec_len, data_len),
+        24 => wire__crate__api__bass__stop_impl(port, ptr, rust_vec_len, data_len),
+        25 => wire__crate__api__bass__toggle_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }

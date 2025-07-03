@@ -15,6 +15,10 @@ anyhow = "1.0.98"
 ttf-parser = "0.25.1"
 libloading = "0.8.8"
 dirs = "6.0.0"
+windows = {version = "0.61.3", features = [
+    "Media_Playback",
+    "Storage_Streams",
+    "Storage_FileProperties"] }
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
