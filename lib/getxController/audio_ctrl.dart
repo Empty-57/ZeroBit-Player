@@ -243,8 +243,16 @@ class AudioController extends GetxController {
   }
 
   Future<void> _maybeRandomPlay() async {
-    if (_settingController.playMode.value == 2) {
-      currentIndex.value = Random().nextInt(playListCacheItems.length);
+    if (_settingController.playMode.value == 2&&playListCacheItems.length>1) {
+      syncCurrentIndex();
+      for(int i=0;i<10;i++){
+        final index=Random().nextInt(playListCacheItems.length);
+        if(index!=currentIndex.value){
+          currentIndex.value=index;
+          break;
+        }
+      }
+
     }
 
     if (_hasNextAudioMetadata != null) {
