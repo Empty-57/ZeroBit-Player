@@ -41,6 +41,8 @@ class AudioController extends GetxController {
 
   List get allUserKey => _userPlayListCacheBox.getKeyAll();
 
+  final currentCover=kTransparentImage.obs;
+
   void syncPlayListCacheItems() {
     if (allUserKey.contains(_audioSource.currentAudioSource.value)) {
       playListCacheItems =
