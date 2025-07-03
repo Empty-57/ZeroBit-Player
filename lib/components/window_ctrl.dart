@@ -97,7 +97,9 @@ class ControllerButton extends StatelessWidget {
 }
 
 class WindowController extends StatelessWidget {
-  const WindowController({super.key});
+  final bool? isNestedRoute;
+
+  const WindowController({super.key,this.isNestedRoute=true});
 
   @override
   Widget build(BuildContext context) {
