@@ -87,6 +87,7 @@ class AudioController extends GetxController {
 
     ever(currentIndex, (_) async {
       if (currentIndex.value == -1) {
+        windowManager.setTitle('ZeroBit Player');
         return;
       }
       if (_settingController.dynamicThemeColor.value) {
