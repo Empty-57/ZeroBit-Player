@@ -144,11 +144,6 @@ class AudioController extends GetxController {
       }
 
       syncCurrentIndex();
-
-      if (_settingController.dynamicThemeColor.value) {
-        await _setThemeColor4Cover();
-      }
-
       currentState.value = AudioState.playing;
       await playFile(path: metadata.path);
     } catch (e) {
