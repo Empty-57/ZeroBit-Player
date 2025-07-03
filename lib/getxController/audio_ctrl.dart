@@ -88,6 +88,16 @@ class AudioController extends GetxController {
         return;
       }
     });
+
+    ever(currentPath, (_) async {
+      if (currentPath.value == '') {
+        return;
+      }
+
+      currentCover.value=await getCover(path: currentPath.value, sizeFlag: 1)??kTransparentImage;
+
+    });
+
   }
 
   Future<void> _setThemeColor4Cover() async {
