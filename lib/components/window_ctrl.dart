@@ -117,7 +117,7 @@ class WindowController extends StatelessWidget {
           ControllerButton(
             icon: PhosphorIconsLight.caretLeft,
             fn: () {
-              Get.back(id: 1);
+              Get.back(id: isNestedRoute! ? 1:null);
             },
             tooltip: "返回",
           ),
