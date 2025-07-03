@@ -406,7 +406,9 @@ class PlayBar extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       spacing: 8,
                       children: [
-                        ClipRRect(
+                        Hero(
+                          tag: 'playingCover',
+                          child: ClipRRect(
                           borderRadius: _coverBorderRadius,
                           child: FadeInImage(
                             placeholder: MemoryImage(kTransparentImage),
