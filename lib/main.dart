@@ -11,6 +11,7 @@ import 'package:zerobit_player/field/audio_source.dart';
 import 'package:zerobit_player/getxController/audio_ctrl.dart';
 import 'package:zerobit_player/getxController/user_playlist_ctrl.dart';
 import 'package:zerobit_player/pages/local_music_page.dart';
+import 'package:zerobit_player/pages/lrc_view.dart';
 import 'package:zerobit_player/pages/playlist_page.dart';
 import 'package:zerobit_player/pages/setting_page.dart';
 import 'package:zerobit_player/pages/user_playlists_page.dart';
