@@ -33,7 +33,7 @@ class CustomBtn<T> extends StatelessWidget {
     this.overlayColor,
     this.btnWidth=128,
     this.btnHeight=48,
-    this.spacing=8,
+    this.spacing=6,
     this.padding,
     this.tooltip,
     this.mainAxisAlignment = MainAxisAlignment.spaceAround,

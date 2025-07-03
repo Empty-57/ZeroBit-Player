@@ -155,7 +155,7 @@ class UserPlayList extends StatelessWidget {
                 label: "新建歌单",
                 icon: PhosphorIconsLight.plus,
                 btnWidth: 128,
-                btnHeight: 48,
+                btnHeight: 42,
                 mainAxisAlignment: MainAxisAlignment.center,
               ),
             ],

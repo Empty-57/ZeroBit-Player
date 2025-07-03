@@ -21,6 +21,32 @@ List<String> _fontsList=[];
 
 const double _setBtnHeight= 40;
 
+class _SetDivider extends StatelessWidget{
+
+  final String title;
+  const _SetDivider({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Container(
+                margin: EdgeInsets.only(bottom: 8,top: 16),
+                child: Text(title, style: generalTextStyle(ctx: context, size: 'xl',weight: FontWeight.w600)),
+              ),
+              Container(
+                margin: EdgeInsets.only(bottom: 12),
+                child: Divider(height: 0,thickness: 0.5, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),),
+              ),
+
+            ],
+          );
+  }
+
+}
+
 class _FolderManagerDialog extends StatelessWidget {
   const _FolderManagerDialog();
 
@@ -238,11 +264,10 @@ class _ApiDropMenu extends StatelessWidget {
           label: _settingController.apiMap[_settingController.apiIndex.value],
           btnHeight: _setBtnHeight,
           btnWidth: btnW,
-          spacing: 4,
           backgroundColor: Theme.of(context).colorScheme.primary,
           overlayColor: Theme.of(context).colorScheme.surfaceContainer,
           contentColor: Theme.of(context).colorScheme.onPrimary,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.center,
         ),
       ),
     );
@@ -355,7 +380,6 @@ class _ColorPicker extends StatelessWidget {
       label: '取色器',
       btnHeight: _setBtnHeight,
       btnWidth: 108,
-      spacing: 6,
       mainAxisAlignment: MainAxisAlignment.center,
       backgroundColor: Theme.of(context).colorScheme.primary,
       overlayColor: Theme.of(context).colorScheme.surfaceContainer,
@@ -437,7 +461,6 @@ class _FontFamilyDialog extends StatelessWidget{
       label: '选择字体',
       btnHeight: _setBtnHeight,
       btnWidth: 128,
-      spacing: 6,
       mainAxisAlignment: MainAxisAlignment.center,
       backgroundColor: Theme.of(context).colorScheme.primary,
       overlayColor: Theme.of(context).colorScheme.surfaceContainer,
@@ -486,6 +509,8 @@ class Setting extends StatelessWidget {
             ),
           ),
 
+          const _SetDivider(title: '常规'),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -503,6 +528,8 @@ class Setting extends StatelessWidget {
               const _ApiDropMenu(),
             ],
           ),
+
+          const _SetDivider(title: '个性化'),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
