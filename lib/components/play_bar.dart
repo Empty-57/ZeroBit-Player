@@ -422,6 +422,7 @@ class PlayBar extends StatelessWidget {
                             fit: BoxFit.cover,
                           ),
                         ),
+                        ),
                         Expanded(
                           flex: 1,
                           child: Column(
