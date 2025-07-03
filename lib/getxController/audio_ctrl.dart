@@ -273,9 +273,8 @@ class AudioController extends GetxController {
       return;
     }
 
-    if (currentIndex.value < playListCacheItems.length - 1) {
-      currentIndex.value++;
-    } else {
+    currentIndex.value++;
+    if (currentIndex.value > playListCacheItems.length - 1) {
       currentIndex.value = 0;
     }
 
