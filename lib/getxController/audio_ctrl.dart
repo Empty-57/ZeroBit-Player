@@ -22,7 +22,6 @@ enum AudioState { stop, playing, pause }
 class AudioController extends GetxController {
   final currentPath = ''.obs;
   final currentIndex = (-1).obs;
-  String? _lastPath;
   final currentMs100 = 0.0.obs;
   final progress = 0.0.obs;
 
@@ -97,7 +96,6 @@ class AudioController extends GetxController {
       }
 
       currentCover.value=await getCover(path: currentPath.value, sizeFlag: 1)??kTransparentImage;
-
     });
 
   }
@@ -135,7 +133,6 @@ class AudioController extends GetxController {
 
     currentMs100.value = 0.0;
     try {
-      _lastPath = currentPath.value;
       currentPath.value = metadata.path;
 
       if (!playListCacheItems.any((v) => v.path == metadata.path)) {
@@ -143,20 +140,17 @@ class AudioController extends GetxController {
       }
 
       syncCurrentIndex();
-      currentState.value = AudioState.playing;
-
-      update([metadata.path, if (_lastPath != null) _lastPath!]);
-      await playFile(path: metadata.path);
 
       if (_settingController.dynamicThemeColor.value) {
         await _setThemeColor4Cover();
       }
+
+      currentState.value = AudioState.playing;
+      await playFile(path: metadata.path);
     } catch (e) {
       currentPath.value = oldPath;
       currentIndex.value = oldIndex;
       currentState.value = oldState;
-      update([metadata.path, if (oldPath != null) oldPath]);
-
       currentMs100.value = 0.0;
 
       debugPrint(e.toString());
