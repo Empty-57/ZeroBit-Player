@@ -40,7 +40,7 @@ const _playModeIcons = [
 ];
 
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
-final int _coverRenderSize = 150;
+const int _coverRenderSize = 150;
 
 final AudioController _audioController = Get.find<AudioController>();
 final SettingController _settingController = Get.find<SettingController>();
