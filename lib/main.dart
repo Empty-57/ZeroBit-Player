@@ -128,12 +128,6 @@ void main() async {
   }
 
   try{
-    audioEventStream().listen((data) {
-      if(data==AudioState.stop.index){
-        audioController.audioAutoPlay();
-      }
-    });
-
     progressListen().listen((data){
       count++;
       if(count>3){
