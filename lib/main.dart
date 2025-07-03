@@ -180,7 +180,7 @@ class MainFrame extends StatelessWidget {
         GetPage(name: AppRoutes.setting, page: () => const Setting()),
         GetPage(name: AppRoutes.userPlayList, page: () => const UserPlayList()),
         GetPage(name: AppRoutes.playList, page: () => const PlayList()),
-        GetPage(name: AppRoutes.lrcView, page: () => const LrcView()),
+        GetPage(name: AppRoutes.lrcView, page: () => const LrcView(),transition: Transition.fade,transitionDuration: 300.ms,),
       ],
     )
     );
