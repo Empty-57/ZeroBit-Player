@@ -88,6 +88,10 @@ class AudioController extends GetxController {
       if (currentIndex.value == -1) {
         return;
       }
+      if (_settingController.dynamicThemeColor.value) {
+        await _setThemeColor4Cover();
+      }
+      windowManager.setTitle("${playListCacheItems[currentIndex.value].title} - ${playListCacheItems[currentIndex.value].artist}");
     });
 
     ever(currentPath, (_) async {
