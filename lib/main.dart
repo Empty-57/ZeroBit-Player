@@ -122,6 +122,17 @@ void main() async {
         audioController.audioAutoPlay();
       }
     });
+  }catch(e){
+    debugPrint(e.toString());
+    showSnackBar(title: "ERR:",msg: e.toString());
+  }
+
+  try{
+    audioEventStream().listen((data) {
+      if(data==AudioState.stop.index){
+        audioController.audioAutoPlay();
+      }
+    });
 
     progressListen().listen((data){
       count++;
