@@ -300,6 +300,8 @@ class AudioController extends GetxController {
     }
 
     if(_settingController.playMode.value != 2){
+
+    if (currentIndex.value < playListCacheItems.length-1) {
       currentIndex.value++;
     if (currentIndex.value > playListCacheItems.length - 1) {
       currentIndex.value = 0;
