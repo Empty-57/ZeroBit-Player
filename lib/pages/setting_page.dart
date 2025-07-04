@@ -403,8 +403,8 @@ class _FontFamilyDialog extends StatelessWidget{
               title: const Text("选择字体"),
               titleTextStyle: generalTextStyle(
                 ctx: context,
-                size: 20,
-                weight: FontWeight.w700,
+                size: 'xl',
+                weight: FontWeight.w600,
               ),
 
               shape: RoundedRectangleBorder(
