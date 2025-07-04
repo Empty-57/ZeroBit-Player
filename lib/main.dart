@@ -158,7 +158,7 @@ void main() async {
       }
 
       if(data==AudioAction.next.index){
-        audioController.audioToNext();
+        audioController.audioToNext.throttle(ms: 500)();
       }
 
       if(data==AudioAction.previous.index){
