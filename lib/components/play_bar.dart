@@ -401,7 +401,6 @@ class PlayBar extends StatelessWidget {
                       audioState = AudioState.stop;
                       duration = "--:--";
                     }
-                    debugPrint("upup");
 
                     return Row(
                       mainAxisAlignment: MainAxisAlignment.start,
