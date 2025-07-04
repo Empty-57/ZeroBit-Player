@@ -162,7 +162,7 @@ class AudioGenPages extends StatelessWidget {
                                 metadata: controller.items[0],
                               );
                             }
-                          }.futureDebounce(ms: 300),
+                          }.throttle(ms: 500),
                           icon: PhosphorIconsLight.play,
                           btnHeight: btnHeight,
                           btnWidth: 96,
