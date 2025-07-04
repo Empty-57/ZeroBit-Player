@@ -18,6 +18,7 @@ import 'package:zerobit_player/pages/user_playlists_page.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
 import 'package:zerobit_player/src/rust/frb_generated.dart';
+import 'package:zerobit_player/tools/func_extension.dart';
 import 'package:zerobit_player/tools/sync_cache.dart';
 import 'package:zerobit_player/components/window_ctrl.dart';
 import 'package:get/get.dart';
