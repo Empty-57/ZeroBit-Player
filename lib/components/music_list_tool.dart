@@ -205,7 +205,7 @@ class MusicTile extends StatelessWidget {
             _audioSource.currentAudioSource.value = audioSource;
             menuController.close();
             await _audioController.audioPlay(metadata: metadata);
-          }.futureDebounce(ms: isMulSelect.value?10:300),
+          }.throttle(ms: isMulSelect.value?10:500),
 
           style: TextButton.styleFrom(
             shape: RoundedRectangleBorder(borderRadius: _borderRadius),
