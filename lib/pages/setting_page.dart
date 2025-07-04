@@ -292,8 +292,8 @@ class _ColorPicker extends StatelessWidget {
               title: Text('取色器'),
               titleTextStyle: generalTextStyle(
                 ctx: context,
-                size: 20,
-                weight: FontWeight.w700,
+                size: 'xl',
+                weight: FontWeight.w600,
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(4)),
