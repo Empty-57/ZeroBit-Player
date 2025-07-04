@@ -534,7 +534,7 @@ class PlayBar extends StatelessWidget {
                                   icon: PhosphorIconsFill.skipForward,
                                   fn: () async{
                                     await _audioController.audioToNext();
-                                  }.futureDebounce(ms: 300),
+                                  }.throttle(ms: 500),
                                 ),
                                 _CtrlBtn(
                                   tooltip:
