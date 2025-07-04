@@ -562,9 +562,9 @@ class PlayBar extends StatelessWidget {
                               audioState == AudioState.playing
                                   ? PhosphorIconsFill.pause
                                   : PhosphorIconsFill.play,
-                          fn: () {
-                            _audioController.audioToggle();
-                          },
+                          fn: () async{
+                            await _audioController.audioToggle();
+                          }.throttle(ms: 300),
                         ),
 
                         Obx(
