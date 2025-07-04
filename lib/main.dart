@@ -162,7 +162,7 @@ void main() async {
       }
 
       if(data==AudioAction.previous.index){
-        audioController.audioToPrevious();
+        audioController.audioToPrevious.throttle(ms: 500)();
       }
 
     });
