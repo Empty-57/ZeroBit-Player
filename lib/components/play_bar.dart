@@ -527,7 +527,7 @@ class PlayBar extends StatelessWidget {
                                   icon: PhosphorIconsFill.skipBack,
                                   fn: () async{
                                     await _audioController.audioToPrevious();
-                                  }.futureDebounce(ms: 300),
+                                  }.throttle(ms: 500),
                                 ),
                                 _CtrlBtn(
                                   tooltip: "下一首",
