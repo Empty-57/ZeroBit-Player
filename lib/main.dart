@@ -153,7 +153,7 @@ void main() async {
 
   try{
     smtcControlEvents().listen((data){
-
+      
       if(data==AudioAction.play.index||data==AudioAction.pause.index){
         audioController.audioToggle.throttle(ms: 300)();
       }
