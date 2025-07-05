@@ -105,7 +105,7 @@ List<Widget> _genMenuItems({
           btnHeight: _menuHeight,
           btnWidth: _menuWidth,
           radius: _menuRadius,
-          icon: PhosphorIconsLight.arrowBendDownLeft,
+          icon: PhosphorIconsLight.arrowBendDownRight,
           label: "添加到下一首",
           mainAxisAlignment: MainAxisAlignment.start,
           backgroundColor: Colors.transparent,
