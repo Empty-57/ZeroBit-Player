@@ -320,6 +320,7 @@ class PlayBar extends StatelessWidget {
                         onChangeStart: (v) {
                           _isSeekBarDragging.value = true;
                           _seekDraggingValue.value = v;
+                          _isSeekBarDragging.value = true;
                         },
                         onChanged: (v) {
                           _seekDraggingValue.value = v;
