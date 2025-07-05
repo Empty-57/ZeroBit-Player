@@ -115,7 +115,7 @@ List<Widget> _genMenuItems({
         SubmenuButton(
           style: ButtonStyle(
             padding: WidgetStateProperty.all(
-              EdgeInsets.symmetric(horizontal: _itemSpacing),
+              EdgeInsets.symmetric(horizontal: 8),
             ),
           ),
           menuChildren: playList,
