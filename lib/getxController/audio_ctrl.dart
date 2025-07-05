@@ -104,6 +104,7 @@ class AudioController extends GetxController {
   }
 
   Future<void> _setThemeColor4Cover() async {
+    if(currentIndex.value > playListCacheItems.length-1){return;}
     final src =
         playListCacheItems[currentIndex.value].src ??
         await getCover(
