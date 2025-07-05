@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:transparent_image/transparent_image.dart';
 
 import '../components/window_ctrl.dart';
 import '../getxController/audio_ctrl.dart';
@@ -25,29 +24,40 @@ class LrcView extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const WindowController(isNestedRoute: false),
+          const WindowController(isNestedRoute: false,useCaretDown: true),
 
           Expanded(
             child: Container(
               alignment: Alignment.center,
               child: Hero(
                 tag: 'playingCover',
-                child: Obx(
-                  () => ClipRRect(
+                child: ClipRRect(
                     borderRadius: _coverBorderRadius,
-                    child: FadeInImage(
-                      placeholder: MemoryImage(kTransparentImage),
-                      image: ResizeImage(
-                        MemoryImage(_audioController.currentCover.value),
-                        width: _coverRenderSize,
-                        height: _coverRenderSize,
+                    child: Obx(()=>AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      switchInCurve: Curves.easeIn,
+                      switchOutCurve: Curves.easeOut,
+                      child: Image(
+                        key: ValueKey(
+                          _audioController.currentCover.value.hashCode,
+                        ),
+                        image: ResizeImage(
+                          MemoryImage(_audioController.currentCover.value),
+                          width: _coverRenderSize,
+                          height: _coverRenderSize,
+                        ),
+                        height: _coverSize,
+                        width: _coverSize,
+                        fit: BoxFit.cover,
                       ),
-                      height: _coverSize,
-                      width: _coverSize,
-                      fit: BoxFit.cover,
-                    ),
+                      transitionBuilder: (
+                        Widget child,
+                        Animation<double> anim,
+                      ) {
+                        return FadeTransition(opacity: anim, child: child);
+                      },
+                    )),
                   ),
-                ),
               ),
             ),
           ),
