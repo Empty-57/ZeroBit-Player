@@ -11,7 +11,7 @@ import '../getxController/setting_ctrl.dart';
 final SettingController _settingController = Get.find<SettingController>();
 final ThemeService _themeService = Get.find<ThemeService>();
 
-var themeMode = _settingController.themeMode;
+final themeMode = _settingController.themeMode;
 
 const double _controllerBarHeight = 48;
 
