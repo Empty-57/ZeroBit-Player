@@ -99,6 +99,7 @@ class ControllerButton extends StatelessWidget {
 
 class WindowController extends StatelessWidget {
   final bool? isNestedRoute;
+  final bool? useCaretDown;
 
   const WindowController({super.key,this.isNestedRoute=true,this.useCaretDown=false});
 
