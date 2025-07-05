@@ -1,4 +1,4 @@
-// 转写自：https://github.com/chenmozhijin/LDDC/blob/main/LDDC/backend/decryptor
+// 转写自: https://github.com/chenmozhijin/LDDC/tree/main/LDDC/core/decryptor
 
 import 'dart:typed_data';
 import 'dart:convert';
