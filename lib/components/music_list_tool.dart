@@ -48,7 +48,11 @@ List<Widget> _genMenuItems({
           onPressed: () {
             _audioController.addToAudioList(metadata: metadata, userKey: v);
           },
-          child: Center(child: Text(v.split(playListTagSuffix)[0])),
+          child: Center(
+              child: Text(
+                  v.split(playListTagSuffix)[0]
+              )
+          ),
         );
       }).toList();
 
