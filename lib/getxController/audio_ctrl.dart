@@ -94,6 +94,7 @@ class AudioController extends GetxController {
       if (_settingController.dynamicThemeColor.value) {
         await _setThemeColor4Cover();
       }
+
       windowManager.setTitle("${playListCacheItems[currentIndex.value].title} - ${playListCacheItems[currentIndex.value].artist}");
       currentCover.value=await getCover(path: currentPath.value, sizeFlag: 1)??kTransparentImage;
       await smtcUpdateMetadata(title: playListCacheItems[currentIndex.value].title, artist: playListCacheItems[currentIndex.value].artist, album: playListCacheItems[currentIndex.value].album, coverSrc: currentCover.value);
