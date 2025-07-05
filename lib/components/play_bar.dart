@@ -318,7 +318,6 @@ class PlayBar extends StatelessWidget {
                                 ? _seekDraggingValue.value
                                 : _audioController.currentMs100.value,
                         onChangeStart: (v) {
-                          _isSeekBarDragging.value = true;
                           _seekDraggingValue.value = v;
                           _isSeekBarDragging.value = true;
                         },
