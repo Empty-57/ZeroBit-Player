@@ -99,6 +99,7 @@ List<Widget> _genMenuItems({
           label: "播放",
           mainAxisAlignment: MainAxisAlignment.start,
           backgroundColor: Colors.transparent,
+          padding: EdgeInsets.symmetric(horizontal: 16),
         ),
 
         CustomBtn(
@@ -113,13 +114,14 @@ List<Widget> _genMenuItems({
           label: "添加到下一首",
           mainAxisAlignment: MainAxisAlignment.start,
           backgroundColor: Colors.transparent,
+          padding: EdgeInsets.symmetric(horizontal: 16),
         ),
         EditMetadataDialog(menuController: menuController, metadata: metadata,index:index),
 
         SubmenuButton(
           style: ButtonStyle(
             padding: WidgetStateProperty.all(
-              EdgeInsets.symmetric(horizontal: 8),
+              EdgeInsets.symmetric(horizontal: 16),
             ),
           ),
           menuChildren: playList,
@@ -142,6 +144,7 @@ List<Widget> _genMenuItems({
           label: "打开本地资源",
           mainAxisAlignment: MainAxisAlignment.start,
           backgroundColor: Colors.transparent,
+          padding: EdgeInsets.symmetric(horizontal: 16),
         ),
       ] +
       maybeDel;

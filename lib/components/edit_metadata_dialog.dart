@@ -324,6 +324,7 @@ class EditMetadataDialog extends StatelessWidget {
       label: "修改元数据",
       mainAxisAlignment: MainAxisAlignment.start,
       backgroundColor: Colors.transparent,
+      padding: EdgeInsets.symmetric(horizontal: 16),
     );
   }
 }
