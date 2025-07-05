@@ -285,6 +285,7 @@ class PlayBar extends StatelessWidget {
                     height: 28,
                     radius: 4,
                   ),
+                  valueIndicatorTextStyle:generalTextStyle(ctx: context,size: 'sm',color: Theme.of(context).colorScheme.onPrimary),
                   mouseCursor: WidgetStateProperty.all(SystemMouseCursors.resizeLeftRight),
                 ),
                 child: Obx(() {
