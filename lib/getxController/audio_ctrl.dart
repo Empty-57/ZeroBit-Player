@@ -101,15 +101,6 @@ class AudioController extends GetxController {
       debugPrint("currentIndex:set");
     });
 
-    ever(currentPath, (_) async {
-      if (currentPath.value == '') {
-        return;
-      }
-
-      currentCover.value=await getCover(path: currentPath.value, sizeFlag: 1)??kTransparentImage;
-      await smtcUpdateMetadata(title: playListCacheItems[currentIndex.value].title, artist: playListCacheItems[currentIndex.value].artist, album: playListCacheItems[currentIndex.value].album, coverSrc: currentCover.value);
-    });
-
   }
 
   Future<void> _setThemeColor4Cover() async {
