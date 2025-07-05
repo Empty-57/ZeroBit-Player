@@ -116,7 +116,7 @@ class WindowController extends StatelessWidget {
         spacing: 8,
         children: <Widget>[
           ControllerButton(
-            icon: PhosphorIconsLight.caretLeft,
+            icon: useCaretDown! ? PhosphorIconsLight.caretDown:PhosphorIconsLight.caretLeft,
             fn: () {
               Get.back(id: isNestedRoute! ? 1:null);
             },
