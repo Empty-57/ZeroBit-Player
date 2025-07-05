@@ -97,11 +97,11 @@ class ControllerButton extends StatelessWidget {
   }
 }
 
-class WindowController extends StatelessWidget {
+class WindowControllerBar extends StatelessWidget {
   final bool? isNestedRoute;
   final bool? useCaretDown;
 
-  const WindowController({super.key,this.isNestedRoute=true,this.useCaretDown=false});
+  const WindowControllerBar({super.key,this.isNestedRoute=true,this.useCaretDown=false});
 
   @override
   Widget build(BuildContext context) {

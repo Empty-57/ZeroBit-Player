@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../components/window_ctrl.dart';
+import '../components/window_ctrl_bar.dart';
 import '../getxController/audio_ctrl.dart';
 
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
@@ -24,11 +24,12 @@ class LrcView extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const WindowController(isNestedRoute: false,useCaretDown: true),
+          const WindowControllerBar(isNestedRoute: false,useCaretDown: true),
 
           Expanded(
             child: Container(
               alignment: Alignment.center,
+
               child: Hero(
                 tag: 'playingCover',
                 child: ClipRRect(
@@ -59,6 +60,7 @@ class LrcView extends StatelessWidget {
                     )),
                   ),
               ),
+
             ),
           ),
         ],

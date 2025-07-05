@@ -20,7 +20,7 @@ import 'package:zerobit_player/src/rust/api/smtc.dart';
 import 'package:zerobit_player/src/rust/frb_generated.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
 import 'package:zerobit_player/tools/sync_cache.dart';
-import 'package:zerobit_player/components/window_ctrl.dart';
+import 'package:zerobit_player/components/window_ctrl_bar.dart';
 import 'package:get/get.dart';
 
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -266,7 +266,7 @@ class HomePage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const WindowController(),
+          const WindowControllerBar(),
           Expanded(
             flex: 1,
             child: Row(
