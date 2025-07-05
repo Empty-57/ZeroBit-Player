@@ -145,7 +145,7 @@ class AudioGenPages extends StatelessWidget {
                               showSnackBar(
                                 title: "WARNING",
                                 msg: "此歌单暂无音乐！",
-                                duration: Duration(milliseconds: 1000),
+                                duration: Duration(milliseconds: 1500),
                               );
                               return;
                             }
