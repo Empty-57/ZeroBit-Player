@@ -147,6 +147,10 @@ void main() async {
         audioController.currentMs100.value=data;
         countMs20=0;
       }
+      if(countSec>48){
+        audioController.currentSec.value=data;
+        countSec=0;
+      }
     });
   }catch(e){
     debugPrint(e.toString());
