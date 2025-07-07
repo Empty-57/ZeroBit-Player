@@ -140,8 +140,8 @@ void main() async {
 
   try{
     progressListen().listen((data){
-      count++;
-      if(count>3){
+      countMs20++;
+      if(countMs20>3){
         audioController.currentMs100.value=data;
         count=0;
       }
