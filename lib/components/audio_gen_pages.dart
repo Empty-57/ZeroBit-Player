@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/HIveCtrl/models/music_cahce_model.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
