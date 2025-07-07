@@ -48,6 +48,7 @@ class AudioGenPages extends StatelessWidget {
     required this.operateArea,
     required this.audioSource,
     required this.controller,
+    this.backgroundColor,
   });
 
   @override
