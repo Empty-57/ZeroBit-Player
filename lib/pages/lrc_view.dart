@@ -38,7 +38,8 @@ class LrcView extends StatelessWidget {
                       duration: const Duration(milliseconds: 300),
                       switchInCurve: Curves.easeIn,
                       switchOutCurve: Curves.easeOut,
-                      child: Image(
+                      child: Image.memory(
+                        _audioController.currentCover.value,
                         key: ValueKey(
                           _audioController.currentCover.value.hashCode,
                         ),
