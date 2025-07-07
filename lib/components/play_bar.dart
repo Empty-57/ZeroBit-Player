@@ -311,7 +311,7 @@ class PlayBar extends StatelessWidget {
                       () => Slider(
                         min: 0.0,
                         max: duration,
-                        label: formatTime(
+                        label: _isSeekBarDragging.value ? formatTime(
                           totalSeconds: _seekDraggingValue.value,
                         ),
                         value:
