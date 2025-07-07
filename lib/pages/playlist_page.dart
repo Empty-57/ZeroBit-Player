@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zerobit_player/HIveCtrl/models/user_playlist_model.dart';
@@ -23,11 +24,66 @@ class PlayList extends StatelessWidget {
       tag: userArgs.userKey,
     );
 
-    return AudioGenPages(
-      title: userArgs.userKey.split(playListTagSuffix)[0],
-      operateArea: OperateArea.playList,
-      audioSource: userArgs.userKey,
-      controller: playListController,
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(8)),
+          child: Container(
+            color: Theme.of(context).colorScheme.surface,
+          ),
+        ),
+        ClipRRect(
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(8)),
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 48, sigmaY: 48),
+            child: ShaderMask(
+              shaderCallback: (Rect bounds) {
+                return LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: <Color>[
+                    Colors.white.withValues(alpha: 0.4),
+                    Colors.transparent,
+                  ],
+                  tileMode: TileMode.clamp,
+                ).createShader(bounds);
+              },
+              child: Obx(
+                  () => AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      switchInCurve: Curves.easeIn,
+                      switchOutCurve: Curves.easeOut,
+                      child: SizedBox.expand(
+                        child: Image.memory(
+                        playListController.headCover.value,
+                        key: ValueKey(
+                          playListController.headCover.value.hashCode,
+                        ),
+                        cacheWidth: 800,
+                        cacheHeight: 800,
+                        fit: BoxFit.fill,
+                      ),
+                      ),
+                      transitionBuilder: (
+                        Widget child,
+                        Animation<double> anim,
+                      ) {
+                        return FadeTransition(opacity: anim, child: child);
+                      },
+                    ),
+                ),
+            ),
+          ),
+        ),
+
+        AudioGenPages(
+          title: userArgs.userKey.split(playListTagSuffix)[0],
+          operateArea: OperateArea.playList,
+          audioSource: userArgs.userKey,
+          controller: playListController,
+          backgroundColor: Colors.transparent,
+        ),
+      ],
     );
   }
 }

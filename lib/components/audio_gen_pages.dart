@@ -95,17 +95,28 @@ class AudioGenPages extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: _coverBorderRadius,
                     child: Obx(() {
-                      return FadeInImage(
-                        placeholder: MemoryImage(kTransparentImage),
-                        image: ResizeImage(
-                          MemoryImage(controller.headCover.value),
-                          width: _coverBigRenderSize,
-                          height: _coverBigRenderSize,
+                      return AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      switchInCurve: Curves.easeIn,
+                      switchOutCurve: Curves.easeOut,
+                      child: Image.memory(
+                        controller.headCover.value,
+                        key: ValueKey(
+                          controller.headCover.value.hashCode,
                         ),
+                        cacheWidth: _coverBigRenderSize,
+                        cacheHeight: _coverBigRenderSize,
                         height: _headCoverSize,
                         width: _headCoverSize,
                         fit: BoxFit.cover,
-                      );
+                      ),
+                      transitionBuilder: (
+                        Widget child,
+                        Animation<double> anim,
+                      ) {
+                        return FadeTransition(opacity: anim, child: child);
+                      },
+                    );
                     }),
                   ),
                 ),
