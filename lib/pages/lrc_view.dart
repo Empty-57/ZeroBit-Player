@@ -43,11 +43,8 @@ class LrcView extends StatelessWidget {
                         key: ValueKey(
                           _audioController.currentCover.value.hashCode,
                         ),
-                        image: ResizeImage(
-                          MemoryImage(_audioController.currentCover.value),
-                          width: _coverRenderSize,
-                          height: _coverRenderSize,
-                        ),
+                        cacheWidth: _coverRenderSize,
+                        cacheHeight: _coverRenderSize,
                         height: _coverSize,
                         width: _coverSize,
                         fit: BoxFit.cover,
