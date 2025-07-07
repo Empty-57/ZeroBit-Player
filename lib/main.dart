@@ -142,6 +142,7 @@ void main() async {
   try{
     progressListen().listen((data){
       countMs20++;
+      countSec++;
       if(countMs20>3){
         audioController.currentMs100.value=data;
         countMs20=0;
