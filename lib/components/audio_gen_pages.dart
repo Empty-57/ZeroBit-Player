@@ -41,6 +41,7 @@ class AudioGenPages extends StatelessWidget {
   final String operateArea;
   final String audioSource;
   final AudioControllerGenClass controller;
+  final Color? backgroundColor;
   const AudioGenPages({
     super.key,
     required this.title,
