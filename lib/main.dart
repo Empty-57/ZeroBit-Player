@@ -143,7 +143,7 @@ void main() async {
       countMs20++;
       if(countMs20>3){
         audioController.currentMs100.value=data;
-        count=0;
+        countMs20=0;
       }
     });
   }catch(e){
