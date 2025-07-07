@@ -44,7 +44,8 @@ import 'getxController/setting_ctrl.dart';
 
 import 'theme_manager.dart';
 
-int count=0;
+int countMs20=0;
+int countSec=0;
 
 enum AudioAction{
   play,
