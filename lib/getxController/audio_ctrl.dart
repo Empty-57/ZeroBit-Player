@@ -25,6 +25,7 @@ class AudioController extends GetxController {
   final currentPath = ''.obs;
   final currentIndex = (-1).obs;
   final currentMs100 = 0.0.obs;
+  final currentSec = 0.0.obs;
   final progress = 0.0.obs;
 
   final currentState = AudioState.stop.obs;
