@@ -568,8 +568,8 @@ class PlayBar extends StatelessWidget {
                         ),
 
                         Obx(
-                          () => Text(
-                            "${formatTime(totalSeconds: _audioController.currentMs100.value)} / $duration",
+                          ()=>Text(
+                            "${formatTime(totalSeconds: _audioController.currentSec.value)} / $duration",
                             style: timeTextStyle,
                           ),
                         ),
