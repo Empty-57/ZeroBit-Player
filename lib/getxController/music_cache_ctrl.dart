@@ -52,6 +52,8 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
     for (var v in items) {
       v.artist.split('/').forEach((i){
         artistItemsDict.putIfAbsent(i, ()=><String>[]).add(v.path);
+        final String letter=_getLetter(str: i);
+        artistHasLetter.addIf(!artistHasLetter.contains(letter),letter);
       });
     }
   }
