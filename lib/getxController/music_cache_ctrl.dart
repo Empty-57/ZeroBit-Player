@@ -56,6 +56,7 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
         artistHasLetter.addIf(!artistHasLetter.contains(letter),letter);
       });
     }
+    artistHasLetter.sort((a,b)=>a.compareTo(b));
   }
 
   @override
