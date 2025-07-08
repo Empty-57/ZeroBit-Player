@@ -17,7 +17,7 @@ const double _navigationWidth = 260;
 const double _navigationWidthSmall = 64;
 const double resViewThresholds= 1100;
 
-final mainRoutes = AppRoutes.orderMap.keys.toList();
+final _mainRoutes = AppRoutes.orderMap.keys.toList();
 
 class CustomNavigationBtn extends StatelessWidget {
   final String label;
