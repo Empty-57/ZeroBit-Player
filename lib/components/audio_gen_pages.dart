@@ -270,7 +270,7 @@ class AudioGenPages extends StatelessWidget {
                                             btnWidth: 160,
                                             btnHeight: btnHeight,
                                             label:
-                                                v.split(playListTagSuffix)[0],
+                                                v.split(TagSuffix.playList)[0],
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             backgroundColor: Colors.transparent,
