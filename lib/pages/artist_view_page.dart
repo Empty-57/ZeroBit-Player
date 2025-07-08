@@ -35,7 +35,7 @@ class ArtistViewPage extends StatelessWidget {
                 spacing: 8,
                 children: [
                   Text(
-                    '歌单',
+                    '艺术家',
                     style: generalTextStyle(
                       ctx: context,
                       size: 'title',
