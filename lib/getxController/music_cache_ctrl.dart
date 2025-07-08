@@ -38,6 +38,16 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
     loadItem4Artist();
   }
 
+  String _getLetter({required String str}){
+    final String letter=PinyinHelper.getFirstWordPinyin(str[0]);
+
+    if(letter.isEmpty){
+      final String letter=str[0].toUpperCase();
+      return letter.contains(RegExp(r'[A-Z]'))? letter:'#';
+    }
+    return letter[0].toUpperCase();
+  }
+
   void loadItem4Artist(){
     for (var v in items) {
       v.artist.split('/').forEach((i){
