@@ -362,7 +362,7 @@ class AudioController extends GetxController {
       showSnackBar(
         title: "WARNING",
         msg:
-            "歌单 ${userKey.split(playListTagSuffix)[0]} 存在重复歌曲 ${metadata.title} ！",
+            "歌单 ${userKey.split(TagSuffix.playList)[0]} 存在重复歌曲 ${metadata.title} ！",
         duration: Duration(milliseconds: 1500),
       );
       return;
@@ -382,7 +382,7 @@ class AudioController extends GetxController {
 
     showSnackBar(
       title: "OK",
-      msg: "已将 ${metadata.title} 添加到歌单 ${userKey.split(playListTagSuffix)[0]}",
+      msg: "已将 ${metadata.title} 添加到歌单 ${userKey.split(TagSuffix.playList)[0]}",
       duration: Duration(milliseconds: 1500),
     );
   }
@@ -425,7 +425,7 @@ class AudioController extends GetxController {
 
     showSnackBar(
       title: "OK",
-      msg: "已将去重后的 $l 首歌添加到歌单 ${userKey.split(playListTagSuffix)[0]}",
+      msg: "已将去重后的 $l 首歌添加到歌单 ${userKey.split(TagSuffix.playList)[0]}",
       duration: Duration(milliseconds: 1500),
     );
   }
@@ -458,7 +458,7 @@ class AudioController extends GetxController {
       showSnackBar(
         title: "OK",
         msg:
-            "已将 ${metadata.title} 从歌单 ${userKey.split(playListTagSuffix)[0]}删除！",
+            "已将 ${metadata.title} 从歌单 ${userKey.split(TagSuffix.playList)[0]}删除！",
         duration: Duration(milliseconds: 1500),
       );
     }
@@ -501,7 +501,7 @@ class AudioController extends GetxController {
     showSnackBar(
       title: "OK",
       msg:
-          "已将去重后的 ${removeList.length} 首歌从歌单 ${userKey.split(playListTagSuffix)[0]}删除！",
+          "已将去重后的 ${removeList.length} 首歌从歌单 ${userKey.split(TagSuffix.playList)[0]}删除！",
       duration: Duration(milliseconds: 1500),
     );
   }

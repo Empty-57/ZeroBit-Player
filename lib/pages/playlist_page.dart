@@ -77,7 +77,7 @@ class PlayList extends StatelessWidget {
         ),
 
         AudioGenPages(
-          title: userArgs.userKey.split(playListTagSuffix)[0],
+          title: userArgs.userKey.split(TagSuffix.playList)[0],
           operateArea: OperateArea.playList,
           audioSource: userArgs.userKey,
           controller: playListController,

@@ -1,1 +1,3 @@
-const String playListTagSuffix = '<!！@#￥>user';
+abstract class TagSuffix{
+  static const String playList = '<!！@#￥>user';
+}

@@ -193,7 +193,7 @@ class UserPlayList extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              items.userKey.split(playListTagSuffix)[0],
+                              items.userKey.split(TagSuffix.playList)[0],
                               style: textStyle1,
                               softWrap: true,
                               overflow: TextOverflow.ellipsis,

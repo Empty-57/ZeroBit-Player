@@ -31,7 +31,7 @@ class UserPlayListController extends GetxController {
       return;
     }
 
-    userKey += playListTagSuffix;
+    userKey += TagSuffix.playList;
 
     if (allUserKey.contains(userKey)) {
       showSnackBar(title: "WARNING", msg: "重复的歌单名称！");
@@ -60,7 +60,7 @@ class UserPlayListController extends GetxController {
       showSnackBar(title: "WARNING", msg: "歌单名称为空！");
       return;
     }
-    newKey += playListTagSuffix;
+    newKey += TagSuffix.playList;
     if (allUserKey.contains(newKey)) {
       showSnackBar(title: "WARNING", msg: "重复的歌单名称！");
       return;
