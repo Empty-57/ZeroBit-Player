@@ -14,7 +14,6 @@ abstract class AppRoutes {
 
   static const Map<String, int> orderMap = {
   home: homeOrder,
-  '/': homeOrder,
   artistView:artistViewOrder,
   userPlayList:userPlayListOrder,
   setting: settingOrder,
