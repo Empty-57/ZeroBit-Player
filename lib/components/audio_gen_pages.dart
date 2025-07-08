@@ -201,7 +201,7 @@ class AudioGenPages extends StatelessWidget {
                                 ],
                                 2: [
                                   _settingController.sortType[2],
-                                  PhosphorIconsRegular.userFocus,
+                                  PhosphorIconsRegular.vinylRecord,
                                 ],
                                 3: [
                                   _settingController.sortType[3],
