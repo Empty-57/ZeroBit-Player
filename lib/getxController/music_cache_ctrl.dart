@@ -32,6 +32,14 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
     }
   }
 
+  void loadItem4Artist(){
+    for (var v in items) {
+      v.artist.split('/').forEach((i){
+        artistItemsDict.putIfAbsent(i, ()=><String>[]).add(v.path);
+      });
+    }
+  }
+
   @override
   void itemReSort({required int type}) {
     items.sort(
