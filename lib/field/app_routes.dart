@@ -5,4 +5,18 @@ abstract class AppRoutes {
   static const userPlayList = '/userPlayList';
   static const playList = '/playList';
   static const lrcView = '/lrcView';
+
+  static const homeOrder=0;
+  static const artistViewOrder=1;
+  static const userPlayListOrder=2;
+  static const settingOrder=3;
+
+  static const Map<String, int> orderMap = {
+  home: homeOrder,
+  '/': homeOrder,
+  artistView:artistViewOrder,
+  userPlayList:userPlayListOrder,
+  setting: settingOrder,
+};
+
 }
