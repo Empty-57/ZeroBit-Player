@@ -50,7 +50,7 @@ class CustomNavigationBtn extends StatelessWidget {
                   ? () {
                     _oldIndex = currentNavigationIndex.value;
                     currentNavigationIndex.value = localIndex;
-                    Get.toNamed(mainRoutes[localIndex], id: 1);
+                    Get.toNamed(_mainRoutes[localIndex], id: 1);
                   }
                   : null,
 
