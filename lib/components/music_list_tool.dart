@@ -50,7 +50,7 @@ List<Widget> _genMenuItems({
           },
           child: Center(
               child: Text(
-                  v.split(playListTagSuffix)[0]
+                  v.split(TagSuffix.playList)[0]
               )
           ),
         );
