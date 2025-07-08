@@ -20,7 +20,7 @@ import '../HIveCtrl/models/music_cahce_model.dart';
 import '../components/edit_metadata_dialog.dart';
 import '../field/audio_source.dart';
 import '../tools/format_time.dart';
-import '../tools/tag_suffix.dart';
+import '../field/tag_suffix.dart';
 
 const double _itemSpacing = 16.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));

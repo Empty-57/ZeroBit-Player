@@ -14,7 +14,7 @@ import '../getxController/audio_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 import '../tools/audio_ctrl_mixin.dart';
 import '../tools/general_style.dart';
-import '../tools/tag_suffix.dart';
+import '../field/tag_suffix.dart';
 import 'floating_button.dart';
 import 'get_snack_bar.dart';
 import 'music_list_tool.dart';

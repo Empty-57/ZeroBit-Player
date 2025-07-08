@@ -16,7 +16,7 @@ import 'package:zerobit_player/src/rust/api/smtc.dart';
 import '../HIveCtrl/hive_manager.dart';
 import '../HIveCtrl/models/music_cahce_model.dart';
 import '../field/audio_source.dart';
-import '../tools/tag_suffix.dart';
+import '../field/tag_suffix.dart';
 import 'music_cache_ctrl.dart';
 
 enum AudioState { stop, playing, pause }
