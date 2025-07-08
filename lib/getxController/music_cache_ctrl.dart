@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:zerobit_player/HIveCtrl/hive_manager.dart';
 import 'package:zerobit_player/HIveCtrl/models/music_cahce_model.dart';
 import 'package:get/get.dart';
@@ -12,6 +13,8 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
 
   @override
   final items = <MusicCache>[].obs;
+
+  final artistItemsDict=<String,List<String>>{}.obs;
 
   final _musicCacheBox = HiveManager.musicCacheBox;
   final SettingController _settingController = Get.find<SettingController>();

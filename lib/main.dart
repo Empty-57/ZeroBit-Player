@@ -10,6 +10,7 @@ import 'package:zerobit_player/components/play_bar.dart';
 import 'package:zerobit_player/field/audio_source.dart';
 import 'package:zerobit_player/getxController/audio_ctrl.dart';
 import 'package:zerobit_player/getxController/user_playlist_ctrl.dart';
+import 'package:zerobit_player/pages/artist_view_page.dart';
 import 'package:zerobit_player/pages/local_music_page.dart';
 import 'package:zerobit_player/pages/lrc_view.dart';
 import 'package:zerobit_player/pages/playlist_page.dart';
@@ -223,6 +224,7 @@ class MainFrame extends StatelessWidget {
         GetPage(name: AppRoutes.setting, page: () => const Setting()),
         GetPage(name: AppRoutes.userPlayList, page: () => const UserPlayList()),
         GetPage(name: AppRoutes.playList, page: () => const PlayList()),
+        GetPage(name: AppRoutes.artistView, page: () => const ArtistViewPage()),
         GetPage(name: AppRoutes.lrcView, page: () => const LrcView(),transition: Transition.fade,transitionDuration: 300.ms,),
       ],
     )
@@ -254,9 +256,11 @@ class HomePage extends StatelessWidget {
       case AppRoutes.setting:
         return const Setting();
       case AppRoutes.playList:
-        return PlayList();
+        return const PlayList();
+      case AppRoutes.artistView:
+        return const ArtistViewPage();
     }
-    return LocalMusic();
+    return const LocalMusic();
   }
 
   @override
@@ -285,17 +289,22 @@ class HomePage extends StatelessWidget {
                     CustomNavigationBtn(
                       label: '音乐',
                       icon: PhosphorIconsLight.musicNoteSimple,
-                      localIndex: 0,
+                      localIndex: AppRoutes.homeOrder,
+                    ),
+                    CustomNavigationBtn(
+                      label: '艺术家',
+                      icon: PhosphorIconsLight.userFocus,
+                      localIndex: AppRoutes.artistViewOrder,
                     ),
                     CustomNavigationBtn(
                       label: '歌单',
                       icon: PhosphorIconsLight.playlist,
-                      localIndex: 1,
+                      localIndex: AppRoutes.userPlayListOrder,
                     ),
                     CustomNavigationBtn(
                       label: '设置',
                       icon: PhosphorIconsLight.gearSix,
-                      localIndex: 2,
+                      localIndex: AppRoutes.settingOrder,
                     ),
                   ],
                 ),
@@ -305,7 +314,7 @@ class HomePage extends StatelessWidget {
                     observers: [
                       NestedObserver(
                         onRoutePopped: (name) {
-                          currentNavigationIndex.value = routesMap[name] ?? 0;
+                          currentNavigationIndex.value = AppRoutes.orderMap[name] ?? 0;
                         },
                       ),
                     ],
