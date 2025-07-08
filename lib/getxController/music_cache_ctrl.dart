@@ -30,6 +30,7 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
     if (_settingController.isReverse.value) {
       itemReverse();
     }
+    loadItem4Artist();
   }
 
   void loadItem4Artist(){
