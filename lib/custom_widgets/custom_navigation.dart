@@ -19,13 +19,6 @@ const double resViewThresholds= 1100;
 
 const mainRoutes = [AppRoutes.home, AppRoutes.userPlayList,AppRoutes.setting];
 
-const Map<String, int> routesMap = {
-  AppRoutes.home: 0,
-  '/': 0,
-  AppRoutes.userPlayList:1,
-  AppRoutes.setting: 2,
-};
-
 class CustomNavigationBtn extends StatelessWidget {
   final String label;
   final IconData icon;
