@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:zerobit_player/components/blur_background.dart';
-import 'package:zerobit_player/field/audio_source.dart';
 import 'package:zerobit_player/getxController/artist_list_ctrl.dart';
 
 import '../components/audio_gen_pages.dart';
