@@ -172,7 +172,8 @@ class ArtistViewPage extends StatelessWidget {
                               return TextButton(
                                 onPressed: () {
                                   final index=_musicCacheController.artistItemsDict.value.keys.toList().indexWhere((l)=>l[0]==v);
-                                  final double offset=(index*_itemHeight).clamp(0, scrollController.position.maxScrollExtent);
+                                  final letterIndex=_musicCacheController.artistHasLetter.indexWhere((l)=>l==v);
+                                  final double offset=((letterIndex+index)*_itemHeight).clamp(0, scrollController.position.maxScrollExtent);
                                   scrollController.jumpTo(offset);
                                 },
                                 style: ButtonStyle(
