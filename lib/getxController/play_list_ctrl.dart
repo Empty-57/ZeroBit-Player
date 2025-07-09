@@ -19,6 +19,8 @@ class PlayListController extends GetxController with AudioControllerGenClass {
   final MusicCacheController _musicCacheController =
     Get.find<MusicCacheController>();
 
+  final SettingController _settingController = Get.find<SettingController>();
+
   final _userPlayListCacheBox = HiveManager.userPlayListCacheBox;
 
   final SettingController _settingController = Get.find<SettingController>();
