@@ -20,7 +20,7 @@ class ArtistViewPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bigTitleStyle = generalTextStyle(ctx: context, size: 'subtitle');
+    final letterTitleStyle = generalTextStyle(ctx: context, size: 'xl');
     final titleStyle = generalTextStyle(ctx: context, size: 'md');
     final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
 
@@ -33,6 +33,8 @@ class ArtistViewPage extends StatelessWidget {
 
       return Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8);
     });
+
+    final scrollController=ScrollController();
 
     return Container(
       alignment: Alignment.centerLeft,
@@ -90,6 +92,7 @@ class ArtistViewPage extends StatelessWidget {
                       itemCount: dict.length,
                       // itemExtent: _itemHeight,
                       cacheExtent: _itemHeight * 1,
+                      controller: scrollController,
                       itemExtentBuilder: (index, _) {
                         if (index < 1 || keys[index][0] != keys[index - 1][0]) {
                           return _itemHeight * 2;
@@ -111,7 +114,7 @@ class ArtistViewPage extends StatelessWidget {
                                 alignment: Alignment.center,
                                 child: Text(
                                   keys[index][0],
-                                  style: bigTitleStyle,
+                                  style: letterTitleStyle,
                                 ),
                               ),
                             TextButton(
@@ -178,10 +181,12 @@ class ArtistViewPage extends StatelessWidget {
                                 },
                                 style: ButtonStyle(
                                   foregroundColor: foregroundColorHover,
-                                  // overlayColor: WidgetStatePropertyAll(Colors.transparent),
                                   padding: WidgetStatePropertyAll(
                                     EdgeInsets.zero,
                                   ),
+                                  shape: WidgetStatePropertyAll(RoundedRectangleBorder(
+                                  borderRadius: _borderRadius,
+                                )),
                                 ),
                                 child: Center(
                                   child: Text(
