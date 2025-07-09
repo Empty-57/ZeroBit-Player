@@ -298,6 +298,14 @@ class AudioGenPages extends StatelessWidget {
                                       controller: playListMenuController,
                                       child: CustomBtn(
                                         fn: () {
+                                          if(_audioController.allUserKey.isEmpty){
+                                            showSnackBar(
+                                              title: "WARNING",
+                                              msg: "未创建歌单！",
+                                              duration: Duration(milliseconds: 1500),
+                                            );
+                                            return;
+                                          }
                                           playListMenuController.open();
                                         },
                                         icon: PhosphorIconsLight.plus,
