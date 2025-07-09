@@ -16,7 +16,6 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
   @override
   final items = <MusicCache>[].obs;
 
-  // final artistItemsDict=<String,List<String>>{}.obs;
   final artistItemsDict=SplayTreeMap<String, List<String>>((a,b)=>a.compareTo(b)).obs;
 
   final artistHasLetter=<String>[].obs;
