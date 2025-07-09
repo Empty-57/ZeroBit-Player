@@ -416,7 +416,7 @@ class AudioController extends GetxController {
     );
   }
 
-  void addAllToAudioList({required List<MusicCache> selectedList, required String userKey,}) {
+  void addAllToAudioList({required List<MusicCache> selectedList, required String userKey,}) async{
     if (!allUserKey.contains(userKey)) {
       return;
     }
@@ -438,7 +438,7 @@ class AudioController extends GetxController {
 
     newList.addAll(selectedList.map((v) => v.path));
 
-    _userPlayListCacheBox.put(
+    await _userPlayListCacheBox.put(
       data: UserPlayListCache(pathList: newList, userKey: userKey),
       key: userKey,
     );
@@ -451,6 +451,8 @@ class AudioController extends GetxController {
       playListCacheItems.addAll(selectedList);
       syncCurrentIndex();
     }
+
+    _userPlayListController.initHive();
 
     showSnackBar(
       title: "OK",
@@ -526,8 +528,6 @@ class AudioController extends GetxController {
     PlayListController.audioListItems.removeWhere(
       (v) => removeList.any((p) => p.path == v.path),
     );
-
-    _userPlayListController.initHive();
 
     showSnackBar(
       title: "OK",
