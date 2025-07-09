@@ -12,9 +12,7 @@ class PlayList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final UserPlayListCache userArgs =
-        (ModalRoute.of(context)!.settings.arguments
-            as Map)['userPlayListCache'];
+    final UserPlayListCache userArgs = ModalRoute.of(context)!.settings.arguments as UserPlayListCache;
 
     late final PlayListController playListController;
 
