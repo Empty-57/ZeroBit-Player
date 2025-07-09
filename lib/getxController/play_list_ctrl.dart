@@ -11,8 +11,6 @@ import '../src/rust/api/music_tag_tool.dart';
 import '../tools/get_sort_type.dart';
 import 'music_cache_ctrl.dart';
 
-final MusicCacheController _musicCacheController =
-    Get.find<MusicCacheController>();
 
 class PlayListController extends GetxController with AudioControllerGenClass {
   final UserPlayListCache userArgs;
