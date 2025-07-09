@@ -9,6 +9,7 @@ import 'package:zerobit_player/HIveCtrl/models/user_playlist_model.dart';
 import 'package:zerobit_player/components/get_snack_bar.dart';
 import 'package:zerobit_player/getxController/play_list_ctrl.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
+import 'package:zerobit_player/getxController/user_playlist_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
@@ -37,6 +38,9 @@ class AudioController extends GetxController {
   final AudioSource _audioSource = Get.find<AudioSource>();
   final MusicCacheController _musicCacheController =
       Get.find<MusicCacheController>();
+
+  final UserPlayListController _userPlayListController =
+    Get.find<UserPlayListController>();
 
   final _userPlayListCacheBox = HiveManager.userPlayListCacheBox;
 
@@ -376,7 +380,7 @@ class AudioController extends GetxController {
     _hasNextAudioMetadata = metadata;
   }
 
-  void addToAudioList({required MusicCache metadata, required String userKey}) {
+  void addToAudioList({required MusicCache metadata, required String userKey}) async{
     if (!allUserKey.contains(userKey)) {
       return;
     }
@@ -391,7 +395,7 @@ class AudioController extends GetxController {
       return;
     }
     newList.add(metadata.path);
-    _userPlayListCacheBox.put(
+    await _userPlayListCacheBox.put(
       data: UserPlayListCache(pathList: newList, userKey: userKey),
       key: userKey,
     );
@@ -402,6 +406,8 @@ class AudioController extends GetxController {
         syncCurrentIndex();
       }
     }
+
+    _userPlayListController.initHive();
 
     showSnackBar(
       title: "OK",
@@ -487,7 +493,7 @@ class AudioController extends GetxController {
     }
   }
 
-  void audioRemoveAll({required String userKey, required List<MusicCache> removeList,}) {
+  void audioRemoveAll({required String userKey, required List<MusicCache> removeList,}) async{
     if (!allUserKey.contains(userKey)) {
       return;
     }
@@ -505,7 +511,7 @@ class AudioController extends GetxController {
 
     newList.removeWhere((v) => removeList.any((p) => p.path == v));
 
-    _userPlayListCacheBox.put(
+    await _userPlayListCacheBox.put(
       data: UserPlayListCache(pathList: newList, userKey: userKey),
       key: userKey,
     );
@@ -520,6 +526,8 @@ class AudioController extends GetxController {
     PlayListController.audioListItems.removeWhere(
       (v) => removeList.any((p) => p.path == v.path),
     );
+
+    _userPlayListController.initHive();
 
     showSnackBar(
       title: "OK",
