@@ -170,7 +170,11 @@ class ArtistViewPage extends StatelessWidget {
                         children:
                             _musicCacheController.artistHasLetter.map((v) {
                               return TextButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  final index=_musicCacheController.artistItemsDict.value.keys.toList().indexWhere((l)=>l[0]==v);
+                                  final double offset=(index*_itemHeight).clamp(0, scrollController.position.maxScrollExtent);
+                                  scrollController.jumpTo(offset);
+                                },
                                 style: ButtonStyle(
                                   foregroundColor: foregroundColorHover,
                                   // overlayColor: WidgetStatePropertyAll(Colors.transparent),
