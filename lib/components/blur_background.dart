@@ -6,12 +6,12 @@ import 'package:get/get.dart';
 
 class BlurBackground extends StatelessWidget {
   final AudioControllerGenClass controller;
-  final Widget widget;
+  final Widget child;
 
   const BlurBackground({
     super.key,
     required this.controller,
-    required this.widget,
+    required this.child,
   });
 
   @override
@@ -60,7 +60,7 @@ class BlurBackground extends StatelessWidget {
             ),
           ),
         ),
-        widget,
+        child,
       ],
     );
   }

@@ -25,7 +25,7 @@ class PlayList extends StatelessWidget {
 
     return BlurBackground(
       controller: playListController,
-      widget: AudioGenPages(
+      child: AudioGenPages(
         title: userArgs.userKey.split(TagSuffix.playList)[0],
         operateArea: OperateArea.playList,
         audioSource: userArgs.userKey,
