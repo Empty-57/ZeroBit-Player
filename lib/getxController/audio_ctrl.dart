@@ -17,6 +17,7 @@ import '../HIveCtrl/hive_manager.dart';
 import '../HIveCtrl/models/music_cahce_model.dart';
 import '../field/audio_source.dart';
 import '../field/tag_suffix.dart';
+import 'artist_list_ctrl.dart';
 import 'music_cache_ctrl.dart';
 
 enum AudioState { stop, playing, pause }
@@ -56,6 +57,11 @@ class AudioController extends GetxController {
                     .contains(v.path),
               )
               .toList();
+      return;
+    }
+
+    if(_musicCacheController.artistItemsDict.value.keys.any((v)=>v.substring(1)+TagSuffix.artistList==_audioSource.currentAudioSource.value)){
+      playListCacheItems = [...ArtistListController.audioListItems];
       return;
     }
 

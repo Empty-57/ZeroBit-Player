@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:zerobit_player/HIveCtrl/models/setting_cache_model.dart';
 import 'package:get/get.dart';
 import 'package:zerobit_player/HIveCtrl/hive_manager.dart';
@@ -14,10 +15,12 @@ class SettingController extends GetxController {
   final sortMap=<dynamic,dynamic>{
     OperateArea.allMusic:0,
     OperateArea.playList:0,
+    OperateArea.artistList:0,
   }.obs;
   final viewModeMap=<dynamic,dynamic>{
     OperateArea.allMusic:true, //列表/表格
     OperateArea.playList:true,
+    OperateArea.artistList:true,
   }.obs;
   final isReverse=false.obs;
   final themeColor=0xff27272a.obs;
@@ -58,10 +61,12 @@ class SettingController extends GetxController {
       sortMap.value= cache.sortMap.isNotEmpty? Map<dynamic,dynamic>.of(cache.sortMap):{
         OperateArea.allMusic:0,
         OperateArea.playList:0,
+        OperateArea.artistList:0,
       };
       viewModeMap.value=cache.viewModeMap.isNotEmpty? Map<dynamic,dynamic>.of(cache.viewModeMap):{
         OperateArea.allMusic:true, //列表/表格
         OperateArea.playList:true,
+        OperateArea.artistList:true,
       };
       isReverse.value=cache.isReverse;
       themeColor.value=cache.themeColor;

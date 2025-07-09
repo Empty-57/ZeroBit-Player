@@ -10,6 +10,7 @@ import 'package:zerobit_player/components/play_bar.dart';
 import 'package:zerobit_player/field/audio_source.dart';
 import 'package:zerobit_player/getxController/audio_ctrl.dart';
 import 'package:zerobit_player/getxController/user_playlist_ctrl.dart';
+import 'package:zerobit_player/pages/artist_list_page.dart';
 import 'package:zerobit_player/pages/artist_view_page.dart';
 import 'package:zerobit_player/pages/local_music_page.dart';
 import 'package:zerobit_player/pages/lrc_view.dart';
@@ -225,6 +226,7 @@ class MainFrame extends StatelessWidget {
         GetPage(name: AppRoutes.userPlayList, page: () => const UserPlayList()),
         GetPage(name: AppRoutes.playList, page: () => const PlayList()),
         GetPage(name: AppRoutes.artistView, page: () => const ArtistViewPage()),
+        GetPage(name: AppRoutes.artistList, page: () => const ArtistListPage()),
         GetPage(name: AppRoutes.lrcView, page: () => const LrcView(),transition: Transition.fade,transitionDuration: 300.ms,),
       ],
     )
@@ -259,6 +261,8 @@ class HomePage extends StatelessWidget {
         return const PlayList();
       case AppRoutes.artistView:
         return const ArtistViewPage();
+      case AppRoutes.artistList:
+        return const ArtistListPage();
     }
     return const LocalMusic();
   }

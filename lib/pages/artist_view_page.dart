@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:transparent_image/transparent_image.dart';
 
+import '../field/app_routes.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../tools/general_style.dart';
 import 'package:get/get.dart';
@@ -119,7 +120,13 @@ class ArtistViewPage extends StatelessWidget {
                                 ),
                               ),
                             TextButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                Get.toNamed(
+                                  AppRoutes.artistList,
+                                  arguments: {'pathList':item,'title':keys[index].substring(1)},
+                                  id: 1,
+                                );
+                              },
                               style: TextButton.styleFrom(
                                 shape: RoundedRectangleBorder(
                                   borderRadius: _borderRadius,

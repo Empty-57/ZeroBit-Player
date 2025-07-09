@@ -188,9 +188,8 @@ class AudioGenPages extends StatelessWidget {
                         ),
 
                         Obx(() {
-                          if (!isMulSelect.value) {
-                            return CustomDropdownMenu(
-                              itemMap: {
+
+                          final itemMap={
                                 0: [
                                   _settingController.sortType[0],
                                   PhosphorIconsRegular.textT,
@@ -207,7 +206,14 @@ class AudioGenPages extends StatelessWidget {
                                   _settingController.sortType[3],
                                   PhosphorIconsRegular.clockCountdown,
                                 ],
-                              },
+                              };
+                          if(operateArea==OperateArea.artistList){
+                            itemMap.remove(1);
+                          }
+
+                          if (!isMulSelect.value) {
+                            return CustomDropdownMenu(
+                              itemMap: itemMap,
                               fn: (entry) {
                                 _settingController.sortMap[operateArea] =
                                     entry.key;
