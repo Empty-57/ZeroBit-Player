@@ -174,7 +174,7 @@ class UserPlayList extends StatelessWidget {
                     onPressed: () {
                       Get.toNamed(
                         AppRoutes.playList,
-                        arguments: {'userPlayListCache': items},
+                        arguments: items,
                         id: 1,
                       );
                     },
