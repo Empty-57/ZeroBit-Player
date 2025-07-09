@@ -17,8 +17,10 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
   final items = <MusicCache>[].obs;
 
   final artistItemsDict=SplayTreeMap<String, List<String>>((a,b)=>a.compareTo(b)).obs;
-
   final artistHasLetter=<String>[].obs;
+
+  final albumItemsDict=SplayTreeMap<String, List<String>>((a,b)=>a.compareTo(b)).obs;
+  final albumHasLetter=<String>[].obs;
 
   final _musicCacheBox = HiveManager.musicCacheBox;
   final SettingController _settingController = Get.find<SettingController>();
@@ -38,6 +40,7 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
       itemReverse();
     }
     loadItem4Artist();
+    loadData4Album();
   }
 
   String _getLetter({required String str}){
@@ -55,16 +58,23 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
     artistHasLetter.clear();
     for (var v in items) {
       v.artist.split('/').forEach((i){
-
         final String letter=_getLetter(str: i);
-
         artistItemsDict.value.putIfAbsent(letter+i, ()=><String>[]).add(v.path);
-
         artistHasLetter.addIf(!artistHasLetter.contains(letter),letter);
-
       });
     }
     artistHasLetter.sort((a,b)=>a.compareTo(b));
+  }
+
+  void loadData4Album(){
+    albumItemsDict.value.clear();
+    albumHasLetter.clear();
+    for (var v in items) {
+      final String letter=_getLetter(str: v.album);
+      albumItemsDict.value.putIfAbsent(letter+v.album, ()=><String>[]).add(v.path);
+      albumHasLetter.addIf(!albumHasLetter.contains(letter), letter);
+    }
+    albumHasLetter.sort((a,b)=>a.compareTo(b));
   }
 
   @override

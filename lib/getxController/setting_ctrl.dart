@@ -16,11 +16,13 @@ class SettingController extends GetxController {
     OperateArea.allMusic:0,
     OperateArea.playList:0,
     OperateArea.artistList:0,
+    OperateArea.albumList:0,
   }.obs;
   final viewModeMap=<dynamic,dynamic>{
     OperateArea.allMusic:true, //列表/表格
     OperateArea.playList:true,
     OperateArea.artistList:true,
+    OperateArea.albumList:true,
   }.obs;
   final isReverse=false.obs;
   final themeColor=0xff27272a.obs;
@@ -62,11 +64,13 @@ class SettingController extends GetxController {
         OperateArea.allMusic:0,
         OperateArea.playList:0,
         OperateArea.artistList:0,
+        OperateArea.albumList:0,
       };
       viewModeMap.value=cache.viewModeMap.isNotEmpty? Map<dynamic,dynamic>.of(cache.viewModeMap):{
         OperateArea.allMusic:true, //列表/表格
         OperateArea.playList:true,
         OperateArea.artistList:true,
+        OperateArea.albumList:true,
       };
       isReverse.value=cache.isReverse;
       themeColor.value=cache.themeColor;

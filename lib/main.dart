@@ -10,6 +10,8 @@ import 'package:zerobit_player/components/play_bar.dart';
 import 'package:zerobit_player/field/audio_source.dart';
 import 'package:zerobit_player/getxController/audio_ctrl.dart';
 import 'package:zerobit_player/getxController/user_playlist_ctrl.dart';
+import 'package:zerobit_player/pages/album_list_page.dart';
+import 'package:zerobit_player/pages/album_view_page.dart';
 import 'package:zerobit_player/pages/artist_list_page.dart';
 import 'package:zerobit_player/pages/artist_view_page.dart';
 import 'package:zerobit_player/pages/local_music_page.dart';
@@ -227,6 +229,8 @@ class MainFrame extends StatelessWidget {
         GetPage(name: AppRoutes.playList, page: () => const PlayList()),
         GetPage(name: AppRoutes.artistView, page: () => const ArtistViewPage()),
         GetPage(name: AppRoutes.artistList, page: () => const ArtistListPage()),
+        GetPage(name: AppRoutes.albumView, page: () => const AlbumViewPage()),
+        GetPage(name: AppRoutes.albumList, page: () => const AlbumListPage()),
         GetPage(name: AppRoutes.lrcView, page: () => const LrcView(),transition: Transition.fade,transitionDuration: 300.ms,),
       ],
     )
@@ -263,6 +267,10 @@ class HomePage extends StatelessWidget {
         return const ArtistViewPage();
       case AppRoutes.artistList:
         return const ArtistListPage();
+      case AppRoutes.albumView:
+        return const AlbumViewPage();
+      case AppRoutes.albumList:
+        return const AlbumListPage();
     }
     return const LocalMusic();
   }
@@ -299,6 +307,11 @@ class HomePage extends StatelessWidget {
                       label: '艺术家',
                       icon: PhosphorIconsLight.userFocus,
                       localIndex: AppRoutes.artistViewOrder,
+                    ),
+                    CustomNavigationBtn(
+                      label: '专辑',
+                      icon: PhosphorIconsLight.vinylRecord,
+                      localIndex: AppRoutes.albumViewOrder,
                     ),
                     CustomNavigationBtn(
                       label: '歌单',

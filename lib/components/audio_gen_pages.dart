@@ -211,6 +211,10 @@ class AudioGenPages extends StatelessWidget {
                             itemMap.remove(1);
                           }
 
+                          if(operateArea==OperateArea.albumList){
+                            itemMap.remove(2);
+                          }
+
                           if (!isMulSelect.value) {
                             return CustomDropdownMenu(
                               itemMap: itemMap,

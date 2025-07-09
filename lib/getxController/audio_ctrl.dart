@@ -17,6 +17,7 @@ import '../HIveCtrl/hive_manager.dart';
 import '../HIveCtrl/models/music_cahce_model.dart';
 import '../field/audio_source.dart';
 import '../field/tag_suffix.dart';
+import 'album_list_crl.dart';
 import 'artist_list_ctrl.dart';
 import 'music_cache_ctrl.dart';
 
@@ -62,6 +63,11 @@ class AudioController extends GetxController {
 
     if(_musicCacheController.artistItemsDict.value.keys.any((v)=>v.substring(1)+TagSuffix.artistList==_audioSource.currentAudioSource.value)){
       playListCacheItems = [...ArtistListController.audioListItems];
+      return;
+    }
+
+    if(_musicCacheController.albumItemsDict.value.keys.any((v)=>v.substring(1)+TagSuffix.albumList==_audioSource.currentAudioSource.value)){
+      playListCacheItems = [...AlbumListController.audioListItems];
       return;
     }
 
