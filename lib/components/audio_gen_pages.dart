@@ -89,7 +89,7 @@ class AudioGenPages extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             spacing: 8,
             children: <Widget>[
-              if (operateArea == OperateArea.playList)
+              if (operateArea != OperateArea.allMusic)
                 Container(
                   margin: EdgeInsets.only(left: 8),
                   child: ClipRRect(
