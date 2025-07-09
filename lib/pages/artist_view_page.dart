@@ -111,7 +111,8 @@ class ArtistViewPage extends StatelessWidget {
                               Container(
                                 width: _itemHeight,
                                 height: _itemHeight,
-                                alignment: Alignment.center,
+                                alignment: Alignment.centerLeft,
+                                padding: EdgeInsets.only(left: _itemSpacing),
                                 child: Text(
                                   keys[index][0],
                                   style: letterTitleStyle,
