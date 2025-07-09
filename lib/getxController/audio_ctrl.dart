@@ -12,6 +12,7 @@ import 'package:zerobit_player/getxController/setting_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
+import 'package:zerobit_player/tools/func_extension.dart';
 
 import '../HIveCtrl/hive_manager.dart';
 import '../HIveCtrl/models/music_cahce_model.dart';
@@ -46,6 +47,8 @@ class AudioController extends GetxController {
   List get allUserKey => _userPlayListCacheBox.getKeyAll();
 
   final currentCover=kTransparentImage.obs;
+
+  bool _isSyncing=false;
 
   void syncPlayListCacheItems() {
     if (allUserKey.contains(_audioSource.currentAudioSource.value)) {
@@ -99,12 +102,21 @@ class AudioController extends GetxController {
       syncPlayListCacheItems();
     });
 
-    ever(currentIndex, (_) async {
-      if (currentIndex.value == -1) {
+
+    everAll([currentIndex,_audioSource.currentAudioSource,], (_) async{
+      _syncInfo();
+    });
+  }
+
+  void _syncInfo()async{
+    if(_isSyncing){return;}
+
+    if (currentIndex.value == -1) {
         windowManager.setTitle('ZeroBit Player');
         return;
       }
-      if (_settingController.dynamicThemeColor.value) {
+    _isSyncing=true;
+     if (_settingController.dynamicThemeColor.value) {
         await _setThemeColor4Cover();
       }
 
@@ -112,8 +124,7 @@ class AudioController extends GetxController {
       currentCover.value=await getCover(path: currentPath.value, sizeFlag: 1)??kTransparentImage;
       await smtcUpdateMetadata(title: playListCacheItems[currentIndex.value].title, artist: playListCacheItems[currentIndex.value].artist, album: playListCacheItems[currentIndex.value].album, coverSrc: currentCover.value);
       debugPrint("currentIndex:set");
-    });
-
+      _isSyncing=false;
   }
 
   Future<void> _setThemeColor4Cover() async {

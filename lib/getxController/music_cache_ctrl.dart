@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:flutter/cupertino.dart';
 import 'package:pinyin/pinyin.dart';
 import 'package:zerobit_player/HIveCtrl/hive_manager.dart';
 import 'package:zerobit_player/HIveCtrl/models/music_cahce_model.dart';
@@ -70,8 +71,12 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
     albumItemsDict.value.clear();
     albumHasLetter.clear();
     for (var v in items) {
-      final String letter=_getLetter(str: v.album);
-      albumItemsDict.value.putIfAbsent(letter+v.album, ()=><String>[]).add(v.path);
+      String album=v.album;
+      if(album.isEmpty){
+        album='UNKNOWN';
+      }
+      final String letter=_getLetter(str: album);
+      albumItemsDict.value.putIfAbsent(letter+album, ()=><String>[]).add(v.path);
       albumHasLetter.addIf(!albumHasLetter.contains(letter), letter);
     }
     albumHasLetter.sort((a,b)=>a.compareTo(b));
