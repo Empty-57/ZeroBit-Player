@@ -20,6 +20,7 @@ class ArtistViewPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bigTitleStyle = generalTextStyle(ctx: context, size: 'subtitle');
     final titleStyle = generalTextStyle(ctx: context, size: 'md');
     final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
 
@@ -65,7 +66,7 @@ class ArtistViewPage extends StatelessWidget {
                   ),
                   Obx(
                     () => Text(
-                      '共${_musicCacheController.artistItemsDict.length}位艺术家',
+                      '共${_musicCacheController.artistItemsDict.value.length}位艺术家',
                       style: generalTextStyle(ctx: context, size: 'md'),
                     ),
                   ),
@@ -80,48 +81,78 @@ class ArtistViewPage extends StatelessWidget {
                 Expanded(
                   flex: 1,
                   child: Obx(() {
-                    final dict = _musicCacheController.artistItemsDict;
+                    final dict = _musicCacheController.artistItemsDict.value;
                     final keys =
-                        _musicCacheController.artistItemsDict.keys.toList();
+                        _musicCacheController.artistItemsDict.value.keys
+                            .toList();
 
                     return ListView.builder(
                       itemCount: dict.length,
-                      itemExtent: _itemHeight,
+                      // itemExtent: _itemHeight,
                       cacheExtent: _itemHeight * 1,
+                      itemExtentBuilder: (index, _) {
+                        if (index < 1 || keys[index][0] != keys[index - 1][0]) {
+                          return _itemHeight * 2;
+                        }
+                        return _itemHeight;
+                      },
                       padding: EdgeInsets.only(bottom: _itemHeight * 2),
                       itemBuilder: (context, index) {
                         final item = dict[keys[index]]!;
-                        return TextButton(
-                          onPressed: () {},
-                          style: TextButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: _borderRadius,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            spacing: _itemSpacing,
-                            children: [
-                              ClipRRect(
-                                borderRadius: _coverBorderRadius,
-                                child: Image.memory(
-                                  _musicCacheController.items
-                                          .firstWhere((v) => v.path == item[0])
-                                          .src ??
-                                      kTransparentImage,
-                                  cacheWidth: _coverSmallRenderSize,
-                                  cacheHeight: _coverSmallRenderSize,
-                                  height: _coverSize,
-                                  width: _coverSize,
-                                  fit: BoxFit.cover,
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (index < 1 ||
+                                keys[index][0] != keys[index - 1][0])
+                              Container(
+                                width: _itemHeight,
+                                height: _itemHeight,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  keys[index][0],
+                                  style: bigTitleStyle,
                                 ),
                               ),
-                              Text(keys[index], style: titleStyle),
-                              Expanded(flex: 1, child: Container()),
-                              Text("共${item.length}首作品", style: subStyle),
-                            ],
-                          ),
+                            TextButton(
+                              onPressed: () {},
+                              style: TextButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: _borderRadius,
+                                ),
+                                fixedSize: Size.fromHeight(_itemHeight),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                spacing: _itemSpacing,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: _coverBorderRadius,
+                                    child: Image.memory(
+                                      _musicCacheController.items
+                                              .firstWhere(
+                                                (v) => v.path == item[0],
+                                              )
+                                              .src ??
+                                          kTransparentImage,
+                                      cacheWidth: _coverSmallRenderSize,
+                                      cacheHeight: _coverSmallRenderSize,
+                                      height: _coverSize,
+                                      width: _coverSize,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  Text(
+                                    keys[index].substring(1),
+                                    style: titleStyle,
+                                  ),
+                                  Expanded(flex: 1, child: Container()),
+                                  Text("共${item.length}首作品", style: subStyle),
+                                ],
+                              ),
+                            ),
+                          ],
                         );
                       },
                     );

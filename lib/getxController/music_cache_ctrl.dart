@@ -1,4 +1,5 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:collection';
+
 import 'package:pinyin/pinyin.dart';
 import 'package:zerobit_player/HIveCtrl/hive_manager.dart';
 import 'package:zerobit_player/HIveCtrl/models/music_cahce_model.dart';
@@ -15,7 +16,8 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
   @override
   final items = <MusicCache>[].obs;
 
-  final artistItemsDict=<String,List<String>>{}.obs;
+  // final artistItemsDict=<String,List<String>>{}.obs;
+  final artistItemsDict=SplayTreeMap<String, List<String>>((a,b)=>a.compareTo(b)).obs;
 
   final artistHasLetter=<String>[].obs;
 
@@ -50,13 +52,17 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
   }
 
   void loadItem4Artist(){
-    artistItemsDict.clear();
+    artistItemsDict.value.clear();
     artistHasLetter.clear();
     for (var v in items) {
       v.artist.split('/').forEach((i){
-        artistItemsDict.putIfAbsent(i, ()=><String>[]).add(v.path);
+
         final String letter=_getLetter(str: i);
+
+        artistItemsDict.value.putIfAbsent(letter+i, ()=><String>[]).add(v.path);
+
         artistHasLetter.addIf(!artistHasLetter.contains(letter),letter);
+
       });
     }
     artistHasLetter.sort((a,b)=>a.compareTo(b));
