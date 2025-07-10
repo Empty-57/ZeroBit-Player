@@ -9,7 +9,7 @@ use once_cell::sync::Lazy;
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
 use std::ptr::null_mut;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 use std::time::Duration;
 use std::{env, iter, thread};
 
@@ -246,7 +246,7 @@ impl BassApi {
 
                 let path: Vec<u16> = OsStr::new(&addons_path)
                     .encode_wide()
-                    .chain(std::iter::once(0))
+                    .chain(iter::once(0))
                     .collect();
 
                 let r = (self.plugin_load)(path.as_ptr() as *const _, BASS_UNICODE);

@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:get/get.dart';
@@ -13,8 +12,6 @@ import 'package:zerobit_player/getxController/user_playlist_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
-import 'package:zerobit_player/tools/func_extension.dart';
-
 import '../HIveCtrl/hive_manager.dart';
 import '../HIveCtrl/models/music_cahce_model.dart';
 import '../field/audio_source.dart';
