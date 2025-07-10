@@ -223,7 +223,7 @@ class EditMetadataDialog extends StatelessWidget {
                                           Theme.of(context).colorScheme.primary,
                                       btnWidth: 128,
                                       btnHeight: 36,
-                                      label: "重置封面",
+                                      label: "匹配网络封面",
                                     ),
                                     CustomBtn(
                                       fn: () async {
