@@ -38,6 +38,11 @@ class UserPlayListController extends GetxController {
       return;
     }
 
+    if (userKey.length>255) {
+      showSnackBar(title: "WARNING", msg: "歌单名称过长！（最大255个字符）");
+      return;
+    }
+
     await _userPlayListCacheBox.put(
       data: UserPlayListCache(pathList: <String>[], userKey: userKey),
       key: userKey,
