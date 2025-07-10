@@ -299,7 +299,11 @@ class CustomNavigation extends StatelessWidget {
                   ),
                   child: TextButton(
                     onPressed: () {
-                      _playQueueController.open();
+                      if (_playQueueController.isOpen) {
+                        _playQueueController.close();
+                      } else {
+                        _playQueueController.open();
+                      }
                     },
                     style: TextButton.styleFrom(
                       shape: RoundedRectangleBorder(

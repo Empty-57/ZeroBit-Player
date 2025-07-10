@@ -269,7 +269,11 @@ class _ApiDropMenu extends StatelessWidget {
       child: Obx(
         () => CustomBtn(
           fn: () {
+            if (menuController.isOpen) {
+            menuController.close();
+          } else {
             menuController.open();
+          }
           },
           icon: PhosphorIconsLight.plugs,
           label: _settingController.apiMap[_settingController.apiIndex.value],

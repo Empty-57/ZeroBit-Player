@@ -8,7 +8,7 @@ import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
 
 import '../custom_widgets/custom_button.dart';
-import '../custom_widgets/custom_dropMenu.dart';
+import '../custom_widgets/custom_drop_menu.dart';
 import '../field/audio_source.dart';
 import '../getxController/audio_ctrl.dart';
 import '../getxController/setting_ctrl.dart';

@@ -37,33 +37,35 @@ class CustomDropdownMenu<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-    final menuController=MenuController();
+    final menuController = MenuController();
     final menuList =
         itemMap.entries.map((entry) {
           return CustomBtn(
-          fn: () {
-            fn(entry);
-            menuController.close();
-          },
-          btnHeight: itemHeight,
-          btnWidth: itemWidth,
-          radius: 4,
-          icon: entry.value[1] as IconData?,
-          label: entry.value[0].toString(),
-          mainAxisAlignment: MainAxisAlignment.start,
-          backgroundColor: Colors.transparent,
-        );
+            fn: () {
+              fn(entry);
+              menuController.close();
+            },
+            btnHeight: itemHeight,
+            btnWidth: itemWidth,
+            radius: 4,
+            icon: entry.value[1] as IconData?,
+            label: entry.value[0].toString(),
+            mainAxisAlignment: MainAxisAlignment.start,
+            backgroundColor: Colors.transparent,
+          );
         }).toList();
-
 
     return MenuAnchor(
       menuChildren: menuList,
       controller: menuController,
       consumeOutsideTap: true,
       child: CustomBtn(
-        fn: (){
-          menuController.open();
+        fn: () {
+          if (menuController.isOpen) {
+            menuController.close();
+          } else {
+            menuController.open();
+          }
         },
         radius: radius!,
         btnHeight: btnHeight,
@@ -76,15 +78,14 @@ class CustomDropdownMenu<T> extends StatelessWidget {
             Icon(
               btnIcon!,
               color: Theme.of(context).colorScheme.onSecondaryContainer,
-              size:
-                  getIconSize(size: 'md'),
+              size: getIconSize(size: 'md'),
             ),
 
           Expanded(
             flex: 1,
             child: Text(
               label,
-              style: generalTextStyle(ctx: context,size: 'md'),
+              style: generalTextStyle(ctx: context, size: 'md'),
             ),
           ),
           Icon(
