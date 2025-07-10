@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:zerobit_player/tools/general_style.dart';
 import 'package:get/get.dart';
 
 import '../field/app_routes.dart';
-
+import '../getxController/audio_ctrl.dart';
 
 final currentNavigationIndex = 0.obs;
 
@@ -15,9 +17,14 @@ const double _navigationBtnHeight = 48;
 
 const double _navigationWidth = 260;
 const double _navigationWidthSmall = 64;
-const double resViewThresholds= 1100;
+const double resViewThresholds = 1100;
 
 final _mainRoutes = AppRoutes.orderMap.keys.toList();
+
+final _playQueueController = MenuController();
+final _playQueueScrollController = ScrollController();
+final AudioController _audioController = Get.find<AudioController>();
+const double _itemHeight = 64;
 
 class CustomNavigationBtn extends StatelessWidget {
   final String label;
@@ -59,18 +66,16 @@ class CustomNavigationBtn extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
             ),
             disabledMouseCursor: SystemMouseCursors.click,
-            overlayColor:
-                Theme.of(context).colorScheme.onSecondaryContainer,
-            foregroundColor:
-                Theme.of(context).colorScheme.onSecondaryContainer,
+            overlayColor: Theme.of(context).colorScheme.onSecondaryContainer,
+            foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
             backgroundColor:
                 currentNavigationIndex.value == localIndex
-                    ? Theme.of(context)
-                        .colorScheme.secondaryContainer
-                        .withValues(alpha: 1)
-                    : Theme.of(context)
-                        .colorScheme.secondaryContainer
-                        .withValues(alpha: 0),
+                    ? Theme.of(
+                      context,
+                    ).colorScheme.secondaryContainer.withValues(alpha: 1)
+                    : Theme.of(
+                      context,
+                    ).colorScheme.secondaryContainer.withValues(alpha: 0),
             padding: EdgeInsets.only(left: 12, right: 0, top: 8, bottom: 8),
           ),
 
@@ -84,29 +89,26 @@ class CustomNavigationBtn extends StatelessWidget {
               Expanded(
                 flex: 1,
                 child: Tooltip(
-                  message: context.width>resViewThresholds? "":label,
+                  message: context.width > resViewThresholds ? "" : label,
                   child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  spacing: 16,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    spacing: 16,
 
-                  children: [
-                    Icon(
-                      icon,
-                      color:
-                          Theme.of(
-                            context,
-                          ).colorScheme.onSurface,
-                      size:
-                          getIconSize(size: 'md'),
-                    ),
+                    children: [
+                      Icon(
+                        icon,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        size: getIconSize(size: 'md'),
+                      ),
 
-                    if(context.width>resViewThresholds) Text(
-                      label,
-                      style: generalTextStyle(ctx: context,size: 'md'),
-                    ),
-                  ],
-                ),
+                      if (context.width > resViewThresholds)
+                        Text(
+                          label,
+                          style: generalTextStyle(ctx: context, size: 'md'),
+                        ),
+                    ],
+                  ),
                 ),
               ),
               Container(
@@ -116,10 +118,9 @@ class CustomNavigationBtn extends StatelessWidget {
                       borderRadius: BorderRadius.circular(2),
                       color:
                           currentNavigationIndex.value == localIndex
-                              ? Theme.of(context)
-                                  .colorScheme
-                                  .primary
-                                  .withValues(alpha: 0.8)
+                              ? Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.8)
                               : Colors.transparent,
                     ),
                   )
@@ -154,7 +155,10 @@ class CustomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: context.width>resViewThresholds? _navigationWidth:_navigationWidthSmall,
+      width:
+          context.width > resViewThresholds
+              ? _navigationWidth
+              : _navigationWidthSmall,
       padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainer,
@@ -165,7 +169,149 @@ class CustomNavigation extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         spacing: 8.0,
 
-        children: btnList + const <Widget>[],
+        children:
+            btnList +
+            <Widget>[
+              Expanded(flex: 1, child: Container()),
+              MenuAnchor(
+                menuChildren: [
+                  Container(
+                    height: Get.height - 200,
+                    width: Get.width / 2,
+                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                    padding: EdgeInsets.all(16),
+                    child: ListView.builder(
+                      itemCount: _audioController.playListCacheItems.length,
+                      itemExtent: _itemHeight,
+                      cacheExtent: _itemHeight * 1,
+                      controller: _playQueueScrollController,
+                      padding: EdgeInsets.only(bottom: _itemHeight * 2),
+                      itemBuilder: (context, index) {
+                        return TextButton(
+                          onPressed: () {
+                            _audioController.audioPlay(
+                              metadata:
+                                  _audioController.playListCacheItems[index],
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          child: SizedBox.expand(
+                            child: Obx(
+                              () => Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _audioController
+                                        .playListCacheItems[index]
+                                        .title,
+                                    style: generalTextStyle(
+                                      ctx: context,
+                                      size: 'md',
+                                      color:
+                                          _audioController.currentIndex.value ==
+                                                  index
+                                              ? Theme.of(
+                                                context,
+                                              ).colorScheme.primary
+                                              : null,
+                                    ),
+                                    softWrap: true,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                  Text(
+                                    "${_audioController.playListCacheItems[index].artist} - ${_audioController.playListCacheItems[index].album}",
+                                    style: generalTextStyle(
+                                      ctx: context,
+                                      size: 'sm',
+                                      color:
+                                          _audioController.currentIndex.value ==
+                                                  index
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .primary
+                                                  .withValues(alpha: 0.8)
+                                              : null,
+                                      opacity: 0.8,
+                                    ),
+                                    softWrap: true,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+                onOpen: () {
+                  SchedulerBinding.instance.addPostFrameCallback((_) {
+                    _playQueueScrollController.jumpTo(
+                      (_itemHeight * _audioController.currentIndex.value).clamp(
+                        0.0,
+                        _playQueueScrollController.position.maxScrollExtent,
+                      ),
+                    );
+                  });
+                },
+                style: MenuStyle(alignment: Alignment.centerRight),
+                controller: _playQueueController,
+                child: Container(
+                  width: _navigationBtnWidth,
+                  height: _navigationBtnHeight,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    color: Colors.transparent,
+                  ),
+                  child: TextButton(
+                    onPressed: () {
+                      _playQueueController.open();
+                    },
+                    style: TextButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      padding: EdgeInsets.only(
+                        left: 12,
+                        right: 0,
+                        top: 8,
+                        bottom: 8,
+                      ),
+                    ),
+                    child: Tooltip(
+                      message: context.width > resViewThresholds ? "" : "播放队列",
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        spacing: 16,
+
+                        children: [
+                          Icon(
+                            PhosphorIconsLight.queue,
+                            color: Theme.of(context).colorScheme.onSurface,
+                            size: getIconSize(size: 'md'),
+                          ),
+
+                          if (context.width > resViewThresholds)
+                            Text(
+                              "播放队列",
+                              style: generalTextStyle(ctx: context, size: 'md'),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
       ),
     );
   }
