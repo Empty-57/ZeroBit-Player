@@ -1,6 +1,4 @@
 import 'dart:collection';
-
-import 'package:flutter/cupertino.dart';
 import 'package:pinyin/pinyin.dart';
 import 'package:zerobit_player/HIveCtrl/hive_manager.dart';
 import 'package:zerobit_player/HIveCtrl/models/music_cahce_model.dart';
