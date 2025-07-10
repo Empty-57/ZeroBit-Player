@@ -6,8 +6,6 @@ import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:zerobit_player/src/rust/api/get_fonts.dart';
-
-import '../getxController/audio_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../tools/general_style.dart';
 import '../getxController/setting_ctrl.dart';
@@ -15,7 +13,6 @@ import '../getxController/setting_ctrl.dart';
 final SettingController _settingController = Get.find<SettingController>();
 final MusicCacheController _musicCacheController =
     Get.find<MusicCacheController>();
-final AudioController _audioController = Get.find<AudioController>();
 
 List<String> _fontsList = [];
 
