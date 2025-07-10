@@ -105,14 +105,19 @@ class AudioController extends GetxController {
 
 
     everAll([currentIndex,_audioSource.currentAudioSource,], (_) async{
-      _syncInfo();
+      try{
+        _syncInfo();
+      }catch(e){
+        debugPrint(e.toString());
+        _isSyncing=false;
+      }
     });
   }
 
   void _syncInfo()async{
     if(_isSyncing){return;}
 
-    if (currentIndex.value == -1) {
+    if (currentIndex.value == -1||currentIndex.value>playListCacheItems.length-1) {
         windowManager.setTitle('ZeroBit Player');
         return;
       }
