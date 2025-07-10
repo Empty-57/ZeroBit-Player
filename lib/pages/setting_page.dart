@@ -573,19 +573,6 @@ class Setting extends StatelessWidget {
             ],
           ),
 
-          Expanded(
-            child: ListView.builder(
-              itemCount: _audioController.playListCacheItems.length,
-              itemExtent: 48,
-              cacheExtent: 48 * 1,
-              itemBuilder: (context, index) {
-                return Text(
-                  _audioController.playListCacheItems[index].title,
-                  style: generalTextStyle(ctx: context),
-                );
-              },
-            ),
-          ),
         ],
       ),
     );
