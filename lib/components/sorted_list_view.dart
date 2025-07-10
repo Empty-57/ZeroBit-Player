@@ -168,11 +168,13 @@ class SortedListView extends StatelessWidget {
                                       fit: BoxFit.cover,
                                     ),
                                   ),
-                                  Text(
+                                  Expanded(flex: 1, child: Text(
                                     keys[index].substring(1),
                                     style: titleStyle,
-                                  ),
-                                  Expanded(flex: 1, child: Container()),
+                                    softWrap: false,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  )),
                                   Text("共${item.length}首作品", style: subStyle),
                                 ],
                               ),
