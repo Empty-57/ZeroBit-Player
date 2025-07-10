@@ -274,6 +274,9 @@ class EditMetadataDialog extends StatelessWidget {
                                             path: metadata.path,
                                             src: src.value,
                                           );
+                                          _musicCacheController
+                                              .items[index]
+                                              .src = src.value;
                                         }
                                         MusicCache newCache= await _musicCacheController.putMetadata(
                                           path: metadata.path,
