@@ -313,7 +313,7 @@ class PlayBar extends StatelessWidget {
                         max: duration,
                         label: _isSeekBarDragging.value ? formatTime(
                           totalSeconds: _seekDraggingValue.value,
-                        ):'00:00',
+                        ):'√',
                         value:
                             _isSeekBarDragging.value
                                 ? _seekDraggingValue.value
