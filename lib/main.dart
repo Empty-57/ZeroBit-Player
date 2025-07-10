@@ -297,7 +297,7 @@ class HomePage extends StatelessWidget {
 
               children: <Widget>[
                 CustomNavigation(
-                  btnList: const [
+                  btnList: const <Widget>[
                     CustomNavigationBtn(
                       label: '音乐',
                       icon: PhosphorIconsLight.musicNoteSimple,
