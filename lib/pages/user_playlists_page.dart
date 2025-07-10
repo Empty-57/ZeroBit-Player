@@ -204,8 +204,7 @@ class UserPlayList extends StatelessWidget {
                               style: textStyle2,
                             ),
                           ],
-                        ),
-                        Expanded(flex: 1, child: Container()),
+                        )),
                         CustomBtn(
                           fn: () {
                             _createOrRename(
