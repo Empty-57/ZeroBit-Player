@@ -65,6 +65,10 @@ class UserPlayListController extends GetxController {
       showSnackBar(title: "WARNING", msg: "重复的歌单名称！");
       return;
     }
+    if (newKey.length>255) {
+      showSnackBar(title: "WARNING", msg: "歌单名称过长！（最大255个字符）");
+      return;
+    }
     final oldValue = _userPlayListCacheBox.get(key: oldKey);
     if (oldValue == null) {
       return;
