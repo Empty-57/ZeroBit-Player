@@ -182,83 +182,98 @@ class CustomNavigation extends StatelessWidget {
                     padding: EdgeInsets.all(16),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 8.0,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 8.0,
                       children: [
-                        Text("播放队列",style: generalTextStyle(ctx: context,size: 'xl',weight: FontWeight.w600),),
-                        Expanded(flex: 1,
-                            child: Obx((){
-                              final items=_audioController.playListCacheItems;
-                              return ListView.builder(
-                      itemCount: items.length,
-                      itemExtent: _itemHeight,
-                      cacheExtent: _itemHeight * 1,
-                      controller: _playQueueScrollController,
-                      padding: EdgeInsets.only(bottom: _itemHeight * 2),
-                      itemBuilder: (context, index) {
-                        return TextButton(
-                          onPressed: () {
-                            _audioController.audioPlay(
-                              metadata:
-                                  items[index],
+                        Text(
+                          "播放队列",
+                          style: generalTextStyle(
+                            ctx: context,
+                            size: 'xl',
+                            weight: FontWeight.w600,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Obx(() {
+                            final items = _audioController.playListCacheItems;
+                            return ListView.builder(
+                              itemCount: items.length,
+                              itemExtent: _itemHeight,
+                              cacheExtent: _itemHeight * 1,
+                              controller: _playQueueScrollController,
+                              padding: EdgeInsets.only(bottom: _itemHeight * 2),
+                              itemBuilder: (context, index) {
+                                return TextButton(
+                                  onPressed: () {
+                                    _audioController.audioPlay(
+                                      metadata: items[index],
+                                    );
+                                  },
+                                  style: TextButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                  child: SizedBox.expand(
+                                    child: Obx(
+                                      () => Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            items[index].title,
+                                            style: generalTextStyle(
+                                              ctx: context,
+                                              size: 'md',
+                                              color:
+                                                  _audioController
+                                                              .currentIndex
+                                                              .value ==
+                                                          index
+                                                      ? Theme.of(
+                                                        context,
+                                                      ).colorScheme.primary
+                                                      : null,
+                                            ),
+                                            softWrap: true,
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
+                                          ),
+                                          Text(
+                                            "${items[index].artist} - ${items[index].album}",
+                                            style: generalTextStyle(
+                                              ctx: context,
+                                              size: 'sm',
+                                              color:
+                                                  _audioController
+                                                              .currentIndex
+                                                              .value ==
+                                                          index
+                                                      ? Theme.of(context)
+                                                          .colorScheme
+                                                          .primary
+                                                          .withValues(
+                                                            alpha: 0.8,
+                                                          )
+                                                      : null,
+                                              opacity: 0.8,
+                                            ),
+                                            softWrap: true,
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
                             );
-                          },
-                          style: TextButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                          child: SizedBox.expand(
-                            child: Obx(
-                              () => Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    items[index]
-                                        .title,
-                                    style: generalTextStyle(
-                                      ctx: context,
-                                      size: 'md',
-                                      color:
-                                          _audioController.currentIndex.value ==
-                                                  index
-                                              ? Theme.of(
-                                                context,
-                                              ).colorScheme.primary
-                                              : null,
-                                    ),
-                                    softWrap: true,
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
-                                  Text(
-                                    "${items[index].artist} - ${items[index].album}",
-                                    style: generalTextStyle(
-                                      ctx: context,
-                                      size: 'sm',
-                                      color:
-                                          _audioController.currentIndex.value ==
-                                                  index
-                                              ? Theme.of(context)
-                                                  .colorScheme
-                                                  .primary
-                                                  .withValues(alpha: 0.8)
-                                              : null,
-                                      opacity: 0.8,
-                                    ),
-                                    softWrap: true,
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                            }))
+                          }),
+                        ),
                       ],
                     ),
                   ),
