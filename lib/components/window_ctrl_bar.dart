@@ -47,6 +47,7 @@ class _WindowListener extends GetxController with WindowListener {
   @override
   void onWindowClose() {
     windowManager.removeListener(this);
+    await smtcClear();
     super.onClose();
   }
 
