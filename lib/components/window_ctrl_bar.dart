@@ -137,7 +137,7 @@ class WindowControllerBar extends StatelessWidget {
                     getIconSize(size: 'lg'),
               ),
               Text(
-                'Player',
+                'ZeroBit Player',
                 style: generalTextStyle(ctx: context,size: 'sm'),
               ),
             ],
