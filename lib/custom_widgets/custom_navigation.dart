@@ -187,8 +187,10 @@ class CustomNavigation extends StatelessWidget {
                       children: [
                         Text("播放队列",style: generalTextStyle(ctx: context,size: 'xl',weight: FontWeight.w600),),
                         Expanded(flex: 1,
-                            child: ListView.builder(
-                      itemCount: _audioController.playListCacheItems.length,
+                            child: Obx((){
+                              final items=_audioController.playListCacheItems;
+                              return ListView.builder(
+                      itemCount: items.length,
                       itemExtent: _itemHeight,
                       cacheExtent: _itemHeight * 1,
                       controller: _playQueueScrollController,
@@ -198,7 +200,7 @@ class CustomNavigation extends StatelessWidget {
                           onPressed: () {
                             _audioController.audioPlay(
                               metadata:
-                                  _audioController.playListCacheItems[index],
+                                  items[index],
                             );
                           },
                           style: TextButton.styleFrom(
@@ -213,8 +215,7 @@ class CustomNavigation extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    _audioController
-                                        .playListCacheItems[index]
+                                    items[index]
                                         .title,
                                     style: generalTextStyle(
                                       ctx: context,
@@ -232,7 +233,7 @@ class CustomNavigation extends StatelessWidget {
                                     maxLines: 1,
                                   ),
                                   Text(
-                                    "${_audioController.playListCacheItems[index].artist} - ${_audioController.playListCacheItems[index].album}",
+                                    "${items[index].artist} - ${items[index].album}",
                                     style: generalTextStyle(
                                       ctx: context,
                                       size: 'sm',
@@ -256,7 +257,8 @@ class CustomNavigation extends StatelessWidget {
                           ),
                         );
                       },
-                    ))
+                    );
+                            }))
                       ],
                     ),
                   ),

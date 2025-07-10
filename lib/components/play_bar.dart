@@ -290,12 +290,13 @@ class PlayBar extends StatelessWidget {
                 ),
                 child: Obx(() {
                   late final double duration;
+                  final items=_audioController.playListCacheItems;
                   if (_audioController.currentIndex.value != -1 &&
-                      _audioController.playListCacheItems.isNotEmpty &&
+                      items.isNotEmpty &&
                       _audioController.currentIndex.value <
-                          _audioController.playListCacheItems.length) {
+                          items.length) {
                     final currentMetadata =
-                        _audioController.playListCacheItems[_audioController
+                        items[_audioController
                             .currentIndex
                             .value];
 
@@ -377,13 +378,14 @@ class PlayBar extends StatelessWidget {
                     late final String artist;
                     late final AudioState audioState;
                     late final String duration;
+                    final items=_audioController.playListCacheItems;
 
                     if (_audioController.currentIndex.value != -1 &&
-                        _audioController.playListCacheItems.isNotEmpty &&
+                        items.isNotEmpty &&
                         _audioController.currentIndex.value <
-                            _audioController.playListCacheItems.length) {
+                            items.length) {
                       final currentMetadata =
-                          _audioController.playListCacheItems[_audioController
+                          items[_audioController
                               .currentIndex
                               .value];
                       src = currentMetadata.src ?? kTransparentImage;

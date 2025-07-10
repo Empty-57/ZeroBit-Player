@@ -44,7 +44,7 @@ class AudioController extends GetxController {
 
   final _userPlayListCacheBox = HiveManager.userPlayListCacheBox;
 
-  late List<MusicCache> playListCacheItems = [..._musicCacheController.items];
+  late final RxList<MusicCache> playListCacheItems = [..._musicCacheController.items].obs;
 
   MusicCache? _hasNextAudioMetadata;
 
@@ -56,7 +56,7 @@ class AudioController extends GetxController {
 
   void syncPlayListCacheItems() {
     if (allUserKey.contains(_audioSource.currentAudioSource.value)) {
-      playListCacheItems =
+      playListCacheItems.value =
           _musicCacheController.items
               .where(
                 (v) => _userPlayListCacheBox
@@ -69,18 +69,18 @@ class AudioController extends GetxController {
     }
 
     if(_musicCacheController.artistItemsDict.value.keys.any((v)=>v.substring(1)+TagSuffix.artistList==_audioSource.currentAudioSource.value)){
-      playListCacheItems = [...ArtistListController.audioListItems];
+      playListCacheItems.value = [...ArtistListController.audioListItems];
       return;
     }
 
     if(_musicCacheController.albumItemsDict.value.keys.any((v)=>v.substring(1)+TagSuffix.albumList==_audioSource.currentAudioSource.value)){
-      playListCacheItems = [...AlbumListController.audioListItems];
+      playListCacheItems.value = [...AlbumListController.audioListItems];
       return;
     }
 
     switch (_audioSource.currentAudioSource.value) {
       case AudioSource.allMusic:
-        playListCacheItems = [..._musicCacheController.items];
+        playListCacheItems.value = [..._musicCacheController.items];
         return;
     }
   }
