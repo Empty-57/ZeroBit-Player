@@ -92,6 +92,9 @@ class PlayListController extends GetxController with AudioControllerGenClass {
 
 
  static void audioListSyncMetadata({required int index, required MusicCache newCache,}){
+    if(audioListItems.isEmpty&&index>audioListItems.length-1){
+      return;
+    }
     audioListItems[index] = newCache;
   }
 
