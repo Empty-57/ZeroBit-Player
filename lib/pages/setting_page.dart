@@ -17,34 +17,42 @@ final MusicCacheController _musicCacheController =
     Get.find<MusicCacheController>();
 final AudioController _audioController = Get.find<AudioController>();
 
-List<String> _fontsList=[];
+List<String> _fontsList = [];
 
-const double _setBtnHeight= 40;
+const double _setBtnHeight = 40;
 
-class _SetDivider extends StatelessWidget{
-
+class _SetDivider extends StatelessWidget {
   final String title;
   const _SetDivider({required this.title});
 
   @override
   Widget build(BuildContext context) {
     return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Container(
-                margin: EdgeInsets.only(bottom: 8,top: 16),
-                child: Text(title, style: generalTextStyle(ctx: context, size: 'xl',weight: FontWeight.w600)),
-              ),
-              Container(
-                margin: EdgeInsets.only(bottom: 12),
-                child: Divider(height: 0,thickness: 0.5, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),),
-              ),
-
-            ],
-          );
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Container(
+          margin: EdgeInsets.only(bottom: 8, top: 16),
+          child: Text(
+            title,
+            style: generalTextStyle(
+              ctx: context,
+              size: 'xl',
+              weight: FontWeight.w600,
+            ),
+          ),
+        ),
+        Container(
+          margin: EdgeInsets.only(bottom: 12),
+          child: Divider(
+            height: 0,
+            thickness: 0.5,
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+          ),
+        ),
+      ],
+    );
   }
-
 }
 
 class _FolderManagerDialog extends StatelessWidget {
@@ -95,11 +103,17 @@ class _FolderManagerDialog extends StatelessWidget {
                                     MainAxisAlignment.spaceBetween,
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  Text(
-                                    _settingController.folders[index],
-                                    style: generalTextStyle(
-                                      ctx: context,
-                                      size: 'md',
+                                  Expanded(
+                                    flex: 1,
+                                    child: Text(
+                                      _settingController.folders[index],
+                                      style: generalTextStyle(
+                                        ctx: context,
+                                        size: 'md',
+                                      ),
+                                      softWrap: false,
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                     ),
                                   ),
                                   Tooltip(
@@ -388,7 +402,7 @@ class _ColorPicker extends StatelessWidget {
   }
 }
 
-class _FontFamilyDialog extends StatelessWidget{
+class _FontFamilyDialog extends StatelessWidget {
   const _FontFamilyDialog();
 
   @override
@@ -422,32 +436,46 @@ class _FontFamilyDialog extends StatelessWidget{
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 8,
                     children: [
-                      Text("当前字体: ${_settingController.fontFamily.value}",style: generalTextStyle(ctx: context,size: 'md'),),
+                      Text(
+                        "当前字体: ${_settingController.fontFamily.value}",
+                        style: generalTextStyle(ctx: context, size: 'md'),
+                      ),
                       Expanded(
                         flex: 1,
                         child: ListView.builder(
-                            itemCount: _fontsList.length,
-                            itemExtent: 36,
-                            cacheExtent: 36 * 1,
-                            itemBuilder: (context, index) {
-                              return TextButton(
-                                  onPressed: (){
-                                    _settingController.fontFamily.value = _fontsList[index];
-                                    _settingController.putCache();
-                                    Navigator.pop(context);
-                                  },
-                                style: TextButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
+                          itemCount: _fontsList.length,
+                          itemExtent: 36,
+                          cacheExtent: 36 * 1,
+                          itemBuilder: (context, index) {
+                            return TextButton(
+                              onPressed: () {
+                                _settingController.fontFamily.value =
+                                    _fontsList[index];
+                                _settingController.putCache();
+                                Navigator.pop(context);
+                              },
+                              style: TextButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
-                                  child: Container(
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(_fontsList[index],style: generalTextStyle(ctx: context,size: 'md',fontFamily: _fontsList[index])),
+                              ),
+                              child: Container(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  _fontsList[index],
+                                  style: generalTextStyle(
+                                    ctx: context,
+                                    size: 'md',
+                                    fontFamily: _fontsList[index],
                                   ),
-                              );
-                            },
-                          ),
+                                  softWrap: false,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -467,15 +495,14 @@ class _FontFamilyDialog extends StatelessWidget{
       contentColor: Theme.of(context).colorScheme.onPrimary,
     );
   }
-
 }
 
 class Setting extends StatelessWidget {
   const Setting({super.key});
 
-  void _getFonts()async{
-    if(_fontsList.isEmpty){
-      _fontsList=await getFontsList();
+  void _getFonts() async {
+    if (_fontsList.isEmpty) {
+      _fontsList = await getFontsList();
     }
   }
 
@@ -572,7 +599,6 @@ class Setting extends StatelessWidget {
               const _FontFamilyDialog(),
             ],
           ),
-
         ],
       ),
     );
