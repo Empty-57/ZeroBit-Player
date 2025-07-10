@@ -161,10 +161,6 @@ class AudioController extends GetxController {
   }
 
   Future<void> audioPlay({required MusicCache metadata}) async {
-    final oldPath = currentPath.value;
-    final oldIndex = currentIndex.value;
-    final oldState = currentState.value;
-
     currentMs100.value = 0.0;
     try {
       currentPath.value = metadata.path;
@@ -178,10 +174,8 @@ class AudioController extends GetxController {
       await smtcUpdateState(state: currentState.value.index);
       await playFile(path: metadata.path);
     } catch (e) {
-      currentPath.value = oldPath;
-      currentIndex.value = oldIndex;
-      currentState.value = oldState;
       currentMs100.value = 0.0;
+      currentSec.value=0.0;
 
       debugPrint(e.toString());
       currentState.value = AudioState.stop;

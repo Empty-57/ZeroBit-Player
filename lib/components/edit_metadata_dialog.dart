@@ -9,6 +9,8 @@ import 'package:transparent_image/transparent_image.dart';
 import '../API/apis.dart';
 import '../HIveCtrl/models/music_cache_model.dart';
 import '../custom_widgets/custom_button.dart';
+import '../getxController/album_list_crl.dart';
+import '../getxController/artist_list_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../getxController/play_list_ctrl.dart';
 import '../src/rust/api/music_tag_tool.dart';
@@ -284,6 +286,8 @@ class EditMetadataDialog extends StatelessWidget {
                                         );
 
                                         PlayListController.audioListSyncMetadata(index: index,newCache: newCache);
+                                        ArtistListController.audioListSyncMetadata(index: index,newCache: newCache);
+                                        AlbumListController.audioListSyncMetadata(index: index,newCache: newCache);
 
                                         isSave.value = false;
                                         Navigator.pop(context, 'actions');

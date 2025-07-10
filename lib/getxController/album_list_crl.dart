@@ -65,4 +65,11 @@ class AlbumListController extends GetxController with AudioControllerGenClass{
     audioListItems.assignAll(audioListItems.reversed.toList());
   }
 
+  static void audioListSyncMetadata({required int index, required MusicCache newCache,}){
+    if(audioListItems.isEmpty||index>audioListItems.length-1){
+      return;
+    }
+    audioListItems[index] = newCache;
+  }
+
 }

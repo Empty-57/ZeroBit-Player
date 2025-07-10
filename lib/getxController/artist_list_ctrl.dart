@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/HIveCtrl/models/music_cache_model.dart';
@@ -63,6 +64,13 @@ class ArtistListController extends GetxController with AudioControllerGenClass{
   @override
   void itemReverse() {
     audioListItems.assignAll(audioListItems.reversed.toList());
+  }
+
+  static void audioListSyncMetadata({required int index, required MusicCache newCache,}){
+    if(audioListItems.isEmpty||index>audioListItems.length-1){
+      return;
+    }
+    audioListItems[index] = newCache;
   }
 
 }
