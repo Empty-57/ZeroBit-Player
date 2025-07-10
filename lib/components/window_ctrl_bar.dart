@@ -184,8 +184,7 @@ class WindowControllerBar extends StatelessWidget {
             icon: PhosphorIconsLight.x,
             hoverColor:
                 Theme.of(context).colorScheme.secondaryContainer,
-            fn: ()async{
-              await smtcClear();
+            fn: (){
               windowListener.windowClose();
             },
             tooltip: "退出",
