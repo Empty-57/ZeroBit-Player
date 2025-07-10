@@ -16,10 +16,10 @@ import '../tools/format_time.dart';
 import '../tools/general_style.dart';
 
 const double _metadataDialogW = 600;
-const double _metadataDialogH = 400;
+const double _metadataDialogH = 580;
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 
-const double _bigCoverSize = 160;
+const double _bigCoverSize = 200;
 const int _coverBigRenderSize = 800;
 const double _menuWidth = 180;
 const double _menuHeight = 48;
@@ -105,7 +105,8 @@ class EditMetadataDialog extends StatelessWidget {
                                 ),
                                 builder: (context, snapshot) {
                                   if (snapshot.hasData) {
-                                    return Obx(
+                                    return Center(
+                                      child: Obx(
                                       () => ClipRRect(
                                         borderRadius: _coverBorderRadius,
                                         child: FadeInImage(
@@ -126,6 +127,7 @@ class EditMetadataDialog extends StatelessWidget {
                                           fit: BoxFit.cover,
                                         ),
                                       ),
+                                    ),
                                     );
                                   }
                                   return SizedBox(
