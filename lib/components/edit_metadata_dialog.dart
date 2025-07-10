@@ -256,7 +256,7 @@ class EditMetadataDialog extends StatelessWidget {
                                     ),
                                     CustomBtn(
                                       fn: () {
-                                        src.value=kTransparentImage;
+                                        src.value=Uint8List(0);
                                         Navigator.pop(context, 'actions');
                                       },
                                       backgroundColor: Colors.transparent,
