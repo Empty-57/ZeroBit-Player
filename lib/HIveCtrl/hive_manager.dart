@@ -1,7 +1,7 @@
 import 'package:zerobit_player/HIveCtrl/models/setting_cache_model.dart';
 import 'package:zerobit_player/HIveCtrl/models/user_playlist_model.dart';
 import 'hive_crud.dart';
-import 'models/music_cahce_model.dart';
+import 'models/music_cache_model.dart';
 import 'package:hive_ce/hive.dart';
 
 import 'hive_boxes.dart';

@@ -13,7 +13,7 @@ import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
 import '../HIveCtrl/hive_manager.dart';
-import '../HIveCtrl/models/music_cahce_model.dart';
+import '../HIveCtrl/models/music_cache_model.dart';
 import '../field/audio_source.dart';
 import '../field/tag_suffix.dart';
 import 'album_list_crl.dart';

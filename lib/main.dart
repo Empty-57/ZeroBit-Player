@@ -29,7 +29,7 @@ import 'package:get/get.dart';
 
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'HIveCtrl/adapters/setting_cache_adapter.dart';
-import 'HIveCtrl/models/music_cahce_model.dart';
+import 'HIveCtrl/models/music_cache_model.dart';
 import 'components/get_snack_bar.dart';
 import 'field/app_routes.dart';
 

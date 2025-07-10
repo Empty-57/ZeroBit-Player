@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 import 'package:transparent_image/transparent_image.dart';
-import 'package:zerobit_player/HIveCtrl/models/music_cahce_model.dart';
+import 'package:zerobit_player/HIveCtrl/models/music_cache_model.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
 
 import '../field/operate_area.dart';

@@ -16,7 +16,7 @@ import 'package:zerobit_player/tools/general_style.dart';
 
 import 'dart:typed_data';
 
-import '../HIveCtrl/models/music_cahce_model.dart';
+import '../HIveCtrl/models/music_cache_model.dart';
 import '../components/edit_metadata_dialog.dart';
 import '../field/audio_source.dart';
 import '../tools/format_time.dart';

@@ -2,7 +2,7 @@ import 'dart:collection';
 
 import 'package:flutter/material.dart';
 import 'package:transparent_image/transparent_image.dart';
-import 'package:zerobit_player/HIveCtrl/models/music_cahce_model.dart';
+import 'package:zerobit_player/HIveCtrl/models/music_cache_model.dart';
 
 import '../tools/general_style.dart';
 import 'package:get/get.dart';

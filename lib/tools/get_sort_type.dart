@@ -1,6 +1,6 @@
 import 'package:pinyin/pinyin.dart';
 
-import '../HIveCtrl/models/music_cahce_model.dart';
+import '../HIveCtrl/models/music_cache_model.dart';
 
 String _getLetter({required String str}){
   if(str.isEmpty){

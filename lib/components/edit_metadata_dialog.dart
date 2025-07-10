@@ -7,7 +7,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
 
 import '../API/apis.dart';
-import '../HIveCtrl/models/music_cahce_model.dart';
+import '../HIveCtrl/models/music_cache_model.dart';
 import '../custom_widgets/custom_button.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../getxController/play_list_ctrl.dart';

@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 import 'package:transparent_image/transparent_image.dart';
-import '../HIveCtrl/models/music_cahce_model.dart';
+import '../HIveCtrl/models/music_cache_model.dart';
 import 'package:get/get.dart';
 
 mixin AudioControllerGenClass {
