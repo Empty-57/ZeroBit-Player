@@ -515,7 +515,7 @@ class Setting extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              Text('文件夹', style: generalTextStyle(ctx: context, size: 'lg')),
+              Text('歌曲文件夹', style: generalTextStyle(ctx: context, size: 'lg')),
               const _FolderManagerDialog(),
             ],
           ),
