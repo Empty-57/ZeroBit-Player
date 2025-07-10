@@ -6,7 +6,7 @@ abstract class AppRoutes {
   static const playList = '/playList';
   static const artistView = '/artistView';
   static const artistList = '/artistList';
-    static const albumView = '/albumView';
+  static const albumView = '/albumView';
   static const albumList = '/albumList';
   static const lrcView = '/lrcView';
 
