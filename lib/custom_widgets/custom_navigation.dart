@@ -86,7 +86,7 @@ class CustomNavigationBtn extends StatelessWidget {
                 child: Tooltip(
                   message: context.width>resViewThresholds? "":label,
                   child: Row(
-                  mainAxisAlignment: context.width>resViewThresholds? MainAxisAlignment.start:MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   spacing: 16,
 
