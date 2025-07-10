@@ -180,7 +180,14 @@ class CustomNavigation extends StatelessWidget {
                     width: Get.width / 2,
                     color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     padding: EdgeInsets.all(16),
-                    child: ListView.builder(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 8.0,
+                      children: [
+                        Text("播放队列",style: generalTextStyle(ctx: context,size: 'xl',weight: FontWeight.w600),),
+                        Expanded(flex: 1,
+                            child: ListView.builder(
                       itemCount: _audioController.playListCacheItems.length,
                       itemExtent: _itemHeight,
                       cacheExtent: _itemHeight * 1,
@@ -249,6 +256,8 @@ class CustomNavigation extends StatelessWidget {
                           ),
                         );
                       },
+                    ))
+                      ],
                     ),
                   ),
                 ],
