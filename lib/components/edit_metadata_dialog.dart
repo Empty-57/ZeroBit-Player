@@ -248,7 +248,7 @@ class EditMetadataDialog extends StatelessWidget {
                                           Theme.of(context).colorScheme.primary,
                                       btnWidth: 128,
                                       btnHeight: 36,
-                                      label: "选择封面",
+                                      label: "选择本地封面",
                                     ),
                                     CustomBtn(
                                       fn: () {
