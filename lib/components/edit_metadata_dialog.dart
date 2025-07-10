@@ -69,7 +69,7 @@ class EditMetadataDialog extends StatelessWidget {
 
             final OutlineInputBorder border = OutlineInputBorder();
 
-            var src = Uint8List(0).obs;
+            final src = Uint8List(0).obs;
 
             var isSave = false.obs;
 
