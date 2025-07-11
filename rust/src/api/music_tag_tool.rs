@@ -1,14 +1,15 @@
 use image::{load_from_memory, ImageFormat};
-use lofty::config::WriteOptions;
-use lofty::error::ErrorKind as LoftyErrorKind;
-use lofty::file::TaggedFileExt;
+use lofty::config::{ParseOptions, WriteOptions};
+use lofty::error::{ErrorKind as LoftyErrorKind, LoftyError};
+use lofty::file::{TaggedFile, TaggedFileExt};
 use lofty::picture::{MimeType, Picture, PictureType};
 use lofty::prelude::{Accessor, AudioFile, ItemKey, TagExt};
+use lofty::probe::Probe;
 use lofty::read_from_path;
 use lofty::tag::Tag;
 use std::borrow::Cow;
-use std::io::ErrorKind as IoErrorKind;
 use std::io::Cursor;
+use std::io::ErrorKind as IoErrorKind;
 use std::path::Path;
 
 pub struct EditableMetadata {
@@ -27,6 +28,18 @@ pub struct AudioMetadata {
     pub bitrate: Option<u32>,
     pub sample_rate: Option<u32>,
     pub path: String,
+}
+
+fn handle_get_cover_error(err: LoftyError, path: &Path, options: ParseOptions) -> Option<TaggedFile> {
+    match err.kind() {
+        LoftyErrorKind::Io(inner) if inner.kind() == IoErrorKind::UnexpectedEof => {
+            Probe::open(path).ok()?.options(options).read().ok()
+        }
+        _ => {
+            println!("Error Get Cover: {:?}", err.kind());
+            None
+        }
+    }
 }
 
 impl AudioMetadata {
@@ -76,14 +89,18 @@ impl AudioMetadata {
 
     fn render_tags(path: String) -> Self {
         let path_ = Path::new(&path);
-        let tagged_file = match Probe::open(path_){
-            Ok(v) => match v.options(ParseOptions::new()
-                .read_cover_art(false)
-                .read_properties(true)
-                .read_tags(true)
-            ).read() { 
-                Ok(f) => f, 
-                Err(err) => { 
+        let tagged_file = match Probe::open(path_) {
+            Ok(v) => match v
+                .options(
+                    ParseOptions::new()
+                        .read_cover_art(false)
+                        .read_properties(true)
+                        .read_tags(true),
+                )
+                .read()
+            {
+                Ok(f) => f,
+                Err(err) => {
                     println!("Error reading file: {:?}", err.kind());
                     return Self::new(path);
                 }
@@ -145,22 +162,17 @@ impl AudioMetadata {
 
     fn get_cover(path: String) -> Option<Vec<u8>> {
         let path_ = Path::new(&path);
-        let tagged_file = match read_from_path(path_) {
-            Ok(v) => v,
-            Err(err) => {
-                match err.kind() { 
-                    LoftyErrorKind::Io(inner)
-                    if inner.kind() == IoErrorKind::UnexpectedEof => 
-                        { 
-                            read_from_path(path_).ok()? 
-                        }, 
-                    _=>{
-                        println!("Error get cover: {:?}", err.kind());
-                        return None;
-                    }
-                }
-                
-            }
+
+        let options = ParseOptions::new()
+            .read_cover_art(true)
+            .read_properties(false)
+            .read_tags(true);
+        let tagged_file = match Probe::open(path_) {
+            Ok(v) => match v.options(options).read() {
+                Ok(f) => f,
+                Err(err) => handle_get_cover_error(err, path_, options)?,
+            },
+            Err(err) => handle_get_cover_error(err, path_, options)?,
         };
         if let Some(tag) = tagged_file
             .primary_tag()
