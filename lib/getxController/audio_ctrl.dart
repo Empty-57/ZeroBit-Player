@@ -99,11 +99,8 @@ class AudioController extends GetxController {
     super.onInit();
 
     ever(currentMs100, (_) {
-      if (currentIndex.value != -1 &&
-          playListCacheItems.isNotEmpty &&
-          currentIndex.value < playListCacheItems.length) {
-        progress.value = (currentMs100.value /
-                playListCacheItems[currentIndex.value].duration)
+      if (currentMetadata.value.path.isNotEmpty && playListCacheItems.isNotEmpty) {
+        progress.value = (currentMs100.value /currentMetadata.value.duration)
             .clamp(0.0, 1.0);
       } else {
         progress.value = 0.0;
