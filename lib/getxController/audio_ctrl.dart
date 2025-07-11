@@ -547,7 +547,7 @@ class AudioController extends GetxController {
   }
 
   Future<void> audioListSyncMetadata({required String path, required MusicCache newCache,})async{
-    if(playListCacheItems.isEmpty){
+    if(playListCacheItems.isEmpty||path!=currentMetadata.value.path){
       return;
     }
     audioSetPositon(pos: currentMs100.value);
