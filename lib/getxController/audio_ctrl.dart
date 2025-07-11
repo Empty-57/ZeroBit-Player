@@ -29,6 +29,18 @@ class AudioController extends GetxController {
   final currentSec = 0.0.obs;
   final progress = 0.0.obs;
 
+  late final Rx<MusicCache> currentMetadata=MusicCache(
+    title: '',
+    artist: '',
+    album: '',
+    genre: '',
+    duration: 9999,
+    bitrate: null,
+    sampleRate: null,
+    path: '',
+    src: null,
+  ).obs;
+
   final currentState = AudioState.stop.obs;
 
   final SettingController _settingController = Get.find<SettingController>();
@@ -164,6 +176,7 @@ class AudioController extends GetxController {
     currentMs100.value = 0.0;
     try {
       currentPath.value = metadata.path;
+      currentMetadata.value=metadata;
 
       if (!playListCacheItems.any((v) => v.path == metadata.path)) {
         playListCacheItems.add(metadata);
@@ -286,7 +299,6 @@ class AudioController extends GetxController {
           break;
         }
       }
-
     }
 
     if (_hasNextAudioMetadata != null) {
@@ -295,11 +307,15 @@ class AudioController extends GetxController {
       return;
     }
 
+    if(playListCacheItems.length==1){
+      currentIndex.value=0;
+    }
+
     await audioPlay(metadata: playListCacheItems[currentIndex.value]);
   }
 
   Future<void> audioToPrevious() async {
-    if (currentIndex.value == -1) {
+    if (playListCacheItems.isEmpty) {
       return;
     }
 
@@ -316,13 +332,13 @@ class AudioController extends GetxController {
   }
 
   Future<void> audioToNext() async {
-    if (currentIndex.value == -1) {
+    if (playListCacheItems.isEmpty) {
       return;
     }
 
     if(_settingController.playMode.value != 2){
 
-    if (currentIndex.value < playListCacheItems.length-1) {
+    if (currentIndex.value < playListCacheItems.length-1&&currentIndex.value>=0) {
       currentIndex.value++;
     }else{
       currentIndex.value=0;
@@ -335,12 +351,12 @@ class AudioController extends GetxController {
   }
 
   Future<void> audioAutoPlay() async {
-    if (currentIndex.value == -1) {
+    if (playListCacheItems.isEmpty) {
       return;
     }
     switch (_settingController.playMode.value) {
       case 0:
-        await audioPlay(metadata: playListCacheItems[currentIndex.value]);
+        await audioPlay(metadata: playListCacheItems[currentIndex.value.clamp(0, playListCacheItems.length-1)]);
         break;
       case 1:
         await audioToNext();

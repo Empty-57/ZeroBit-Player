@@ -290,17 +290,8 @@ class PlayBar extends StatelessWidget {
                 ),
                 child: Obx(() {
                   late final double duration;
-                  final items=_audioController.playListCacheItems;
-                  if (_audioController.currentIndex.value != -1 &&
-                      items.isNotEmpty &&
-                      _audioController.currentIndex.value <
-                          items.length) {
-                    final currentMetadata =
-                        items[_audioController
-                            .currentIndex
-                            .value];
-
-                    duration = currentMetadata.duration;
+                  if (_audioController.currentMetadata.value.path.isNotEmpty) {
+                    duration = _audioController.currentMetadata.value.duration;
                   } else {
                     _seekDraggingValue.value=0.0;
                     duration = 9999.0;
@@ -378,22 +369,12 @@ class PlayBar extends StatelessWidget {
                     late final String artist;
                     late final AudioState audioState;
                     late final String duration;
-                    final items=_audioController.playListCacheItems;
-
-                    if (_audioController.currentIndex.value != -1 &&
-                        items.isNotEmpty &&
-                        _audioController.currentIndex.value <
-                            items.length) {
-                      final currentMetadata =
-                          items[_audioController
-                              .currentIndex
-                              .value];
+                    final currentMetadata =_audioController.currentMetadata.value;
+                    if (currentMetadata.path.isNotEmpty) {
                       src = currentMetadata.src ?? kTransparentImage;
                       title = currentMetadata.title;
                       artist = currentMetadata.artist;
-
                       audioState = _audioController.currentState.value;
-
                       duration = formatTime(
                         totalSeconds: currentMetadata.duration,
                       );

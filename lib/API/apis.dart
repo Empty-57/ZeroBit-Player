@@ -17,7 +17,7 @@ final _dio = Dio();
 
 final SettingController _settingController = Get.find<SettingController>();
 
-Future<dynamic> _saveNetCover({required String songPath, required String picUrl,}) async {
+Future<dynamic> _saveNetCover({required String songPath, required String picUrl,required bool saveCover}) async {
   try{
     final pic = await _dio.get(
     picUrl,
@@ -25,7 +25,9 @@ Future<dynamic> _saveNetCover({required String songPath, required String picUrl,
   );
 
     if (pic.data != null) {
-    await editCover(path: songPath, src: Uint8List.fromList(pic.data));
+      if(saveCover){
+        await editCover(path: songPath, src: Uint8List.fromList(pic.data));
+      }
     return pic.data;
   }
 
@@ -47,14 +49,14 @@ Future<dynamic> _qmSearchByText({required String text, required int offset, requ
   return null;
 }
 
-Future<dynamic> _qmSaveCoverByText({required String text, required String songPath,}) async {
+Future<dynamic> _qmSaveCoverByText({required String text, required String songPath,bool? saveCover=true}) async {
   String? picUrl;
   try {
     final data = await _qmSearchByText(text: text, offset: 1, limit: 1);
     final mid = data["data"]["song"]["list"][0]["albummid"];
     if (mid != null) {
       picUrl = "https://y.gtimg.cn/music/photo_new/T002R800x800M000$mid.jpg";
-      return await _saveNetCover(songPath: songPath, picUrl: picUrl);
+      return await _saveNetCover(songPath: songPath, picUrl: picUrl,saveCover: saveCover!);
     }
   } catch (e) {
     debugPrint('$e,$picUrl');
@@ -147,13 +149,13 @@ Future<dynamic> _neSearchByText({required String text, required int offset, requ
   return null;
 }
 
-Future<dynamic> _neSaveCoverByText({required String text, required String songPath,}) async {
+Future<dynamic> _neSaveCoverByText({required String text, required String songPath,bool? saveCover=true}) async {
   String? picUrl;
   try {
     final data = await _neSearchByText(text: text, offset: 1, limit: 1);
     if (data["result"]["songCount"] > 0) {
       final picUrl = data["result"]["songs"][0]["al"]["picUrl"];
-      return await _saveNetCover(songPath: songPath, picUrl: picUrl);
+      return await _saveNetCover(songPath: songPath, picUrl: picUrl,saveCover: saveCover!);
     }
   } catch (e) {
     debugPrint('$e,$picUrl');
@@ -215,8 +217,8 @@ Future<List<Map<String, dynamic>>?> _neGetLrcBySearch({required String text,requ
 }
 
 
-Future<dynamic> saveCoverByText({required String text, required String songPath,}) async {
-  return await[_qmSaveCoverByText,_neSaveCoverByText][_settingController.apiIndex.value](text: text, songPath: songPath);
+Future<dynamic> saveCoverByText({required String text, required String songPath,bool? saveCover=true}) async {
+  return await[_qmSaveCoverByText,_neSaveCoverByText][_settingController.apiIndex.value](text: text, songPath: songPath,saveCover: saveCover);
 }
 
 Future<dynamic> getLrcBySearch({required String text,required int offset,required int limit})async{

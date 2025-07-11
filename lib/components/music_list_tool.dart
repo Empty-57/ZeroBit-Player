@@ -40,6 +40,7 @@ List<Widget> _genMenuItems({
   required MusicCache metadata,
   required String userKey,
   required int index,
+  required String operateArea,
   bool renderMaybeDel = false,
 }) {
   final List<Widget> playList =
@@ -116,7 +117,7 @@ List<Widget> _genMenuItems({
           backgroundColor: Colors.transparent,
           padding: EdgeInsets.symmetric(horizontal: 16),
         ),
-        EditMetadataDialog(menuController: menuController, metadata: metadata,index:index),
+        EditMetadataDialog(menuController: menuController, metadata: metadata,index:index,operateArea:operateArea),
 
         SubmenuButton(
           style: ButtonStyle(
@@ -194,6 +195,7 @@ class MusicTile extends StatelessWidget {
           userKey: audioSource,
           index: index,
           renderMaybeDel: audioSource == AudioSource.allMusic ? false : true,
+          operateArea: operateArea,
         ),
 
         child: Obx((){
