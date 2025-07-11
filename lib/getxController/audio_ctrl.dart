@@ -553,6 +553,7 @@ class AudioController extends GetxController {
     if(playListCacheItems.isEmpty){
       return;
     }
+    audioSetPositon(pos: currentMs100.value);
     playListCacheItems[playListCacheItems.indexWhere((v)=>v.path==path)] = newCache;
     currentMetadata.value=newCache;
   }
