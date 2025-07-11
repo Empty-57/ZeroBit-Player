@@ -1,11 +1,13 @@
 use image::{load_from_memory, ImageFormat};
 use lofty::config::WriteOptions;
+use lofty::error::ErrorKind as LoftyErrorKind;
 use lofty::file::TaggedFileExt;
 use lofty::picture::{MimeType, Picture, PictureType};
 use lofty::prelude::{Accessor, AudioFile, ItemKey, TagExt};
 use lofty::read_from_path;
 use lofty::tag::Tag;
 use std::borrow::Cow;
+use std::io::ErrorKind as IoErrorKind;
 use std::io::Cursor;
 use std::path::Path;
 
@@ -51,7 +53,7 @@ impl AudioMetadata {
         let mut tagged_file = match read_from_path(path_) {
             Ok(v) => v,
             Err(err) => {
-                println!("{}: {}", err_msg, err);
+                println!("{}: {:?}", err_msg, err.kind());
                 return None;
             }
         };
@@ -77,7 +79,7 @@ impl AudioMetadata {
         let tagged_file = match read_from_path(path_) {
             Ok(v) => v,
             Err(err) => {
-                println!("Error reading file: {}", err);
+                println!("Error reading file: {:?}", err.kind());
                 return Self::new(path);
             }
         };
@@ -136,8 +138,18 @@ impl AudioMetadata {
         let tagged_file = match read_from_path(path_) {
             Ok(v) => v,
             Err(err) => {
-                println!("Error get cover: {}", err);
-                return None;
+                match err.kind() { 
+                    LoftyErrorKind::Io(inner)
+                    if inner.kind() == IoErrorKind::UnexpectedEof => 
+                        { 
+                            read_from_path(path_).ok()? 
+                        }, 
+                    _=>{
+                        println!("Error get cover: {:?}", err.kind());
+                        return None;
+                    }
+                }
+                
             }
         };
         if let Some(tag) = tagged_file

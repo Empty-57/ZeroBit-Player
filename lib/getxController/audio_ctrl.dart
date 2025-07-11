@@ -548,4 +548,12 @@ class AudioController extends GetxController {
       duration: Duration(milliseconds: 1500),
     );
   }
+
+  void audioListSyncMetadata({required String path, required MusicCache newCache,}){
+    if(playListCacheItems.isEmpty){
+      return;
+    }
+    playListCacheItems[playListCacheItems.indexWhere((v)=>v.path==path)] = newCache;
+    currentMetadata.value=newCache;
+  }
 }

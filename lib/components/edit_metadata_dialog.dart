@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
+import 'package:zerobit_player/field/operate_area.dart';
 
 import '../API/apis.dart';
 import '../HIveCtrl/models/music_cache_model.dart';
 import '../custom_widgets/custom_button.dart';
 import '../getxController/album_list_crl.dart';
 import '../getxController/artist_list_ctrl.dart';
+import '../getxController/audio_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../getxController/play_list_ctrl.dart';
 import '../src/rust/api/music_tag_tool.dart';
@@ -30,15 +32,19 @@ const double _menuRadius = 0;
 final MusicCacheController _musicCacheController =
     Get.find<MusicCacheController>();
 
+final AudioController _audioController = Get.find<AudioController>();
+
 class EditMetadataDialog extends StatelessWidget {
   final MenuController menuController;
   final MusicCache metadata;
   final int index;
+  final String operateArea;
   const EditMetadataDialog({
     super.key,
     required this.menuController,
     required this.metadata,
     required this.index,
+    required this.operateArea,
   });
 
   @override
@@ -210,15 +216,13 @@ class EditMetadataDialog extends StatelessWidget {
                                             await saveCoverByText(
                                               text: title + artist,
                                               songPath: metadata.path,
+                                              saveCover: false
                                             );
                                         if (coverData_ != null &&
                                             coverData_.isNotEmpty) {
                                           src.value = Uint8List.fromList(
                                             coverData_,
                                           );
-                                          _musicCacheController
-                                              .items[index]
-                                              .src = null;
                                         }
                                         isSave.value = false;
                                       },
@@ -267,7 +271,7 @@ class EditMetadataDialog extends StatelessWidget {
                                       label: "取消",
                                     ),
                                     CustomBtn(
-                                      fn: () async {
+                                      fn: ()  async{
                                         isSave.value = true;
                                         if (src.value.isNotEmpty) {
                                           await editCover(
@@ -276,9 +280,9 @@ class EditMetadataDialog extends StatelessWidget {
                                           );
                                           _musicCacheController
                                               .items[index]
-                                              .src = src.value;
+                                              .src = null;
                                         }
-                                        MusicCache newCache= await _musicCacheController.putMetadata(
+                                        MusicCache newCache= _musicCacheController.putMetadata(
                                           path: metadata.path,
                                           index: _musicCacheController.items.indexWhere((v)=>v.path==metadata.path),
                                           data: EditableMetadata(
@@ -289,12 +293,27 @@ class EditMetadataDialog extends StatelessWidget {
                                           ),
                                         );
 
-                                        PlayListController.audioListSyncMetadata(index: index,newCache: newCache);
-                                        ArtistListController.audioListSyncMetadata(index: index,newCache: newCache);
-                                        AlbumListController.audioListSyncMetadata(index: index,newCache: newCache);
+                                        switch(operateArea){
+                                          case OperateArea.playList:
+                                            PlayListController.audioListSyncMetadata(index: index,newCache: newCache);
+                                            break;
+                                          case OperateArea.artistList:
+                                            ArtistListController.audioListSyncMetadata(index: index,newCache: newCache);
+                                            break;
+                                          case OperateArea.albumList:
+                                            AlbumListController.audioListSyncMetadata(index: index,newCache: newCache);
+                                            break;
+                                        }
+
+                                        _audioController.audioListSyncMetadata(path: metadata.path, newCache: newCache);
+
 
                                         isSave.value = false;
-                                        Navigator.pop(context, 'actions');
+
+                                        if (context.mounted) {
+                                          Navigator.pop(context, 'actions');
+                                        }
+
                                       },
                                       backgroundColor: Colors.transparent,
                                       contentColor:

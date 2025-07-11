@@ -100,24 +100,25 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
     await HiveManager.musicCacheBox.del(key: metadata.path);
   }
 
-  Future<MusicCache> putMetadata({
+  MusicCache putMetadata({
     required String path,
     required int index,
     required EditableMetadata data,
-  }) async {
-    await editTags(path: path, data: data);
-    final newMetadata = await getMetadata(path: path);
+  }) {
+
+    editTags(path: path, data: data);
+    final oldCache=items[index];
     final newCache = MusicCache(
-      title: newMetadata.title,
-      artist: newMetadata.artist,
-      album: newMetadata.album,
-      genre: newMetadata.genre,
-      duration: newMetadata.duration,
-      bitrate: newMetadata.bitrate,
-      sampleRate: newMetadata.sampleRate,
-      path: newMetadata.path,
+      title: data.title??path,
+      artist: data.artist??"UNKNOWN",
+      album: data.album??"UNKNOWN",
+      genre: data.genre??"UNKNOWN",
+      duration: oldCache.duration,
+      bitrate: oldCache.bitrate,
+      sampleRate: oldCache.sampleRate,
+      path: oldCache.path,
     );
-    await _musicCacheBox.put(data: newCache, key: path);
+    _musicCacheBox.put(data: newCache, key: path);
     items[index] = newCache;
     return newCache;
   }
