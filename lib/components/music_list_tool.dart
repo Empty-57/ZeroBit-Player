@@ -10,7 +10,6 @@ import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import 'package:zerobit_player/custom_widgets/custom_widget.dart';
-import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
 import 'package:zerobit_player/tools/general_style.dart';
 
@@ -41,21 +40,9 @@ List<Widget> _genMenuItems({
   required String userKey,
   required int index,
   required String operateArea,
+  required List<Widget> playList,
   bool renderMaybeDel = false,
 }) {
-  final List<Widget> playList =
-      _audioController.allUserKey.map((v) {
-        return MenuItemButton(
-          onPressed: () {
-            _audioController.addToAudioList(metadata: metadata, userKey: v);
-          },
-          child: Center(
-              child: Text(
-                  v.split(TagSuffix.playList)[0]
-              )
-          ),
-        );
-      }).toList();
 
   final List<Widget> maybeDel =
       renderMaybeDel
@@ -181,6 +168,21 @@ class MusicTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final List<Widget> playList =
+      _audioController.allUserKey.map((v) {
+        return MenuItemButton(
+          onPressed: () {
+            _audioController.addToAudioList(metadata: metadata, userKey: v);
+          },
+          child: Center(
+              child: Text(
+                  v.split(TagSuffix.playList)[0]
+              )
+          ),
+        );
+      }).toList();
+
     return GestureDetector(
       onSecondaryTapUp: (e) {
         menuController.open(position: e.localPosition);
@@ -196,6 +198,7 @@ class MusicTile extends StatelessWidget {
           index: index,
           renderMaybeDel: audioSource == AudioSource.allMusic ? false : true,
           operateArea: operateArea,
+          playList: playList
         ),
 
         child: Obx((){
@@ -302,18 +305,16 @@ class AsyncCover extends StatelessWidget {
 
   Widget _renderCover() {
     return ClipRRect(
-      borderRadius: _coverBorderRadius,
-      child: FadeInImage(
-        placeholder: MemoryImage(kTransparentImage),
-        image: ResizeImage(
-          MemoryImage(music.src!),
-          width: _coverSmallRenderSize,
-          height: _coverSmallRenderSize,
-        ),
-        height: _coverSize,
-        width: _coverSize,
-        fit: BoxFit.cover,
-      ),
+        borderRadius: _coverBorderRadius,
+        child: Image.memory(
+          music.src!,
+          width: _coverSize,
+          height: _coverSize,
+          fit: BoxFit.cover,
+          cacheWidth: _coverSmallRenderSize,
+          cacheHeight: _coverSmallRenderSize,
+          gaplessPlayback: true, // 防止图片突然闪烁
+        )
     );
   }
 
