@@ -76,10 +76,20 @@ impl AudioMetadata {
 
     fn render_tags(path: String) -> Self {
         let path_ = Path::new(&path);
-        let tagged_file = match read_from_path(path_) {
-            Ok(v) => v,
+        let tagged_file = match Probe::open(path_){
+            Ok(v) => match v.options(ParseOptions::new()
+                .read_cover_art(false)
+                .read_properties(true)
+                .read_tags(true)
+            ).read() { 
+                Ok(f) => f, 
+                Err(err) => { 
+                    println!("Error reading file: {:?}", err.kind());
+                    return Self::new(path);
+                }
+            },
             Err(err) => {
-                println!("Error reading file: {:?}", err.kind());
+                println!("Error reading TaggedFile: {:?}", err.kind());
                 return Self::new(path);
             }
         };
