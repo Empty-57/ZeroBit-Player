@@ -306,8 +306,6 @@ class EditMetadataDialog extends StatelessWidget {
                                         }
 
                                         _audioController.audioListSyncMetadata(path: metadata.path, newCache: newCache);
-
-
                                         isSave.value = false;
 
                                         if (context.mounted) {

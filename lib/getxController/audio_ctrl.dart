@@ -126,7 +126,7 @@ class AudioController extends GetxController {
   void _syncInfo()async{
     if(_isSyncing){return;}
 
-    if (currentIndex.value == -1||currentIndex.value>playListCacheItems.length-1) {
+    if (currentMetadata.value.path.isEmpty) {
         windowManager.setTitle('ZeroBit Player');
         return;
       }
@@ -135,19 +135,19 @@ class AudioController extends GetxController {
         await _setThemeColor4Cover();
       }
 
-      windowManager.setTitle("${playListCacheItems[currentIndex.value].title} - ${playListCacheItems[currentIndex.value].artist}");
+      windowManager.setTitle("${currentMetadata.value.title} - ${currentMetadata.value.artist}");
       currentCover.value=await getCover(path: currentPath.value, sizeFlag: 1)??kTransparentImage;
-      await smtcUpdateMetadata(title: playListCacheItems[currentIndex.value].title, artist: playListCacheItems[currentIndex.value].artist, album: playListCacheItems[currentIndex.value].album, coverSrc: currentCover.value);
+      await smtcUpdateMetadata(title: currentMetadata.value.title, artist: currentMetadata.value.artist, album: currentMetadata.value.album, coverSrc: currentCover.value);
       debugPrint("currentIndex:set");
       _isSyncing=false;
   }
 
   Future<void> _setThemeColor4Cover() async {
-    if(currentIndex.value > playListCacheItems.length-1){return;}
+    if(currentMetadata.value.path.isEmpty){return;}
     final src =
-        playListCacheItems[currentIndex.value].src ??
+        currentMetadata.value.src ??
         await getCover(
-          path: playListCacheItems[currentIndex.value].path,
+          path: currentMetadata.value.path,
           sizeFlag: 0,
         ) ??
         kTransparentImage;
@@ -194,7 +194,7 @@ class AudioController extends GetxController {
   }
 
   Future<void> audioResume() async {
-    if (currentIndex.value == -1 || currentState.value == AudioState.playing) {
+    if (currentMetadata.value.path.isEmpty || playListCacheItems.isEmpty || currentState.value == AudioState.playing) {
       return;
     }
     currentState.value = AudioState.playing;
@@ -207,7 +207,7 @@ class AudioController extends GetxController {
   }
 
   Future<void> audioPause() async {
-    if (currentIndex.value == -1 || currentState.value == AudioState.pause) {
+    if (currentMetadata.value.path.isEmpty || playListCacheItems.isEmpty || currentState.value == AudioState.pause) {
       return;
     }
     currentState.value = AudioState.pause;
@@ -231,7 +231,7 @@ class AudioController extends GetxController {
   }
 
   Future<void> audioToggle() async {
-    if (currentIndex.value == -1) {
+    if (currentMetadata.value.path.isEmpty || playListCacheItems.isEmpty) {
       return;
     }
     if (currentState.value == AudioState.stop ||
@@ -266,7 +266,7 @@ class AudioController extends GetxController {
   }
 
   Future<void> audioSetPositon({required double pos}) async {
-    if (currentIndex.value == -1) {
+    if (currentMetadata.value.path.isEmpty) {
       return;
     }
     try {
@@ -353,7 +353,7 @@ class AudioController extends GetxController {
     }
     switch (_settingController.playMode.value) {
       case 0:
-        await audioPlay(metadata: playListCacheItems[currentIndex.value.clamp(0, playListCacheItems.length-1)]);
+        await audioPlay(metadata: currentMetadata.value);
         break;
       case 1:
         await audioToNext();
@@ -365,8 +365,8 @@ class AudioController extends GetxController {
   }
 
   void insertNext({required MusicCache metadata}) {
-    if (currentIndex.value == -1 ||
-        playListCacheItems[currentIndex.value].path == metadata.path) {
+    if (currentMetadata.value.path.isEmpty ||
+        currentMetadata.value.path == metadata.path) {
       showSnackBar(
         title: "WARNING",
         msg: "无效操作！",
@@ -546,12 +546,13 @@ class AudioController extends GetxController {
     );
   }
 
-  void audioListSyncMetadata({required String path, required MusicCache newCache,}){
+  Future<void> audioListSyncMetadata({required String path, required MusicCache newCache,})async{
     if(playListCacheItems.isEmpty){
       return;
     }
     audioSetPositon(pos: currentMs100.value);
     playListCacheItems[playListCacheItems.indexWhere((v)=>v.path==path)] = newCache;
     currentMetadata.value=newCache;
+    currentCover.value=await getCover(path: currentPath.value, sizeFlag: 1)??kTransparentImage;
   }
 }
