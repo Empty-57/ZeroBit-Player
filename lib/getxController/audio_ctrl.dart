@@ -126,6 +126,8 @@ class AudioController extends GetxController {
   void _syncInfo()async{
     if(_isSyncing){return;}
 
+    currentMs100.value=0;
+    currentSec.value=0;
     if (currentMetadata.value.path.isEmpty) {
         windowManager.setTitle('ZeroBit Player');
         return;

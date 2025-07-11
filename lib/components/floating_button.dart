@@ -101,8 +101,8 @@ class FloatingButton extends StatelessWidget {
             tooltip: '顶部',
             icon: PhosphorIconsFill.arrowLineUp,
             fn: () {
-              scrollControllerGrid.jumpTo(0.0);
-              scrollControllerList.jumpTo(0.0);
+              scrollControllerGrid.animateTo(0.0, duration: Duration(milliseconds: 300), curve: Curves.easeOut);
+              scrollControllerList.animateTo(0.0, duration: Duration(milliseconds: 300), curve: Curves.easeOut);
             },
           ),
 
@@ -114,20 +114,17 @@ class FloatingButton extends StatelessWidget {
                   operateArea == OperateArea.allMusic ? 144 : 384;
 
               final double middleOffset =
-                  (Get.height - _itemHeight - offset) / 2;
+                  (Get.height - _itemHeight*2.5 - offset) / 2;
 
               final int index = _getIndex();
 
               double targetOffsetList = (index * _itemHeight - middleOffset)
                   .clamp(0.0, scrollControllerList.position.maxScrollExtent);
-              double targetOffsetGrid = (index ~/
-                          (Get.width < resViewThresholds ? 3 : 4) *
-                          (_itemHeight + 8) -
-                      middleOffset)
+              double targetOffsetGrid = (index * _itemHeight - middleOffset)/(Get.width < resViewThresholds ? 3 : 4)
                   .clamp(0.0, scrollControllerGrid.position.maxScrollExtent);
 
-              scrollControllerList.jumpTo(targetOffsetList);
-              scrollControllerGrid.jumpTo(targetOffsetGrid);
+              scrollControllerList.animateTo(targetOffsetList, duration: Duration(milliseconds: 300), curve: Curves.easeOut);
+              scrollControllerGrid.animateTo(targetOffsetGrid, duration: Duration(milliseconds: 300), curve: Curves.easeOut);
             },
           ),
         ],
