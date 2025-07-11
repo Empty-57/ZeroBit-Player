@@ -201,7 +201,9 @@ class _FolderManagerDialog extends StatelessWidget {
                                   await _settingController.putCache(
                                     isSaveFolders: true,
                                   );
-                                  Navigator.pop(context, 'actions');
+                                  if (context.mounted) {
+                                    Navigator.pop(context, 'actions');
+                                  }
                                 },
                                 backgroundColor: Colors.transparent,
                                 contentColor:
