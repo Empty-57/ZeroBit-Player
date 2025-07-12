@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ import '../getxController/setting_ctrl.dart';
 import '../tools/audio_ctrl_mixin.dart';
 import '../tools/general_style.dart';
 import '../field/tag_suffix.dart';
+import 'edit_metadata_dialog.dart';
 import 'floating_button.dart';
 import 'get_snack_bar.dart';
 import 'music_list_tool.dart';
@@ -34,6 +36,152 @@ const double resViewThresholds = 1100;
 final SettingController _settingController = Get.find<SettingController>();
 final AudioController _audioController = Get.find<AudioController>();
 final AudioSource _audioSource = Get.find<AudioSource>();
+
+const double _menuWidth = 180;
+const double _menuHeight = 48;
+const double _menuRadius = 0;
+const _borderRadius = BorderRadius.all(Radius.circular(4));
+
+class _MusicMenuController extends GetxController {
+  final menuController = MenuController();
+  final Rxn<Offset> menuPosition = Rxn<Offset>();
+  final Rxn<MusicCache> currentMetadata = Rxn<MusicCache>();
+  final RxInt currentIndex = (-1).obs;
+
+  void openMenu({
+    required Offset overlayOffset,
+    required MusicCache metadata,
+    required int index,
+  }) {
+    menuPosition.value = overlayOffset;
+    currentMetadata.value = metadata;
+    currentIndex.value = index;
+    menuController.open(position: Offset.zero);
+  }
+}
+
+final _MusicMenuController _musicMenuCtrl = Get.put(_MusicMenuController());
+
+List<Widget> _genMenuItems({
+  required BuildContext context,
+  required MenuController menuController,
+  required MusicCache metadata,
+  required String userKey,
+  required int index,
+  required String operateArea,
+  required List<Widget> playList,
+  bool renderMaybeDel = false,
+}) {
+  final List<Widget> maybeDel =
+      renderMaybeDel
+          ? [
+            Divider(
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.8),
+              height: 0.5,
+              thickness: 0.5,
+            ),
+            CustomBtn(
+              fn: () async {
+                menuController.close();
+                await _audioController.audioRemove(
+                  userKey: userKey,
+                  metadata: metadata,
+                );
+              },
+              btnHeight: _menuHeight,
+              btnWidth: _menuWidth,
+              radius: _menuRadius,
+              icon: PhosphorIconsLight.trash,
+              label: "删除",
+              mainAxisAlignment: MainAxisAlignment.start,
+              backgroundColor: Colors.transparent,
+            ),
+          ]
+          : [];
+
+  return <Widget>[
+        CustomBtn(
+          fn: () {
+            _audioSource.currentAudioSource.value = userKey;
+            menuController.close();
+            _audioController.audioPlay(metadata: metadata);
+          },
+          btnHeight: _menuHeight,
+          btnWidth: _menuWidth,
+          radius: _menuRadius,
+          icon: PhosphorIconsLight.play,
+          label: "播放",
+          mainAxisAlignment: MainAxisAlignment.start,
+          backgroundColor: Colors.transparent,
+          padding: EdgeInsets.symmetric(horizontal: 16),
+        ),
+
+        CustomBtn(
+          fn: () {
+            menuController.close();
+            _audioController.insertNext(metadata: metadata);
+          },
+          btnHeight: _menuHeight,
+          btnWidth: _menuWidth,
+          radius: _menuRadius,
+          icon: PhosphorIconsLight.arrowBendDownRight,
+          label: "添加到下一首",
+          mainAxisAlignment: MainAxisAlignment.start,
+          backgroundColor: Colors.transparent,
+          padding: EdgeInsets.symmetric(horizontal: 16),
+        ),
+        EditMetadataDialog(
+          menuController: menuController,
+          metadata: metadata,
+          index: index,
+          operateArea: operateArea,
+        ),
+
+        SubmenuButton(
+          style: ButtonStyle(
+            padding: WidgetStateProperty.all(
+              EdgeInsets.symmetric(horizontal: 16),
+            ),
+          ),
+          menuStyle: MenuStyle(alignment: Alignment.topRight),
+          menuChildren: playList,
+          leadingIcon: Icon(
+            PhosphorIconsLight.plus,
+            size: getIconSize(size: 'md'),
+          ),
+          child: const Text('添加到歌单'),
+        ),
+
+        CustomBtn(
+          fn: () {
+            menuController.close();
+            Process.run('explorer.exe', ['/select,', metadata.path]);
+          },
+          btnHeight: _menuHeight,
+          btnWidth: _menuWidth,
+          radius: _menuRadius,
+          icon: PhosphorIconsLight.folderOpen,
+          label: "打开本地资源",
+          mainAxisAlignment: MainAxisAlignment.start,
+          backgroundColor: Colors.transparent,
+          padding: EdgeInsets.symmetric(horizontal: 16),
+        ),
+      ] +
+      maybeDel;
+}
+
+List<Widget> Function(MusicCache metadata) _playListBuilder = (metadata) {
+  return _audioController.allUserKey.map((v) {
+    return MenuItemButton(
+      onPressed: () {
+        _audioController.addToAudioList(metadata: metadata, userKey: v);
+      },
+      child: Center(child: Text(v.split(TagSuffix.playList)[0])),
+    );
+  }).toList();
+};
 
 class AudioGenPages extends StatelessWidget {
   final String title;
@@ -298,11 +446,15 @@ class AudioGenPages extends StatelessWidget {
                                       controller: playListMenuController,
                                       child: CustomBtn(
                                         fn: () {
-                                          if(_audioController.allUserKey.isEmpty){
+                                          if (_audioController
+                                              .allUserKey
+                                              .isEmpty) {
                                             showSnackBar(
                                               title: "WARNING",
                                               msg: "未创建歌单！",
-                                              duration: Duration(milliseconds: 1500),
+                                              duration: Duration(
+                                                milliseconds: 1500,
+                                              ),
                                             );
                                             return;
                                           }
@@ -416,73 +568,177 @@ class AudioGenPages extends StatelessWidget {
               final ScrollController scrollControllerList = ScrollController();
               final ScrollController scrollControllerGrid = ScrollController();
 
-              return Stack(
-                children: [
-                  Offstage(
-                    offstage: !viewMode,
-                    child: ListView.builder(
-                      controller: scrollControllerList,
-                      itemCount: controller.items.length,
-                      itemExtent: _itemHeight,
-                      cacheExtent: _itemHeight * 1,
-                      padding: EdgeInsets.only(bottom: _itemHeight * 2),
-                      itemBuilder: (context, index) {
-                        final metadata = controller.items[index];
-
-                        return MusicTile(
-                          metadata: metadata,
-                          titleStyle: titleStyle,
-                          highLightTitleStyle: highLightTitleStyle,
-                          subStyle: subStyle,
-                          highLightSubStyle: highLightSubStyle,
-                          audioSource: audioSource,
-                          operateArea: operateArea,
-                          index: index,
-                          isMulSelect: isMulSelect,
-                          selectedList: selectedList,
-                        );
-                      },
-                    ),
-                  ),
-                  Offstage(
-                    offstage: viewMode,
-                    child: GridView.builder(
-                      controller: scrollControllerGrid,
-                      itemCount: controller.items.length,
-                      cacheExtent: _itemHeight * 1,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount:
-                            context.width < resViewThresholds ? 3 : 4,
-                        mainAxisSpacing: 4.0,
-                        crossAxisSpacing: 8.0,
-                        childAspectRatio: 1.0,
-                        mainAxisExtent: _itemHeight,
+              return RawMenuAnchor(
+                controller: _musicMenuCtrl.menuController,
+                consumeOutsideTaps: true,
+                overlayBuilder: (
+                  BuildContext context,
+                  RawMenuOverlayInfo info,
+                ) {
+                  final metadata = _musicMenuCtrl.currentMetadata.value;
+                  final position = _musicMenuCtrl.menuPosition.value;
+                  if (metadata == null || position == null)
+                    return SizedBox(
+                      child: Text(
+                        "发生了某些错误！",
+                        style: generalTextStyle(ctx: context, size: 'md'),
                       ),
-                      padding: EdgeInsets.only(bottom: _itemHeight * 2),
-                      itemBuilder: (context, index) {
-                        final metadata = controller.items[index];
+                    );
 
-                        return MusicTile(
-                          metadata: metadata,
-                          titleStyle: titleStyle,
-                          highLightTitleStyle: highLightTitleStyle,
-                          subStyle: subStyle,
-                          highLightSubStyle: highLightSubStyle,
-                          audioSource: audioSource,
-                          operateArea: operateArea,
-                          index: index,
-                          isMulSelect: isMulSelect,
-                          selectedList: selectedList,
+                  double left = position.dx + 16;
+                  double top = position.dy;
+                  final itemCount = operateArea == OperateArea.playList ? 6 : 5;
+                  if (top + _menuHeight * (itemCount + 1.5) > Get.height) {
+                    top = top - _menuHeight * itemCount;
+                  }
+                  if (left + _menuWidth * 2 > Get.width) {
+                    left = left - _menuWidth - 16;
+                  }
+
+                  return Positioned(
+                    top: top,
+                    left: left,
+                    child: TapRegion(
+                      onTapOutside: (PointerDownEvent event) {
+                        Future.delayed(
+                          Duration(milliseconds: 100),
+                          _musicMenuCtrl.menuController.close,
                         );
                       },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainer,
+                          borderRadius: _borderRadius,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              offset: Offset(0, 2),
+                              blurRadius: 4,
+                              spreadRadius: 0,
+                            ),
+                          ],
+                        ),
+                        padding: EdgeInsets.zero,
+                        width: _menuWidth,
+                        child: Column(
+                          children: _genMenuItems(
+                            context: context,
+                            menuController: _musicMenuCtrl.menuController,
+                            metadata: metadata,
+                            userKey: audioSource,
+                            index: _musicMenuCtrl.currentIndex.value,
+                            renderMaybeDel:
+                                operateArea == OperateArea.playList
+                                    ? true
+                                    : false,
+                            operateArea: operateArea,
+                            playList: _playListBuilder(metadata),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  FloatingButton(
-                    scrollControllerList: scrollControllerList,
-                    scrollControllerGrid: scrollControllerGrid,
-                    operateArea: operateArea,
-                  ),
-                ],
+                  );
+                },
+                child: Stack(
+                  children: [
+                    Offstage(
+                      offstage: !viewMode,
+                      child: ListView.builder(
+                        controller: scrollControllerList,
+                        itemCount: controller.items.length,
+                        itemExtent: _itemHeight,
+                        cacheExtent: _itemHeight * 1,
+                        padding: EdgeInsets.only(bottom: _itemHeight * 2),
+                        itemBuilder: (context, index) {
+                          final metadata = controller.items[index];
+
+                          return GestureDetector(
+                            onSecondaryTapDown: (e) {
+                              RenderBox overlayBox =
+                                  Overlay.of(context).context.findRenderObject()
+                                      as RenderBox;
+                              Offset overlayOffset = overlayBox.globalToLocal(
+                                e.globalPosition,
+                              );
+                              _musicMenuCtrl.openMenu(
+                                overlayOffset: overlayOffset,
+                                metadata: metadata,
+                                index: index,
+                              );
+                            },
+                            child: MusicTile(
+                              key: ValueKey(metadata.path), //暂定
+                              metadata: metadata,
+                              titleStyle: titleStyle,
+                              highLightTitleStyle: highLightTitleStyle,
+                              subStyle: subStyle,
+                              highLightSubStyle: highLightSubStyle,
+                              audioSource: audioSource,
+                              operateArea: operateArea,
+                              index: index,
+                              isMulSelect: isMulSelect,
+                              selectedList: selectedList,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    Offstage(
+                      offstage: viewMode,
+                      child: GridView.builder(
+                        controller: scrollControllerGrid,
+                        itemCount: controller.items.length,
+                        cacheExtent: _itemHeight * 1,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount:
+                              context.width < resViewThresholds ? 3 : 4,
+                          mainAxisSpacing: 4.0,
+                          crossAxisSpacing: 8.0,
+                          childAspectRatio: 1.0,
+                          mainAxisExtent: _itemHeight,
+                        ),
+                        padding: EdgeInsets.only(bottom: _itemHeight * 2),
+                        itemBuilder: (context, index) {
+                          final metadata = controller.items[index];
+
+                          return GestureDetector(
+                            onSecondaryTapDown: (e) {
+                              RenderBox overlayBox =
+                                  Overlay.of(context).context.findRenderObject()
+                                      as RenderBox;
+                              Offset overlayOffset = overlayBox.globalToLocal(
+                                e.globalPosition,
+                              );
+                              _musicMenuCtrl.openMenu(
+                                overlayOffset: overlayOffset,
+                                metadata: metadata,
+                                index: index,
+                              );
+                            },
+                            child: MusicTile(
+                              key: ValueKey(metadata.path), //暂定
+                              metadata: metadata,
+                              titleStyle: titleStyle,
+                              highLightTitleStyle: highLightTitleStyle,
+                              subStyle: subStyle,
+                              highLightSubStyle: highLightSubStyle,
+                              audioSource: audioSource,
+                              operateArea: operateArea,
+                              index: index,
+                              isMulSelect: isMulSelect,
+                              selectedList: selectedList,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    FloatingButton(
+                      scrollControllerList: scrollControllerList,
+                      scrollControllerGrid: scrollControllerGrid,
+                      operateArea: operateArea,
+                    ),
+                  ],
+                ),
               );
             }),
           ),
