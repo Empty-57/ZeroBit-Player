@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:zerobit_player/API/apis.dart';
+import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/getxController/audio_ctrl.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
@@ -147,7 +148,6 @@ class MusicTile extends StatelessWidget {
   final TextStyle highLightTitleStyle;
   final TextStyle subStyle;
   final TextStyle highLightSubStyle;
-  final MenuController menuController;
   final String audioSource;
   final String operateArea;
   final int index;
@@ -161,7 +161,6 @@ class MusicTile extends StatelessWidget {
     required this.highLightTitleStyle,
     required this.subStyle,
     required this.highLightSubStyle,
-    required this.menuController,
     required this.audioSource,
     required this.operateArea,
     required this.index,
@@ -171,6 +170,7 @@ class MusicTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final menuController=MenuController();
 
     final List<Widget> playList =
       _audioController.allUserKey.map((v) {
@@ -200,7 +200,7 @@ class MusicTile extends StatelessWidget {
         overlayBuilder: (BuildContext context, RawMenuOverlayInfo info) {
           double top=info.position!=null?info.position!.dy+info.anchorRect.top:info.anchorRect.bottom+4;
           double left=info.position!=null?info.position!.dx+32:info.anchorRect.left;
-          final itemCount=audioSource == AudioSource.allMusic ? 5: 6;
+          final itemCount=operateArea == OperateArea.playList ? 5: 6;
           if(top+_menuHeight*(itemCount+1.5)>Get.height){
             top=top-_menuHeight*itemCount;
           }
@@ -237,7 +237,7 @@ class MusicTile extends StatelessWidget {
           metadata: metadata,
           userKey: audioSource,
           index: index,
-          renderMaybeDel: audioSource == AudioSource.allMusic ? false : true,
+          renderMaybeDel: operateArea == OperateArea.playList ? true : false,
           operateArea: operateArea,
           playList: playList
         ),
