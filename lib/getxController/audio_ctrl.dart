@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:get/get.dart';
 import 'package:palette_generator/palette_generator.dart';
@@ -112,8 +113,7 @@ class AudioController extends GetxController {
       syncPlayListCacheItems();
     });
 
-
-    everAll([currentIndex,_audioSource.currentAudioSource,], (_) async{
+    ever(currentMetadata,(_) async {
       try{
         _syncInfo();
       }catch(e){
@@ -121,6 +121,7 @@ class AudioController extends GetxController {
         _isSyncing=false;
       }
     });
+
   }
 
   void _syncInfo()async{
