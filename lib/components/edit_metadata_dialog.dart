@@ -79,7 +79,11 @@ class EditMetadataDialog extends StatelessWidget {
             var isSave = false.obs;
 
             return AlertDialog(
-              title: Text(metadata.title),
+              title: SizedBox(width: _metadataDialogW,child: Text(metadata.title,
+                softWrap: false,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),),
               titleTextStyle: generalTextStyle(
                 ctx: context,
                 size: 20,
