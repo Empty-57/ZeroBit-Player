@@ -575,15 +575,16 @@ class AudioGenPages extends StatelessWidget {
                   BuildContext context,
                   RawMenuOverlayInfo info,
                 ) {
-                  final metadata = _musicMenuCtrl.currentMetadata.value;
+                  final currentMetadata = _musicMenuCtrl.currentMetadata.value;
                   final position = _musicMenuCtrl.menuPosition.value;
-                  if (metadata == null || position == null)
+                  if (currentMetadata == null || position == null) {
                     return SizedBox(
                       child: Text(
                         "发生了某些错误！",
                         style: generalTextStyle(ctx: context, size: 'md'),
                       ),
                     );
+                  }
 
                   double left = position.dx + 16;
                   double top = position.dy;
@@ -624,7 +625,7 @@ class AudioGenPages extends StatelessWidget {
                           children: _genMenuItems(
                             context: context,
                             menuController: _musicMenuCtrl.menuController,
-                            metadata: metadata,
+                            metadata: currentMetadata,
                             userKey: audioSource,
                             index: _musicMenuCtrl.currentIndex.value,
                             renderMaybeDel:
@@ -632,7 +633,7 @@ class AudioGenPages extends StatelessWidget {
                                     ? true
                                     : false,
                             operateArea: operateArea,
-                            playList: _playListBuilder(metadata),
+                            playList: _playListBuilder(currentMetadata),
                           ),
                         ),
                       ),
@@ -675,7 +676,6 @@ class AudioGenPages extends StatelessWidget {
                               highLightSubStyle: highLightSubStyle,
                               audioSource: audioSource,
                               operateArea: operateArea,
-                              index: index,
                               isMulSelect: isMulSelect,
                               selectedList: selectedList,
                             ),
@@ -724,7 +724,6 @@ class AudioGenPages extends StatelessWidget {
                               highLightSubStyle: highLightSubStyle,
                               audioSource: audioSource,
                               operateArea: operateArea,
-                              index: index,
                               isMulSelect: isMulSelect,
                               selectedList: selectedList,
                             ),

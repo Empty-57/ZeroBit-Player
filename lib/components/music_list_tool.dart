@@ -1,32 +1,18 @@
 import 'dart:async';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:zerobit_player/API/apis.dart';
-import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/getxController/audio_ctrl.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:get/get.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
-
-import 'package:zerobit_player/custom_widgets/custom_widget.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
-import 'package:zerobit_player/tools/general_style.dart';
-
 import 'dart:typed_data';
-
 import '../HIveCtrl/models/music_cache_model.dart';
-import '../components/edit_metadata_dialog.dart';
 import '../field/audio_source.dart';
 import '../tools/format_time.dart';
 
 const double _itemSpacing = 16.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
-
-const double _menuWidth = 180;
-const double _menuHeight = 48;
-const double _menuRadius = 0;
 
 final SettingController _settingController = Get.find<SettingController>();
 final AudioController _audioController = Get.find<AudioController>();
@@ -41,7 +27,6 @@ class MusicTile extends StatelessWidget {
   final TextStyle highLightSubStyle;
   final String audioSource;
   final String operateArea;
-  final int index;
   final RxBool isMulSelect;
   final RxList<MusicCache> selectedList;
 
@@ -54,7 +39,6 @@ class MusicTile extends StatelessWidget {
     required this.highLightSubStyle,
     required this.audioSource,
     required this.operateArea,
-    required this.index,
     required this.isMulSelect,
     required this.selectedList,
   });
