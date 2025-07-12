@@ -123,8 +123,8 @@ class FloatingButton extends StatelessWidget {
               double targetOffsetGrid = (index * _itemHeight - middleOffset)/(Get.width < resViewThresholds ? 3 : 4)
                   .clamp(0.0, scrollControllerGrid.position.maxScrollExtent);
 
-              scrollControllerList.animateTo(targetOffsetList, duration: Duration(milliseconds: 300), curve: Curves.easeOut);
-              scrollControllerGrid.animateTo(targetOffsetGrid, duration: Duration(milliseconds: 300), curve: Curves.easeOut);
+              scrollControllerList.jumpTo(targetOffsetList);
+              scrollControllerGrid.jumpTo(targetOffsetGrid);
             },
           ),
         ],
