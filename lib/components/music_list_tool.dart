@@ -112,6 +112,9 @@ List<Widget> _genMenuItems({
               EdgeInsets.symmetric(horizontal: 16),
             ),
           ),
+          menuStyle: MenuStyle(
+            alignment: Alignment.topRight,
+          ),
           menuChildren: playList,
           leadingIcon: Icon(
             PhosphorIconsLight.plus,
@@ -185,12 +188,50 @@ class MusicTile extends StatelessWidget {
 
     return GestureDetector(
       onSecondaryTapUp: (e) {
-        menuController.open(position: e.localPosition);
+        if(menuController.isOpen){
+          menuController.close();
+        }else{
+          menuController.open(position: e.localPosition);
+        }
       },
-      child: MenuAnchor(
+      child: RawMenuAnchor(
         controller: menuController,
-        consumeOutsideTap: true,
-        menuChildren: _genMenuItems(
+        consumeOutsideTaps:true,
+        overlayBuilder: (BuildContext context, RawMenuOverlayInfo info) {
+          double top=info.position!=null?info.position!.dy+info.anchorRect.top:info.anchorRect.bottom+4;
+          double left=info.position!=null?info.position!.dx+32:info.anchorRect.left;
+          final itemCount=audioSource == AudioSource.allMusic ? 5: 6;
+          if(top+_menuHeight*(itemCount+1.5)>Get.height){
+            top=top-_menuHeight*itemCount;
+          }
+          if(left+_menuWidth*2>Get.width){
+            left=left-_menuWidth-32;
+          }
+
+          return Positioned(
+            top: top,
+          left: left,
+              child: TapRegion(
+            onTapOutside: (PointerDownEvent event) {
+              Future.delayed(Duration(milliseconds: 100),menuController.close);
+              },
+              child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainer,
+                    borderRadius: _borderRadius,
+                    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.2),
+        offset: Offset(0, 2),
+        blurRadius: 4,
+        spreadRadius: 0,
+      ),
+    ],
+                  ),
+                  padding: EdgeInsets.zero,
+                  width: _menuWidth,
+                  child: Column(
+            children: _genMenuItems(
           context: context,
           menuController: menuController,
           metadata: metadata,
@@ -200,8 +241,21 @@ class MusicTile extends StatelessWidget {
           operateArea: operateArea,
           playList: playList
         ),
-
+          ),
+                )
+          ));
+        },
         child: Obx((){
+
+          final subTextStyle=_audioController.currentPath.value != metadata.path
+                            ? subStyle
+                            : highLightSubStyle;
+
+          final textStyle=_audioController.currentPath.value !=
+                                      metadata.path
+                                  ? titleStyle
+                                  : highLightTitleStyle;
+
           return TextButton(
           onPressed: () async {
 
@@ -229,7 +283,7 @@ class MusicTile extends StatelessWidget {
                 spacing: _itemSpacing,
                 children: [
                   AsyncCover(path: metadata.path, music: metadata),
-                  Obx(()=>Expanded(
+                  Expanded(
                     flex: 1,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -240,50 +294,36 @@ class MusicTile extends StatelessWidget {
                           softWrap: true,
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
-                          style:
-                              _audioController.currentPath.value !=
-                                      metadata.path
-                                  ? titleStyle
-                                  : highLightTitleStyle,
+                          style: textStyle,
                         ),
                         Text(
                           metadata.artist,
                           softWrap: true,
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
-                          style:
-                              _audioController.currentPath.value !=
-                                      metadata.path
-                                  ? subStyle
-                                  : highLightSubStyle,
+                          style: subTextStyle,
                         ),
                       ],
                     ),
-                  )),
+                  ),
                   if (_settingController.viewModeMap[operateArea])
-                    Obx(()=>Expanded(
+                    Expanded(
                       flex: 2,
                       child: Text(
                         metadata.album,
                         softWrap: true,
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
-                        style:
-                            _audioController.currentPath.value != metadata.path
-                                ? subStyle
-                                : highLightSubStyle,
+                        style: subTextStyle,
                       ),
-                    )),
-                  Obx(()=>Text(
+                    ),
+                  Text(
                     formatTime(totalSeconds: metadata.duration),
                     softWrap: true,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
-                    style:
-                        _audioController.currentPath.value != metadata.path
-                            ? subStyle
-                            : highLightSubStyle,
-                  )),
+                    style: subTextStyle,
+                  ),
                 ],
               ),
         );
