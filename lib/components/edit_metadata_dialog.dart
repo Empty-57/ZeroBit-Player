@@ -52,6 +52,7 @@ class EditMetadataDialog extends StatelessWidget {
     return CustomBtn(
       fn: () {
         menuController.close();
+        final src = Uint8List(0).obs;
         showDialog(
           barrierDismissible: true,
           context: context,
@@ -74,8 +75,6 @@ class EditMetadataDialog extends StatelessWidget {
             );
 
             final OutlineInputBorder border = OutlineInputBorder();
-
-            final src = Uint8List(0).obs;
 
             var isSave = false.obs;
 
@@ -307,8 +306,8 @@ class EditMetadataDialog extends StatelessWidget {
 
                                         _audioController.audioListSyncMetadata(path: metadata.path, newCache: newCache);
                                         isSave.value = false;
-
                                         if (context.mounted) {
+                                          src.value=Uint8List(0);
                                           Navigator.pop(context, 'actions');
                                         }
 
@@ -342,7 +341,9 @@ class EditMetadataDialog extends StatelessWidget {
               ],
             );
           },
-        );
+        ).then((v){
+          src.value=Uint8List(0);
+        });
       },
       btnHeight: _menuHeight,
       btnWidth: _menuWidth,
