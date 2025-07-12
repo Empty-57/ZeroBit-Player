@@ -101,8 +101,8 @@ class FloatingButton extends StatelessWidget {
             tooltip: '顶部',
             icon: PhosphorIconsFill.arrowLineUp,
             fn: () {
-              scrollControllerGrid.animateTo(0.0, duration: Duration(milliseconds: 300), curve: Curves.easeOut);
-              scrollControllerList.animateTo(0.0, duration: Duration(milliseconds: 300), curve: Curves.easeOut);
+              scrollControllerGrid.jumpTo(0.0);
+              scrollControllerList.jumpTo(0.0);
             },
           ),
 
