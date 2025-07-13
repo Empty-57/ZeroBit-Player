@@ -29,6 +29,7 @@ class BlurBackground extends StatelessWidget {
           child: ImageFiltered(
             imageFilter: ImageFilter.blur(sigmaX: 48, sigmaY: 48),
             child: ShaderMask(
+              blendMode: BlendMode.modulate,
               shaderCallback: (Rect bounds) {
                 return LinearGradient(
                   begin: Alignment.topCenter,
