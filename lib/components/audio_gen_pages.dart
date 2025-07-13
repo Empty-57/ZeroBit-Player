@@ -210,8 +210,7 @@ class AudioGenPages extends StatelessWidget {
     final highLightSubStyle = generalTextStyle(
       ctx: context,
       size: 'sm',
-      opacity: 0.8,
-      color: Theme.of(context).colorScheme.primary,
+      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
     );
     final isMulSelect = false.obs;
 
