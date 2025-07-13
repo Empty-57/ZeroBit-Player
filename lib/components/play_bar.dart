@@ -280,7 +280,7 @@ class PlayBar extends StatelessWidget {
                   overlayShape: RoundSliderOverlayShape(
                     overlayRadius: 0,
                   ), // 按下圈大小
-                  valueIndicatorShape: _RectangularValueIndicatorShape(
+                  valueIndicatorShape: RectangularValueIndicatorShape(
                     width: 48,
                     height: 28,
                     radius: 4,
