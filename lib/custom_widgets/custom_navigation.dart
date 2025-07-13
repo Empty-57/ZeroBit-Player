@@ -25,6 +25,7 @@ final _playQueueController = MenuController();
 final _playQueueScrollController = ScrollController();
 final AudioController _audioController = Get.find<AudioController>();
 const double _itemHeight = 64;
+const _borderRadius = BorderRadius.all(Radius.circular(4));
 
 class CustomNavigationBtn extends StatelessWidget {
   final String label;
@@ -201,7 +202,7 @@ class CustomNavigation extends StatelessWidget {
                                   },
                                   style: TextButton.styleFrom(
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
+                                      borderRadius: _borderRadius,
                                     ),
                                   ),
                                   child: SizedBox.expand(

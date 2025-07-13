@@ -5,6 +5,7 @@ import 'package:zerobit_player/HIveCtrl/models/music_cache_model.dart';
 import 'package:get/get.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
 import 'package:zerobit_player/field/operate_area.dart';
+import 'package:zerobit_player/tools/search.dart';
 import '../src/rust/api/music_tag_tool.dart';
 import '../tools/audio_ctrl_mixin.dart';
 import '../tools/get_sort_type.dart';
@@ -26,10 +27,19 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
 
   final currentScanPath = ''.obs;
 
+  final searchText=''.obs;
+
+  final searchResult=<MusicCache>[].obs;
+
   @override
   void onInit() {
     loadData();
     super.onInit();
+
+    debounce(searchText, (_){
+      search(searchResult: searchResult, items: items, searchText: searchText.value);
+    },time: Duration(milliseconds: 500));
+
   }
 
   void loadData() {

@@ -80,8 +80,8 @@ class _FolderManagerDialog extends StatelessWidget {
               actionsAlignment: MainAxisAlignment.end,
               actions: <Widget>[
                 SizedBox(
-                  width: Get.width/2,
-                  height: Get.height/2,
+                  width: context.width/2,
+                  height: context.height/2,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -432,8 +432,8 @@ class _FontFamilyDialog extends StatelessWidget {
               actionsAlignment: MainAxisAlignment.end,
               actions: <Widget>[
                 SizedBox(
-                  width: Get.width/2,
-                  height: Get.height/2,
+                  width: context.width/2,
+                  height: context.height/2,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,

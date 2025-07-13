@@ -4,16 +4,20 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
 import 'package:zerobit_player/theme_manager.dart';
+import '../getxController/music_cache_ctrl.dart';
 import '../tools/general_style.dart';
 import '../getxController/setting_ctrl.dart';
 
 
 final SettingController _settingController = Get.find<SettingController>();
 final ThemeService _themeService = Get.find<ThemeService>();
+final MusicCacheController _musicCacheController = Get.find<MusicCacheController>();
 
 final themeMode = _settingController.themeMode;
 
 const double _controllerBarHeight = 48;
+const double _itemHeight = 64;
+const _borderRadius = BorderRadius.all(Radius.circular(4));
 
 class _WindowListener extends GetxController with WindowListener {
   final _isMaximized = false.obs;
@@ -64,6 +68,125 @@ class _WindowListener extends GetxController with WindowListener {
   }
 }
 
+class _SearchDialog extends StatelessWidget{
+  const _SearchDialog();
+  @override
+  Widget build(BuildContext context) {
+    return ControllerButton(
+            icon: PhosphorIconsLight.magnifyingGlass,
+            fn: (){
+              _musicCacheController.searchResult.clear();
+              _musicCacheController.searchText.value='';
+              showDialog(
+          barrierDismissible: true,
+          context: context,
+          builder: (BuildContext context) {
+            final searchCtrl=TextEditingController();
+            return AlertDialog(
+              title: const Text("搜索"),
+              titleTextStyle: generalTextStyle(
+                ctx: context,
+                size: 'xl',
+                weight: FontWeight.w600,
+              ),
+
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(4)),
+              ),
+              backgroundColor: Theme.of(context).colorScheme.surface,
+
+              actionsAlignment: MainAxisAlignment.end,
+              actions: <Widget>[
+                SizedBox(
+                  width: context.width/2,
+                  height: context.height/2,
+
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 8,
+                    children: [
+                      TextField(
+                        autofocus: true,
+                                controller: searchCtrl,
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  labelText: '搜索',
+                                ),
+                        onChanged: (String text){
+                                  _musicCacheController.searchText.value=text;
+                        },
+                              ),
+                      Expanded(
+                        flex: 1,
+                        child: Obx(()=>ListView.builder(
+                          itemCount: _musicCacheController.searchResult.length,
+                          itemExtent: _itemHeight,
+                              cacheExtent: _itemHeight * 1,
+                          padding: EdgeInsets.only(bottom: _itemHeight * 2),
+                          itemBuilder: (context, index) {
+
+                            final items=_musicCacheController.searchResult;
+
+                            return TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              style: TextButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: _borderRadius,
+                                ),
+                              ),
+                              child: SizedBox.expand(
+                                child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            items[index].title,
+                                            style: generalTextStyle(
+                                              ctx: context,
+                                              size: 'md',
+                                            ),
+                                            softWrap: true,
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
+                                          ),
+                                          Text(
+                                            "${items[index].artist} - ${items[index].album}",
+                                            style: generalTextStyle(
+                                              ctx: context,
+                                              size: 'sm',
+                                              opacity: 0.8,
+                                            ),
+                                            softWrap: true,
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
+                                          ),
+                                        ],
+                                      ),
+                              ),
+                            );
+                          },
+                        )
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+            },
+            tooltip: "搜索",
+          );
+  }
+
+}
+
 class ControllerButton extends StatelessWidget {
   final IconData icon;
   final Color? hoverColor;
@@ -100,9 +223,11 @@ class ControllerButton extends StatelessWidget {
 
 class WindowControllerBar extends StatelessWidget {
   final bool? isNestedRoute;
+  final bool? showLogo;
   final bool? useCaretDown;
+  final bool? useSearch;
 
-  const WindowControllerBar({super.key,this.isNestedRoute=true,this.useCaretDown=false});
+  const WindowControllerBar({super.key,this.isNestedRoute=true,this.showLogo=true,this.useCaretDown=false,this.useSearch=true});
 
   @override
   Widget build(BuildContext context) {
@@ -124,7 +249,7 @@ class WindowControllerBar extends StatelessWidget {
             },
             tooltip: "返回",
           ),
-          Row(
+          if(showLogo!) Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             spacing: 8,
@@ -151,6 +276,8 @@ class WindowControllerBar extends StatelessWidget {
               child: Container(),
             ),
           ),
+
+          if(useSearch!) const _SearchDialog(),
 
           Obx(
             () => ControllerButton(
