@@ -47,8 +47,8 @@ class BlurBackground extends StatelessWidget {
                     child: Image.memory(
                       controller.headCover.value,
                       key: ValueKey(controller.headCover.value.hashCode),
-                      cacheWidth: 800,
-                      cacheHeight: 800,
+                      cacheWidth: _coverBigRenderSize,
+                      cacheHeight: _coverBigRenderSize,
                       fit: BoxFit.fill,
                     ),
                   ),
