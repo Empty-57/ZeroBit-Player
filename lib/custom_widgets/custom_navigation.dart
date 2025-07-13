@@ -40,18 +40,10 @@ class CustomNavigationBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => AnimatedContainer(
+    return SizedBox(
         width: _navigationBtnWidth,
         height: _navigationBtnHeight,
-        duration: 300.ms,
-
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(4),
-          color: Colors.transparent,
-        ),
-
-        child: TextButton(
+        child: Obx(()=>TextButton(
           onPressed:
               currentNavigationIndex.value != localIndex
                   ? () {
@@ -65,9 +57,6 @@ class CustomNavigationBtn extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(4),
             ),
-            disabledMouseCursor: SystemMouseCursors.click,
-            overlayColor: Theme.of(context).colorScheme.onSecondaryContainer,
-            foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
             backgroundColor:
                 currentNavigationIndex.value == localIndex
                     ? Theme.of(
@@ -141,9 +130,8 @@ class CustomNavigationBtn extends StatelessWidget {
                   ),
             ],
           ),
-        ),
-      ),
-    );
+        )),
+      );
   }
 }
 
@@ -174,6 +162,7 @@ class CustomNavigation extends StatelessWidget {
             <Widget>[
               Expanded(flex: 1, child: Container()),
               MenuAnchor(
+                consumeOutsideTap: true,
                 menuChildren: [
                   Container(
                     height: Get.height - 200,
@@ -288,7 +277,7 @@ class CustomNavigation extends StatelessWidget {
                     );
                   });
                 },
-                style: MenuStyle(alignment: Alignment.centerRight),
+                style: MenuStyle(alignment: Alignment.topRight),
                 controller: _playQueueController,
                 child: Container(
                   width: _navigationBtnWidth,
@@ -297,7 +286,10 @@ class CustomNavigation extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                     color: Colors.transparent,
                   ),
-                  child: TextButton(
+                  child: SizedBox(
+                    width: _navigationBtnWidth,
+                    height: _navigationBtnHeight,
+                    child: TextButton(
                     onPressed: () {
                       if (_playQueueController.isOpen) {
                         _playQueueController.close();
@@ -338,6 +330,7 @@ class CustomNavigation extends StatelessWidget {
                         ],
                       ),
                     ),
+                  ),
                   ),
                 ),
               ),
