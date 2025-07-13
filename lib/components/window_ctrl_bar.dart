@@ -277,6 +277,7 @@ class WindowControllerBar extends StatelessWidget {
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
               onPanStart: (details) => windowManager.startDragging(),
+              onDoubleTap: ()=>windowListener.toggleMaximize(),
               child: Container(),
             ),
           ),
