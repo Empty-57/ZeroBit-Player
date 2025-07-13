@@ -4,6 +4,8 @@ import '../tools/audio_ctrl_mixin.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+const int _coverBigRenderSize=800;
+
 class BlurBackground extends StatelessWidget {
   final AudioControllerGenClass controller;
   final Widget child;
