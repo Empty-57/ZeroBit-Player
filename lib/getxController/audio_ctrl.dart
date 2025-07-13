@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:get/get.dart';
 import 'package:palette_generator/palette_generator.dart';
