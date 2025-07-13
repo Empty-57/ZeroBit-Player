@@ -24,7 +24,7 @@ class LrcView extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const WindowControllerBar(isNestedRoute: false,useCaretDown: true),
+          const WindowControllerBar(isNestedRoute: false,showLogo: false,useCaretDown: true,useSearch: false,),
 
           Expanded(
             child: Container(
