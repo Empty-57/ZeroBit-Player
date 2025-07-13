@@ -91,7 +91,7 @@ class _SearchDialog extends StatelessWidget{
               ),
 
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(4)),
+                borderRadius: _borderRadius,
               ),
               backgroundColor: Theme.of(context).colorScheme.surface,
 
