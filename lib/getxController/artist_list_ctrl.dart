@@ -34,6 +34,13 @@ class ArtistListController extends GetxController with AudioControllerGenClass{
     _loadData();
   }
 
+  @override
+  void onClose() {
+    headCover.value=kTransparentImage;
+    audioListItems.value=[];
+    super.onClose();
+  }
+
   void _loadData()async{
 
     audioListItems.value=_musicCacheController.items.where((v)=>pathList.contains(v.path)).toList();

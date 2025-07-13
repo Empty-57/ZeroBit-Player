@@ -38,6 +38,13 @@ class PlayListController extends GetxController with AudioControllerGenClass {
     _loadData();
   }
 
+  @override
+  void onClose() {
+    headCover.value=kTransparentImage;
+    audioListItems.value=[];
+    super.onClose();
+  }
+
   Future<void> syncCache() async {
     await _userPlayListCacheBox.put(
       data: UserPlayListCache(
