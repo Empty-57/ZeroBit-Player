@@ -432,8 +432,8 @@ class _FontFamilyDialog extends StatelessWidget {
               actionsAlignment: MainAxisAlignment.end,
               actions: <Widget>[
                 SizedBox(
-                  width: 400,
-                  height: 300,
+                  width: Get.width/2,
+                  height: Get.height/2,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
