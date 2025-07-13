@@ -231,7 +231,7 @@ class MainFrame extends StatelessWidget {
         GetPage(name: AppRoutes.artistList, page: () => const ArtistListPage()),
         GetPage(name: AppRoutes.albumView, page: () => const AlbumViewPage()),
         GetPage(name: AppRoutes.albumList, page: () => const AlbumListPage()),
-        GetPage(name: AppRoutes.lrcView, page: () => const LrcView(),transition: Transition.fade,transitionDuration: 300.ms,),
+        GetPage(name: AppRoutes.lrcView, page: () => const LrcView(),transition: Transition.fade,curve: Curves.fastOutSlowIn,transitionDuration: 300.ms,),
       ],
     )
     );
