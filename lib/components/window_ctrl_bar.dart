@@ -4,6 +4,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
 import 'package:zerobit_player/theme_manager.dart';
+import '../getxController/audio_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../tools/general_style.dart';
 import '../getxController/setting_ctrl.dart';
@@ -12,6 +13,7 @@ import '../getxController/setting_ctrl.dart';
 final SettingController _settingController = Get.find<SettingController>();
 final ThemeService _themeService = Get.find<ThemeService>();
 final MusicCacheController _musicCacheController = Get.find<MusicCacheController>();
+final AudioController _audioController = Get.find<AudioController>();
 
 final themeMode = _settingController.themeMode;
 
@@ -77,11 +79,11 @@ class _SearchDialog extends StatelessWidget{
             fn: (){
               _musicCacheController.searchResult.clear();
               _musicCacheController.searchText.value='';
+              final searchCtrl=TextEditingController();
               showDialog(
           barrierDismissible: true,
           context: context,
           builder: (BuildContext context) {
-            final searchCtrl=TextEditingController();
             return AlertDialog(
               title: const Text("搜索"),
               titleTextStyle: generalTextStyle(
@@ -125,12 +127,10 @@ class _SearchDialog extends StatelessWidget{
                               cacheExtent: _itemHeight * 1,
                           padding: EdgeInsets.only(bottom: _itemHeight * 2),
                           itemBuilder: (context, index) {
-
-                            final items=_musicCacheController.searchResult;
-
+                            final items=_musicCacheController.searchResult[index];
                             return TextButton(
                               onPressed: () {
-                                Navigator.pop(context);
+                                _audioController.searchInsert(metadata: items);
                               },
                               style: TextButton.styleFrom(
                                 shape: RoundedRectangleBorder(
@@ -145,7 +145,7 @@ class _SearchDialog extends StatelessWidget{
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            items[index].title,
+                                            items.title,
                                             style: generalTextStyle(
                                               ctx: context,
                                               size: 'md',
@@ -155,7 +155,7 @@ class _SearchDialog extends StatelessWidget{
                                             maxLines: 1,
                                           ),
                                           Text(
-                                            "${items[index].artist} - ${items[index].album}",
+                                            "${items.artist} - ${items.album}",
                                             style: generalTextStyle(
                                               ctx: context,
                                               size: 'sm',

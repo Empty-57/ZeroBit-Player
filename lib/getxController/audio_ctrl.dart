@@ -557,4 +557,11 @@ class AudioController extends GetxController {
     currentMetadata.value=newCache;
     currentCover.value=await getCover(path: currentPath.value, sizeFlag: 1)??kTransparentImage;
   }
+
+  void searchInsert({required MusicCache metadata}){
+    if(!playListCacheItems.any((v)=>v.path==metadata.path)){
+      playListCacheItems.add(metadata);
+    }
+    audioPlay(metadata: metadata);
+  }
 }
