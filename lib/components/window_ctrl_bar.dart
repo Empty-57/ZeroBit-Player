@@ -9,10 +9,10 @@ import '../getxController/music_cache_ctrl.dart';
 import '../tools/general_style.dart';
 import '../getxController/setting_ctrl.dart';
 
-
 final SettingController _settingController = Get.find<SettingController>();
 final ThemeService _themeService = Get.find<ThemeService>();
-final MusicCacheController _musicCacheController = Get.find<MusicCacheController>();
+final MusicCacheController _musicCacheController =
+    Get.find<MusicCacheController>();
 final AudioController _audioController = Get.find<AudioController>();
 
 final themeMode = _settingController.themeMode;
@@ -51,7 +51,7 @@ class _WindowListener extends GetxController with WindowListener {
   }
 
   @override
-  void onWindowClose() async{
+  void onWindowClose() async {
     windowManager.removeListener(this);
     await smtcClear();
     super.onClose();
@@ -70,17 +70,19 @@ class _WindowListener extends GetxController with WindowListener {
   }
 }
 
-class _SearchDialog extends StatelessWidget{
+class _SearchDialog extends StatelessWidget {
   const _SearchDialog();
   @override
   Widget build(BuildContext context) {
+    final titleStyle = generalTextStyle(ctx: context, size: 'md');
+    final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
     return ControllerButton(
-            icon: PhosphorIconsLight.magnifyingGlass,
-            fn: (){
-              _musicCacheController.searchResult.clear();
-              _musicCacheController.searchText.value='';
-              final searchCtrl=TextEditingController();
-              showDialog(
+      icon: PhosphorIconsLight.magnifyingGlass,
+      fn: () {
+        _musicCacheController.searchResult.clear();
+        _musicCacheController.searchText.value = '';
+        final searchCtrl = TextEditingController();
+        showDialog(
           barrierDismissible: true,
           context: context,
           builder: (BuildContext context) {
@@ -92,16 +94,14 @@ class _SearchDialog extends StatelessWidget{
                 weight: FontWeight.w600,
               ),
 
-              shape: RoundedRectangleBorder(
-                borderRadius: _borderRadius,
-              ),
+              shape: RoundedRectangleBorder(borderRadius: _borderRadius),
               backgroundColor: Theme.of(context).colorScheme.surface,
 
               actionsAlignment: MainAxisAlignment.end,
               actions: <Widget>[
                 SizedBox(
-                  width: context.width/2,
-                  height: context.height/2,
+                  width: context.width / 2,
+                  height: context.height / 2,
 
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -110,67 +110,64 @@ class _SearchDialog extends StatelessWidget{
                     children: [
                       TextField(
                         autofocus: true,
-                                controller: searchCtrl,
-                                decoration: InputDecoration(
-                                  border: OutlineInputBorder(),
-                                  labelText: '搜索',
-                                ),
-                        onChanged: (String text){
-                                  _musicCacheController.searchText.value=text;
+                        controller: searchCtrl,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: '搜索',
+                        ),
+                        onChanged: (String text) {
+                          _musicCacheController.searchText.value = text;
                         },
-                              ),
+                      ),
                       Expanded(
                         flex: 1,
-                        child: Obx(()=>ListView.builder(
-                          itemCount: _musicCacheController.searchResult.length,
-                          itemExtent: _itemHeight,
-                              cacheExtent: _itemHeight * 1,
-                          padding: EdgeInsets.only(bottom: _itemHeight * 2),
-                          itemBuilder: (context, index) {
-                            final items=_musicCacheController.searchResult[index];
-                            return TextButton(
-                              onPressed: () {
-                                _audioController.searchInsert(metadata: items);
-                              },
-                              style: TextButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: _borderRadius,
+                        child: Obx(
+                          () => ListView.builder(
+                            itemCount:
+                                _musicCacheController.searchResult.length,
+                            itemExtent: _itemHeight,
+                            cacheExtent: _itemHeight * 1,
+                            padding: EdgeInsets.only(bottom: _itemHeight * 2),
+                            itemBuilder: (context, index) {
+                              final items =
+                                  _musicCacheController.searchResult[index];
+                              return TextButton(
+                                onPressed: () {
+                                  _audioController.searchInsert(
+                                    metadata: items,
+                                  );
+                                },
+                                style: TextButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: _borderRadius,
+                                  ),
                                 ),
-                              ),
-                              child: SizedBox.expand(
-                                child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            items.title,
-                                            style: generalTextStyle(
-                                              ctx: context,
-                                              size: 'md',
-                                            ),
-                                            softWrap: true,
-                                            overflow: TextOverflow.ellipsis,
-                                            maxLines: 1,
-                                          ),
-                                          Text(
-                                            "${items.artist} - ${items.album}",
-                                            style: generalTextStyle(
-                                              ctx: context,
-                                              size: 'sm',
-                                              opacity: 0.8,
-                                            ),
-                                            softWrap: true,
-                                            overflow: TextOverflow.ellipsis,
-                                            maxLines: 1,
-                                          ),
-                                        ],
+                                child: SizedBox.expand(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        items.title,
+                                        style: titleStyle,
+                                        softWrap: true,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
                                       ),
-                              ),
-                            );
-                          },
-                        )
+                                      Text(
+                                        "${items.artist} - ${items.album}",
+                                        style: subStyle,
+                                        softWrap: true,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ],
@@ -180,11 +177,10 @@ class _SearchDialog extends StatelessWidget{
             );
           },
         );
-            },
-            tooltip: "搜索",
-          );
+      },
+      tooltip: "搜索",
+    );
   }
-
 }
 
 class ControllerButton extends StatelessWidget {
@@ -227,7 +223,13 @@ class WindowControllerBar extends StatelessWidget {
   final bool? useCaretDown;
   final bool? useSearch;
 
-  const WindowControllerBar({super.key,this.isNestedRoute=true,this.showLogo=true,this.useCaretDown=false,this.useSearch=true});
+  const WindowControllerBar({
+    super.key,
+    this.isNestedRoute = true,
+    this.showLogo = true,
+    this.useCaretDown = false,
+    this.useSearch = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -243,30 +245,32 @@ class WindowControllerBar extends StatelessWidget {
         spacing: 8,
         children: <Widget>[
           ControllerButton(
-            icon: useCaretDown! ? PhosphorIconsLight.caretDown:PhosphorIconsLight.caretLeft,
+            icon:
+                useCaretDown!
+                    ? PhosphorIconsLight.caretDown
+                    : PhosphorIconsLight.caretLeft,
             fn: () {
-              Get.back(id: isNestedRoute! ? 1:null);
+              Get.back(id: isNestedRoute! ? 1 : null);
             },
             tooltip: "返回",
           ),
-          if(showLogo!) Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            spacing: 8,
-            children: [
-              Icon(
-                PhosphorIconsLight.code,
-                color:
-                    Theme.of(context).colorScheme.onSurface,
-                size:
-                    getIconSize(size: 'lg'),
-              ),
-              Text(
-                'ZeroBit Player',
-                style: generalTextStyle(ctx: context,size: 'sm'),
-              ),
-            ],
-          ),
+          if (showLogo!)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              spacing: 8,
+              children: [
+                Icon(
+                  PhosphorIconsLight.code,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  size: getIconSize(size: 'lg'),
+                ),
+                Text(
+                  'ZeroBit Player',
+                  style: generalTextStyle(ctx: context, size: 'sm'),
+                ),
+              ],
+            ),
 
           Expanded(
             flex: 1,
@@ -277,7 +281,7 @@ class WindowControllerBar extends StatelessWidget {
             ),
           ),
 
-          if(useSearch!) const _SearchDialog(),
+          if (useSearch!) const _SearchDialog(),
 
           Obx(
             () => ControllerButton(
@@ -286,7 +290,10 @@ class WindowControllerBar extends StatelessWidget {
                       ? PhosphorIconsLight.moon
                       : PhosphorIconsLight.sun,
               fn: _themeService.setThemeMode,
-              tooltip: _settingController.themeMode.value == 'dark'?"暗色主题":"亮色主题",
+              tooltip:
+                  _settingController.themeMode.value == 'dark'
+                      ? "暗色主题"
+                      : "亮色主题",
             ),
           ),
 
@@ -303,15 +310,14 @@ class WindowControllerBar extends StatelessWidget {
                       ? PhosphorIconsLight.cornersIn
                       : PhosphorIconsLight.cornersOut,
               fn: windowListener.toggleMaximize,
-              tooltip: windowListener._isMaximized.value?"还原":"最大化",
+              tooltip: windowListener._isMaximized.value ? "还原" : "最大化",
             ),
           ),
 
           ControllerButton(
             icon: PhosphorIconsLight.x,
-            hoverColor:
-                Theme.of(context).colorScheme.errorContainer,
-            fn: (){
+            hoverColor: Theme.of(context).colorScheme.errorContainer,
+            fn: () {
               windowListener.windowClose();
             },
             tooltip: "退出",

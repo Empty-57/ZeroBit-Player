@@ -42,9 +42,10 @@ class CustomNavigationBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-        width: _navigationBtnWidth,
-        height: _navigationBtnHeight,
-        child: Obx(()=>TextButton(
+      width: _navigationBtnWidth,
+      height: _navigationBtnHeight,
+      child: Obx(
+        () => TextButton(
           onPressed:
               currentNavigationIndex.value != localIndex
                   ? () {
@@ -131,8 +132,9 @@ class CustomNavigationBtn extends StatelessWidget {
                   ),
             ],
           ),
-        )),
-      );
+        ),
+      ),
+    );
   }
 }
 
@@ -143,6 +145,18 @@ class CustomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final titleStyle = generalTextStyle(ctx: context, size: 'md');
+    final highLightTitleStyle = generalTextStyle(
+      ctx: context,
+      size: 'md',
+      color: Theme.of(context).colorScheme.primary,
+    );
+    final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
+    final highLightSubStyle = generalTextStyle(
+      ctx: context,
+      size: 'sm',
+      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+    );
     return Container(
       width:
           context.width > resViewThresholds
@@ -186,19 +200,19 @@ class CustomNavigation extends StatelessWidget {
                         Expanded(
                           flex: 1,
                           child: Obx(() {
-                            final items = _audioController.playListCacheItems;
                             return ListView.builder(
-                              itemCount: items.length,
+                              itemCount:
+                                  _audioController.playListCacheItems.length,
                               itemExtent: _itemHeight,
                               cacheExtent: _itemHeight * 1,
                               controller: _playQueueScrollController,
                               padding: EdgeInsets.only(bottom: _itemHeight * 2),
                               itemBuilder: (context, index) {
+                                final items =
+                                    _audioController.playListCacheItems[index];
                                 return TextButton(
                                   onPressed: () {
-                                    _audioController.audioPlay(
-                                      metadata: items[index],
-                                    );
+                                    _audioController.audioPlay(metadata: items);
                                   },
                                   style: TextButton.styleFrom(
                                     shape: RoundedRectangleBorder(
@@ -206,58 +220,41 @@ class CustomNavigation extends StatelessWidget {
                                     ),
                                   ),
                                   child: SizedBox.expand(
-                                    child: Obx(
-                                      () => Column(
+                                    child: Obx(() {
+                                      final subTextStyle =
+                                          _audioController.currentPath.value !=
+                                                  items.path
+                                              ? subStyle
+                                              : highLightSubStyle;
+
+                                      final textStyle =
+                                          _audioController.currentPath.value !=
+                                                  items.path
+                                              ? titleStyle
+                                              : highLightTitleStyle;
+                                      return Column(
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            items[index].title,
-                                            style: generalTextStyle(
-                                              ctx: context,
-                                              size: 'md',
-                                              color:
-                                                  _audioController
-                                                              .currentIndex
-                                                              .value ==
-                                                          index
-                                                      ? Theme.of(
-                                                        context,
-                                                      ).colorScheme.primary
-                                                      : null,
-                                            ),
+                                            items.title,
+                                            style: textStyle,
                                             softWrap: true,
                                             overflow: TextOverflow.ellipsis,
                                             maxLines: 1,
                                           ),
                                           Text(
-                                            "${items[index].artist} - ${items[index].album}",
-                                            style: generalTextStyle(
-                                              ctx: context,
-                                              size: 'sm',
-                                              color:
-                                                  _audioController
-                                                              .currentIndex
-                                                              .value ==
-                                                          index
-                                                      ? Theme.of(context)
-                                                          .colorScheme
-                                                          .primary
-                                                          .withValues(
-                                                            alpha: 0.8,
-                                                          )
-                                                      : null,
-                                              opacity: 0.8,
-                                            ),
+                                            "${items.artist} - ${items.album}",
+                                            style: subTextStyle,
                                             softWrap: true,
                                             overflow: TextOverflow.ellipsis,
                                             maxLines: 1,
                                           ),
                                         ],
-                                      ),
-                                    ),
+                                      );
+                                    }),
                                   ),
                                 );
                               },
@@ -291,47 +288,51 @@ class CustomNavigation extends StatelessWidget {
                     width: _navigationBtnWidth,
                     height: _navigationBtnHeight,
                     child: TextButton(
-                    onPressed: () {
-                      if (_playQueueController.isOpen) {
-                        _playQueueController.close();
-                      } else {
-                        _playQueueController.open();
-                      }
-                    },
-                    style: TextButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
+                      onPressed: () {
+                        if (_playQueueController.isOpen) {
+                          _playQueueController.close();
+                        } else {
+                          _playQueueController.open();
+                        }
+                      },
+                      style: TextButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        padding: EdgeInsets.only(
+                          left: 12,
+                          right: 0,
+                          top: 8,
+                          bottom: 8,
+                        ),
                       ),
-                      padding: EdgeInsets.only(
-                        left: 12,
-                        right: 0,
-                        top: 8,
-                        bottom: 8,
-                      ),
-                    ),
-                    child: Tooltip(
-                      message: context.width > resViewThresholds ? "" : "播放队列",
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        spacing: 16,
+                      child: Tooltip(
+                        message:
+                            context.width > resViewThresholds ? "" : "播放队列",
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          spacing: 16,
 
-                        children: [
-                          Icon(
-                            PhosphorIconsLight.queue,
-                            color: Theme.of(context).colorScheme.onSurface,
-                            size: getIconSize(size: 'md'),
-                          ),
-
-                          if (context.width > resViewThresholds)
-                            Text(
-                              "播放队列",
-                              style: generalTextStyle(ctx: context, size: 'md'),
+                          children: [
+                            Icon(
+                              PhosphorIconsLight.queue,
+                              color: Theme.of(context).colorScheme.onSurface,
+                              size: getIconSize(size: 'md'),
                             ),
-                        ],
+
+                            if (context.width > resViewThresholds)
+                              Text(
+                                "播放队列",
+                                style: generalTextStyle(
+                                  ctx: context,
+                                  size: 'md',
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                   ),
                 ),
               ),
