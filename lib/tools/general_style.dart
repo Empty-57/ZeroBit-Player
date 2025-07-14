@@ -14,7 +14,7 @@ TextStyle generalTextStyle<T>({
 }) {
   double fontSize = 15.0;
 
-  const Map<String, double> sizeMap = {'sm': 13.0, 'md': 15.0, 'lg': 17.0,'xl':19,'subtitle':24.27,'title':30.742};
+  const Map<String, double> sizeMap = {'sm': 13.0, 'md': 15.0, 'lg': 17.0,'xl':19.0,'subtitle':24.27,'title':30.742};
 
   if (size is String) {
     fontSize = sizeMap[size] ?? sizeMap['md']!;
