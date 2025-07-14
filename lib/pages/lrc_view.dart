@@ -136,6 +136,21 @@ class LrcView extends StatelessWidget {
       weight: FontWeight.w100,
       color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.8),
     );
+    final titleStyle=generalTextStyle(
+                                                ctx: context,
+                                                size: '2xl',
+                                                color:
+                                                    Theme.of(context).colorScheme.secondary,
+                                                weight: FontWeight.w600,
+                                              );
+    final subTitleStyle=generalTextStyle(
+                                                ctx: context,
+                                                size: 'md',
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).colorScheme.secondary.withValues(alpha: 0.8),
+                                              );
     final audioCtrlWidget = AudioCtrlWidget(
       context: context,
       size: _ctrlBtnMinSize,
@@ -273,29 +288,14 @@ class LrcView extends StatelessWidget {
                                                   .currentMetadata
                                                   .value
                                                   .title,
-                                              style: generalTextStyle(
-                                                ctx: context,
-                                                size: 'xl',
-                                                color:
-                                                    Theme.of(
-                                                      context,
-                                                    ).colorScheme.secondary,
-                                                weight: FontWeight.w600,
-                                              ),
+                                              style: titleStyle,
                                               softWrap: false,
                                               overflow: TextOverflow.ellipsis,
                                               maxLines: 1,
                                             ),
                                             Text(
                                               "${_audioController.currentMetadata.value.artist} - ${_audioController.currentMetadata.value.album}",
-                                              style: generalTextStyle(
-                                                ctx: context,
-                                                size: 'md',
-                                                weight: FontWeight.w100,
-                                                color: Theme.of(context)
-                                                    .colorScheme.secondary
-                                                    .withValues(alpha: 0.8),
-                                              ),
+                                              style: subTitleStyle,
                                               softWrap: false,
                                               overflow: TextOverflow.ellipsis,
                                               maxLines: 1,
