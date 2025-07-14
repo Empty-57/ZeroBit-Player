@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:zerobit_player/components/blur_background.dart';
 import 'package:zerobit_player/tools/general_style.dart';
 
 import '../components/audio_ctrl_btn.dart';
@@ -122,26 +123,31 @@ class LrcView extends StatelessWidget {
   Widget build(BuildContext context) {
     double coverSize = (context.width * 0.3).clamp(300, 500);
     final halfWidth = context.width / 2;
-    final activeCover = Theme.of(context).colorScheme.primary;
+    final activeCover = Theme.of(context).colorScheme.secondary;
     final timeCurrentStyle = generalTextStyle(
       ctx: context,
       size: 'xl',
       weight: FontWeight.w100,
-      color: Theme.of(context).colorScheme.primary,
+      color: Theme.of(context).colorScheme.secondary,
     );
     final timeTotalStyle = generalTextStyle(
       ctx: context,
       size: 'sm',
       weight: FontWeight.w100,
-      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+      color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.8),
     );
     final audioCtrlWidget = AudioCtrlWidget(
       context: context,
       size: _ctrlBtnMinSize,
     );
-    return Container(
+    return BlurWithCoverBackground(
+      cover: _audioController.currentCover,
+      useGradient: false,
+      sigma: 256,
+      useMask: true,
+      child: Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainer,
+        color: Theme.of(context).colorScheme.surfaceContainer.withValues(alpha: 0.0),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -162,13 +168,12 @@ class LrcView extends StatelessWidget {
               children: [
                 Expanded(
                   flex: 1,
-                  child: Obx(() {
-                    return Stack(
+                  child: Obx(()=>Stack(
                       children: [
                         Align(
                           alignment: Alignment.centerRight,
                           child: Container(
-                                color: Colors.blue,
+                                color: Colors.blue.withValues(alpha: 0.0),
                                 width: halfWidth,
                                 alignment: Alignment.center,
                                 child: Text(
@@ -274,7 +279,7 @@ class LrcView extends StatelessWidget {
                                                 color:
                                                     Theme.of(
                                                       context,
-                                                    ).colorScheme.primary,
+                                                    ).colorScheme.secondary,
                                                 weight: FontWeight.w600,
                                               ),
                                               softWrap: false,
@@ -288,8 +293,7 @@ class LrcView extends StatelessWidget {
                                                 size: 'md',
                                                 weight: FontWeight.w100,
                                                 color: Theme.of(context)
-                                                    .colorScheme
-                                                    .primary
+                                                    .colorScheme.secondary
                                                     .withValues(alpha: 0.8),
                                               ),
                                               softWrap: false,
@@ -312,8 +316,7 @@ class LrcView extends StatelessWidget {
                               ),
                         ),
                       ],
-                    );
-                  }),
+                    )),
                 ),
                 SizedBox(
                   height: _audioCtrlBarHeight,
@@ -340,7 +343,7 @@ class LrcView extends StatelessWidget {
 
                             inactiveTrackColor: Theme.of(
                               context,
-                            ).colorScheme.primary.withValues(alpha: 0.1),
+                            ).colorScheme.secondary.withValues(alpha: 0.2),
                             thumbColor: Colors.transparent,
                             overlayColor: Colors.transparent,
                             valueIndicatorShape: RectangularValueIndicatorShape(
@@ -516,6 +519,7 @@ class LrcView extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

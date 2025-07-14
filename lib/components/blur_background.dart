@@ -10,8 +10,33 @@ class BlurWithCoverBackground extends StatelessWidget {
   final Widget child;
   final double sigma;
   final double coverScale;
+  final bool useGradient;
+  final bool useMask;
 
-  const BlurWithCoverBackground({super.key, required this.cover, required this.child,this.sigma=48,this.coverScale=1});
+  const BlurWithCoverBackground({super.key, required this.cover, required this.child,this.sigma=48,this.coverScale=1,this.useGradient=true,this.useMask=false});
+
+  Widget get _cover=>Transform.scale(
+    scale: coverScale,
+    child: Obx(
+                () => AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  switchInCurve: Curves.easeIn,
+                  switchOutCurve: Curves.easeOut,
+                  child: SizedBox.expand(
+                    child: Image.memory(
+                      cover.value,
+                      key: ValueKey(cover.value.hashCode),
+                      cacheWidth: _coverBigRenderSize,
+                      cacheHeight: _coverBigRenderSize,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  transitionBuilder: (Widget child, Animation<double> anim) {
+                    return FadeTransition(opacity: anim, child: child);
+                  },
+                ),
+              ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -24,8 +49,8 @@ class BlurWithCoverBackground extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.only(topLeft: Radius.circular(8)),
           child: ImageFiltered(
-            imageFilter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-            child: ShaderMask(
+            imageFilter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma,tileMode: TileMode.clamp),
+            child: useGradient? ShaderMask(
               blendMode: BlendMode.modulate,
               shaderCallback: (Rect bounds) {
                 return LinearGradient(
@@ -38,28 +63,13 @@ class BlurWithCoverBackground extends StatelessWidget {
                   tileMode: TileMode.clamp,
                 ).createShader(bounds);
               },
-              child: Obx(
-                () => AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  switchInCurve: Curves.easeIn,
-                  switchOutCurve: Curves.easeOut,
-                  child: SizedBox.expand(
-                    child: Image.memory(
-                      cover.value,
-                      scale: coverScale,
-                      key: ValueKey(cover.value.hashCode),
-                      cacheWidth: _coverBigRenderSize,
-                      cacheHeight: _coverBigRenderSize,
-                      fit: BoxFit.fill,
-                    ),
-                  ),
-                  transitionBuilder: (Widget child, Animation<double> anim) {
-                    return FadeTransition(opacity: anim, child: child);
-                  },
-                ),
-              ),
-            ),
+              child: _cover,
+            ):_cover,
           ),
+        ),
+        if(useMask) ClipRRect(
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(8)),
+          child: Container(color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.4)),
         ),
         child,
       ],
