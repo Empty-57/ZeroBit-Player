@@ -188,21 +188,21 @@ class LrcView extends StatelessWidget {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    DecoratedBox(
-                                      decoration: BoxDecoration(
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(
-                                              alpha: 0.4,
+                                    Hero(
+                                      tag: 'playingCover',
+                                      child: DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.2,
+                                              ),
+                                              offset: Offset(0, 2),
+                                              blurRadius: 8,
+                                              spreadRadius: 0,
                                             ),
-                                            offset: Offset(0, 2),
-                                            blurRadius: 6,
-                                            spreadRadius: 0,
-                                          ),
-                                        ],
-                                      ),
-                                      child: Hero(
-                                        tag: 'playingCover',
+                                          ],
+                                        ),
                                         child: ClipRRect(
                                           borderRadius: _coverBorderRadius,
                                           child: MouseRegion(
@@ -213,36 +213,39 @@ class LrcView extends StatelessWidget {
                                                       _onlyCover.value =
                                                           !_onlyCover.value,
                                               child: Obx(
-                                                () => Image.memory(
+                                                () => AnimatedSwitcher(
+                                                  duration: 300.ms,
+                                                  switchInCurve: Curves.easeIn,
+                                                  switchOutCurve:
+                                                      Curves.easeOut,
+                                                  child: Image.memory(
+                                                    _audioController
+                                                        .currentCover
+                                                        .value,
+                                                    key: ValueKey(
                                                       _audioController
                                                           .currentCover
-                                                          .value,
-                                                      key: ValueKey(
-                                                        _audioController
-                                                            .currentCover
-                                                            .value
-                                                            .hashCode,
-                                                      ),
-                                                      cacheWidth:
-                                                          _coverRenderSize,
-                                                      cacheHeight:
-                                                          _coverRenderSize,
-                                                      height: coverSize,
-                                                      width: coverSize,
-                                                      fit: BoxFit.cover,
-                                                    )
-                                                    .animate(
-                                                      key: ValueKey(
-                                                        _audioController
-                                                            .currentCover
-                                                            .value
-                                                            .hashCode,
-                                                      ),
-                                                    )
-                                                    .fade(
-                                                      duration: 300.ms,
-                                                      curve: Curves.easeInOut,
+                                                          .value
+                                                          .hashCode,
                                                     ),
+                                                    cacheWidth:
+                                                        _coverRenderSize,
+                                                    cacheHeight:
+                                                        _coverRenderSize,
+                                                    height: coverSize,
+                                                    width: coverSize,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                  transitionBuilder: (
+                                                    Widget child,
+                                                    Animation<double> anim,
+                                                  ) {
+                                                    return FadeTransition(
+                                                      opacity: anim,
+                                                      child: child,
+                                                    );
+                                                  },
+                                                ),
                                               ),
                                             ),
                                           ),
