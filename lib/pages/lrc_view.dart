@@ -254,7 +254,7 @@ class LrcView extends StatelessWidget {
                                           color:
                                               Theme.of(
                                                 context,
-                                              ).colorScheme.primary,
+                                              ).colorScheme.primary.withValues(alpha: 0.8),
                                         ),
                                         softWrap: false,
                                         overflow: TextOverflow.ellipsis,
