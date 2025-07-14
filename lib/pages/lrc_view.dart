@@ -21,18 +21,14 @@ const int _coverRenderSize = 800;
 const double _ctrlBtnMinSize = 40.0;
 const double _thumbRadius = 10.0;
 final _isBarHover = false.obs;
+final _onlyCover = false.obs;
 
 final double _audioCtrlBarHeight = 96;
 
 class _GradientSliderTrackShape extends SliderTrackShape {
-  /// 已激活轨道高度
   final double activeTrackHeight;
-
-  /// 未激活轨道高度
   final double inactiveTrackHeight;
-
   final Color activeColor;
-
   const _GradientSliderTrackShape({
     this.activeTrackHeight = 6.0,
     this.inactiveTrackHeight = 4.0,
@@ -68,7 +64,7 @@ class _GradientSliderTrackShape extends SliderTrackShape {
     required TextDirection textDirection,
   }) {
     final Canvas canvas = context.canvas;
-    // 1. 整体轨道区域（用于 active 部分对齐）
+
     final Rect baseRect = getPreferredRect(
       parentBox: parentBox,
       offset: offset,
@@ -77,7 +73,6 @@ class _GradientSliderTrackShape extends SliderTrackShape {
       isDiscrete: isDiscrete,
     );
 
-    // 2. 绘制未激活轨道（全长、较小高度）
     final double inH = inactiveTrackHeight;
     final double inTop = offset.dy + (parentBox.size.height - inH) / 2;
     final Rect inactiveRect = Rect.fromLTWH(
@@ -95,7 +90,6 @@ class _GradientSliderTrackShape extends SliderTrackShape {
       inactivePaint,
     );
 
-    // 3. 绘制已激活轨道（从左到 thumb 的渐变、高度 activeTrackHeight）
     final Rect activeRect = Rect.fromLTRB(
       baseRect.left,
       baseRect.top,
@@ -127,6 +121,7 @@ class LrcView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     double coverSize = (context.width * 0.3).clamp(300, 500);
+    final halfWidth = context.width / 2;
     final activeCover = Theme.of(context).colorScheme.primary;
     final timeCurrentStyle = generalTextStyle(
       ctx: context,
@@ -167,120 +162,155 @@ class LrcView extends StatelessWidget {
               children: [
                 Expanded(
                   flex: 1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: Align(
-                          alignment: Alignment.center,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Hero(
-                                tag: 'playingCover',
-                                child: ClipRRect(
-                                  borderRadius: _coverBorderRadius,
-                                  child: Obx(
-                                    () => AnimatedSwitcher(
-                                      duration: const Duration(
-                                        milliseconds: 300,
+                  child: Obx(() {
+                    return Stack(
+                      children: [
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Container(
+                                color: Colors.blue,
+                                width: halfWidth,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  "Lrc",
+                                  style: generalTextStyle(ctx: context),
+                                ),
+                              )
+                              .animate(target: _onlyCover.value ? 1 : 0)
+                              .fade(duration: 300.ms, begin: 1.0, end: 0.0),
+                        ),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                                width: halfWidth,
+                                alignment: Alignment.center,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.4,
+                                            ),
+                                            offset: Offset(0, 2),
+                                            blurRadius: 6,
+                                            spreadRadius: 0,
+                                          ),
+                                        ],
                                       ),
-                                      switchInCurve: Curves.easeIn,
-                                      switchOutCurve: Curves.easeOut,
-                                      child: Image.memory(
-                                        _audioController.currentCover.value,
-                                        key: ValueKey(
-                                          _audioController
-                                              .currentCover
-                                              .value
-                                              .hashCode,
+                                      child: Hero(
+                                        tag: 'playingCover',
+                                        child: ClipRRect(
+                                          borderRadius: _coverBorderRadius,
+                                          child: MouseRegion(
+                                            cursor: SystemMouseCursors.click,
+                                            child: GestureDetector(
+                                              onTap:
+                                                  () =>
+                                                      _onlyCover.value =
+                                                          !_onlyCover.value,
+                                              child: Obx(
+                                                () => Image.memory(
+                                                      _audioController
+                                                          .currentCover
+                                                          .value,
+                                                      key: ValueKey(
+                                                        _audioController
+                                                            .currentCover
+                                                            .value
+                                                            .hashCode,
+                                                      ),
+                                                      cacheWidth:
+                                                          _coverRenderSize,
+                                                      cacheHeight:
+                                                          _coverRenderSize,
+                                                      height: coverSize,
+                                                      width: coverSize,
+                                                      fit: BoxFit.cover,
+                                                    )
+                                                    .animate(
+                                                      key: ValueKey(
+                                                        _audioController
+                                                            .currentCover
+                                                            .value
+                                                            .hashCode,
+                                                      ),
+                                                    )
+                                                    .fade(
+                                                      duration: 300.ms,
+                                                      curve: Curves.easeInOut,
+                                                    ),
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                        cacheWidth: _coverRenderSize,
-                                        cacheHeight: _coverRenderSize,
-                                        height: coverSize,
-                                        width: coverSize,
-                                        fit: BoxFit.cover,
                                       ),
-                                      transitionBuilder: (
-                                        Widget child,
-                                        Animation<double> anim,
-                                      ) {
-                                        return FadeTransition(
-                                          opacity: anim,
-                                          child: child,
-                                        );
-                                      },
                                     ),
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                width: coverSize - 24,
-                                margin: EdgeInsets.only(top: 24),
-                                child: Obx(
-                                  () => Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    spacing: 2,
-                                    children: [
-                                      Text(
-                                        _audioController
-                                            .currentMetadata
-                                            .value
-                                            .title,
-                                        style: generalTextStyle(
-                                          ctx: context,
-                                          size: 'xl',
-                                          color:
-                                              Theme.of(
-                                                context,
-                                              ).colorScheme.primary,
-                                          weight: FontWeight.w600,
+                                    Container(
+                                      width: coverSize - 24,
+                                      margin: EdgeInsets.only(top: 24),
+                                      child: Obx(
+                                        () => Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          spacing: 2,
+                                          children: [
+                                            Text(
+                                              _audioController
+                                                  .currentMetadata
+                                                  .value
+                                                  .title,
+                                              style: generalTextStyle(
+                                                ctx: context,
+                                                size: 'xl',
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary,
+                                                weight: FontWeight.w600,
+                                              ),
+                                              softWrap: false,
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                            Text(
+                                              "${_audioController.currentMetadata.value.artist} - ${_audioController.currentMetadata.value.album}",
+                                              style: generalTextStyle(
+                                                ctx: context,
+                                                size: 'md',
+                                                weight: FontWeight.w100,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .primary
+                                                    .withValues(alpha: 0.8),
+                                              ),
+                                              softWrap: false,
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ],
                                         ),
-                                        softWrap: false,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
                                       ),
-                                      Text(
-                                        "${_audioController.currentMetadata.value.artist} - ${_audioController.currentMetadata.value.album}",
-                                        style: generalTextStyle(
-                                          ctx: context,
-                                          size: 'md',
-                                          weight: FontWeight.w100,
-                                          color:
-                                              Theme.of(
-                                                context,
-                                              ).colorScheme.primary.withValues(alpha: 0.8),
-                                        ),
-                                        softWrap: false,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
+                              )
+                              .animate(target: _onlyCover.value ? 1 : 0)
+                              .moveX(
+                                begin: 0,
+                                end: halfWidth / 2,
+                                duration: 300.ms,
+                                curve: Curves.fastOutSlowIn,
                               ),
-                            ],
-                          ),
                         ),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Container(
-                          color: Colors.blue,
-                          alignment: Alignment.center,
-                          child: Text(
-                            "Lrc",
-                            style: generalTextStyle(ctx: context),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    );
+                  }),
                 ),
                 SizedBox(
                   height: _audioCtrlBarHeight,
