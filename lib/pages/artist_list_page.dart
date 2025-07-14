@@ -28,8 +28,8 @@ class ArtistListPage extends StatelessWidget {
       tag: title + TagSuffix.artistList,
     );
 
-    return BlurBackground(
-      controller: artistListController,
+    return BlurWithCoverBackground(
+      cover: artistListController.headCover,
       child: AudioGenPages(
         title: title,
         operateArea: OperateArea.artistList,

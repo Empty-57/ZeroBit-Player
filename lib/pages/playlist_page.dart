@@ -23,8 +23,8 @@ class PlayList extends StatelessWidget {
       tag: userArgs.userKey,
     );
 
-    return BlurBackground(
-      controller: playListController,
+    return BlurWithCoverBackground(
+      cover: playListController.headCover,
       child: AudioGenPages(
         title: userArgs.userKey.split(TagSuffix.playList)[0],
         operateArea: OperateArea.playList,

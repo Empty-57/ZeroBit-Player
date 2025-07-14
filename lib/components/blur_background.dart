@@ -1,20 +1,17 @@
+import 'dart:typed_data';
 import 'dart:ui';
-
-import '../tools/audio_ctrl_mixin.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-const int _coverBigRenderSize=800;
+const int _coverBigRenderSize = 800;
 
-class BlurBackground extends StatelessWidget {
-  final AudioControllerGenClass controller;
+class BlurWithCoverBackground extends StatelessWidget {
+  final Rx<Uint8List> cover;
   final Widget child;
+  final double sigma;
+  final double coverScale;
 
-  const BlurBackground({
-    super.key,
-    required this.controller,
-    required this.child,
-  });
+  const BlurWithCoverBackground({super.key, required this.cover, required this.child,this.sigma=48,this.coverScale=1});
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +24,7 @@ class BlurBackground extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.only(topLeft: Radius.circular(8)),
           child: ImageFiltered(
-            imageFilter: ImageFilter.blur(sigmaX: 48, sigmaY: 48),
+            imageFilter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
             child: ShaderMask(
               blendMode: BlendMode.modulate,
               shaderCallback: (Rect bounds) {
@@ -48,8 +45,9 @@ class BlurBackground extends StatelessWidget {
                   switchOutCurve: Curves.easeOut,
                   child: SizedBox.expand(
                     child: Image.memory(
-                      controller.headCover.value,
-                      key: ValueKey(controller.headCover.value.hashCode),
+                      cover.value,
+                      scale: coverScale,
+                      key: ValueKey(cover.value.hashCode),
                       cacheWidth: _coverBigRenderSize,
                       cacheHeight: _coverBigRenderSize,
                       fit: BoxFit.fill,
