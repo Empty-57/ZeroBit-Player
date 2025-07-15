@@ -102,7 +102,7 @@ class _GradientSliderTrackShape extends SliderTrackShape {
           ..shader = LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
-            colors: [Colors.transparent, activeColor],
+            colors: [activeColor.withValues(alpha: 0.0), activeColor],
             stops: [0.0, 0.1],
           ).createShader(activeRect)
           ..style = PaintingStyle.fill;
