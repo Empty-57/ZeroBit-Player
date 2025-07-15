@@ -52,8 +52,9 @@ Future<dynamic> _qmSearchByText({required String text, required int offset, requ
 Future<dynamic> _qmSaveCoverByText({required String text, required String songPath,bool? saveCover=true}) async {
   String? picUrl;
   try {
-    final data = await _qmSearchByText(text: text, offset: 1, limit: 1);
-    final mid = data["data"]["song"]["list"][0]["albummid"];
+    final Map<String, dynamic> data = await _qmSearchByText(text: text, offset: 1, limit: 1);
+    final midList = data["data"]?["song"]?["list"];
+    final mid = midList!=null ? (midList[0]?["albummid"]):null;
     if (mid != null) {
       picUrl = "https://y.gtimg.cn/music/photo_new/T002R800x800M000$mid.jpg";
       return await _saveNetCover(songPath: songPath, picUrl: picUrl,saveCover: saveCover!);
@@ -75,48 +76,84 @@ Future<Map<String,dynamic>?> _qmGetLrc({required int id})async{
     options: Options(responseType: ResponseType.json),
   );
 
-  if(response.data!=null){
-    final data=response.data.toString();
-    final regex = RegExp(r'CDATA\[(\S+)]]');
-    final List<String?> lrcTs = []; //original,ts,roma
+  final String? body = response.data?.toString();
+  if (body == null || body.isEmpty) {
+    return {
+      'lrc': null,
+      'qrc': null,
+      'translate': null,
+      'type': '.qrc',
+    };
+  }
 
-  for (final match in regex.allMatches(data)) {
-    final extracted = match.group(1);
-    if (extracted != null) {
-      lrcTs.add(extracted);
+  //Original、ts、roma
+  final regex = RegExp(r'CDATA\[(\S+)]]');//CDATA\[(\S+?)\]\]
+  final List<String> extracted = regex
+      .allMatches(body)
+      .map((m) => m.group(1))
+      .whereType<String>()
+      .toList();
+
+  final String? encryptedOriginal = extracted.isNotEmpty ? extracted[0] : null;
+  final String? encryptedTranslate =
+      extracted.length > 1 ? extracted[1] : null;
+
+  String? qrcDecrypted;
+  String? translateDecrypted;
+
+  if (encryptedOriginal != null && encryptedOriginal.isNotEmpty) {
+    try {
+      qrcDecrypted =
+          await qrcDecrypt(encryptedQrc: encryptedOriginal, isLocal: false);
+    } catch (e) {
+      debugPrint('qrcDecrypt original error: $e');
+      qrcDecrypted = null;
     }
   }
 
-  lrcTs[0]= await qrcDecrypt(encryptedQrc: lrcTs[0],isLocal: false);
-  lrcTs[1]= await qrcDecrypt(encryptedQrc: lrcTs[1],isLocal: false);
-
-    return {
-      "lrc":null,
-      "qrc": lrcTs[0],
-      "translate": lrcTs[1],
-      "type": '.qrc',
-    };
+  if (encryptedTranslate != null && encryptedTranslate.isNotEmpty) {
+    try {
+      translateDecrypted =
+          await qrcDecrypt(encryptedQrc: encryptedTranslate, isLocal: false);
+    } catch (e) {
+      debugPrint('qrcDecrypt translate error: $e');
+      translateDecrypted = null;
+    }
   }
-return null;
+
+  return {
+    'lrc': null,
+    'qrc': qrcDecrypted,
+    'translate': translateDecrypted,
+    'type': '.qrc',
+  };
 }
 
 Future<List<Map<String, dynamic>>?> _qmGetLrcBySearch({required String text,required int offset,required int limit})async{
 final List<Map<String,dynamic>> lrcData=[];
   try {
-    final data=await _qmSearchByText(text: text,offset: offset,limit: limit);
-    if (data["data"]["song"]["list"].isEmpty){
+    final Map<String, dynamic> data=await _qmSearchByText(text: text,offset: offset,limit: limit);
+    final songList = data["data"]?["song"]?["list"];
+    if (songList is! List || songList.isEmpty) {
       return null;
     }
-    for (final item in data["data"]["song"]["list"]) {
+
+    for (final item in songList) {
       final data=await _qmGetLrc(id:item["songid"]);
       if (data==null){
         continue;
       }
 
+      var singerList=item["singer"];
+      String? singer;
+      if(singerList is List&&singerList.isNotEmpty){
+        singer=singerList[0]["name"];
+      }
+
       lrcData.add({
-        "name": item["songname"],
-        "id": item["songid"],
-        "artist": item["singer"][0]["name"]??'UNKNOWN',
+        "name": item["songname"]??'UNKNOWN',
+        "id": item["songid"]??'UNKNOWN',
+        "artist": singer??'UNKNOWN',
         ...data
       });
     }
@@ -152,9 +189,16 @@ Future<dynamic> _neSearchByText({required String text, required int offset, requ
 Future<dynamic> _neSaveCoverByText({required String text, required String songPath,bool? saveCover=true}) async {
   String? picUrl;
   try {
-    final data = await _neSearchByText(text: text, offset: 1, limit: 1);
-    if (data["result"]["songCount"] > 0) {
-      final picUrl = data["result"]["songs"][0]["al"]["picUrl"];
+    final Map<String, dynamic> data = await _neSearchByText(text: text, offset: 1, limit: 1);
+    final songCount=data["result"]?["songCount"];
+    if (songCount is int && songCount > 0) {
+
+      final songList=data["result"]?["songs"];
+      if(songList is! List || songList.isEmpty) {
+        return null;
+      }
+
+      final picUrl = songList[0]["al"]["picUrl"];
       return await _saveNetCover(songPath: songPath, picUrl: picUrl,saveCover: saveCover!);
     }
   } catch (e) {
@@ -175,29 +219,40 @@ final response = await _dio.get(
     },
     options: Options(responseType: ResponseType.json),
   );
-
-if (response.data!=null){
-  final data=jsonDecode(response.data);
+final body = response.data as String?;
+if (body == null || body.isEmpty) {
     return {
-      "lrc": data["lrc"]["lyric"],
-      "yrc": data["yrc"]["lyric"],
-      "translate": data["tlyric"]["lyric"],
-      "type": data["yrc"]["lyric"].isNotEmpty? ".yrc":".lrc",
+      'lrc': null,
+      'yrc': null,
+      'translate': null,
+      'type': '.lrc',
     };
   }
-  return null;
+  final Map<String, dynamic> data = jsonDecode(body);
 
+  final String? lrcLyric = data['lrc']?['lyric'];
+  final String? yrcLyric = data['yrc']?['lyric'];
+  final String? tLyric   = data['tlyric']?['lyric'];
+  final String type = yrcLyric!=null&&yrcLyric.isNotEmpty ? '.yrc' : '.lrc';
+
+  return {
+    'lrc': lrcLyric,
+    'yrc': yrcLyric,
+    'translate': tLyric,
+    'type': type,
+  };
 }
 
 Future<List<Map<String, dynamic>>?> _neGetLrcBySearch({required String text,required int offset,required int limit})async{
   final List<Map<String,dynamic>> lrcData=[];
   try {
     final data=await _neSearchByText(text: text,offset: offset,limit: limit);
-    if (data["result"]["songs"].isEmpty){
+    final songs=data["result"]?["songs"];
+    if (songs is! List || songs.isEmpty){
       return null;
     }
 
-    for (final item in data["result"]["songs"]) {
+    for (final item in songs) {
       final data=await _neGetLrc(id:item["id"]);
       if (data==null){
         continue;

@@ -12,6 +12,7 @@ import 'package:zerobit_player/getxController/user_playlist_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
+import 'package:zerobit_player/tools/lrcTool/get_lyrics.dart';
 import '../HIveCtrl/hive_manager.dart';
 import '../HIveCtrl/models/music_cache_model.dart';
 import '../field/audio_source.dart';
@@ -62,6 +63,8 @@ class AudioController extends GetxController {
   final currentCover=kTransparentImage.obs;
 
   bool _isSyncing=false;
+
+  Map<String, dynamic>? currentLyrics;
 
   void syncPlayListCacheItems() {
     if (allUserKey.contains(_audioSource.currentAudioSource.value)) {
@@ -119,6 +122,10 @@ class AudioController extends GetxController {
         debugPrint(e.toString());
         _isSyncing=false;
       }
+
+      currentLyrics=await getParsedLyric(filePath: currentMetadata.value.path);
+      debugPrint(currentLyrics?['parsedLrc'].toString());
+
     });
 
   }
