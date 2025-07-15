@@ -8,12 +8,14 @@ import 'package:zerobit_player/tools/general_style.dart';
 import '../components/audio_ctrl_btn.dart';
 import '../components/window_ctrl_bar.dart';
 import '../getxController/audio_ctrl.dart';
+import '../getxController/setting_ctrl.dart';
 import '../tools/format_time.dart';
 import '../tools/rect_value_indicator.dart';
 
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 
 final AudioController _audioController = Get.find<AudioController>();
+final SettingController _settingController = Get.find<SettingController>();
 
 const int _coverRenderSize = 800;
 const double _ctrlBtnMinSize = 40.0;
@@ -22,6 +24,12 @@ final _isBarHover = false.obs;
 final _onlyCover = false.obs;
 
 final double _audioCtrlBarHeight = 96;
+
+const _lrcAlignmentIcons = [
+  PhosphorIconsLight.textAlignLeft,
+  PhosphorIconsLight.textAlignCenter,
+  PhosphorIconsLight.textAlignRight,
+];
 
 class _GradientSliderTrackShape extends SliderTrackShape {
   final double activeTrackHeight;
@@ -448,6 +456,15 @@ class LrcView extends StatelessWidget {
                                           CrossAxisAlignment.center,
                                       spacing: 16,
                                       children: [
+                                        Obx(()=>GenIconBtn(
+                                          tooltip: _settingController.lrcAlignmentMap[_settingController.lrcAlignment.value]??'',
+                                          icon: _lrcAlignmentIcons[_settingController.lrcAlignment.value],
+                                          size: _ctrlBtnMinSize,
+                                          color: mixColor,
+                                          fn: () {
+                                            _audioController.changeLrcAlignment();
+                                          },
+                                        )),
                                         GenIconBtn(
                                           tooltip: '网络歌词',
                                           icon: PhosphorIconsLight.article,

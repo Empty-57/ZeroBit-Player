@@ -288,6 +288,15 @@ class AudioController extends GetxController {
     _settingController.putCache();
   }
 
+  void changeLrcAlignment(){
+    if (_settingController.lrcAlignment.value >= 0 && _settingController.lrcAlignment.value < 2) {
+      _settingController.lrcAlignment.value++;
+    }else{
+      _settingController.lrcAlignment.value = 0;
+    }
+    _settingController.putCache();
+  }
+
   Future<void> _maybeRandomPlay() async {
     if (_settingController.playMode.value == 2&&playListCacheItems.length>1) {
       syncCurrentIndex();

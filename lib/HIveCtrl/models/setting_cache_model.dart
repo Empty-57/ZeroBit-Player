@@ -10,6 +10,7 @@ class SettingCache {
   final int playMode;
   final bool dynamicThemeColor;
   final String fontFamily;
+  final int lrcAlignment;
 
   const SettingCache({
     required this.themeMode,
@@ -23,5 +24,6 @@ class SettingCache {
     required this.playMode,
     required this.dynamicThemeColor,
     required this.fontFamily,
+    required this.lrcAlignment,
   });
 }

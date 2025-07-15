@@ -137,7 +137,7 @@ class AudioCtrlWidget {
     }.throttle(ms: 500),
   );
 
-  Widget get toggle => GenIconBtn(
+  Widget get toggle => Obx(()=>GenIconBtn(
     tooltip:
         _audioController.currentState.value == AudioState.playing ? "暂停" : "播放",
     icon:
@@ -149,7 +149,7 @@ class AudioCtrlWidget {
     fn: () async {
       await _audioController.audioToggle();
     }.throttle(ms: 300),
-  );
+  ));
 
   Widget get skipForward => GenIconBtn(
     tooltip: "下一首",
@@ -161,7 +161,7 @@ class AudioCtrlWidget {
     }.throttle(ms: 500),
   );
 
-  Widget get changeMode => GenIconBtn(
+  Widget get changeMode => Obx(()=>GenIconBtn(
     tooltip:
         _settingController.playModeMap[_settingController.playMode.value] ??
         "单曲循环",
@@ -171,7 +171,7 @@ class AudioCtrlWidget {
     fn: () {
       _audioController.changePlayMode();
     },
-  );
+  ));
 
   Widget get seekSlide => Obx(() {
     late final double duration;

@@ -29,6 +29,8 @@ class SettingController extends GetxController {
   final dynamicThemeColor=true.obs;
   final fontFamily="Microsoft YaHei Light".obs;
 
+  final lrcAlignment=0.obs;
+
 
   final Map<int,String> apiMap={
     0:"QQ音乐",
@@ -46,6 +48,12 @@ class SettingController extends GetxController {
     0:'单曲循环',
     1:'列表循环',
     2:'随机播放',
+  };
+
+  final Map<int,String> lrcAlignmentMap={
+    0:'左对齐',
+    1:'居中',
+    2:'右对齐',
   };
 
 
@@ -76,6 +84,7 @@ class SettingController extends GetxController {
       playMode.value=cache.playMode;
       dynamicThemeColor.value=cache.dynamicThemeColor;
       fontFamily.value=cache.fontFamily;
+      lrcAlignment.value=cache.lrcAlignment;
     }
 
     await setVolume(vol: cache?.volume??1.0);
@@ -101,6 +110,7 @@ class SettingController extends GetxController {
         playMode: playMode.value,
         dynamicThemeColor: dynamicThemeColor.value,
         fontFamily: fontFamily.value,
+        lrcAlignment: lrcAlignment.value,
       ),
       key: _key,
     );
