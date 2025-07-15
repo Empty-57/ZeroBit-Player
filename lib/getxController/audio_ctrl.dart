@@ -280,9 +280,9 @@ class AudioController extends GetxController {
   }
 
   void changePlayMode() {
-    _settingController.playMode.value++;
-    if (_settingController.playMode.value > 2 ||
-        _settingController.playMode.value < 0) {
+    if (_settingController.playMode.value >= 0 && _settingController.playMode.value < 2) {
+      _settingController.playMode.value++;
+    }else{
       _settingController.playMode.value = 0;
     }
     _settingController.putCache();
