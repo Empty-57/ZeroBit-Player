@@ -2,45 +2,7 @@ import 'dart:core';
 
 import 'package:flutter/cupertino.dart';
 
-/// 时间轴条目
-class LyricEntry<T> {
-  final double segmentStart;
-  double nextTime;
-  T lyricText;
-  String translate;
-
-  LyricEntry({
-    required this.segmentStart,
-    this.nextTime = double.infinity,
-    required this.lyricText,
-    this.translate = '',
-  });
-
-  @override
-  String toString() {
-    final display =
-        lyricText is String
-            ? lyricText
-            : (lyricText as List<WordEntry>)
-                .map(
-                  (w) =>
-                      "word:${w.lyricWord} start:${w.start} duration:${w.duration} \n",
-                )
-                .join();
-    return '[segmentStart: $segmentStart,\n lyricText: "$display",\n nextTime: $nextTime,\n translate: "$translate"\n]';
-  }
-}
-
-/// 抽取单词数据
-class WordEntry {
-  final double start, duration;
-  final String lyricWord;
-  WordEntry({
-    required this.start,
-    required this.duration,
-    required this.lyricWord,
-  });
-}
+import 'lyric_model.dart';
 
 /// 解析 LRC 行的正则： [mm:ss.xx]text
 final RegExp _lrcLineRegex = RegExp(
@@ -89,10 +51,10 @@ List<LyricEntry> _parseLyrics(String text) {
 List<LyricEntry> _mergeTranslations(
   List<LyricEntry> mainEntries,
   String? lyricDataTs, {
-  String type = '.lrc',
+  String type = LyricFormat.lrc,
 }) {
   // 如果是 LRC 格式，就直接从 mainEntries 中提取翻译
-  if (type == '.lrc') {
+  if (type == LyricFormat.lrc) {
     // 按时间分组：同一时间点的列表
     final Map<double, List<LyricEntry>> grouped = {};
     for (final e in mainEntries) {
@@ -134,10 +96,10 @@ List<LyricEntry> _mergeTranslations(
   var transIdx = 0;
 
   String Function(LyricEntry) getTranslate = (e) => e.lyricText;
-  if (type == '.qrc') {
+  if (type == LyricFormat.qrc) {
     getTranslate = (e) => e.lyricText == '//' ? ' ' : e.lyricText;
   }
-  final tolerance = (type == '.qrc' || type == '.lrc') ? 0.3 : 0.8;
+  final tolerance = (type ==  LyricFormat.qrc || type ==  LyricFormat.lrc) ? 0.3 : 0.8;
 
   for (var i = 0; i < mainEntries.length; i++) {
     final curr = mainEntries[i];
@@ -184,9 +146,9 @@ class _WordRegexConfig {
 
 _WordRegexConfig? _getWordRegexConfig(String type) {
   switch (type) {
-    case '.yrc':
+    case LyricFormat.yrc:
       return _WordRegexConfig(_yrcWordRegex, 1, 2, 3);
-    case '.qrc':
+    case LyricFormat.qrc:
       return _WordRegexConfig(_qrcWordRegex, 2, 3, 1);
     default:
       return null;

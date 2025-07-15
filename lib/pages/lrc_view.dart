@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:zerobit_player/components/blur_background.dart';
+import 'package:zerobit_player/components/lyrics_render.dart';
 import 'package:zerobit_player/tools/general_style.dart';
 
 import '../components/audio_ctrl_btn.dart';
@@ -198,13 +199,9 @@ class LrcView extends StatelessWidget {
                           Align(
                             alignment: Alignment.centerRight,
                             child: Container(
-                                  color: Colors.blue.withValues(alpha: 0.0),
                                   width: halfWidth,
                                   alignment: Alignment.center,
-                                  child: Text(
-                                    "Lrc",
-                                    style: generalTextStyle(ctx: context),
-                                  ),
+                                  child: const LyricsRender(),
                                 )
                                 .animate(target: _onlyCover.value ? 1 : 0)
                                 .fade(duration: 300.ms, begin: 1.0, end: 0.0),
