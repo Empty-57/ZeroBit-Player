@@ -64,7 +64,7 @@ class AudioController extends GetxController {
 
   bool _isSyncing=false;
 
-  Map<String, dynamic>? currentLyrics;
+final currentLyrics = Rxn<Map<String, dynamic>>();
 
   void syncPlayListCacheItems() {
     if (allUserKey.contains(_audioSource.currentAudioSource.value)) {
@@ -123,8 +123,8 @@ class AudioController extends GetxController {
         _isSyncing=false;
       }
 
-      currentLyrics=await getParsedLyric(filePath: currentMetadata.value.path);
-      debugPrint(currentLyrics?['parsedLrc'].toString());
+      currentLyrics.value=await getParsedLyric(filePath: currentMetadata.value.path);
+      debugPrint(currentLyrics.value?['parsedLrc'].toString());
 
     });
 

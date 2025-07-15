@@ -24,7 +24,7 @@ const double _thumbRadius = 10.0;
 final _isBarHover = false.obs;
 final _onlyCover = false.obs;
 
-final double _audioCtrlBarHeight = 96;
+const double _audioCtrlBarHeight = 96;
 
 const _lrcAlignmentIcons = [
   PhosphorIconsLight.textAlignLeft,
@@ -201,6 +201,7 @@ class LrcView extends StatelessWidget {
                             child: Container(
                                   width: halfWidth,
                                   alignment: Alignment.center,
+                                  padding: EdgeInsets.only(right: 16),
                                   child: const LyricsRender(),
                                 )
                                 .animate(target: _onlyCover.value ? 1 : 0)
