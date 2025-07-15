@@ -8,7 +8,7 @@ import '../qrc_decryptor.dart';
 
 /// 支持的歌词扩展名
 const List<String> _lyricExts = ['.qrc', '.yrc', '.lrc'];
-const String _lyricVtsSuffix = '_Vts.lrc';
+const String _lyricTsSuffix = '.lrc';
 
 /// 获取主歌词路径和翻译歌词路径
 Map<String, dynamic> _getLyricPaths(String filePath) {
@@ -17,7 +17,7 @@ Map<String, dynamic> _getLyricPaths(String filePath) {
 
   return {
     'mainPaths': _lyricExts.map((ext) => p.join(dir, '$baseName$ext')).toList(),
-    'vtsPath': p.join(dir, '$baseName$_lyricVtsSuffix'),
+    'vtsPath': p.join(dir, '$baseName$_lyricTsSuffix'),
   };
 }
 
@@ -59,7 +59,7 @@ Future<Map<String, dynamic>?> getLyrics({String? filePath}) async {
     final lyrics = await _safeReadFile(path);
     final ext = p.extension(path);
     if (lyrics != null && lyrics.trim().isNotEmpty) {
-      late final String? lyricsTs;
+      String? lyricsTs;
 
       if (ext != '.lrc') {
         lyricsTs = await lyricsTsFuture;
