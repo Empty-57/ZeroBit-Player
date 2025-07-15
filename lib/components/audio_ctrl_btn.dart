@@ -8,9 +8,14 @@ import '../getxController/audio_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 import 'package:get/get.dart';
 
+import '../tools/format_time.dart';
+
 final AudioController _audioController = Get.find<AudioController>();
 final SettingController _settingController = Get.find<SettingController>();
 const double _radius = 6;
+final _isSeekBarDragging = false.obs;
+
+final _seekDraggingValue = 0.0.obs;
 
 const _playModeIcons = [
   PhosphorIconsFill.repeatOnce,
@@ -22,6 +27,7 @@ class GenIconBtn extends StatelessWidget {
   final String tooltip;
   final IconData icon;
   final double size;
+  final Color? color;
   final VoidCallback? fn;
 
   const GenIconBtn({
@@ -29,6 +35,7 @@ class GenIconBtn extends StatelessWidget {
     required this.tooltip,
     required this.icon,
     required this.size,
+    this.color,
     required this.fn,
   });
   @override
@@ -51,7 +58,7 @@ class GenIconBtn extends StatelessWidget {
             borderRadius: BorderRadius.circular(_radius),
           ),
         ),
-        child: Icon(icon, size: getIconSize(size: 'lg')),
+        child: Icon(icon, size: getIconSize(size: 'lg'), color: color),
       ),
     );
   }
@@ -60,7 +67,12 @@ class GenIconBtn extends StatelessWidget {
 class AudioCtrlWidget {
   final double size;
   final BuildContext context;
-  const AudioCtrlWidget({required this.size, required this.context});
+  final Color? color;
+  const AudioCtrlWidget({
+    required this.size,
+    required this.context,
+    this.color,
+  });
 
   Widget get volumeSet => MenuAnchor(
     menuChildren: [
@@ -103,6 +115,7 @@ class AudioCtrlWidget {
         tooltip: "音量",
         icon: PhosphorIconsFill.speakerHigh,
         size: size,
+        color: color,
         fn: () {
           if (controller.isOpen) {
             controller.close();
@@ -118,6 +131,7 @@ class AudioCtrlWidget {
     tooltip: "上一首",
     icon: PhosphorIconsFill.skipBack,
     size: size,
+    color: color,
     fn: () async {
       await _audioController.audioToPrevious();
     }.throttle(ms: 500),
@@ -131,6 +145,7 @@ class AudioCtrlWidget {
             ? PhosphorIconsFill.pause
             : PhosphorIconsFill.play,
     size: size,
+    color: color,
     fn: () async {
       await _audioController.audioToggle();
     }.throttle(ms: 300),
@@ -140,6 +155,7 @@ class AudioCtrlWidget {
     tooltip: "下一首",
     icon: PhosphorIconsFill.skipForward,
     size: size,
+    color: color,
     fn: () async {
       await _audioController.audioToNext();
     }.throttle(ms: 500),
@@ -151,8 +167,43 @@ class AudioCtrlWidget {
         "单曲循环",
     icon: _playModeIcons[_settingController.playMode.value],
     size: size,
+    color: color,
     fn: () {
       _audioController.changePlayMode();
     },
   );
+
+  Widget get seekSlide => Obx(() {
+    late final double duration;
+    if (_audioController.currentMetadata.value.path.isNotEmpty) {
+      duration = _audioController.currentMetadata.value.duration;
+    } else {
+      _seekDraggingValue.value = 0.0;
+      duration = 9999.0;
+    }
+    return Slider(
+      min: 0.0,
+      max: duration,
+      label:
+          _isSeekBarDragging.value
+              ? formatTime(totalSeconds: _seekDraggingValue.value)
+              : '√',
+      value:
+          _isSeekBarDragging.value
+              ? _seekDraggingValue.value
+              : _audioController.currentMs100.value,
+      onChangeStart: (v) {
+        _seekDraggingValue.value = v;
+        _isSeekBarDragging.value = true;
+      },
+      onChanged: (v) {
+        _seekDraggingValue.value = v;
+      },
+      onChangeEnd: (v) {
+        _audioController.currentMs100.value = v;
+        _isSeekBarDragging.value = false;
+        _audioController.audioSetPositon(pos: v);
+      },
+    );
+  });
 }

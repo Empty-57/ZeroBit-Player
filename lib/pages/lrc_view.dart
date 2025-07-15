@@ -14,9 +14,6 @@ import '../tools/rect_value_indicator.dart';
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 
 final AudioController _audioController = Get.find<AudioController>();
-final _isSeekBarDragging = false.obs;
-
-final _seekDraggingValue = 0.0.obs;
 
 const int _coverRenderSize = 800;
 const double _ctrlBtnMinSize = 40.0;
@@ -123,33 +120,39 @@ class LrcView extends StatelessWidget {
   Widget build(BuildContext context) {
     double coverSize = (context.width * 0.3).clamp(300, 500);
     final halfWidth = context.width / 2;
-    final activeCover = Theme.of(context).colorScheme.secondary;
+    final mixColor=Color.lerp(Theme.of(context).colorScheme.primary, themeMode.value=='dark'? Colors.white:Colors.black, 0.4);
+    final mixSubColor=Color.lerp(Theme.of(context).colorScheme.primary.withValues(alpha: 0.8), themeMode.value=='dark'? Colors.white:Colors.black, 0.4);
+
+    final activeTrackCover = mixColor??Theme.of(context).colorScheme.primary;
+    final inactiveTrackCover=mixColor?.withValues(alpha: 0.2)??Theme.of(context).colorScheme.primary.withValues(alpha: 0.2);
+
     final timeCurrentStyle = generalTextStyle(
       ctx: context,
-      size: 'xl',
+      size: '2xl',
+      color: mixColor,
       weight: FontWeight.w100,
-      color: Theme.of(context).colorScheme.secondary,
     );
     final timeTotalStyle = generalTextStyle(
       ctx: context,
-      size: 'sm',
+      size: 'md',
       weight: FontWeight.w100,
-      color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.8),
+      color: mixSubColor,
     );
     final titleStyle = generalTextStyle(
       ctx: context,
       size: '2xl',
-      color: Theme.of(context).colorScheme.secondary,
+      color: mixColor,
       weight: FontWeight.w600,
-    );
+    );//可能需要用主色来根据主题模式来混合颜色
     final subTitleStyle = generalTextStyle(
       ctx: context,
       size: 'md',
-      color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.8),
+      color: mixSubColor,
     );
     final audioCtrlWidget = AudioCtrlWidget(
       context: context,
       size: _ctrlBtnMinSize,
+      color: mixColor,
     );
     return BlurWithCoverBackground(
       cover: _audioController.currentCover,
@@ -333,8 +336,9 @@ class LrcView extends StatelessWidget {
                               trackShape: _GradientSliderTrackShape(
                                 activeTrackHeight: 2,
                                 inactiveTrackHeight: 1,
-                                activeColor: activeCover,
+                                activeColor: activeTrackCover,
                               ),
+                              inactiveTrackColor: inactiveTrackCover,
                               showValueIndicator: ShowValueIndicator.always,
                               thumbShape: const RoundSliderThumbShape(
                                 enabledThumbRadius: _thumbRadius,
@@ -342,10 +346,6 @@ class LrcView extends StatelessWidget {
                                 pressedElevation: 0,
                               ),
                               padding: EdgeInsets.zero,
-
-                              inactiveTrackColor: Theme.of(
-                                context,
-                              ).colorScheme.secondary.withValues(alpha: 0.2),
                               thumbColor: Colors.transparent,
                               overlayColor: Colors.transparent,
                               valueIndicatorShape:
@@ -363,52 +363,7 @@ class LrcView extends StatelessWidget {
                                 SystemMouseCursors.click,
                               ),
                             ),
-                            child: Obx(() {
-                              late final double duration;
-                              if (_audioController
-                                  .currentMetadata
-                                  .value
-                                  .path
-                                  .isNotEmpty) {
-                                duration =
-                                    _audioController
-                                        .currentMetadata
-                                        .value
-                                        .duration;
-                              } else {
-                                _seekDraggingValue.value = 0.0;
-                                duration = 9999.0;
-                              }
-                              return Obx(
-                                () => Slider(
-                                  min: 0.0,
-                                  max: duration,
-                                  label:
-                                      _isSeekBarDragging.value
-                                          ? formatTime(
-                                            totalSeconds:
-                                                _seekDraggingValue.value,
-                                          )
-                                          : '√',
-                                  value:
-                                      _isSeekBarDragging.value
-                                          ? _seekDraggingValue.value
-                                          : _audioController.currentMs100.value,
-                                  onChangeStart: (v) {
-                                    _seekDraggingValue.value = v;
-                                    _isSeekBarDragging.value = true;
-                                  },
-                                  onChanged: (v) {
-                                    _seekDraggingValue.value = v;
-                                  },
-                                  onChangeEnd: (v) {
-                                    _audioController.currentMs100.value = v;
-                                    _isSeekBarDragging.value = false;
-                                    _audioController.audioSetPositon(pos: v);
-                                  },
-                                ),
-                              );
-                            }),
+                            child: audioCtrlWidget.seekSlide,
                           ),
                         ),
                         Expanded(
@@ -438,7 +393,6 @@ class LrcView extends StatelessWidget {
                                             MainAxisAlignment.center,
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
-                                        spacing: 2,
                                         children: [
                                           Text(
                                             formatTime(
@@ -498,12 +452,14 @@ class LrcView extends StatelessWidget {
                                           tooltip: '网络歌词',
                                           icon: PhosphorIconsLight.article,
                                           size: _ctrlBtnMinSize,
+                                          color: mixColor,
                                           fn: () {},
                                         ),
                                         GenIconBtn(
                                           tooltip: '桌面歌词',
                                           icon: PhosphorIconsLight.creditCard,
                                           size: _ctrlBtnMinSize,
+                                          color: mixColor,
                                           fn: () {},
                                         ),
                                       ],

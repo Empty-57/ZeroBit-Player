@@ -29,10 +29,6 @@ const double _ctrlBtnMinSize = 40.0;
 
 final _isBarHover = false.obs;
 
-final _isSeekBarDragging = false.obs;
-
-final _seekDraggingValue = 0.0.obs;
-
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 const int _coverRenderSize = 150;
 
@@ -197,44 +193,11 @@ class PlayBar extends StatelessWidget {
                   valueIndicatorTextStyle:generalTextStyle(ctx: context,size: 'sm',color: Theme.of(context).colorScheme.onPrimary),
                   mouseCursor: WidgetStateProperty.all(SystemMouseCursors.resizeLeftRight),
                 ),
-                child: Obx(() {
-                  late final double duration;
-                  if (_audioController.currentMetadata.value.path.isNotEmpty) {
-                    duration = _audioController.currentMetadata.value.duration;
-                  } else {
-                    _seekDraggingValue.value=0.0;
-                    duration = 9999.0;
-                  }
-                  return Container(
-                    width: _barWidth+16,
-                    padding: EdgeInsets.symmetric(horizontal: 8),
-                    child: Obx(
-                      () => Slider(
-                        min: 0.0,
-                        max: duration,
-                        label: _isSeekBarDragging.value ? formatTime(
-                          totalSeconds: _seekDraggingValue.value,
-                        ):'√',
-                        value:
-                            _isSeekBarDragging.value
-                                ? _seekDraggingValue.value
-                                : _audioController.currentMs100.value,
-                        onChangeStart: (v) {
-                          _seekDraggingValue.value = v;
-                          _isSeekBarDragging.value = true;
-                        },
-                        onChanged: (v) {
-                          _seekDraggingValue.value = v;
-                        },
-                        onChangeEnd: (v) {
-                          _audioController.currentMs100.value = v;
-                          _isSeekBarDragging.value = false;
-                          _audioController.audioSetPositon(pos: v);
-                        },
-                      ),
-                    ),
-                  );
-                }),
+                child: Container(
+                  width: _barWidth+16,
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  child: audioCtrlWidget.seekSlide,
+                ),
               ),
             ),
             Stack(
