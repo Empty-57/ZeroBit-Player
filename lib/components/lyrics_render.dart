@@ -41,7 +41,6 @@ class LyricsRender extends StatelessWidget {
       color: Theme.of(context).colorScheme.onSecondaryContainer.withValues(alpha: _settingController.themeMode.value=='dark'?0.2:0.2),
       weight: FontWeight.w600,
     );
-    final lrcScrollController = ScrollController();
     final hoverColor = Theme.of(
       context,
     ).colorScheme.onSurface.withValues(alpha: 0.2);
