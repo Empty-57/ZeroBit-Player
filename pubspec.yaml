@@ -47,6 +47,7 @@ dependencies:
   pinyin: ^3.3.0
   path: ^1.9.1
   fl_charset: ^1.0.2
+  scrollable_positioned_list: ^0.3.8
   flutter_rust_bridge: 2.10.0
   rust_lib_zerobit_player:
     path: rust_builder

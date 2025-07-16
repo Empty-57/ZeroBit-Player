@@ -43,6 +43,7 @@ import 'HIveCtrl/hive_boxes.dart';
 
 import 'HIveCtrl/adapters/music_cache_adapter.dart';
 import 'field/operate_area.dart';
+import 'getxController/lyric_ctrl.dart';
 import 'getxController/music_cache_ctrl.dart';
 import 'getxController/setting_ctrl.dart';
 
@@ -98,6 +99,7 @@ void main() async {
   await Hive.openBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
 
   Get.put(AudioSource());
+  Get.put(LyricController());
   Get.put(UserPlayListController());
   Get.put(OperateArea());
   Get.put(SettingController());
@@ -131,6 +133,7 @@ void main() async {
   runApp(const MainFrame());
 
   final AudioController audioController =Get.find<AudioController>();
+  final LyricController lyricController=Get.find<LyricController>();
 
   try{
     audioEventStream().listen((data) {
@@ -145,6 +148,7 @@ void main() async {
 
   try{
     progressListen().listen((data){
+      lyricController.currentMs20.value=data;
       countMs20++;
       countSec++;
       if(countMs20>3){
