@@ -37,8 +37,8 @@ class LyricsRender extends StatelessWidget {
   Widget build(BuildContext context) {
     final lyricStyle = generalTextStyle(
       ctx: context,
-      size: 'lg',
-      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: _settingController.themeMode.value=='dark'?0.4:0.2),
+      size: 24,
+      color: Theme.of(context).colorScheme.onSecondaryContainer.withValues(alpha: _settingController.themeMode.value=='dark'?0.2:0.2),
       weight: FontWeight.w600,
     );
     final lrcScrollController = ScrollController();
