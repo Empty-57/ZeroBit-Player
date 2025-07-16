@@ -46,6 +46,10 @@ class LyricsRender extends StatelessWidget {
       context,
     ).colorScheme.onSurface.withValues(alpha: 0.2);
 
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _lyricController.scrollToCenter();
+    });
+
     return ScrollConfiguration(
       behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
       child: Obx(() {
