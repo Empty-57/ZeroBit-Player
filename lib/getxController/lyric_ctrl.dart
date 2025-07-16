@@ -27,7 +27,12 @@ if (newIndex != lrcCurrentIndex.value) {
   }
 
   void scrollToCenter(){
-    if(!lrcViewScrollController.isAttached||lrcCurrentIndex.value==-1){return;}
+    if(!lrcViewScrollController.isAttached){return;}
+
+    if(lrcCurrentIndex.value==-1){
+      lrcViewScrollController.jumpTo(index: 0,alignment: 0.5);
+      return;
+    }
 
     lrcViewScrollController.scrollTo(
   index: lrcCurrentIndex.value,
