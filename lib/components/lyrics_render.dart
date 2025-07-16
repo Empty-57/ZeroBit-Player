@@ -67,7 +67,7 @@ class LyricsRender extends StatelessWidget {
 
         return ScrollablePositionedList.builder(
           itemCount: parsedLrc.length,
-          controller: lrcScrollController,
+          itemScrollController: _lyricController.lrcViewScrollController,
           padding: EdgeInsets.symmetric(
             vertical:
                 (context.height - _audioCtrlBarHeight - _controllerBarHeight) /
