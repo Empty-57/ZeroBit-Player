@@ -203,6 +203,7 @@ class AudioCtrlWidget {
         _audioController.currentMs100.value = v;
         _isSeekBarDragging.value = false;
         _audioController.audioSetPositon(pos: v);
+        _seekDraggingValue.value = 0.0;
       },
     );
   });

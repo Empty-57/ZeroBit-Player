@@ -137,6 +137,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.1.1"
+  fl_charset:
+    dependency: "direct main"
+    description:
+      name: fl_charset
+      sha256: a6bcc449aca31d8931d7405aa73929bd50efda7e653dad46545a264a83d69f5a
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.0.2"
   flutter:
     dependency: "direct main"
     description: flutter

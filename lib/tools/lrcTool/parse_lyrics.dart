@@ -68,14 +68,14 @@ List<LyricEntry> _mergeTranslations(
         final primary = group[0];
         final trans = group[1];
 
-        primary.translate = trans.lyricText;
+        primary.translate = trans.lyricText.trim();
       } else {
         // 只有一条时，检查 “ / ” 拆分
         final entry = group[0];
         if (entry.lyricText.contains(' / ')) {
           final parts = entry.lyricText.split(' / ');
-          entry.lyricText = parts[0];
-          entry.translate = parts[1];
+          entry.lyricText = parts[0].trim();
+          entry.translate = parts[1].trim();
         }
       }
     }
@@ -113,7 +113,7 @@ List<LyricEntry> _mergeTranslations(
       final te = transQueue[transIdx];
       if (curr.segmentStart >= te.segmentStart - tolerance) {
         if (curr.segmentStart <= te.segmentStart + tolerance) {
-          curr.translate = getTranslate(te);
+          curr.translate = getTranslate(te).trim();
         }
       } else {
         break;

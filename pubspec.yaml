@@ -46,6 +46,7 @@ dependencies:
   flutter_single_instance: ^1.5.1
   pinyin: ^3.3.0
   path: ^1.9.1
+  fl_charset: ^1.0.2
   flutter_rust_bridge: 2.10.0
   rust_lib_zerobit_player:
     path: rust_builder

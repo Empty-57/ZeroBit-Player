@@ -3,12 +3,16 @@ import 'package:get/get.dart';
 import 'package:zerobit_player/tools/general_style.dart';
 
 import '../getxController/audio_ctrl.dart';
+import '../getxController/setting_ctrl.dart';
 import '../tools/lrcTool/lyric_model.dart';
 
 const double _audioCtrlBarHeight = 96;
 const double _controllerBarHeight = 48;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 final AudioController _audioController = Get.find<AudioController>();
+final SettingController _settingController = Get.find<SettingController>();
+
+const _lrcAlignment=[CrossAxisAlignment.start,CrossAxisAlignment.center,CrossAxisAlignment.end];
 
 class LyricsRender extends StatelessWidget {
   const LyricsRender({super.key});
@@ -22,7 +26,6 @@ class LyricsRender extends StatelessWidget {
     required TextStyle style,
   }) {
     return Wrap(
-      runSpacing: 2.0, // 每一“行”之间的垂直间距
       children:
           text.map((v) {
             return Text(v.lyricWord, style: style, softWrap: true);
@@ -71,6 +74,11 @@ class LyricsRender extends StatelessWidget {
                 2,
           ),
           itemBuilder: (BuildContext context, int index) {
+
+            if(lrcType == LyricFormat.lrc&&parsedLrc[index].lyricText.isEmpty&&parsedLrc[index].translate.isEmpty){
+              return SizedBox.shrink();
+            }
+
             return TextButton(
               onPressed: () {},
               style: TextButton.styleFrom(
@@ -80,9 +88,9 @@ class LyricsRender extends StatelessWidget {
               ),
               child: FractionallySizedBox(
                 widthFactor: 1,
-                child: Column(
+                child: Obx(()=>Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: _lrcAlignment[_settingController.lrcAlignment.value],
                   children: [
                     lyricWidget(
                       text: parsedLrc[index].lyricText,
@@ -96,7 +104,7 @@ class LyricsRender extends StatelessWidget {
                         )
                         : SizedBox.shrink(),
                   ],
-                ),
+                )),
               ),
             );
           },

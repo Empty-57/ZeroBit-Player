@@ -180,6 +180,7 @@ final currentLyrics = Rxn<Map<String, dynamic>>();
 
   Future<void> audioPlay({required MusicCache metadata}) async {
     currentMs100.value = 0.0;
+    currentSec.value=0.0;
     try {
       currentPath.value = metadata.path;
       currentMetadata.value=metadata;
