@@ -65,7 +65,7 @@ class LyricsRender extends StatelessWidget {
           lyricWidget = karaOkLyric;
         }
 
-        return ListView.builder(
+        return ScrollablePositionedList.builder(
           itemCount: parsedLrc.length,
           controller: lrcScrollController,
           padding: EdgeInsets.symmetric(
