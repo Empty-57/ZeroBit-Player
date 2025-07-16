@@ -13,6 +13,7 @@ import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
 import 'package:zerobit_player/tools/lrcTool/get_lyrics.dart';
+import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import '../HIveCtrl/hive_manager.dart';
 import '../HIveCtrl/models/music_cache_model.dart';
 import '../field/audio_source.dart';
@@ -64,7 +65,7 @@ class AudioController extends GetxController {
 
   bool _isSyncing=false;
 
-final currentLyrics = Rxn<Map<String, dynamic>>();
+final currentLyrics = Rxn<ParsedLyricModel>();
 
   void syncPlayListCacheItems() {
     if (allUserKey.contains(_audioSource.currentAudioSource.value)) {
@@ -124,7 +125,7 @@ final currentLyrics = Rxn<Map<String, dynamic>>();
       }
 
       currentLyrics.value=await getParsedLyric(filePath: currentMetadata.value.path);
-      debugPrint(currentLyrics.value?['parsedLrc'].toString());
+      debugPrint(currentLyrics.value?.type.toString());
 
     });
 

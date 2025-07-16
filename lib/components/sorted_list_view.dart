@@ -172,7 +172,7 @@ class SortedListView extends StatelessWidget {
                                     keys[index].substring(1),
                                     style: titleStyle,
                                     softWrap: false,
-                                    overflow: TextOverflow.ellipsis,
+                                    overflow: TextOverflow.fade,
                                     maxLines: 1,
                                   )),
                                   Text("共${item.length}首作品", style: subStyle),

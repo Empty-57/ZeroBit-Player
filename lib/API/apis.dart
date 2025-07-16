@@ -5,6 +5,7 @@ import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:get/get.dart' hide Response;
 
 import '../getxController/setting_ctrl.dart';
+import '../tools/lrcTool/lyric_model.dart';
 import '../tools/qrc_decryptor.dart';
 
 const _qmSearchUrl = "https://c.y.qq.com/soso/fcgi-bin/client_search_cp";
@@ -65,7 +66,7 @@ Future<dynamic> _qmSaveCoverByText({required String text, required String songPa
   return null;
 }
 
-Future<Map<String,dynamic>?> _qmGetLrc({required int id})async{
+Future<Get4NetLrcModel?> _qmGetLrc({required int id})async{
   final response = await _dio.get(
     _qmLrcUrl,
     queryParameters: {
@@ -78,12 +79,7 @@ Future<Map<String,dynamic>?> _qmGetLrc({required int id})async{
 
   final String? body = response.data?.toString();
   if (body == null || body.isEmpty) {
-    return {
-      'lrc': null,
-      'qrc': null,
-      'translate': null,
-      'type': '.qrc',
-    };
+    return Get4NetLrcModel(lrc: null,verbatimLrc: null,translate: null,type: LyricFormat.qrc);
   }
 
   //Original、ts、roma
@@ -121,21 +117,16 @@ Future<Map<String,dynamic>?> _qmGetLrc({required int id})async{
     }
   }
 
-  return {
-    'lrc': null,
-    'qrc': qrcDecrypted,
-    'translate': translateDecrypted,
-    'type': '.qrc',
-  };
+  return Get4NetLrcModel(lrc: null,verbatimLrc: qrcDecrypted,translate: translateDecrypted,type: LyricFormat.qrc);
 }
 
-Future<List<Map<String, dynamic>>?> _qmGetLrcBySearch({required String text,required int offset,required int limit})async{
-final List<Map<String,dynamic>> lrcData=[];
+Future<List<SearchLrcModel?>> _qmGetLrcBySearch({required String text,required int offset,required int limit})async{
+final List<SearchLrcModel> lrcData=[];
   try {
     final Map<String, dynamic> data=await _qmSearchByText(text: text,offset: offset,limit: limit);
     final songList = data["data"]?["song"]?["list"];
     if (songList is! List || songList.isEmpty) {
-      return null;
+      return [];
     }
 
     for (final item in songList) {
@@ -150,17 +141,12 @@ final List<Map<String,dynamic>> lrcData=[];
         singer=singerList[0]["name"];
       }
 
-      lrcData.add({
-        "name": item["songname"]??'UNKNOWN',
-        "id": item["songid"]??'UNKNOWN',
-        "artist": singer??'UNKNOWN',
-        ...data
-      });
+      lrcData.add(SearchLrcModel(title: item["songname"]??'UNKNOWN',artist: singer??'UNKNOWN',id: item["songid"]??'UNKNOWN',lyric: data));
     }
     return lrcData;
   }catch (err){
     debugPrint(err.toString());
-    return null;
+    return [];
   }
 }
 
@@ -207,7 +193,7 @@ Future<dynamic> _neSaveCoverByText({required String text, required String songPa
   return null;
 }
 
-Future<Map<String,dynamic>?> _neGetLrc({required int id})async{
+Future<Get4NetLrcModel?> _neGetLrc({required int id})async{
 final response = await _dio.get(
     _neLrcUrl,
     queryParameters: {
@@ -221,35 +207,25 @@ final response = await _dio.get(
   );
 final body = response.data as String?;
 if (body == null || body.isEmpty) {
-    return {
-      'lrc': null,
-      'yrc': null,
-      'translate': null,
-      'type': '.lrc',
-    };
+    return Get4NetLrcModel(lrc: null,verbatimLrc: null,translate: null,type: LyricFormat.lrc);
   }
   final Map<String, dynamic> data = jsonDecode(body);
 
   final String? lrcLyric = data['lrc']?['lyric'];
   final String? yrcLyric = data['yrc']?['lyric'];
   final String? tLyric   = data['tlyric']?['lyric'];
-  final String type = yrcLyric!=null&&yrcLyric.isNotEmpty ? '.yrc' : '.lrc';
+  final String type = yrcLyric!=null&&yrcLyric.isNotEmpty ? LyricFormat.yrc : LyricFormat.lrc;
 
-  return {
-    'lrc': lrcLyric,
-    'yrc': yrcLyric,
-    'translate': tLyric,
-    'type': type,
-  };
+  return Get4NetLrcModel(lrc: lrcLyric,verbatimLrc: yrcLyric,translate: tLyric,type: type);
 }
 
-Future<List<Map<String, dynamic>>?> _neGetLrcBySearch({required String text,required int offset,required int limit})async{
-  final List<Map<String,dynamic>> lrcData=[];
+Future<List<SearchLrcModel?>> _neGetLrcBySearch({required String text,required int offset,required int limit})async{
+  final List<SearchLrcModel> lrcData=[];
   try {
     final data=await _neSearchByText(text: text,offset: offset,limit: limit);
     final songs=data["result"]?["songs"];
     if (songs is! List || songs.isEmpty){
-      return null;
+      return [];
     }
 
     for (final item in songs) {
@@ -257,17 +233,14 @@ Future<List<Map<String, dynamic>>?> _neGetLrcBySearch({required String text,requ
       if (data==null){
         continue;
       }
-      lrcData.add({
-        "name": item["name"],
-        "id": item["id"],
-        "artist": item["ar"][0]["name"]??'UNKNOWN',
-        ...data
-      });
+
+
+      lrcData.add(SearchLrcModel(title: item["name"]??'UNKNOWN',artist: item["ar"][0]["name"]??'UNKNOWN',id: item["id"]??'UNKNOWN',lyric: data));
     }
     return lrcData;
   }catch (err){
     debugPrint(err.toString());
-    return null;
+    return [];
   }
 }
 
@@ -276,7 +249,7 @@ Future<dynamic> saveCoverByText({required String text, required String songPath,
   return await[_qmSaveCoverByText,_neSaveCoverByText][_settingController.apiIndex.value](text: text, songPath: songPath,saveCover: saveCover);
 }
 
-Future<dynamic> getLrcBySearch({required String text,required int offset,required int limit})async{
+Future<List<SearchLrcModel?>> getLrcBySearch({required String text,required int offset,required int limit})async{
   return await[_qmGetLrcBySearch,_neGetLrcBySearch][_settingController.apiIndex.value](text: text,offset: offset,limit: limit);
 }
 

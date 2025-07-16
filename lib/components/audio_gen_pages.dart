@@ -285,7 +285,7 @@ class AudioGenPages extends StatelessWidget {
                             weight: FontWeight.w600,
                           ),
                           softWrap: false,
-                          overflow: TextOverflow.ellipsis,
+                          overflow: TextOverflow.fade,
                           maxLines: 1,
                         ),
                       ),

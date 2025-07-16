@@ -28,6 +28,7 @@ class GenIconBtn extends StatelessWidget {
   final IconData icon;
   final double size;
   final Color? color;
+  final Color backgroundColor;
   final VoidCallback? fn;
 
   const GenIconBtn({
@@ -36,6 +37,7 @@ class GenIconBtn extends StatelessWidget {
     required this.icon,
     required this.size,
     this.color,
+    this.backgroundColor=Colors.transparent,
     required this.fn,
   });
   @override
@@ -53,7 +55,7 @@ class GenIconBtn extends StatelessWidget {
           minimumSize: Size(size, size),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           visualDensity: VisualDensity.compact,
-          backgroundColor: Colors.transparent,
+          backgroundColor: backgroundColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(_radius),
           ),

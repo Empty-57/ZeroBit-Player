@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/components/blur_background.dart';
 import 'package:zerobit_player/components/lyrics_render.dart';
 import 'package:zerobit_player/tools/general_style.dart';
+import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
 import '../components/audio_ctrl_btn.dart';
 import '../components/window_ctrl_bar.dart';
 import '../getxController/audio_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 import '../tools/format_time.dart';
+import '../tools/lrcTool/parse_lyrics.dart';
 import '../tools/rect_value_indicator.dart';
 
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
@@ -21,6 +24,7 @@ final SettingController _settingController = Get.find<SettingController>();
 const int _coverRenderSize = 800;
 const double _ctrlBtnMinSize = 40.0;
 const double _thumbRadius = 10.0;
+const _borderRadius = BorderRadius.all(Radius.circular(4));
 final _isBarHover = false.obs;
 final _onlyCover = false.obs;
 
@@ -31,6 +35,32 @@ const _lrcAlignmentIcons = [
   PhosphorIconsLight.textAlignCenter,
   PhosphorIconsLight.textAlignRight,
 ];
+
+
+
+class _LrcSearchController extends GetxController{
+  final currentNetLrc=<SearchLrcModel?>[].obs;
+  final currentNetLrcOffest=0.obs;
+  final searchText="${_audioController.currentMetadata.value.title} - ${_audioController.currentMetadata.value.artist}".obs;
+
+  @override
+  void onInit() async{
+    currentNetLrc.value=await getLrcBySearch(text: searchText.value, offset: currentNetLrcOffest.value, limit: 5);
+    super.onInit();
+
+    debounce(searchText, (_)async{
+      currentNetLrc.value=await getLrcBySearch(text: searchText.value, offset: currentNetLrcOffest.value, limit: 5);
+      currentNetLrcOffest.value=0;
+    },time: Duration(milliseconds: 500));
+
+    interval(currentNetLrcOffest, (_)async{
+      debugPrint(currentNetLrcOffest.value.toString());
+      currentNetLrc.value=await getLrcBySearch(text: searchText.value, offset: currentNetLrcOffest.value, limit: 5);
+    },time: Duration(milliseconds: 300));
+
+  }
+
+}
 
 class _GradientSliderTrackShape extends SliderTrackShape {
   final double activeTrackHeight;
@@ -120,6 +150,200 @@ class _GradientSliderTrackShape extends SliderTrackShape {
       activePaint,
     );
   }
+}
+
+class _NetLrcDialog extends StatelessWidget{
+  final Color? color;
+  const _NetLrcDialog({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final searchCtrl = TextEditingController();
+    final bgColor=Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.4);
+    final textStyle=generalTextStyle(ctx: context,size: 'md');
+    searchCtrl.text="${_audioController.currentMetadata.value.title} - ${_audioController.currentMetadata.value.artist}";
+
+    final lrcSearchController=Get.put(_LrcSearchController());
+
+
+    return GenIconBtn(
+      tooltip: '网络歌词',
+      icon: PhosphorIconsLight.article,
+      size: _ctrlBtnMinSize,
+      color: color,
+      fn: () {
+        showDialog(
+          barrierDismissible: true,
+          context: context,
+          builder: (BuildContext context) {
+            lrcSearchController.searchText.value=searchCtrl.text;
+            lrcSearchController.currentNetLrcOffest.value=0;
+            return AlertDialog(
+              title: const Text("选择歌词"),
+              titleTextStyle: generalTextStyle(
+                ctx: context,
+                size: 'xl',
+                weight: FontWeight.w600,
+              ),
+
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(4)),
+              ),
+              backgroundColor: Theme.of(context).colorScheme.surface,
+
+              actionsAlignment: MainAxisAlignment.end,
+              actions: <Widget>[
+                SizedBox(
+                  width: context.width/2,
+                  height: context.height/2,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 8,
+                    children: [
+                      Row(
+                        spacing: 8,
+                        children: [
+                          Expanded(child:
+                          TextField(
+                        autofocus: true,
+                        controller: searchCtrl,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: '搜索歌词',
+                        ),
+                        onChanged: (String text) {
+                          lrcSearchController.searchText.value=text;
+                        },
+                      )),
+                          Obx(()=>GenIconBtn(
+                        tooltip: lrcSearchController.currentNetLrcOffest.value>0?'上一页':'',
+                        icon: PhosphorIconsLight.caretLeft,
+                        size: _ctrlBtnMinSize*1.5,
+                        color: color,
+                        backgroundColor: bgColor,
+                        fn: lrcSearchController.currentNetLrcOffest.value>0? () {
+                          if(lrcSearchController.currentNetLrcOffest.value>0){
+                            lrcSearchController.currentNetLrcOffest.value--;
+                          }
+                        }:null,
+                      )),
+
+                      GenIconBtn(
+                        tooltip: '下一页',
+                        icon: PhosphorIconsLight.caretRight,
+                        size: _ctrlBtnMinSize*1.5,
+                        color: color,
+                        backgroundColor: bgColor,
+                        fn: () {
+                          lrcSearchController.currentNetLrcOffest.value++;
+                        },
+                      )],
+                      ),
+                      Expanded(child: Obx((){
+                        return ListView(
+                        children: lrcSearchController.currentNetLrc.map((v){
+                          if(v==null||v.lyric==null||(v.lyric!.lrc==null&&v.lyric!.verbatimLrc==null)){
+                            return SizedBox.shrink();
+                          }
+
+                          final String? verbatimLrc=v.lyric!.verbatimLrc;
+                          final String? ts=v.lyric!.translate;
+                          final String title=v.title;
+                          final String artist=v.artist;
+                          return TextButton(
+                              onPressed: (){
+                                final type= v.lyric!.type;
+                                if (type == LyricFormat.lrc) {
+                                  _audioController.currentLyrics.value=ParsedLyricModel(parsedLrc: parseLrc(v.lyric!.lrc),
+                                    type: type,);
+                                }
+                                if (type == LyricFormat.yrc || type == LyricFormat.qrc) {
+                                  _audioController.currentLyrics.value=ParsedLyricModel(parsedLrc: parseKaraOkLyric(
+                                    v.lyric!.verbatimLrc,
+                                    v.lyric!.translate,
+                                    type: type,
+                                  ),
+                                    type: type,);
+                                }
+                                Navigator.pop(context);
+                              },
+                              style: TextButton.styleFrom(
+                shape: RoundedRectangleBorder(borderRadius: _borderRadius),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              ),
+                              child: FractionallySizedBox(
+                            widthFactor: 1,
+                            child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: 8,
+                            children: [
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                verbatimLrc!=null&&verbatimLrc.isNotEmpty? '逐字':'Lrc',
+                                style: textStyle,
+                              ),
+                                  Text(
+                                ts!=null&&ts.isNotEmpty? '有翻译':'无翻译',
+                                style: textStyle,
+                              ),
+                                ],
+                              ),
+                              Expanded(child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                title,
+                                softWrap: false,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: textStyle,
+                              ),
+                                  Text(
+                                artist,
+                                softWrap: false,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: textStyle,
+                              ),
+                                  Container(
+                                    margin: EdgeInsets.only(top: 16),
+                                    constraints: BoxConstraints(
+                                      maxHeight: 200
+                                    ),
+                                    child: SingleChildScrollView(
+                                      child: Text(
+                                "歌词: \n${ts??verbatimLrc??''}",
+                                softWrap: true,
+                                overflow: TextOverflow.fade,
+                                style: textStyle,
+                              ),
+                                    ),
+                                  ),
+                                ],
+                              ))
+                            ],
+                          ),
+                          ));
+                        }).toList(),
+                      );
+                      }))
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
 }
 
 class LrcView extends StatelessWidget {
@@ -300,14 +524,14 @@ class LrcView extends StatelessWidget {
                                                     .title,
                                                 style: titleStyle,
                                                 softWrap: false,
-                                                overflow: TextOverflow.ellipsis,
+                                                overflow: TextOverflow.fade,
                                                 maxLines: 1,
                                               ),
                                               Text(
                                                 "${_audioController.currentMetadata.value.artist} - ${_audioController.currentMetadata.value.album}",
                                                 style: subTitleStyle,
                                                 softWrap: false,
-                                                overflow: TextOverflow.ellipsis,
+                                                overflow: TextOverflow.fade,
                                                 maxLines: 1,
                                               ),
                                             ],
@@ -463,13 +687,7 @@ class LrcView extends StatelessWidget {
                                             _audioController.changeLrcAlignment();
                                           },
                                         )),
-                                        GenIconBtn(
-                                          tooltip: '网络歌词',
-                                          icon: PhosphorIconsLight.article,
-                                          size: _ctrlBtnMinSize,
-                                          color: mixColor,
-                                          fn: () {},
-                                        ),
+                                        _NetLrcDialog(color: mixColor,),
                                         GenIconBtn(
                                           tooltip: '桌面歌词',
                                           icon: PhosphorIconsLight.creditCard,

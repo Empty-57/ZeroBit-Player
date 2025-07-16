@@ -287,7 +287,7 @@ class PlayBar extends StatelessWidget {
                               Text(
                                 title,
                                 softWrap: true,
-                                overflow: TextOverflow.ellipsis,
+                                overflow: TextOverflow.fade,
                                 maxLines: 1,
                                 style: generalTextStyle(
                                   ctx: context,
@@ -298,7 +298,7 @@ class PlayBar extends StatelessWidget {
                               Text(
                                 artist,
                                 softWrap: true,
-                                overflow: TextOverflow.ellipsis,
+                                overflow: TextOverflow.fade,
                                 maxLines: 1,
                                 style: timeTextStyle,
                               ),

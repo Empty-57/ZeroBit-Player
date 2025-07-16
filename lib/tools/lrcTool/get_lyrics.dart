@@ -75,8 +75,14 @@ Future<String?> _safeReadFile(String filePath) async {
   }
 }
 
+class _LyricModel{
+  final String? lyrics;
+  final String? lyricsTs;
+  final String type;
+  const _LyricModel({required this.lyrics,required this.lyricsTs,required this.type});
+}
 
-Future<Map<String, dynamic>?> getLyrics({String? filePath}) async {
+Future<_LyricModel?> _getLyrics({String? filePath}) async {
   if (filePath == null || filePath.isEmpty) return null;
 
   final paths = _getLyricPaths(filePath);
@@ -93,7 +99,7 @@ Future<Map<String, dynamic>?> getLyrics({String? filePath}) async {
         lyricsTs = await _safeReadFile(vtsPath);
       }
 
-      return {'lyrics': lyrics, 'lyrics_ts': lyricsTs, 'type': ext};
+      return _LyricModel(lyrics: lyrics,lyricsTs: lyricsTs,type: ext,);
     }
   }
 
@@ -101,25 +107,26 @@ Future<Map<String, dynamic>?> getLyrics({String? filePath}) async {
 }
 
 /// 主入口，获取已解析的歌词及翻译
-Future<Map<String, dynamic>?> getParsedLyric({String? filePath}) async {
+Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
   if (filePath == null || filePath.isEmpty) return null;
 
-  final lyricsData = await getLyrics(filePath: filePath);
-  if (lyricsData?['type'] == LyricFormat.lrc) {
-    return {
-      'parsedLrc': parseLrc(lyricsData?['lyrics']),
-      'type': lyricsData?['type'],
-    };
+  final lyricsData = await _getLyrics(filePath: filePath);
+
+  if(lyricsData==null){
+    return null;
   }
-  if (lyricsData?['type'] == LyricFormat.yrc || lyricsData?['type'] == LyricFormat.qrc) {
-    return {
-      'parsedLrc': parseKaraOkLyric(
-        lyricsData?['lyrics'],
-        lyricsData?['lyrics_ts'],
-        type: lyricsData?['type'],
+
+  if (lyricsData.type == LyricFormat.lrc) {
+    return ParsedLyricModel(parsedLrc: parseLrc(lyricsData.lyrics),
+      type: lyricsData.type,);
+  }
+  if (lyricsData.type == LyricFormat.yrc || lyricsData.type == LyricFormat.qrc) {
+    return ParsedLyricModel(parsedLrc: parseKaraOkLyric(
+        lyricsData.lyrics,
+        lyricsData.lyricsTs,
+        type: lyricsData.type,
       ),
-      'type': lyricsData?['type'],
-    };
+      type: lyricsData.type,);
   }
   return null;
 }

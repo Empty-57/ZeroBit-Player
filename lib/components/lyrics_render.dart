@@ -38,7 +38,7 @@ class LyricsRender extends StatelessWidget {
     final lyricStyle = generalTextStyle(
       ctx: context,
       size: 'lg',
-      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: _settingController.themeMode.value=='dark'?0.4:0.2),
       weight: FontWeight.w600,
     );
     final lrcScrollController = ScrollController();
@@ -50,13 +50,13 @@ class LyricsRender extends StatelessWidget {
       behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
       child: Obx(() {
         final currentLyrics = _audioController.currentLyrics.value;
-        final parsedLrc = currentLyrics?['parsedLrc'];
+        final parsedLrc = currentLyrics?.parsedLrc;
 
-        if (parsedLrc is! List<LyricEntry> || parsedLrc.isEmpty) {
+        if (currentLyrics==null||parsedLrc is! List<LyricEntry> || parsedLrc.isEmpty) {
           return Center(child: Text("无歌词", style: lyricStyle));
         }
 
-        final String lrcType = currentLyrics?['type'];
+        final String lrcType = currentLyrics.type;
 
         late final Function lyricWidget;
         if (lrcType == LyricFormat.lrc) {
