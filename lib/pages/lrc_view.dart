@@ -422,7 +422,22 @@ class LrcView extends StatelessWidget {
                         children: [
                           Align(
                             alignment: Alignment.centerRight,
-                            child: Container(
+                            child: ShaderMask(
+                              shaderCallback: (rect) {
+                                return LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black,
+                                    Colors.black,
+                                    Colors.transparent,
+                                  ],
+                                  stops: [0.0, 0.1, 0.9, 1.0],
+                                ).createShader(rect);
+                                },
+                              blendMode: BlendMode.dstIn,  // 用 dstIn 保留子 Widget 的 alpha
+                               child: Container(
                                   width: halfWidth,
                                   alignment: Alignment.center,
                                   padding: EdgeInsets.only(right: 16),
