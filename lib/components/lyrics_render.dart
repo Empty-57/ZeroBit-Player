@@ -75,7 +75,7 @@ class LyricsRender extends StatelessWidget {
           ),
           itemBuilder: (BuildContext context, int index) {
 
-            if(lrcType == LyricFormat.lrc&&parsedLrc[index].lyricText.isEmpty&&parsedLrc[index].translate.isEmpty){
+            if((lrcType == LyricFormat.lrc&&parsedLrc[index].lyricText.isEmpty&&parsedLrc[index].translate.isEmpty)||index==-1){
               return SizedBox.shrink();
             }
 
