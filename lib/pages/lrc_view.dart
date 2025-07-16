@@ -445,7 +445,8 @@ class LrcView extends StatelessWidget {
                                 )
                                 .animate(target: _onlyCover.value ? 1 : 0)
                                 .fade(duration: 300.ms, begin: 1.0, end: 0.0),
-                          ),
+                            ),
+                          ) ,
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Container(
