@@ -29,6 +29,7 @@ class BlurWithCoverBackground extends StatelessWidget {
                       cacheWidth: _coverBigRenderSize,
                       cacheHeight: _coverBigRenderSize,
                       fit: BoxFit.cover,
+                      gaplessPlayback: true,
                     ),
                   ),
                   transitionBuilder: (Widget child, Animation<double> anim) {
