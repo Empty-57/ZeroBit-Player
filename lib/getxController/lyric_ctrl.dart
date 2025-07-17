@@ -10,7 +10,7 @@ final AudioController _audioController = Get.find<AudioController>();
 
 class LyricController extends GetxController {
   final currentMs20 = 0.0.obs;
-  final lrcCurrentIndex = (-1).obs;
+  final lrcCurrentLineIndex = (-1).obs;
   final lrcViewScrollController = ItemScrollController();
   final isPointerScroll=false.obs;
 
@@ -25,10 +25,10 @@ class LyricController extends GetxController {
       final newIndex = _findCurrentLine(
         time: currentMs20.value,
         lyrics: _audioController.currentLyrics.value?.parsedLrc,
-        hint: lrcCurrentIndex.value,
+        hint: lrcCurrentLineIndex.value,
       );
-      if (newIndex != lrcCurrentIndex.value) {
-        lrcCurrentIndex.value = newIndex;
+      if (newIndex != lrcCurrentLineIndex.value) {
+        lrcCurrentLineIndex.value = newIndex;
 
         if(!isPointerScroll.value){
           scrollToCenter();
@@ -57,7 +57,7 @@ class LyricController extends GetxController {
     }
 
     lrcViewScrollController.scrollTo(
-      index: lrcCurrentIndex.value.clamp(0, (_audioController.currentLyrics.value?.parsedLrc?.length??1)-1),
+      index: lrcCurrentLineIndex.value.clamp(0, (_audioController.currentLyrics.value?.parsedLrc?.length??1)-1),
       duration: Duration(milliseconds: 500),
       alignment: 0.5,
       curve: Curves.easeInOut,
