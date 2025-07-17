@@ -186,7 +186,9 @@ class LyricsRender extends StatelessWidget {
               child: FractionallySizedBox(
                 widthFactor: 1,
                 child: Obx(
-                  () => Column(
+                  (){
+                    final blur= !_lyricController.isPointerScroll.value? (_lyricController.lrcCurrentIndex.value-index).abs().clamp(0, 4.0).toDouble():0.0;
+                    return ImageFiltered(imageFilter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment:
                         _lrcAlignment[_settingController.lrcAlignment.value],
