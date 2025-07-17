@@ -12,7 +12,7 @@ class LyricController extends GetxController {
   final currentMs20 = 0.0.obs;
   final lrcCurrentIndex = (-1).obs;
   final lrcViewScrollController = ItemScrollController();
-  bool isPointerScroll=false;
+  final isPointerScroll=false.obs;
 
   Timer? _debounceTimer;
   Timer? _delayTimer;
@@ -30,7 +30,7 @@ class LyricController extends GetxController {
       if (newIndex != lrcCurrentIndex.value) {
         lrcCurrentIndex.value = newIndex;
 
-        if(!isPointerScroll){
+        if(!isPointerScroll.value){
           scrollToCenter();
         }
       }
@@ -41,11 +41,11 @@ class LyricController extends GetxController {
   void pointerScroll(){
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 100), () {
-      isPointerScroll = true;
+      isPointerScroll.value = true;
 
       _delayTimer?.cancel();
       _delayTimer = Timer(const Duration(seconds: 3), () {
-        isPointerScroll = false;
+        isPointerScroll.value = false;
         scrollToCenter();
       });
     });
