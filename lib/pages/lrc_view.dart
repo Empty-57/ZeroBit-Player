@@ -329,6 +329,7 @@ class _NetLrcDialog extends StatelessWidget{
                                 style: textStyle,
                               ),
                                     ),
+                                    ),
                                   ),
                                 ],
                               ))
