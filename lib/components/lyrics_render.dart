@@ -86,7 +86,7 @@ class LyricsRender extends StatelessWidget {
       () => Wrap(
             children:
                 text_.map((v) {
-                  return Text(v.lyricWord, style: style, softWrap: true);
+                  return Text(v.lyricWord, style: style);
                 }).toList(),
           )
           .animate(
