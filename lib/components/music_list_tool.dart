@@ -93,14 +93,14 @@ class MusicTile extends StatelessWidget {
                   Text(
                     metadata.title,
                     softWrap: true,
-                    overflow: TextOverflow.fade,
+                    overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                     style: textStyle,
                   ),
                   Text(
                     metadata.artist,
                     softWrap: true,
-                    overflow: TextOverflow.fade,
+                    overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                     style: subTextStyle,
                   ),
@@ -113,7 +113,7 @@ class MusicTile extends StatelessWidget {
                 child: Text(
                   metadata.album,
                   softWrap: true,
-                  overflow: TextOverflow.fade,
+                  overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                   style: subTextStyle,
                 ),
@@ -121,7 +121,7 @@ class MusicTile extends StatelessWidget {
             Text(
               formatTime(totalSeconds: metadata.duration),
               softWrap: true,
-              overflow: TextOverflow.fade,
+              overflow: TextOverflow.ellipsis,
               maxLines: 1,
               style: subTextStyle,
             ),
