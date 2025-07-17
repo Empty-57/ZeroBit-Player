@@ -319,7 +319,9 @@ class _NetLrcDialog extends StatelessWidget{
                                     constraints: BoxConstraints(
                                       maxHeight: 200
                                     ),
-                                    child: SingleChildScrollView(
+                                    child: FractionallySizedBox(
+                                      widthFactor: 0.8,
+                                      child: SingleChildScrollView(
                                       child: Text(
                                 "歌词: \n${ts??verbatimLrc??''}",
                                 softWrap: true,
