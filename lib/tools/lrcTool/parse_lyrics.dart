@@ -128,7 +128,7 @@ List<LyricEntry> _mergeTranslations(
 List<LyricEntry>? parseLrc({String? lyricData, String? lyricDataTs = ''}) {
   if (lyricData == null || lyricData.isEmpty) return null;
   final main = _parseLyrics(lyricData);
-  return _mergeTranslations(main, '');
+  return _mergeTranslations(main, lyricDataTs);
 }
 
 /// 毫秒转秒（保留 3 位小数）
