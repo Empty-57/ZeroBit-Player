@@ -45,7 +45,7 @@ class LyricsRender extends StatelessWidget {
     return Obx(
       () => Text(text_, style: style, softWrap: true)
           .animate(
-            target: index == _lyricController.lrcCurrentLineIndex.value ? 1 : 0,
+            target: index == _lyricController.currentLineIndex.value ? 1 : 0,
           )
           .custom(
             duration: 300.ms,
@@ -90,7 +90,7 @@ class LyricsRender extends StatelessWidget {
                 }).toList(),
           )
           .animate(
-            target: index == _lyricController.lrcCurrentLineIndex.value ? 1 : 0,
+            target: index == _lyricController.currentLineIndex.value ? 1 : 0,
           )
           .scale(
             alignment:
@@ -189,7 +189,7 @@ class LyricsRender extends StatelessWidget {
                 widthFactor: 1,
                 child: Obx(
                   (){
-                    final blur= !_lyricController.isPointerScroll.value? (_lyricController.lrcCurrentLineIndex.value-index).abs().clamp(0, 4.0).toDouble():0.0;
+                    final blur= !_lyricController.isPointerScroll.value? (_lyricController.currentLineIndex.value-index).abs().clamp(0, 4.0).toDouble():0.0;
                     return ImageFiltered(imageFilter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment:
