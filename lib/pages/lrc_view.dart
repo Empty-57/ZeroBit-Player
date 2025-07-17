@@ -176,8 +176,11 @@ class _NetLrcDialog extends StatelessWidget{
           barrierDismissible: true,
           context: context,
           builder: (BuildContext context) {
-            lrcSearchController.searchText.value=searchCtrl.text;
-            lrcSearchController.currentNetLrcOffest.value=0;
+             WidgetsBinding.instance.addPostFrameCallback((_) {
+               lrcSearchController.searchText.value=searchCtrl.text;
+               lrcSearchController.currentNetLrcOffest.value=0;
+             });
+
             return AlertDialog(
               title: const Text("选择歌词"),
               titleTextStyle: generalTextStyle(
