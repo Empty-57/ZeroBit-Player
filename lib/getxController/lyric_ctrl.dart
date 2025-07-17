@@ -52,7 +52,7 @@ class LyricController extends GetxController {
   }
 
   void scrollToCenter() {
-    if (!lrcViewScrollController.isAttached || lrcCurrentIndex.value == -1) {
+    if (!lrcViewScrollController.isAttached) {
       return;
     }
 
