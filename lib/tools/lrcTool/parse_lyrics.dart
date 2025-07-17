@@ -125,7 +125,7 @@ List<LyricEntry> _mergeTranslations(
 }
 
 /// 解析 Lrc 格式歌词并合并翻译
-List<LyricEntry>? parseLrc(String? lyricData) {
+List<LyricEntry>? parseLrc({String? lyricData, String? lyricDataTs = ''}) {
   if (lyricData == null || lyricData.isEmpty) return null;
   final main = _parseLyrics(lyricData);
   return _mergeTranslations(main, '');
