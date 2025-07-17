@@ -53,8 +53,8 @@ List<LyricEntry> _mergeTranslations(
   String? lyricDataTs, {
   String type = LyricFormat.lrc,
 }) {
-  // 如果是 LRC 格式，就直接从 mainEntries 中提取翻译
-  if (type == LyricFormat.lrc) {
+  // 如果是 LRC 格式并且没有指定 lyricDataTs ，就直接从 mainEntries 中提取翻译
+  if (type == LyricFormat.lrc&&(lyricDataTs==null||lyricDataTs.isEmpty)) {
     // 按时间分组：同一时间点的列表
     final Map<double, List<LyricEntry>> grouped = {};
     for (final e in mainEntries) {
