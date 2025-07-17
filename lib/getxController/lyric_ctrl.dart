@@ -57,7 +57,7 @@ class LyricController extends GetxController {
     }
 
     lrcViewScrollController.scrollTo(
-      index: lrcCurrentIndex.value,
+      index: lrcCurrentIndex.value.clamp(0, (_audioController.currentLyrics.value?.parsedLrc?.length??1)-1),
       duration: Duration(milliseconds: 500),
       alignment: 0.5,
       curve: Curves.easeInOut,
