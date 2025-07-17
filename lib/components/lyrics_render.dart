@@ -136,7 +136,7 @@ class LyricsRender extends StatelessWidget {
         if (currentLyrics == null ||
             parsedLrc is! List<LyricEntry> ||
             parsedLrc.isEmpty) {
-          return Center(child: Text("无歌词", style: lyricStyle));
+          return Center(child: Text("无歌词", style: lyricStyle.copyWith(color: lyricStyle.color?.withValues(alpha: 0.8))));
         }
 
         final String lrcType = currentLyrics.type;
