@@ -117,7 +117,7 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
   }
 
   if (lyricsData.type == LyricFormat.lrc) {
-    return ParsedLyricModel(parsedLrc: parseLrc(lyricsData.lyrics),
+    return ParsedLyricModel(parsedLrc: parseLrc(lyricData: lyricsData.lyrics),
       type: lyricsData.type,);
   }
   if (lyricsData.type == LyricFormat.yrc || lyricsData.type == LyricFormat.qrc) {
