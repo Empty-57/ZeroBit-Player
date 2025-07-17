@@ -255,7 +255,7 @@ class _NetLrcDialog extends StatelessWidget{
                               onPressed: (){
                                 final type= v.lyric!.type;
                                 if (type == LyricFormat.lrc) {
-                                  _audioController.currentLyrics.value=ParsedLyricModel(parsedLrc: parseLrc(v.lyric!.lrc),
+                                  _audioController.currentLyrics.value=ParsedLyricModel(parsedLrc: parseLrc(lyricData: v.lyric!.lrc,lyricDataTs: v.lyric!.translate),
                                     type: type,);
                                 }
                                 if (type == LyricFormat.yrc || type == LyricFormat.qrc) {
