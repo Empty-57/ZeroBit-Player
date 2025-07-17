@@ -117,6 +117,8 @@ final currentLyrics = Rxn<ParsedLyricModel>();
     });
 
     ever(currentMetadata,(_) async {
+      currentMs100.value=0;
+    currentSec.value=0;
       try{
         _syncInfo();
       }catch(e){
@@ -134,8 +136,6 @@ final currentLyrics = Rxn<ParsedLyricModel>();
   void _syncInfo()async{
     if(_isSyncing){return;}
 
-    currentMs100.value=0;
-    currentSec.value=0;
     if (currentMetadata.value.path.isEmpty) {
         windowManager.setTitle('ZeroBit Player');
         return;
