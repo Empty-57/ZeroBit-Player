@@ -439,7 +439,7 @@ class LrcView extends StatelessWidget {
                                     Colors.black,
                                     Colors.transparent,
                                   ],
-                                  stops: [0.0, 0.1, 0.9, 1.0],
+                                  stops: [0.0, 0.2, 0.8, 1.0],
                                 ).createShader(rect);
                                 },
                               blendMode: BlendMode.dstIn,  // 用 dstIn 保留子 Widget 的 alpha
