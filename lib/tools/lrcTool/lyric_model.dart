@@ -1,12 +1,18 @@
+abstract class TimedEntry {
+  double get start;
+  double get nextTime;
+}
 /// 时间轴条目
-class LyricEntry<T> {
-  final double segmentStart;
+class LyricEntry<T> implements TimedEntry {
+  @override
+  final double start;
+  @override
   double nextTime;
   T lyricText;
   String translate;
 
   LyricEntry({
-    required this.segmentStart,
+    required this.start,
     this.nextTime = double.infinity,
     required this.lyricText,
     this.translate = '',
@@ -23,18 +29,23 @@ class LyricEntry<T> {
                       "word:${w.lyricWord} start:${w.start} duration:${w.duration} \n",
                 )
                 .join();
-    return '[segmentStart: $segmentStart,\n lyricText: "$display",\n nextTime: $nextTime,\n translate: "$translate"\n]';
+    return '[segmentStart: $start,\n lyricText: "$display",\n nextTime: $nextTime,\n translate: "$translate"\n]';
   }
 }
 
 /// 逐字时间轴
-class WordEntry {
-  final double start, duration;
+class WordEntry implements TimedEntry {
+  @override
+  final double start;
+  final double duration;
   final String lyricWord;
+  @override
+  double nextTime;
   WordEntry({
     required this.start,
     required this.duration,
     required this.lyricWord,
+    this.nextTime = double.infinity
   });
 }
 

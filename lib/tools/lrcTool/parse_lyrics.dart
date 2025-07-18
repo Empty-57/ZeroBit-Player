@@ -38,7 +38,7 @@ List<LyricEntry> _parseLyrics(String text) {
     try {
       final start = _parseTime(match[1]!, match[2]!);
       final lyric = match[3]!.trim();
-      entries.add(LyricEntry(segmentStart: start, lyricText: lyric));
+      entries.add(LyricEntry(start: start, lyricText: lyric));
     } catch (e) {
       // 跳过格式错行
       debugPrint('Invalid lyric line: ${match.group(0)} → $e');
@@ -58,7 +58,7 @@ List<LyricEntry> _mergeTranslations(
     // 按时间分组：同一时间点的列表
     final Map<double, List<LyricEntry>> grouped = {};
     for (final e in mainEntries) {
-      grouped.putIfAbsent(e.segmentStart, () => []).add(e);
+      grouped.putIfAbsent(e.start, () => []).add(e);
     }
 
     // 对每个组进行处理
@@ -84,7 +84,7 @@ List<LyricEntry> _mergeTranslations(
     for (var i = 0; i < mainEntries.length; i++) {
       mainEntries[i].nextTime =
           (i < mainEntries.length - 1)
-              ? mainEntries[i + 1].segmentStart
+              ? mainEntries[i + 1].start
               : double.infinity;
     }
     return mainEntries;
@@ -105,14 +105,14 @@ List<LyricEntry> _mergeTranslations(
     final curr = mainEntries[i];
     curr.nextTime =
         (i < mainEntries.length - 1)
-            ? mainEntries[i + 1].segmentStart
+            ? mainEntries[i + 1].start
             : double.infinity;
     if (curr.lyricText.isEmpty) continue;
 
     while (transIdx < transQueue.length) {
       final te = transQueue[transIdx];
-      if (curr.segmentStart >= te.segmentStart - tolerance) {
-        if (curr.segmentStart <= te.segmentStart + tolerance) {
+      if (curr.start >= te.start - tolerance) {
+        if (curr.start <= te.start + tolerance) {
           curr.translate = getTranslate(te).trim();
         }
       } else {
@@ -197,6 +197,13 @@ List<WordEntry> _processWords(
       words.add(curr);
     }
   }
+
+  for(var i=0;i<words.length;i++){
+    words[i].nextTime=(i < words.length - 1)
+            ? words[i + 1].start
+            : double.infinity;
+  }
+
   return words;
 }
 
@@ -224,7 +231,7 @@ List<LyricEntry>? parseKaraOkLyric(
       cfg.textIdx,
     );
     segments.add(
-      LyricEntry(segmentStart: start, lyricText: words, nextTime: start + dur),
+      LyricEntry(start: start, lyricText: words, nextTime: start + dur),
     );
   }
 
