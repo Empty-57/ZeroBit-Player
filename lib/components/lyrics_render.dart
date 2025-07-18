@@ -178,7 +178,7 @@ class LyricsRender extends StatelessWidget {
             return TextButton(
               onPressed: () {
                 _audioController.audioSetPositon(
-                  pos: parsedLrc[index].segmentStart,
+                  pos: parsedLrc[index].start,
                 );
               },
               style: TextButton.styleFrom(
