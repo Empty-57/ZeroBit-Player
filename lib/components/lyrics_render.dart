@@ -14,6 +14,7 @@ import '../tools/lrcTool/lyric_model.dart';
 
 const double _audioCtrlBarHeight = 96;
 const double _controllerBarHeight = 48;
+const double highLightAlpha=0.8;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 final AudioController _audioController = Get.find<AudioController>();
 final SettingController _settingController = Get.find<SettingController>();
