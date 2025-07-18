@@ -31,7 +31,7 @@ const _lrcScaleAlignment = [
   Alignment.center,
   Alignment.centerRight,
 ];
-const _lrcScale = 1.2;
+const _lrcScale = 1.1;
 
 class LyricsRender extends StatelessWidget {
   const LyricsRender({super.key});
