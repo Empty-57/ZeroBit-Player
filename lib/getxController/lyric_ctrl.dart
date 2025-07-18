@@ -76,6 +76,7 @@ class LyricController extends GetxController {
         hint: currentLineIndex.value,
       );
       if (newLineIndex != currentLineIndex.value) {
+        wordProgress.value = 0;
         currentLineIndex.value = newLineIndex;
         if (!isPointerScroll.value) {
           scrollToCenter();
