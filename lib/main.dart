@@ -76,6 +76,14 @@ void main() async {
   await windowManager.ensureInitialized();
   await RustLib.init();
 
+
+
+  // 最多缓存 200 张图片（默认1000）
+  PaintingBinding.instance.imageCache.maximumSize = 200;
+
+  // 最多缓存 20MB，超过就会清理（默认100MB）
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 20 * 1024 * 1024;
+
   try{
     await loadLib();
     await initBass();
