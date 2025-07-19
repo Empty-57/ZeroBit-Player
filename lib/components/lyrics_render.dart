@@ -33,22 +33,45 @@ const _lrcScaleAlignment = [
 ];
 const _lrcScale = 1.1;
 
-class LyricsRender extends StatelessWidget {
+class _ScaledTranslateGradientTransform extends GradientTransform {
+  final double dx;
+  const _ScaledTranslateGradientTransform({required this.dx});
+  @override
+  Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
+    // 先将x轴扩大2倍，然后平移x轴 其实应该是扩大3倍，但是2倍视觉效果更好
+    return Matrix4.diagonal3Values(2.0, 1.0, 1.0)..translate(dx, 0.0, 0.0);
+  }
+}
+
+class LyricsRender extends StatefulWidget {
   const LyricsRender({super.key});
+
+  @override
+  State<LyricsRender> createState() => _LyricsRenderState();
+}
+
+class _LyricsRenderState extends State<LyricsRender> {
+  @override
+  void initState() {
+    super.initState();
+    // 首次进入页面时，跳转到当前行
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _lyricController.scrollToCenter();
+      }
+    });
+  }
 
   Widget lrcLyric<T>({
     required T text,
     required TextStyle style,
-    required int index,
-    required BuildContext ctx,
+    required bool isCurrent,
   }) {
     final text_ = text as String;
 
     return Obx(
       () => Text(text_, style: style, softWrap: true)
-          .animate(
-            target: index == _lyricController.currentLineIndex.value ? 1 : 0,
-          )
+          .animate(target: isCurrent ? 1 : 0)
           .custom(
             duration: 300.ms,
             builder: (_, value, _) {
@@ -79,8 +102,7 @@ class LyricsRender extends StatelessWidget {
   Widget karaOkLyric<T>({
     required T text,
     required TextStyle style,
-    required int index,
-    required BuildContext ctx,
+    required bool isCurrent,
   }) {
     final text_ = text as List<WordEntry>;
 
@@ -90,71 +112,66 @@ class LyricsRender extends StatelessWidget {
                 text_.asMap().entries.map((v) {
                   final entry = v.value;
                   final wordIndex = v.key;
-                  //   final currLineIndex=_lyricController.currentLineIndex.value;
-                  // final currWordIndex=_lyricController.currentWordIndex.value;
-                  // final high= index==currLineIndex && wordIndex<currWordIndex;
+                  final currWordIndex = _lyricController.currentWordIndex.value;
 
-                  return Stack(
-                    children: [
-                      Obx(() {
-                        final currLineIndex =
-                            _lyricController.currentLineIndex.value;
-                        final currWordIndex =
-                            _lyricController.currentWordIndex.value;
-                        final high =
-                            index == currLineIndex && wordIndex < currWordIndex;
-                        return Text(
-                          entry.lyricWord,
-                          style:
-                              high
-                                  ? style.copyWith(
-                                    color: style.color?.withValues(
-                                      alpha: _highLightAlpha,
-                                    ),
-                                  )
-                                  : style,
-                          softWrap: true,
-                        );
-                      }),
-                      Obx(() {
-                        final currLineIndex =
-                            _lyricController.currentLineIndex.value;
-                        final currWordIndex =
-                            _lyricController.currentWordIndex.value;
-                        final progress =
-                            _lyricController.wordProgress.value / 100;
-                        if (index == currLineIndex &&
-                            currWordIndex == wordIndex) {
-                          return ShaderMask(
-                            shaderCallback: (bounds) {
-                              return LinearGradient(
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                                colors: [Colors.white, Colors.transparent],
-                                stops: [progress, progress],
-                              ).createShader(bounds);
-                            },
-                            blendMode: BlendMode.dstIn,
-                            child: Text(
-                              entry.lyricWord,
-                              style: style.copyWith(
-                                color: style.color?.withValues(
-                                  alpha: _highLightAlpha,
-                                ),
-                              ),
-                              softWrap: true,
+                  if (isCurrent && wordIndex < currWordIndex) {
+                    return Text(
+                      entry.lyricWord,
+                      style: style.copyWith(
+                        color: style.color?.withValues(alpha: _highLightAlpha),
+                      ),
+                      softWrap: true,
+                    );
+                  }
+
+                  if ((isCurrent && currWordIndex == wordIndex)) {
+                    return Obx(() {
+                      final progress =
+                          _lyricController.wordProgress.value / 100;
+                      return ShaderMask(
+                        shaderCallback: (bounds) {
+                          /// 颜色平均分三段：高亮区 过渡区 透明区
+                          /// 在动画开始的时候，覆盖到 Text 上的应该是透明区，应该先把整个遮罩层应该向左移动
+                          /// 但是因为遮罩层放大了3倍，所以应该用 -0.666 * bounds.width 得到透明区位置，负号为向左
+                          /// 随着 progress 增大 遮罩会逐渐向右移动
+                          final double dx =
+                              (-0.666 * bounds.width) * (1 - progress);
+                          final Gradient gradient = LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [
+                              style.color!.withValues(alpha: _highLightAlpha),
+                              style.color!.withValues(alpha: _highLightAlpha),
+                              style.color!,
+                            ],
+                            stops: const [0.0, 0.333, 0.666],
+                            // 平移遮罩层
+                            transform: _ScaledTranslateGradientTransform(
+                              dx: dx,
                             ),
                           );
-                        }
-                        return SizedBox.shrink();
-                      }),
-                    ],
+                          return gradient.createShader(bounds);
+                        },
+                        blendMode: BlendMode.dstIn,
+                        child: Text(
+                          entry.lyricWord,
+                          style: style.copyWith(
+                            color: style.color?.withValues(alpha: 1),
+                          ),
+                          softWrap: true,
+                        ),
+                      );
+                    });
+                  }
+
+                  return Text(
+                    entry.lyricWord,
+                    style: style.copyWith(color: style.color),
+                    softWrap: true,
                   );
                 }).toList(),
           )
-          .animate(
-            target: index == _lyricController.currentLineIndex.value ? 1 : 0,
-          )
+          .animate(target: isCurrent ? 1 : 0)
           .scale(
             alignment:
                 _lrcScaleAlignment[_settingController.lrcAlignment.value],
@@ -180,10 +197,6 @@ class LyricsRender extends StatelessWidget {
     final hoverColor = Theme.of(
       context,
     ).colorScheme.onSurface.withValues(alpha: 0.2);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _lyricController.scrollToCenter();
-    });
 
     return Listener(
       onPointerSignal: (event) {
@@ -215,8 +228,7 @@ class LyricsRender extends StatelessWidget {
           late final Widget Function<T>({
             required T text,
             required TextStyle style,
-            required int index,
-            required BuildContext ctx,
+            required bool isCurrent,
           })
           lyricWidget;
           if (lrcType == LyricFormat.lrc) {
@@ -238,16 +250,18 @@ class LyricsRender extends StatelessWidget {
                   2,
             ),
             itemBuilder: (BuildContext context, int index) {
+              final lrcEntry = parsedLrc[index];
+
               if ((lrcType == LyricFormat.lrc &&
-                      parsedLrc[index].lyricText.isEmpty &&
-                      parsedLrc[index].translate.isEmpty) ||
+                      lrcEntry.lyricText.isEmpty &&
+                      lrcEntry.translate.isEmpty) ||
                   index == -1) {
                 return SizedBox.shrink();
               }
 
               return TextButton(
                 onPressed: () {
-                  _audioController.audioSetPositon(pos: parsedLrc[index].start);
+                  _audioController.audioSetPositon(pos: lrcEntry.start);
                 }.throttle(ms: 500),
                 style: TextButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: _borderRadius),
@@ -257,37 +271,50 @@ class LyricsRender extends StatelessWidget {
                 child: FractionallySizedBox(
                   widthFactor: 1,
                   child: Obx(() {
-                    final blur =
-                        !_lyricController.isPointerScroll.value
-                            ? (_lyricController.currentLineIndex.value - index)
-                                .abs()
-                                .clamp(0, 4.0)
-                                .toDouble()
-                            : 0.0;
-                    return ImageFiltered(
-                      imageFilter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment:
-                            _lrcAlignment[_settingController
-                                .lrcAlignment
-                                .value],
-                        children: [
-                          lyricWidget(
-                            text: parsedLrc[index].lyricText,
+                    final isCurrent =
+                        index == _lyricController.currentLineIndex.value;
+                    final isPointerScrolling =
+                        _lyricController.isPointerScroll.value;
+
+                    final Widget content = Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment:
+                          _lrcAlignment[_settingController.lrcAlignment.value],
+                      children: [
+                        lyricWidget(
+                          text: lrcEntry.lyricText,
+                          style: lyricStyle,
+                          isCurrent: isCurrent,
+                        ),
+                        if (lrcEntry.translate.isNotEmpty)
+                          Text(
+                            lrcEntry.translate,
                             style: lyricStyle,
-                            index: index,
-                            ctx: context,
+                            softWrap: true,
                           ),
-                          parsedLrc[index].translate.isNotEmpty
-                              ? Text(
-                                parsedLrc[index].translate,
-                                style: lyricStyle,
-                                softWrap: true,
-                              )
-                              : SizedBox.shrink(),
-                        ],
+                      ],
+                    );
+
+                    // 此处有个开关模糊功能 isBlurEnabled
+                    // if ( isPointerScrolling || isCurrent) {
+                    //   return content;
+                    // }
+
+                    double sigma =
+                        (_lyricController.currentLineIndex.value - index)
+                            .abs()
+                            .clamp(0.0, 4.0)
+                            .toDouble();
+                    if (isPointerScrolling || isCurrent) {
+                      sigma = 0;
+                    }
+
+                    return ImageFiltered(
+                      imageFilter: ImageFilter.blur(
+                        sigmaX: sigma,
+                        sigmaY: sigma,
                       ),
+                      child: RepaintBoundary(child: content),
                     );
                   }),
                 ),
