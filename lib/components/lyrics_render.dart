@@ -139,7 +139,7 @@ class LyricsRender extends StatelessWidget {
                               entry.lyricWord,
                               style: style.copyWith(
                                 color: style.color?.withValues(
-                                  alpha: highLightAlpha,
+                                  alpha: _highLightAlpha,
                                 ),
                               ),
                               softWrap: true,
