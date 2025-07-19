@@ -204,7 +204,7 @@ class LyricsRender extends StatelessWidget {
               child: Text(
                 "无歌词",
                 style: lyricStyle.copyWith(
-                  color: lyricStyle.color?.withValues(alpha: 0.8),
+                  color: lyricStyle.color?.withValues(alpha: _highLightAlpha),
                 ),
               ),
             );
