@@ -49,7 +49,7 @@ import 'getxController/setting_ctrl.dart';
 
 import 'theme_manager.dart';
 
-int countMs20=0;
+int countMs100=0;
 int countSec=0;
 
 enum AudioAction{
