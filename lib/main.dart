@@ -159,7 +159,7 @@ void main() async {
       lyricController.currentMs20.value=data;
       countMs100++;
       countSec++;
-      if(countMs20>3){
+      if(countMs100>3){
         audioController.currentMs100.value=data;
         countMs20=0;
       }
