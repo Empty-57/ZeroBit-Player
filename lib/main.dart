@@ -161,7 +161,7 @@ void main() async {
       countSec++;
       if(countMs100>3){
         audioController.currentMs100.value=data;
-        countMs20=0;
+        countMs100=0;
       }
       if(countSec>48){
         audioController.currentSec.value=data;
