@@ -109,7 +109,7 @@ class LyricsRender extends StatelessWidget {
                               high
                                   ? style.copyWith(
                                     color: style.color?.withValues(
-                                      alpha: highLightAlpha,
+                                      alpha: _highLightAlpha,
                                     ),
                                   )
                                   : style,
