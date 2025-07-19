@@ -157,7 +157,7 @@ void main() async {
   try{
     progressListen().listen((data){
       lyricController.currentMs20.value=data;
-      countMs20++;
+      countMs100++;
       countSec++;
       if(countMs20>3){
         audioController.currentMs100.value=data;
