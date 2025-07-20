@@ -22,25 +22,20 @@ import 'get_snack_bar.dart';
 import 'music_list_tool.dart';
 
 const double _itemHeight = 64.0;
-
 const double _headCoverSize = 240;
-
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
-
 const int _coverBigRenderSize = 800;
-
 const double btnHeight = 42;
 const double btnWidth = 42;
 const double resViewThresholds = 1100;
-
-final SettingController _settingController = Get.find<SettingController>();
-final AudioController _audioController = Get.find<AudioController>();
-final AudioSource _audioSource = Get.find<AudioSource>();
-
 const double _menuWidth = 180;
 const double _menuHeight = 48;
 const double _menuRadius = 0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
+
+final SettingController _settingController = Get.find<SettingController>();
+final AudioController _audioController = Get.find<AudioController>();
+final AudioSource _audioSource = Get.find<AudioSource>();
 
 class _MusicMenuController extends GetxController {
   final menuController = MenuController();
@@ -58,6 +53,12 @@ class _MusicMenuController extends GetxController {
     currentIndex.value = index;
     menuController.open(position: Offset.zero);
   }
+
+  void closeMenu() {
+    if (menuController.isOpen) {
+      menuController.close();
+    }
+  }
 }
 
 final _MusicMenuController _musicMenuCtrl = Get.put(_MusicMenuController());
@@ -72,104 +73,93 @@ List<Widget> _genMenuItems({
   required List<Widget> playList,
   bool renderMaybeDel = false,
 }) {
-  final List<Widget> maybeDel =
-      renderMaybeDel
-          ? [
-            Divider(
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.8),
-              height: 0.5,
-              thickness: 0.5,
-            ),
-            CustomBtn(
-              fn: () async {
-                menuController.close();
-                await _audioController.audioRemove(
-                  userKey: userKey,
-                  metadata: metadata,
-                );
-              },
-              btnHeight: _menuHeight,
-              btnWidth: _menuWidth,
-              radius: _menuRadius,
-              icon: PhosphorIconsLight.trash,
-              label: "删除",
-              mainAxisAlignment: MainAxisAlignment.start,
-              backgroundColor: Colors.transparent,
-            ),
-          ]
-          : [];
+  final List<Widget> maybeDel = renderMaybeDel
+      ? [
+          Divider(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.8),
+            height: 0.5,
+            thickness: 0.5,
+          ),
+          CustomBtn(
+            fn: () async {
+              menuController.close();
+              await _audioController.audioRemove(
+                userKey: userKey,
+                metadata: metadata,
+              );
+            },
+            btnHeight: _menuHeight,
+            btnWidth: _menuWidth,
+            radius: _menuRadius,
+            icon: PhosphorIconsLight.trash,
+            label: "删除",
+            mainAxisAlignment: MainAxisAlignment.start,
+            backgroundColor: Colors.transparent,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+          ),
+        ]
+      : [];
 
   return <Widget>[
-        CustomBtn(
-          fn: () {
-            _audioSource.currentAudioSource.value = userKey;
-            menuController.close();
-            _audioController.audioPlay(metadata: metadata);
-          },
-          btnHeight: _menuHeight,
-          btnWidth: _menuWidth,
-          radius: _menuRadius,
-          icon: PhosphorIconsLight.play,
-          label: "播放",
-          mainAxisAlignment: MainAxisAlignment.start,
-          backgroundColor: Colors.transparent,
-          padding: EdgeInsets.symmetric(horizontal: 16),
-        ),
-
-        CustomBtn(
-          fn: () {
-            menuController.close();
-            _audioController.insertNext(metadata: metadata);
-          },
-          btnHeight: _menuHeight,
-          btnWidth: _menuWidth,
-          radius: _menuRadius,
-          icon: PhosphorIconsLight.arrowBendDownRight,
-          label: "添加到下一首",
-          mainAxisAlignment: MainAxisAlignment.start,
-          backgroundColor: Colors.transparent,
-          padding: EdgeInsets.symmetric(horizontal: 16),
-        ),
-        EditMetadataDialog(
-          menuController: menuController,
-          metadata: metadata,
-          index: index,
-          operateArea: operateArea,
-        ),
-
-        SubmenuButton(
-          style: ButtonStyle(
-            padding: WidgetStateProperty.all(
-              EdgeInsets.symmetric(horizontal: 16),
-            ),
-          ),
-          menuStyle: MenuStyle(alignment: Alignment.topRight),
-          menuChildren: playList,
-          leadingIcon: Icon(
-            PhosphorIconsLight.plus,
-            size: getIconSize(size: 'md'),
-          ),
-          child: const Text('添加到歌单'),
-        ),
-
-        CustomBtn(
-          fn: () {
-            menuController.close();
-            Process.run('explorer.exe', ['/select,', metadata.path]);
-          },
-          btnHeight: _menuHeight,
-          btnWidth: _menuWidth,
-          radius: _menuRadius,
-          icon: PhosphorIconsLight.folderOpen,
-          label: "打开本地资源",
-          mainAxisAlignment: MainAxisAlignment.start,
-          backgroundColor: Colors.transparent,
-          padding: EdgeInsets.symmetric(horizontal: 16),
-        ),
-      ] +
-      maybeDel;
+    CustomBtn(
+      fn: () {
+        _audioSource.currentAudioSource.value = userKey;
+        menuController.close();
+        _audioController.audioPlay(metadata: metadata);
+      },
+      btnHeight: _menuHeight,
+      btnWidth: _menuWidth,
+      radius: _menuRadius,
+      icon: PhosphorIconsLight.play,
+      label: "播放",
+      mainAxisAlignment: MainAxisAlignment.start,
+      backgroundColor: Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+    ),
+    CustomBtn(
+      fn: () {
+        menuController.close();
+        _audioController.insertNext(metadata: metadata);
+      },
+      btnHeight: _menuHeight,
+      btnWidth: _menuWidth,
+      radius: _menuRadius,
+      icon: PhosphorIconsLight.arrowBendDownRight,
+      label: "添加到下一首",
+      mainAxisAlignment: MainAxisAlignment.start,
+      backgroundColor: Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+    ),
+    EditMetadataDialog(
+      menuController: menuController,
+      metadata: metadata,
+      index: index,
+      operateArea: operateArea,
+    ),
+    SubmenuButton(
+      style: ButtonStyle(
+        padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 16)),
+      ),
+      menuStyle: const MenuStyle(alignment: Alignment.topRight),
+      menuChildren: playList,
+      leadingIcon: Icon(PhosphorIconsLight.plus, size: getIconSize(size: 'md')),
+      child: const Text('添加到歌单'),
+    ),
+    CustomBtn(
+      fn: () {
+        menuController.close();
+        Process.run('explorer.exe', ['/select,', metadata.path]);
+      },
+      btnHeight: _menuHeight,
+      btnWidth: _menuWidth,
+      radius: _menuRadius,
+      icon: PhosphorIconsLight.folderOpen,
+      label: "打开本地资源",
+      mainAxisAlignment: MainAxisAlignment.start,
+      backgroundColor: Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+    ),
+  ] + maybeDel;
 }
 
 List<Widget> Function(MusicCache metadata) _playListBuilder = (metadata) {
@@ -183,12 +173,13 @@ List<Widget> Function(MusicCache metadata) _playListBuilder = (metadata) {
   }).toList();
 };
 
-class AudioGenPages extends StatelessWidget {
+class AudioGenPages extends StatefulWidget {
   final String title;
   final String operateArea;
   final String audioSource;
   final AudioControllerGenClass controller;
   final Color? backgroundColor;
+
   const AudioGenPages({
     super.key,
     required this.title,
@@ -199,548 +190,417 @@ class AudioGenPages extends StatelessWidget {
   });
 
   @override
+  State<AudioGenPages> createState() => _AudioGenPagesState();
+}
+
+class _AudioGenPagesState extends State<AudioGenPages> {
+  late final RxBool _isMulSelect;
+  late final RxList<MusicCache> _selectedList;
+  late final MenuController _playListMenuController;
+  late final ScrollController _scrollControllerList;
+  late final ScrollController _scrollControllerGrid;
+
+  @override
+  void initState() {
+    super.initState();
+    _isMulSelect = false.obs;
+    _selectedList = <MusicCache>[].obs;
+    _playListMenuController = MenuController();
+    _scrollControllerList = ScrollController();
+    _scrollControllerGrid = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollControllerList.dispose();
+    _scrollControllerGrid.dispose();
+    super.dispose();
+  }
+
+  void _playAll() {
+    _audioSource.currentAudioSource.value = widget.audioSource;
+    if (widget.controller.items.isEmpty) {
+      showSnackBar(
+        title: "WARNING",
+        msg: "此歌单暂无音乐！",
+        duration: const Duration(milliseconds: 1500),
+      );
+      return;
+    }
+    final metadataToPlay = _settingController.playMode.value == 2
+        ? widget.controller.items[Random().nextInt(widget.controller.items.length)]
+        : widget.controller.items[0];
+    _audioController.audioPlay(metadata: metadataToPlay);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final titleStyle = generalTextStyle(ctx: context, size: 'md');
-    final highLightTitleStyle = generalTextStyle(
-      ctx: context,
-      size: 'md',
-      color: Theme.of(context).colorScheme.primary,
-    );
-    final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-    final highLightSubStyle = generalTextStyle(
-      ctx: context,
-      size: 'sm',
-      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-    );
-    final isMulSelect = false.obs;
-
-    final selectedList = <MusicCache>[].obs;
-
-    final playListMenuController = MenuController();
-
     return Container(
       alignment: Alignment.centerLeft,
-      padding: EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
+      padding: const EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
       decoration: BoxDecoration(
-        color: backgroundColor ?? Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(8)),
+        color: widget.backgroundColor ?? Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.only(topLeft: Radius.circular(8)),
       ),
-
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 16,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.end,
+          _buildHeader(),
+          Expanded(child: _buildMusicList()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      spacing: 16,
+      children: <Widget>[
+        if (widget.operateArea != OperateArea.allMusic) _buildHeaderCover(),
+        Expanded(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 8,
-            children: <Widget>[
-              if (operateArea != OperateArea.allMusic)
-                Container(
-                  margin: EdgeInsets.only(left: 8),
-                  child: ClipRRect(
-                    borderRadius: _coverBorderRadius,
-                    child: Obx(() {
-                      return AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        switchInCurve: Curves.easeIn,
-                        switchOutCurve: Curves.easeOut,
-                        child: Image.memory(
-                          controller.headCover.value,
-                          key: ValueKey(controller.headCover.value.hashCode),
-                          cacheWidth: _coverBigRenderSize,
-                          cacheHeight: _coverBigRenderSize,
-                          height: _headCoverSize,
-                          width: _headCoverSize,
-                          fit: BoxFit.cover,
-                        ),
-                        transitionBuilder: (
-                          Widget child,
-                          Animation<double> anim,
-                        ) {
-                          return FadeTransition(opacity: anim, child: child);
-                        },
-                      );
-                    }),
-                  ),
-                ),
-
-              Expanded(
-                flex: 1,
-                child: Container(
-                  margin: EdgeInsets.symmetric(horizontal: 8),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 8,
-                    children: [
-                      FractionallySizedBox(
-                        widthFactor: 1.0,
-                        child: Text(
-                          title,
-                          style: generalTextStyle(
-                            ctx: context,
-                            size: 'title',
-                            weight: FontWeight.w600,
-                          ),
-                          softWrap: false,
-                          overflow: TextOverflow.fade,
-                          maxLines: 1,
-                        ),
-                      ),
-
-                      Obx(
-                        () => Text(
-                          '共${controller.items.length}首音乐',
-                          style: generalTextStyle(ctx: context, size: 'md'),
-                        ),
-                      ),
-
-                      Row(
-                        spacing: 8,
-                        children: [
-                          CustomBtn(
-                            fn: () async {
-                              _audioSource.currentAudioSource.value =
-                                  audioSource;
-
-                              if (controller.items.isEmpty) {
-                                showSnackBar(
-                                  title: "WARNING",
-                                  msg: "此歌单暂无音乐！",
-                                  duration: Duration(milliseconds: 1500),
-                                );
-                                return;
-                              }
-
-                              if (_settingController.playMode.value == 2) {
-                                await _audioController.audioPlay(
-                                  metadata:
-                                      controller.items[Random().nextInt(
-                                        controller.items.length,
-                                      )],
-                                );
-                              } else {
-                                await _audioController.audioPlay(
-                                  metadata: controller.items[0],
-                                );
-                              }
-                            }.throttle(ms: 500),
-                            icon: PhosphorIconsLight.play,
-                            btnHeight: btnHeight,
-                            btnWidth: 96,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            label: "播放",
-                            backgroundColor:
-                                Theme.of(context).colorScheme.primary,
-                            contentColor:
-                                Theme.of(context).colorScheme.onPrimary,
-                            overlayColor:
-                                Theme.of(context).colorScheme.surfaceContainer,
-                          ),
-
-                          Obx(() {
-                            final itemMap = {
-                              0: [
-                                _settingController.sortType[0],
-                                PhosphorIconsRegular.textT,
-                              ],
-                              1: [
-                                _settingController.sortType[1],
-                                PhosphorIconsRegular.userFocus,
-                              ],
-                              2: [
-                                _settingController.sortType[2],
-                                PhosphorIconsRegular.vinylRecord,
-                              ],
-                              3: [
-                                _settingController.sortType[3],
-                                PhosphorIconsRegular.clockCountdown,
-                              ],
-                            };
-                            if (operateArea == OperateArea.artistList) {
-                              itemMap.remove(1);
-                            }
-
-                            if (operateArea == OperateArea.albumList) {
-                              itemMap.remove(2);
-                            }
-
-                            if (!isMulSelect.value) {
-                              return CustomDropdownMenu(
-                                itemMap: itemMap,
-                                fn: (entry) {
-                                  _settingController.sortMap[operateArea] =
-                                      entry.key;
-                                  _settingController.putCache();
-                                  controller.itemReSort(type: entry.key);
-                                  _audioController.syncCurrentIndex();
-                                },
-                                label:
-                                    _settingController
-                                        .sortType[_settingController
-                                            .sortMap[operateArea]
-                                        as int] ??
-                                    "未指定",
-                                btnWidth: 128,
-                                btnHeight: btnHeight,
-                                itemWidth: 128,
-                                itemHeight: btnHeight,
-                                btnIcon: PhosphorIconsLight.funnelSimple,
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                spacing: 6,
-                              );
-                            }
-
-                            if (isMulSelect.value &&
-                                operateArea == OperateArea.playList) {
-                              return CustomBtn(
-                                fn: () {
-                                  _audioController.audioRemoveAll(
-                                    userKey: audioSource,
-                                    removeList: [...selectedList],
-                                  );
-                                },
-                                icon: PhosphorIconsLight.trash,
-                                btnHeight: btnHeight,
-                                btnWidth: btnWidth,
-                                contentColor: Colors.red,
-                                tooltip: "删除所选项",
-                              );
-                            }
-
-                            return const SizedBox.shrink();
-                          }),
-
-                          Obx(
-                            () =>
-                                isMulSelect.value
-                                    ? MenuAnchor(
-                                      menuChildren:
-                                          _audioController.allUserKey.map((v) {
-                                            return CustomBtn(
-                                              fn: () {
-                                                playListMenuController.close();
-                                                _audioController
-                                                    .addAllToAudioList(
-                                                      selectedList: [
-                                                        ...selectedList,
-                                                      ],
-                                                      userKey: v,
-                                                    );
-                                              },
-                                              btnWidth: 160,
-                                              btnHeight: btnHeight,
-                                              label:
-                                                  v.split(
-                                                    TagSuffix.playList,
-                                                  )[0],
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              backgroundColor:
-                                                  Colors.transparent,
-                                            );
-                                          }).toList(),
-                                      controller: playListMenuController,
-                                      child: CustomBtn(
-                                        fn: () {
-                                          if (_audioController
-                                              .allUserKey
-                                              .isEmpty) {
-                                            showSnackBar(
-                                              title: "WARNING",
-                                              msg: "未创建歌单！",
-                                              duration: Duration(
-                                                milliseconds: 1500,
-                                              ),
-                                            );
-                                            return;
-                                          }
-                                          playListMenuController.open();
-                                        },
-                                        icon: PhosphorIconsLight.plus,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        btnHeight: btnHeight,
-                                        btnWidth: 160,
-                                        label: "添加到歌单",
-                                      ),
-                                    )
-                                    : CustomBtn(
-                                      fn: () {
-                                        _settingController.isReverse.value =
-                                            !_settingController.isReverse.value;
-                                        _settingController.putCache();
-                                        controller.itemReverse();
-                                        _audioController.syncCurrentIndex();
-                                      },
-                                      icon:
-                                          _settingController.isReverse.value
-                                              ? PhosphorIconsLight.arrowDown
-                                              : PhosphorIconsLight.arrowUp,
-                                      btnHeight: btnHeight,
-                                      btnWidth: btnWidth,
-                                      tooltip:
-                                          _settingController.isReverse.value
-                                              ? '降序'
-                                              : '升序',
-                                    ),
-                          ),
-
-                          Obx(
-                            () =>
-                                isMulSelect.value
-                                    ? CustomBtn(
-                                      fn: () {
-                                        if (selectedList.isNotEmpty) {
-                                          selectedList.clear();
-                                        } else {
-                                          selectedList.value = [
-                                            ...controller.items,
-                                          ];
-                                        }
-                                      },
-                                      icon:
-                                          selectedList.isNotEmpty
-                                              ? PhosphorIconsLight
-                                                  .selectionSlash
-                                              : PhosphorIconsLight.selectionAll,
-                                      btnHeight: btnHeight,
-                                      btnWidth: btnWidth,
-                                      tooltip:
-                                          selectedList.isNotEmpty
-                                              ? '清空选择'
-                                              : '全选',
-                                    )
-                                    : CustomBtn(
-                                      fn: () {
-                                        _settingController
-                                                .viewModeMap[operateArea] =
-                                            !_settingController
-                                                .viewModeMap[operateArea];
-                                        _settingController.putCache();
-                                      },
-                                      icon:
-                                          _settingController
-                                                  .viewModeMap[operateArea]
-                                              ? PhosphorIconsLight.listDashes
-                                              : PhosphorIconsLight.gridFour,
-                                      btnHeight: btnHeight,
-                                      btnWidth: btnWidth,
-                                      spacing: 4,
-                                      tooltip:
-                                          _settingController
-                                                  .viewModeMap[operateArea]
-                                              ? "列表视图"
-                                              : "表格视图",
-                                    ),
-                          ),
-
-                          Obx(
-                            () => CustomBtn(
-                              fn: () {
-                                selectedList.clear();
-                                isMulSelect.value = !isMulSelect.value;
-                              },
-                              icon:
-                                  isMulSelect.value
-                                      ? PhosphorIconsLight.xSquare
-                                      : PhosphorIconsLight.selection,
-                              btnHeight: btnHeight,
-                              btnWidth: btnWidth,
-                              tooltip: isMulSelect.value ? '退出多选' : '多选模式',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+            children: [
+              Text(
+                widget.title,
+                style: generalTextStyle(ctx: context, size: 'title', weight: FontWeight.w600),
+                softWrap: false,
+                overflow: TextOverflow.fade,
+                maxLines: 1,
               ),
+              Obx(() => Text(
+                '共${widget.controller.items.length}首音乐',
+                style: generalTextStyle(ctx: context, size: 'md'),
+              )),
+              _buildActionButtons(),
             ],
           ),
+        ),
+      ],
+    );
+  }
 
-          Expanded(
-            child: Obx(() {
-              final viewMode = _settingController.viewModeMap[operateArea]!;
-              final ScrollController scrollControllerList = ScrollController();
-              final ScrollController scrollControllerGrid = ScrollController();
+  Widget _buildHeaderCover() {
+    return ClipRRect(
+      borderRadius: _coverBorderRadius,
+      child: Obx(() {
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: Image.memory(
+            widget.controller.headCover.value,
+            key: ValueKey(widget.controller.headCover.value.hashCode),
+            cacheWidth: _coverBigRenderSize,
+            cacheHeight: _coverBigRenderSize,
+            height: _headCoverSize,
+            width: _headCoverSize,
+            fit: BoxFit.cover,
+            gaplessPlayback: true,
+          ),
+        );
+      }),
+    );
+  }
 
-              return RawMenuAnchor(
-                controller: _musicMenuCtrl.menuController,
-                consumeOutsideTaps: true,
-                overlayBuilder: (
-                  BuildContext context,
-                  RawMenuOverlayInfo info,
-                ) {
-                  final currentMetadata = _musicMenuCtrl.currentMetadata.value;
-                  final position = _musicMenuCtrl.menuPosition.value;
-                  if (currentMetadata == null || position == null) {
-                    return SizedBox(
-                      child: Text(
-                        "发生了某些错误！",
-                        style: generalTextStyle(ctx: context, size: 'md'),
-                      ),
-                    );
-                  }
+  Widget _buildActionButtons() {
+    return Row(
+      spacing: 8,
+      children: [
+        CustomBtn(
+          fn: _playAll.throttle(ms: 500),
+          icon: PhosphorIconsLight.play,
+          btnHeight: btnHeight,
+          btnWidth: 96,
+          mainAxisAlignment: MainAxisAlignment.center,
+          label: "播放",
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          contentColor: Theme.of(context).colorScheme.onPrimary,
+          overlayColor: Theme.of(context).colorScheme.surfaceContainer,
+        ),
+        Obx(() => AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+          child: _isMulSelect.value ? _buildMultiSelectActions() : _buildNormalActions(),
+        )),
+      ],
+    );
+  }
 
-                  double left = position.dx + 16;
-                  double top = position.dy;
-                  final itemCount = operateArea == OperateArea.playList ? 6 : 5;
-                  if (top + _menuHeight * (itemCount + 1.5) > Get.height) {
-                    top = top - _menuHeight * itemCount;
-                  }
-                  if (left + _menuWidth * 2 > Get.width) {
-                    left = left - _menuWidth - 16;
-                  }
+  Widget _buildNormalActions() {
+    return Row(
+      key: const ValueKey('normal_actions'),
+      spacing: 8,
+      children: [
+        _buildSortButton(),
+        Obx(() => CustomBtn(
+          fn: () {
+            _settingController.isReverse.value = !_settingController.isReverse.value;
+            _settingController.putCache();
+            widget.controller.itemReverse();
+            _audioController.syncCurrentIndex();
+          },
+          icon: _settingController.isReverse.value ? PhosphorIconsLight.arrowDown : PhosphorIconsLight.arrowUp,
+          btnHeight: btnHeight,
+          btnWidth: btnWidth,
+          tooltip: _settingController.isReverse.value ? '降序' : '升序',
+        )),
+        Obx(() => CustomBtn(
+          fn: () {
+            _settingController.viewModeMap[widget.operateArea] = !_settingController.viewModeMap[widget.operateArea]!;
+            _settingController.putCache();
+          },
+          icon: _settingController.viewModeMap[widget.operateArea]! ? PhosphorIconsLight.listDashes : PhosphorIconsLight.gridFour,
+          btnHeight: btnHeight,
+          btnWidth: btnWidth,
+          tooltip: _settingController.viewModeMap[widget.operateArea]! ? "列表视图" : "表格视图",
+        )),
+        _buildMultiSelectToggleButton(),
+      ],
+    );
+  }
 
-                  return Positioned(
-                    top: top,
-                    left: left,
-                    child: TapRegion(
-                      onTapOutside: (PointerDownEvent event) {
-                        Future.delayed(
-                          Duration(milliseconds: 100),
-                          _musicMenuCtrl.menuController.close,
-                        );
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainer,
-                          borderRadius: _borderRadius,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              offset: Offset(0, 2),
-                              blurRadius: 4,
-                              spreadRadius: 0,
-                            ),
-                          ],
-                        ),
-                        padding: EdgeInsets.zero,
-                        width: _menuWidth,
-                        child: Column(
-                          children: _genMenuItems(
-                            context: context,
-                            menuController: _musicMenuCtrl.menuController,
-                            metadata: currentMetadata,
-                            userKey: audioSource,
-                            index: _musicMenuCtrl.currentIndex.value,
-                            renderMaybeDel:
-                                operateArea == OperateArea.playList
-                                    ? true
-                                    : false,
-                            operateArea: operateArea,
-                            playList: _playListBuilder(currentMetadata),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-                child: Stack(
-                  children: [
-                    Offstage(
-                      offstage: !viewMode,
-                      child: ListView.builder(
-                        controller: scrollControllerList,
-                        itemCount: controller.items.length,
-                        itemExtent: _itemHeight,
-                        cacheExtent: _itemHeight * 1,
-                        padding: EdgeInsets.only(bottom: _itemHeight * 2),
-                        itemBuilder: (context, index) {
-                          final metadata = controller.items[index];
+  Widget _buildMultiSelectActions() {
+    return Row(
+      key: const ValueKey('multi_select_actions'),
+      spacing: 8,
+      children: [
+        if (widget.operateArea == OperateArea.playList)
+          CustomBtn(
+            fn: () {
+              _audioController.audioRemoveAll(userKey: widget.audioSource, removeList: [..._selectedList]);
+              _selectedList.clear();
+            },
+            icon: PhosphorIconsLight.trash,
+            btnHeight: btnHeight,
+            btnWidth: btnWidth,
+            contentColor: Colors.red,
+            tooltip: "删除所选项",
+          ),
+        _buildAddToPlaylistMenuButton(),
+        Obx(() => CustomBtn(
+          fn: () {
+            if (_selectedList.isNotEmpty) {
+              _selectedList.clear();
+            } else {
+              _selectedList.value = [...widget.controller.items];
+            }
+          },
+          icon: _selectedList.isNotEmpty ? PhosphorIconsLight.selectionSlash : PhosphorIconsLight.selectionAll,
+          btnHeight: btnHeight,
+          btnWidth: btnWidth,
+          tooltip: _selectedList.isNotEmpty ? '清空选择' : '全选',
+        )),
+        _buildMultiSelectToggleButton(),
+      ],
+    );
+  }
 
-                          return GestureDetector(
-                            onSecondaryTapDown: (e) {
-                              RenderBox overlayBox =
-                                  Overlay.of(context).context.findRenderObject()
-                                      as RenderBox;
-                              Offset overlayOffset = overlayBox.globalToLocal(
-                                e.globalPosition,
-                              );
-                              _musicMenuCtrl.openMenu(
-                                overlayOffset: overlayOffset,
-                                metadata: metadata,
-                                index: index,
-                              );
-                            },
-                            child: MusicTile(
-                              key: ValueKey(metadata.path), //暂定
-                              metadata: metadata,
-                              titleStyle: titleStyle,
-                              highLightTitleStyle: highLightTitleStyle,
-                              subStyle: subStyle,
-                              highLightSubStyle: highLightSubStyle,
-                              audioSource: audioSource,
-                              operateArea: operateArea,
-                              isMulSelect: isMulSelect,
-                              selectedList: selectedList,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    Offstage(
-                      offstage: viewMode,
-                      child: GridView.builder(
-                        controller: scrollControllerGrid,
-                        itemCount: controller.items.length,
-                        cacheExtent: _itemHeight * 1,
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount:
-                              context.width < resViewThresholds ? 3 : 4,
-                          mainAxisSpacing: 4.0,
-                          crossAxisSpacing: 8.0,
-                          childAspectRatio: 1.0,
-                          mainAxisExtent: _itemHeight,
-                        ),
-                        padding: EdgeInsets.only(bottom: _itemHeight * 2),
-                        itemBuilder: (context, index) {
-                          final metadata = controller.items[index];
+  Widget _buildMultiSelectToggleButton() {
+    return CustomBtn(
+      fn: () {
+        _selectedList.clear();
+        _isMulSelect.value = !_isMulSelect.value;
+      },
+      icon: _isMulSelect.value ? PhosphorIconsLight.xSquare : PhosphorIconsLight.selection,
+      btnHeight: btnHeight,
+      btnWidth: btnWidth,
+      tooltip: _isMulSelect.value ? '退出多选' : '多选模式',
+    );
+  }
 
-                          return GestureDetector(
-                            onSecondaryTapDown: (e) {
-                              RenderBox overlayBox =
-                                  Overlay.of(context).context.findRenderObject()
-                                      as RenderBox;
-                              Offset overlayOffset = overlayBox.globalToLocal(
-                                e.globalPosition,
-                              );
-                              _musicMenuCtrl.openMenu(
-                                overlayOffset: overlayOffset,
-                                metadata: metadata,
-                                index: index,
-                              );
-                            },
-                            child: MusicTile(
-                              key: ValueKey(metadata.path), //暂定
-                              metadata: metadata,
-                              titleStyle: titleStyle,
-                              highLightTitleStyle: highLightTitleStyle,
-                              subStyle: subStyle,
-                              highLightSubStyle: highLightSubStyle,
-                              audioSource: audioSource,
-                              operateArea: operateArea,
-                              isMulSelect: isMulSelect,
-                              selectedList: selectedList,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    FloatingButton(
-                      scrollControllerList: scrollControllerList,
-                      scrollControllerGrid: scrollControllerGrid,
-                      operateArea: operateArea,
-                    ),
-                  ],
+  Widget _buildSortButton() {
+    final itemMap = {
+      0: [_settingController.sortType[0], PhosphorIconsRegular.textT],
+      1: [_settingController.sortType[1], PhosphorIconsRegular.userFocus],
+      2: [_settingController.sortType[2], PhosphorIconsRegular.vinylRecord],
+      3: [_settingController.sortType[3], PhosphorIconsRegular.clockCountdown],
+    };
+    if (widget.operateArea == OperateArea.artistList) itemMap.remove(1);
+    if (widget.operateArea == OperateArea.albumList) itemMap.remove(2);
+
+    return CustomDropdownMenu(
+      itemMap: itemMap,
+      fn: (entry) {
+        _settingController.sortMap[widget.operateArea] = entry.key;
+        _settingController.putCache();
+        widget.controller.itemReSort(type: entry.key);
+        _audioController.syncCurrentIndex();
+      },
+      label: _settingController.sortType[_settingController.sortMap[widget.operateArea] as int] ?? "未指定",
+      btnWidth: 128,
+      btnHeight: btnHeight,
+      itemWidth: 128,
+      itemHeight: btnHeight,
+      btnIcon: PhosphorIconsLight.funnelSimple,
+      mainAxisAlignment: MainAxisAlignment.start,
+      spacing: 6,
+    );
+  }
+
+  Widget _buildAddToPlaylistMenuButton() {
+    return MenuAnchor(
+      controller: _playListMenuController,
+      menuChildren: _audioController.allUserKey.map((v) {
+        return CustomBtn(
+          fn: () {
+            _playListMenuController.close();
+            _audioController.addAllToAudioList(selectedList: [..._selectedList], userKey: v);
+          },
+          btnWidth: 160,
+          btnHeight: btnHeight,
+          label: v.split(TagSuffix.playList)[0],
+          mainAxisAlignment: MainAxisAlignment.center,
+          backgroundColor: Colors.transparent,
+        );
+      }).toList(),
+      child: CustomBtn(
+        fn: () {
+          if (_audioController.allUserKey.isEmpty) {
+            showSnackBar(title: "WARNING", msg: "未创建歌单！");
+            return;
+          }
+          if (_selectedList.isEmpty) {
+            showSnackBar(title: "WARNING", msg: "未选择任何音乐！");
+            return;
+          }
+          _playListMenuController.open();
+        },
+        icon: PhosphorIconsLight.plus,
+        mainAxisAlignment: MainAxisAlignment.center,
+        btnHeight: btnHeight,
+        btnWidth: 160,
+        label: "添加到歌单",
+      ),
+    );
+  }
+
+  Widget _buildMusicList() {
+    final titleStyle = generalTextStyle(ctx: context, size: 'md');
+    final highLightTitleStyle = generalTextStyle(ctx: context, size: 'md', color: Theme.of(context).colorScheme.primary);
+    final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
+    final highLightSubStyle = generalTextStyle(ctx: context, size: 'sm', color: Theme.of(context).colorScheme.primary.withOpacity(0.8));
+
+    return RawMenuAnchor(
+      controller: _musicMenuCtrl.menuController,
+      consumeOutsideTaps: true,
+      overlayBuilder: (context, info) {
+        final currentMetadata = _musicMenuCtrl.currentMetadata.value;
+        final position = _musicMenuCtrl.menuPosition.value;
+        if (currentMetadata == null || position == null) return const SizedBox.shrink();
+
+        double left = position.dx + 16;
+        double top = position.dy;
+        final itemCount = widget.operateArea == OperateArea.playList ? 6 : 5;
+        if (top + _menuHeight * (itemCount + 1.5) > Get.height) {
+          top = top - _menuHeight * itemCount;
+        }
+        if (left + _menuWidth * 2 > Get.width) {
+          left = left - _menuWidth - 16;
+        }
+
+        return Positioned(
+          top: top,
+          left: left,
+          child: TapRegion(
+            onTapOutside: (_) => Future.delayed(const Duration(milliseconds: 100), _musicMenuCtrl.closeMenu),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainer,
+                borderRadius: _borderRadius,
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), offset: const Offset(0, 2), blurRadius: 4)],
+              ),
+              width: _menuWidth,
+              child: Column(
+                children: _genMenuItems(
+                  context: context,
+                  menuController: _musicMenuCtrl.menuController,
+                  metadata: currentMetadata,
+                  userKey: widget.audioSource,
+                  index: _musicMenuCtrl.currentIndex.value,
+                  renderMaybeDel: widget.operateArea == OperateArea.playList,
+                  operateArea: widget.operateArea,
+                  playList: _playListBuilder(currentMetadata),
                 ),
-              );
-            }),
+              ),
+            ),
+          ),
+        );
+      },
+      child: Stack(
+        children: [
+          Obx(() => Offstage(
+            offstage: !_settingController.viewModeMap[widget.operateArea]!,
+            child: ListView.builder(
+              controller: _scrollControllerList,
+              itemCount: widget.controller.items.length,
+              itemExtent: _itemHeight,
+              cacheExtent: _itemHeight * 1,
+              padding: const EdgeInsets.only(bottom: _itemHeight * 2),
+              itemBuilder: (context, index) => _buildMusicTile(context, index, titleStyle, highLightTitleStyle, subStyle, highLightSubStyle),
+            ),
+          )),
+          Obx(() => Offstage(
+            offstage: _settingController.viewModeMap[widget.operateArea]!,
+            child: GridView.builder(
+              controller: _scrollControllerGrid,
+              itemCount: widget.controller.items.length,
+              cacheExtent: _itemHeight * 1,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: context.width < resViewThresholds ? 3 : 4,
+                mainAxisSpacing: 4.0,
+                crossAxisSpacing: 8.0,
+                childAspectRatio: 1.0,
+                mainAxisExtent: _itemHeight,
+              ),
+              padding: const EdgeInsets.only(bottom: _itemHeight * 2),
+              itemBuilder: (context, index) => _buildMusicTile(context, index, titleStyle, highLightTitleStyle, subStyle, highLightSubStyle),
+            ),
+          )),
+          FloatingButton(
+            scrollControllerList: _scrollControllerList,
+            scrollControllerGrid: _scrollControllerGrid,
+            operateArea: widget.operateArea,
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMusicTile(
+    BuildContext context,
+    int index,
+    TextStyle titleStyle,
+    TextStyle highLightTitleStyle,
+    TextStyle subStyle,
+    TextStyle highLightSubStyle,
+  ) {
+    final metadata = widget.controller.items[index];
+    return GestureDetector(
+      onSecondaryTapDown: (e) {
+        RenderBox overlayBox = Overlay.of(context).context.findRenderObject() as RenderBox;
+        Offset overlayOffset = overlayBox.globalToLocal(e.globalPosition);
+        _musicMenuCtrl.openMenu(
+          overlayOffset: overlayOffset,
+          metadata: metadata,
+          index: index,
+        );
+      },
+      child: MusicTile(
+        key: ValueKey(metadata.path),
+        metadata: metadata,
+        titleStyle: titleStyle,
+        highLightTitleStyle: highLightTitleStyle,
+        subStyle: subStyle,
+        highLightSubStyle: highLightSubStyle,
+        audioSource: widget.audioSource,
+        operateArea: widget.operateArea,
+        isMulSelect: _isMulSelect,
+        selectedList: _selectedList,
       ),
     );
   }

@@ -9,44 +9,37 @@ import '../getxController/play_list_ctrl.dart';
 import '../tools/general_style.dart';
 
 const double _bottom = 96;
-
 const double _radius = 6;
-
 const double _ctrlBtnMinSize = 40.0;
 const double _itemHeight = 64.0;
-const double resViewThresholds= 1100;
-final MusicCacheController _musicCacheController =
-    Get.find<MusicCacheController>();
+const double _resViewThresholds = 1100;
 
+final MusicCacheController _musicCacheController = Get.find<MusicCacheController>();
 final AudioController _audioController = Get.find<AudioController>();
-
 
 class _FloatingBtn extends StatelessWidget {
   final String tooltip;
   final IconData icon;
-  final VoidCallback? fn;
+  final VoidCallback? onPressed;
 
   const _FloatingBtn({
     required this.tooltip,
     required this.icon,
-    required this.fn,
+    this.onPressed,
   });
+
   @override
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
       child: TextButton(
-        onPressed: () {
-          if (fn != null) {
-            fn!();
-          }
-        },
+        onPressed: onPressed,
         style: TextButton.styleFrom(
           padding: EdgeInsets.zero,
-          minimumSize: Size(_ctrlBtnMinSize, _ctrlBtnMinSize),
+          minimumSize: const Size(_ctrlBtnMinSize, _ctrlBtnMinSize),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           visualDensity: VisualDensity.compact,
-          backgroundColor: Colors.transparent,
+          // backgroundColor: Colors.transparent, // TextButton 默认为透明
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(_radius),
           ),
@@ -57,6 +50,7 @@ class _FloatingBtn extends StatelessWidget {
   }
 }
 
+// --- 主组件 (FloatingButton) ---
 class FloatingButton extends StatelessWidget {
   final ScrollController scrollControllerList;
   final ScrollController scrollControllerGrid;
@@ -69,22 +63,58 @@ class FloatingButton extends StatelessWidget {
     required this.operateArea,
   });
 
-  int _getIndex() {
-    int index = 0;
+  int _getCurrentPlayingIndex() {
+    final currentPath = _audioController.currentPath.value;
+    if (currentPath.isEmpty) return -1;
 
     switch (operateArea) {
       case OperateArea.allMusic:
-        index = _musicCacheController.items.indexWhere(
-          (metadata) => metadata.path == _audioController.currentPath.value,
-        );
-        return index;
+        return _musicCacheController.items.indexWhere((m) => m.path == currentPath);
       case OperateArea.playList:
-        index = PlayListController.audioListItems.indexWhere(
-          (v) => v.path == _audioController.currentPath.value,
-        );
-        return index;
+        return PlayListController.audioListItems.indexWhere((m) => m.path == currentPath);
+      default:
+        return -1;
     }
-    return index;
+  }
+
+  void _jumpToCurrent(BuildContext context) {
+    final index = _getCurrentPlayingIndex();
+
+    final screenSize = MediaQuery.of(context).size;
+
+    // 头部区域的大致高度，用于计算屏幕中间位置
+    // 这个值应该与 AudioGenPages 中的头部高度保持一致
+    final double headerOffset = operateArea == OperateArea.allMusic ? 280 : 384;
+    final double middleOffset = (screenSize.height - headerOffset) / 2;
+
+    // --- ListView 定位逻辑 ---
+    if (scrollControllerList.hasClients) {
+      final double targetOffsetList = (index * _itemHeight - middleOffset)
+          .clamp(0.0, scrollControllerList.position.maxScrollExtent);
+      scrollControllerList.jumpTo(
+        targetOffsetList,
+      );
+    }
+
+    // --- 计算 GridView 的定位逻辑 ---
+    if (scrollControllerGrid.hasClients) {
+      // 计算列数
+      final int crossAxisCount = screenSize.width < _resViewThresholds ? 3 : 4;
+
+      // 计算目标项所在的行号 (从0开始)
+      final int targetRow = index ~/ crossAxisCount;
+
+      // 计算 GridView 中每行的高度（包括间距）
+      const double rowHeight = _itemHeight+8;
+
+      // 计算最终的滚动偏移量
+      final double targetOffsetGrid = (targetRow * rowHeight - middleOffset)
+          .clamp(0.0, scrollControllerGrid.position.maxScrollExtent);
+
+      scrollControllerGrid.jumpTo(
+        targetOffsetGrid,
+      );
+    }
   }
 
   @override
@@ -98,34 +128,21 @@ class FloatingButton extends StatelessWidget {
         spacing: 4,
         children: [
           _FloatingBtn(
-            tooltip: '顶部',
+            tooltip: '回到顶部',
             icon: PhosphorIconsFill.arrowLineUp,
-            fn: () {
-              scrollControllerGrid.jumpTo(0.0);
-              scrollControllerList.jumpTo(0.0);
+            onPressed: () {
+              if (scrollControllerList.hasClients) {
+                scrollControllerList.jumpTo(0.0);
+              }
+              if (scrollControllerGrid.hasClients) {
+                scrollControllerGrid.jumpTo(0.0);
+              }
             },
           ),
-
           _FloatingBtn(
             tooltip: '定位',
             icon: PhosphorIconsLight.diamond,
-            fn: () {
-              final double offset =
-                  operateArea == OperateArea.allMusic ? 144 : 384;
-
-              final double middleOffset =
-                  (Get.height - _itemHeight*2.5 - offset) / 2;
-
-              final int index = _getIndex();
-
-              double targetOffsetList = (index * _itemHeight - middleOffset)
-                  .clamp(0.0, scrollControllerList.position.maxScrollExtent);
-              double targetOffsetGrid = (index * _itemHeight - middleOffset)/(Get.width < resViewThresholds ? 3 : 4)
-                  .clamp(0.0, scrollControllerGrid.position.maxScrollExtent);
-
-              scrollControllerList.jumpTo(targetOffsetList);
-              scrollControllerGrid.jumpTo(targetOffsetGrid);
-            },
+            onPressed: () => _jumpToCurrent(context),
           ),
         ],
       ),
