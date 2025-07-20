@@ -1,7 +1,4 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/field/app_routes.dart';
@@ -27,8 +24,6 @@ const double _coverSize = 48.0;
 
 const double _ctrlBtnMinSize = 40.0;
 
-final _isBarHover = false.obs;
-
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 const int _coverRenderSize = 150;
 
@@ -39,55 +34,42 @@ class _ProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progressColor = Theme.of(
-      context,
-    ).colorScheme.secondaryContainer.withValues(alpha: 0.8);
-
-    final fgPaint =
-        Paint()
-          ..color = progressColor
-          ..style = PaintingStyle.fill;
+    final progressColor = Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.8);
+    final fgPaint = Paint()..color = progressColor..style = PaintingStyle.fill;
 
     return RepaintBoundary(
-      child: Obx(() {
-        return CustomPaint(
-          willChange: true,
-          size: Size(_barWidth, _barHeight),
-          painter: _ProgressPainter(
-            progress: _audioController.progress.value,
-            color: progressColor,
-            fgPaint: fgPaint,
-          ),
-        );
-      }),
+      child: Obx(()=>CustomPaint(
+            size: const Size(_barWidth, _barHeight),
+            painter: _ProgressPainter(
+              progress: _audioController.progress.value,
+              fgPaint: fgPaint,
+            ),
+          )),
     );
   }
 }
 
 class _ProgressPainter extends CustomPainter {
   final double progress;
-  final Color color;
   final Paint fgPaint;
-  const _ProgressPainter({
-    required this.progress,
-    required this.color,
-    required this.fgPaint,
-  });
+
+  const _ProgressPainter({required this.progress, required this.fgPaint});
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (progress <= 0) return;
     final progressRect = RRect.fromRectAndCorners(
       Rect.fromLTWH(0, 0, size.width * progress, size.height),
-      topLeft: Radius.circular(_radius),
-      bottomLeft: Radius.circular(_radius),
+      topLeft: const Radius.circular(_radius),
+      bottomLeft: const Radius.circular(_radius),
     );
-
     canvas.drawRRect(progressRect, fgPaint);
   }
 
   @override
   bool shouldRepaint(_ProgressPainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.color != color;
+    // 仅在 progress 值变化时重绘
+    return oldDelegate.progress != progress;
   }
 }
 
@@ -147,193 +129,194 @@ class _DiamondSliderThumbShape extends SliderComponentShape {
   }
 }
 
-class PlayBar extends StatelessWidget {
+class PlayBar extends StatefulWidget {
   const PlayBar({super.key});
 
   @override
+  State<PlayBar> createState() => _PlayBarState();
+}
+
+class _PlayBarState extends State<PlayBar> {
+  bool _isBarHover = false;
+
+  @override
   Widget build(BuildContext context) {
-    final timeTextStyle = generalTextStyle(
-      ctx: context,
-      size: 'sm',
-      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
-    );
-    final audioCtrlWidget=AudioCtrlWidget(context: context,size: _ctrlBtnMinSize);
+    final audioCtrlWidget = AudioCtrlWidget(context: context, size: _ctrlBtnMinSize);
+
+    final screenWidth = context.width;
+        final rightOffset = (screenWidth - (screenWidth > resViewThresholds ? _navigationWidth : _navigationWidthSmall)) / 2 - _barWidthHalf;
 
     return Positioned(
-      bottom: _bottom,
-      right: (context.width - (context.width>resViewThresholds? _navigationWidth:_navigationWidthSmall)) / 2 - _barWidthHalf,
-      child: ClipRRect(
-        borderRadius: _coverBorderRadius,
-        child: Column(
-          children: [
-            Material(
-              color: Colors.transparent,
-              child: SliderTheme(
-                data: SliderTheme.of(context).copyWith(
-                  trackHeight: 1,
-                  showValueIndicator: ShowValueIndicator.always,
-                  thumbShape: const _DiamondSliderThumbShape(
-                    horizontalDiagonal: 8,
-                    verticalDiagonal: 16,
-                  ),
-                  padding: EdgeInsets.zero,
-                  activeTrackColor: Colors.transparent,
-                  thumbColor: Theme.of(
-                    context,
-                  ).colorScheme.primary,
-                  inactiveTrackColor: Colors.transparent,
-                  overlayShape: RoundSliderOverlayShape(
-                    overlayRadius: 0,
-                  ), // 按下圈大小
-                  valueIndicatorShape: RectangularValueIndicatorShape(
-                    width: 48,
-                    height: 28,
-                    radius: 4,
-                  ),
-                  valueIndicatorTextStyle:generalTextStyle(ctx: context,size: 'sm',color: Theme.of(context).colorScheme.onPrimary),
-                  mouseCursor: WidgetStateProperty.all(SystemMouseCursors.resizeLeftRight),
-                ),
-                child: Container(
-                  width: _barWidth+16,
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                  child: audioCtrlWidget.seekSlide,
-                ),
-              ),
-            ),
-            Stack(
+          bottom: _bottom,
+          right: rightOffset,
+          child: ClipRRect(
+            borderRadius: _coverBorderRadius,
+            child: Column(
               children: [
-                Container(
-                  width: _barWidth,
-                  height: _barHeight,
-                  margin: EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(_radius),
-                    color: Theme.of(context).colorScheme.surfaceContainer,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black38.withValues(alpha: 0.2),
-                        spreadRadius: 2,
-                        blurRadius: 4,
-                        offset: Offset(1, 2),
-                      ),
-                    ],
-                  ),
-                ),
-                const _ProgressBar(),
-                TextButton(
-                  onPressed: (){
-                    Get.toNamed(AppRoutes.lrcView);
-                  },
-                  onHover: (v) {
-                    _isBarHover.value = v;
-                  },
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    fixedSize: Size(_barWidth, _barHeight),
-                    backgroundColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(_radius),
-                    ),
-                  ),
-                  child: Obx(() {
-                    late final Uint8List src;
-                    late final String title;
-                    late final String artist;
-                    late final String duration;
-                    final currentMetadata =_audioController.currentMetadata.value;
-                    if (currentMetadata.path.isNotEmpty) {
-                      src = currentMetadata.src ?? kTransparentImage;
-                      title = currentMetadata.title;
-                      artist = currentMetadata.artist;
-                      duration = formatTime(
-                        totalSeconds: currentMetadata.duration,
-                      );
-                    } else {
-                      src = kTransparentImage;
-                      title = "ZeroBit Player";
-                      artist = "39";
-                      duration = "--:--";
-                    }
-
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      spacing: 8,
-                      children: [
-                        Hero(
-                          tag: 'playingCover',
-                          child: ClipRRect(
-                          borderRadius: _coverBorderRadius,
-                          child: FadeInImage(
-                            placeholder: MemoryImage(kTransparentImage),
-                            image: ResizeImage(
-                              MemoryImage(src),
-                              width: _coverRenderSize,
-                              height: _coverRenderSize,
-                            ),
-                            height: _coverSize,
-                            width: _coverSize,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        ),
-                        Expanded(
-                          flex: 1,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            spacing: 4,
-                            children: [
-                              Text(
-                                title,
-                                softWrap: true,
-                                overflow: TextOverflow.fade,
-                                maxLines: 1,
-                                style: generalTextStyle(
-                                  ctx: context,
-                                  size: 'md',
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              ),
-                              Text(
-                                artist,
-                                softWrap: true,
-                                overflow: TextOverflow.fade,
-                                maxLines: 1,
-                                style: timeTextStyle,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                audioCtrlWidget.volumeSet,
-                                audioCtrlWidget.skipBack,
-                                audioCtrlWidget.skipForward,
-                                audioCtrlWidget.changeMode,
-                              ],
-                            )
-                            .animate(target: _isBarHover.value ? 1 : 0)
-                            .fade(duration: 150.ms),
-                        audioCtrlWidget.toggle,
-
-                        Obx(
-                          ()=>Text(
-                            "${formatTime(totalSeconds: _audioController.currentSec.value)} / $duration",
-                            style: timeTextStyle,
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
-                ),
+                _buildSlider(context, audioCtrlWidget),
+                _buildPlayBarBody(context, audioCtrlWidget),
               ],
             ),
+          ),
+        );
+  }
+
+  // 构建 Slider 部分
+  Widget _buildSlider(BuildContext context, AudioCtrlWidget audioCtrlWidget) {
+    return Material(
+      color:Colors.transparent,
+      child: SliderTheme(
+      data: SliderTheme.of(context).copyWith(
+        trackHeight: 1,
+        showValueIndicator: ShowValueIndicator.always,
+        thumbShape: const _DiamondSliderThumbShape(horizontalDiagonal: 8, verticalDiagonal: 16),
+        activeTrackColor: Colors.transparent,
+        thumbColor: Theme.of(context).colorScheme.primary,
+        inactiveTrackColor: Colors.transparent,
+        overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
+        valueIndicatorShape: const RectangularValueIndicatorShape(width: 48, height: 28, radius: 4),
+        valueIndicatorTextStyle: generalTextStyle(ctx: context, size: 'sm', color: Theme.of(context).colorScheme.onPrimary),
+        mouseCursor: WidgetStateProperty.all(SystemMouseCursors.resizeLeftRight),
+      ),
+      child: Container(
+        width: _barWidth + 16,
+        padding: const EdgeInsets.symmetric(horizontal: 0),
+        child: audioCtrlWidget.seekSlide,
+      ),
+    ),
+    );
+  }
+
+  // 构建播放条主体部分
+  Widget _buildPlayBarBody(BuildContext context, AudioCtrlWidget audioCtrlWidget) {
+    final timeTextStyle = generalTextStyle(ctx: context, size: 'sm', color: Theme.of(context).colorScheme.primary.withOpacity(0.6));
+
+    return Stack(
+      children: [
+        // 背景容器
+        Container(
+          width: _barWidth,
+          height: _barHeight,
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(_radius),
+            color: Theme.of(context).colorScheme.surfaceContainer,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black38.withValues(alpha: 0.1),
+                spreadRadius: 1,
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+        ),
+        // 进度条
+        const _ProgressBar(),
+        // 交互层
+        TextButton(
+          onPressed: () => Get.toNamed(AppRoutes.lrcView),
+          onHover: (v) => setState(() => _isBarHover = v),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            fixedSize: const Size(_barWidth, _barHeight),
+            backgroundColor: Colors.transparent,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_radius)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: 8,
+            children: [
+              _buildCoverAndInfo(timeTextStyle),
+              _buildControlButtons(audioCtrlWidget),
+              audioCtrlWidget.toggle,
+              _buildTimeDisplay(timeTextStyle),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 构建封面和歌曲信息
+  Widget _buildCoverAndInfo(TextStyle timeTextStyle) {
+    return Expanded(
+      child: Row(
+        spacing: 8,
+        children: [
+          Obx(() {
+            final src = _audioController.currentMetadata.value.src ?? kTransparentImage;
+            return Hero(
+              tag: 'playingCover',
+              child: ClipRRect(
+                borderRadius: _coverBorderRadius,
+                child: FadeInImage(
+                  placeholder: MemoryImage(kTransparentImage),
+                  image: ResizeImage(MemoryImage(src), width: _coverRenderSize, height: _coverRenderSize),
+                  height: _coverSize,
+                  width: _coverSize,
+                  fit: BoxFit.cover,
+                  fadeInDuration: const Duration(milliseconds: 200),
+                ),
+              ),
+            );
+          }),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 4,
+              children: [
+                Obx(() => Text(
+                  _audioController.currentMetadata.value.title.isNotEmpty ? _audioController.currentMetadata.value.title : "ZeroBit Player",
+                  softWrap: false,
+                  overflow: TextOverflow.fade,
+                  maxLines: 1,
+                  style: generalTextStyle(ctx: context, size: 'md', color: Theme.of(context).colorScheme.primary),
+                )),
+                Obx(() => Text(
+                  _audioController.currentMetadata.value.artist.isNotEmpty ? _audioController.currentMetadata.value.artist : "39",
+                  softWrap: false,
+                  overflow: TextOverflow.fade,
+                  maxLines: 1,
+                  style: timeTextStyle,
+                )),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 构建可显隐的控制按钮
+  Widget _buildControlButtons(AudioCtrlWidget audioCtrlWidget) {
+    return AnimatedOpacity(
+      opacity: _isBarHover ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 200),
+      // 即使透明，也不让它接收点击事件
+      child: IgnorePointer(
+        ignoring: !_isBarHover,
+        child: Row(
+          children: [
+            audioCtrlWidget.volumeSet,
+            audioCtrlWidget.skipBack,
+            audioCtrlWidget.skipForward,
+            audioCtrlWidget.changeMode,
           ],
         ),
       ),
     );
+  }
+
+  // 构建时间显示
+  Widget _buildTimeDisplay(TextStyle timeTextStyle) {
+    return Obx(() {
+      final duration = _audioController.currentMetadata.value.duration > 0
+          ? formatTime(totalSeconds: _audioController.currentMetadata.value.duration)
+          : "--:--";
+      final currentSec = formatTime(totalSeconds: _audioController.currentSec.value);
+      return Text("$currentSec / $duration", style: timeTextStyle);
+    });
   }
 }
