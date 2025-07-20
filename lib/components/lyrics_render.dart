@@ -68,7 +68,6 @@ class _LyricsRenderState extends State<LyricsRender> {
     required bool isCurrent,
   }) {
     final text_ = text as String;
-
     return Obx(
       () => Text(text_, style: style, softWrap: true)
           .animate(target: isCurrent ? 1 : 0)
