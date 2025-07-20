@@ -256,7 +256,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                       lrcEntry.lyricText.isEmpty &&
                       lrcEntry.translate.isEmpty) ||
                   index == -1) {
-                return SizedBox.shrink();
+                return const SizedBox.shrink();
               }
 
               return TextButton(
