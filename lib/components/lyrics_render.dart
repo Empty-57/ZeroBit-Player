@@ -157,18 +157,18 @@ class _LyricsRenderState extends State<LyricsRender> {
                   final entry = v.value;
                   final wordIndex = v.key;
 
-                  if (isCurrent) {
+                  return RepaintBoundary(
+                    child: Builder(builder: (_){
+                      if (isCurrent) {
                     if (currWordIndex == wordIndex) {
-                      return RepaintBoundary(
-                        child: Obx(() {
+                      return Obx(() {
                           return _HighlightedWord(
                             text: entry.lyricWord,
                             progress:
                                 _lyricController.wordProgress.value / 100.0,
                             style: style,
                           );
-                        }),
-                      );
+                        });
                     }
 
                     if (wordIndex < currWordIndex) {
@@ -211,6 +211,8 @@ class _LyricsRenderState extends State<LyricsRender> {
                     }
                     return Text(entry.lyricWord, style: style, softWrap: true);
                   }
+                    }),
+                  );
                 }).toList(),
           );
         })
@@ -240,12 +242,7 @@ class _LyricsRenderState extends State<LyricsRender> {
       context,
     ).colorScheme.onSurface.withValues(alpha: 0.2);
 
-    final lrcPadding = EdgeInsets.only(
-      top: 16,
-      bottom: 16,
-      left: 16,
-      right: context.width / 2 * (1 - 1 / _lrcScale),
-    );
+    final dynamicPadding=context.width / 2 * (1 - 1 / _lrcScale);
 
     return Listener(
       onPointerSignal: (event) {
@@ -258,6 +255,12 @@ class _LyricsRenderState extends State<LyricsRender> {
         child: Obx(() {
           final currentLyrics = _audioController.currentLyrics.value;
           final parsedLrc = currentLyrics?.parsedLrc;
+          final lrcPadding = EdgeInsets.only(
+            top: 16,
+            bottom: 16,
+            left: _settingController.lrcAlignment.value==2? dynamicPadding:16,
+            right: _settingController.lrcAlignment.value==0? dynamicPadding:16,
+          );
 
           if (currentLyrics == null ||
               parsedLrc is! List<LyricEntry> ||
