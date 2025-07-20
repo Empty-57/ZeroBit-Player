@@ -265,7 +265,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                 }.throttle(ms: 500),
                 style: TextButton.styleFrom(
                   shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   overlayColor: hoverColor,
                 ),
                 child: FractionallySizedBox(
