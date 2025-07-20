@@ -33,6 +33,48 @@ const _lrcScaleAlignment = [
 ];
 const _lrcScale = 1.1;
 
+class _HighlightedWord extends StatelessWidget {
+  final String text;
+  final double progress;
+  final TextStyle style;
+
+  const _HighlightedWord({
+    required this.text,
+    required this.progress,
+    required this.style,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderMask(
+      shaderCallback: (bounds) {
+        /// 颜色平均分三段：高亮区 过渡区 透明区
+        /// 在动画开始的时候，覆盖到 Text 上的应该是透明区，应该先把整个遮罩层应该向左移动
+        /// 但是因为遮罩层放大了3倍，所以应该用 -0.666 * bounds.width 得到透明区位置，负号为向左
+        /// 随着 progress 增大 遮罩会逐渐向右移动
+        final double dx = (-0.666 * bounds.width) * (1 - progress);
+        return LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            style.color!.withValues(alpha: _highLightAlpha),
+            style.color!.withValues(alpha: _highLightAlpha),
+            style.color!,
+          ],
+          stops: const [0.0, 0.333, 0.666],
+          transform: _ScaledTranslateGradientTransform(dx: dx),
+        ).createShader(bounds);
+      },
+      blendMode: BlendMode.dstIn,
+      child: Text(
+        text,
+        style: style.copyWith(color: style.color?.withValues(alpha: 1)),
+        softWrap: true,
+      ),
+    );
+  }
+}
+
 class _ScaledTranslateGradientTransform extends GradientTransform {
   final double dx;
   const _ScaledTranslateGradientTransform({required this.dx});
@@ -66,6 +108,7 @@ class _LyricsRenderState extends State<LyricsRender> {
     required T text,
     required TextStyle style,
     required bool isCurrent,
+    required int index,
   }) {
     final text_ = text as String;
     return Obx(
@@ -102,86 +145,85 @@ class _LyricsRenderState extends State<LyricsRender> {
     required T text,
     required TextStyle style,
     required bool isCurrent,
+    required int index,
   }) {
     final text_ = text as List<WordEntry>;
 
-    return Obx(
-      () => Wrap(
+    return Obx(() {
+          final currWordIndex = _lyricController.currentWordIndex.value;
+          return Wrap(
             children:
                 text_.asMap().entries.map((v) {
                   final entry = v.value;
                   final wordIndex = v.key;
-                  final currWordIndex = _lyricController.currentWordIndex.value;
 
-                  if (isCurrent && wordIndex < currWordIndex) {
-                    return Text(
-                      entry.lyricWord,
-                      style: style.copyWith(
-                        color: style.color?.withValues(alpha: _highLightAlpha),
-                      ),
-                      softWrap: true,
-                    );
-                  }
-
-                  if ((isCurrent && currWordIndex == wordIndex)) {
-                    return RepaintBoundary(
-                      child: Obx(() {
-                      final progress =
-                          _lyricController.wordProgress.value / 100;
-                      return ShaderMask(
-                        shaderCallback: (bounds) {
-                          /// 颜色平均分三段：高亮区 过渡区 透明区
-                          /// 在动画开始的时候，覆盖到 Text 上的应该是透明区，应该先把整个遮罩层应该向左移动
-                          /// 但是因为遮罩层放大了3倍，所以应该用 -0.666 * bounds.width 得到透明区位置，负号为向左
-                          /// 随着 progress 增大 遮罩会逐渐向右移动
-                          final double dx =
-                              (-0.666 * bounds.width) * (1 - progress);
-                          final Gradient gradient = LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [
-                              style.color!.withValues(alpha: _highLightAlpha),
-                              style.color!.withValues(alpha: _highLightAlpha),
-                              style.color!,
-                            ],
-                            stops: const [0.0, 0.333, 0.666],
-                            // 平移遮罩层
-                            transform: _ScaledTranslateGradientTransform(
-                              dx: dx,
-                            ),
+                  if (isCurrent) {
+                    if (currWordIndex == wordIndex) {
+                      return RepaintBoundary(
+                        child: Obx(() {
+                          return _HighlightedWord(
+                            text: entry.lyricWord,
+                            progress:
+                                _lyricController.wordProgress.value / 100.0,
+                            style: style,
                           );
-                          return gradient.createShader(bounds);
-                        },
-                        blendMode: BlendMode.dstIn,
-                        child: Text(
-                          entry.lyricWord,
-                          style: style.copyWith(
-                            color: style.color?.withValues(alpha: 1),
-                          ),
-                          softWrap: true,
-                        ),
+                        }),
                       );
-                    }),
-                    );
-                  }
+                    }
 
-                  return Text(
-                    entry.lyricWord,
-                    style: style,
-                    softWrap: true,
-                  );
+                    if (wordIndex < currWordIndex) {
+                      return Text(
+                        entry.lyricWord,
+                        style: style.copyWith(
+                          color: style.color?.withValues(
+                            alpha: _highLightAlpha,
+                          ),
+                        ),
+                        softWrap: true,
+                      );
+                    }
+
+                    return Text(entry.lyricWord, style: style, softWrap: true);
+                  } else {
+                    final currentLineIndex =
+                        _lyricController.currentLineIndex.value;
+                    if (currentLineIndex - index == 1) {
+                      return Text(entry.lyricWord, style: style, softWrap: true)
+                          .animate(target: isCurrent ? 0 : 1)
+                          .custom(
+                            duration: 300.ms,
+                            curve: Curves.easeOut,
+                            builder: (_, value, _) {
+                              return Text(
+                                entry.lyricWord,
+                                style: style.copyWith(
+                                  color: Color.lerp(
+                                    style.color?.withValues(
+                                      alpha: _highLightAlpha,
+                                    ),
+                                    style.color,
+                                    value,
+                                  ),
+                                ),
+                                softWrap: true,
+                              );
+                            },
+                          );
+                    }
+                    return Text(entry.lyricWord, style: style, softWrap: true);
+                  }
                 }).toList(),
-          )
-          .animate(target: isCurrent ? 1 : 0)
-          .scale(
-            alignment:
-                _lrcScaleAlignment[_settingController.lrcAlignment.value],
-            begin: Offset(1.0, 1.0),
-            end: Offset(_lrcScale, _lrcScale),
-            duration: 300.ms,
-            curve: Curves.easeInOutQuad,
-          ),
-    );
+          );
+        })
+        .animate(target: isCurrent ? 1 : 0)
+        .scale(
+          alignment:
+              _lrcScaleAlignment[_settingController.lrcAlignment.value],
+          begin: const Offset(1.0, 1.0),
+          end: Offset(_lrcScale, _lrcScale),
+          duration: 300.ms,
+          curve: Curves.easeInOutQuad,
+        );
   }
 
   @override
@@ -198,6 +240,13 @@ class _LyricsRenderState extends State<LyricsRender> {
     final hoverColor = Theme.of(
       context,
     ).colorScheme.onSurface.withValues(alpha: 0.2);
+
+    final lrcPadding = EdgeInsets.only(
+      top: 16,
+      bottom: 16,
+      left: 16,
+      right: context.width / 2 * (1 - 1 / _lrcScale),
+    );
 
     return Listener(
       onPointerSignal: (event) {
@@ -230,6 +279,7 @@ class _LyricsRenderState extends State<LyricsRender> {
             required T text,
             required TextStyle style,
             required bool isCurrent,
+            required int index,
           })
           lyricWidget;
           if (lrcType == LyricFormat.lrc) {
@@ -265,8 +315,10 @@ class _LyricsRenderState extends State<LyricsRender> {
                   _audioController.audioSetPositon(pos: lrcEntry.start);
                 }.throttle(ms: 500),
                 style: TextButton.styleFrom(
-                  shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: _borderRadius,
+                  ),
+                  padding: lrcPadding,
                   overlayColor: hoverColor,
                 ),
                 child: FractionallySizedBox(
@@ -286,6 +338,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                           text: lrcEntry.lyricText,
                           style: lyricStyle,
                           isCurrent: isCurrent,
+                          index: index,
                         ),
                         if (lrcEntry.translate.isNotEmpty)
                           Text(
