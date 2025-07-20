@@ -43,47 +43,45 @@ class MusicTile extends StatelessWidget {
     required this.selectedList,
   });
 
+  void _onTileTapped() {
+    if (isMulSelect.value) {
+      // 使用 Set 进行contains检查会更快，但对于小列表List也可以接受。
+      if (selectedList.any((v) => v.path == metadata.path)) {
+        selectedList.removeWhere((v) => v.path == metadata.path);
+      } else {
+        selectedList.add(metadata);
+      }
+    } else {
+      _audioSource.currentAudioSource.value = audioSource;
+      _audioController.audioPlay(metadata: metadata);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final subTextStyle =
-          _audioController.currentPath.value != metadata.path
-              ? subStyle
-              : highLightSubStyle;
+    final Widget cover = AsyncCover(path: metadata.path, music: metadata);
 
-      final textStyle =
-          _audioController.currentPath.value != metadata.path
-              ? titleStyle
-              : highLightTitleStyle;
+    return Obx(() {
+      final isPlaying = _audioController.currentPath.value == metadata.path;
+      final isSelected = selectedList.any((v) => v.path == metadata.path);
+
+      final subTextStyle = isPlaying ? highLightSubStyle : subStyle;
+      final textStyle = isPlaying ? highLightTitleStyle : titleStyle;
 
       return TextButton(
-        onPressed: () async {
-          if (isMulSelect.value) {
-            if (selectedList.any((v) => v.path == metadata.path)) {
-              selectedList.removeWhere((v) => v.path == metadata.path);
-            } else {
-              selectedList.add(metadata);
-            }
-            return;
-          }
-
-          _audioSource.currentAudioSource.value = audioSource;
-          await _audioController.audioPlay(metadata: metadata);
-        }.throttle(ms: isMulSelect.value ? 10 : 500),
-
+        onPressed: _onTileTapped.throttle(ms: isMulSelect.value ? 10 : 500),
         style: TextButton.styleFrom(
-          shape: RoundedRectangleBorder(borderRadius: _borderRadius),
-          backgroundColor:
-              selectedList.any((v) => v.path == metadata.path)
-                  ? Theme.of(context).colorScheme.secondaryContainer
-                  : null,
+          shape: const RoundedRectangleBorder(borderRadius: _borderRadius), // 使用const
+          backgroundColor: isSelected
+              ? Theme.of(context).colorScheme.secondaryContainer
+              : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           spacing: _itemSpacing,
           children: [
-            AsyncCover(path: metadata.path, music: metadata),
+            cover,
             Expanded(
               flex: 1,
               child: Column(
@@ -92,14 +90,14 @@ class MusicTile extends StatelessWidget {
                 children: [
                   Text(
                     metadata.title,
-                    softWrap: true,
+                    softWrap: false,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                     style: textStyle,
                   ),
                   Text(
                     metadata.artist,
-                    softWrap: true,
+                    softWrap: false,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                     style: subTextStyle,
@@ -107,20 +105,27 @@ class MusicTile extends StatelessWidget {
                 ],
               ),
             ),
-            if (_settingController.viewModeMap[operateArea])
-              Expanded(
-                flex: 2,
-                child: Text(
-                  metadata.album,
-                  softWrap: true,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  style: subTextStyle,
-                ),
-              ),
+            Obx(() {
+              if (_settingController.viewModeMap[operateArea]??false) {
+                return Expanded(
+                  flex: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: _itemSpacing),
+                    child: Text(
+                      metadata.album,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: subTextStyle,
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            }),
             Text(
               formatTime(totalSeconds: metadata.duration),
-              softWrap: true,
+              softWrap: false,
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
               style: subTextStyle,
