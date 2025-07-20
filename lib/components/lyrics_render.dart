@@ -158,68 +158,72 @@ class _LyricsRenderState extends State<LyricsRender> {
                   final wordIndex = v.key;
 
                   return RepaintBoundary(
-                    child: Builder(builder: (_){
-                      if (isCurrent) {
-                    if (currWordIndex == wordIndex) {
-                      return Obx(() {
-                          return _HighlightedWord(
-                            text: entry.lyricWord,
-                            progress:
-                                _lyricController.wordProgress.value / 100.0,
-                            style: style,
-                          );
-                        });
-                    }
-
-                    if (wordIndex < currWordIndex) {
-                      return Text(
-                        entry.lyricWord,
-                        style: style.copyWith(
-                          color: style.color?.withValues(
-                            alpha: _highLightAlpha,
-                          ),
-                        ),
-                        softWrap: true,
-                      );
-                    }
-
-                    return Text(entry.lyricWord, style: style, softWrap: true);
-                  } else {
-                    final currentLineIndex =
-                        _lyricController.currentLineIndex.value;
-                    if (currentLineIndex - index == 1) {
-                      return Text(entry.lyricWord, style: style, softWrap: true)
-                          .animate(target: isCurrent ? 0 : 1)
-                          .custom(
-                            duration: 300.ms,
-                            builder: (_, value, _) {
-                              return Text(
-                                entry.lyricWord,
-                                style: style.copyWith(
-                                  color: Color.lerp(
-                                    style.color?.withValues(
-                                      alpha: _highLightAlpha,
-                                    ),
-                                    style.color,
-                                    value,
-                                  ),
-                                ),
-                                softWrap: true,
+                    child: Builder(
+                      builder: (_) {
+                        if (isCurrent) {
+                          if (currWordIndex == wordIndex) {
+                            return Obx(() {
+                              return _HighlightedWord(
+                                text: entry.lyricWord,
+                                progress:
+                                    _lyricController.wordProgress.value / 100.0,
+                                style: style,
                               );
-                            },
+                            });
+                          }
+
+                          if (wordIndex < currWordIndex) {
+                            return Text(
+                              entry.lyricWord,
+                              style: style.copyWith(
+                                color: style.color?.withValues(
+                                  alpha: _highLightAlpha,
+                                ),
+                              ),
+                              softWrap: true,
+                            );
+                          }
+
+                          return Text(
+                            entry.lyricWord,
+                            style: style,
+                            softWrap: true,
                           );
-                    }
-                    return Text(entry.lyricWord, style: style, softWrap: true);
-                  }
-                    }),
+                        } else {
+                          final currentLineIndex =
+                              _lyricController.currentLineIndex.value;
+                          if (currentLineIndex - index == 1) {
+                            return TweenAnimationBuilder<Color?>(
+                              tween: ColorTween(
+                                begin: style.color?.withValues(
+                                  alpha: _highLightAlpha,
+                                ),
+                                end: style.color,
+                              ),
+                              duration: const Duration(milliseconds: 300),
+                              builder: (_, color, _) {
+                                return Text(
+                                  entry.lyricWord,
+                                  style: style.copyWith(color: color),
+                                );
+                              },
+                            );
+                          }
+                          return Text(
+                            entry.lyricWord,
+                            style: style,
+                            softWrap: true,
+                          );
+                        }
+                      },
+                    ),
                   );
                 }).toList(),
           );
         })
         .animate(target: isCurrent ? 1 : 0)
         .scale(
-          alignment:
-              _lrcScaleAlignment[_settingController.lrcAlignment.value],
+          alignment: _lrcScaleAlignment[_settingController.lrcAlignment.value],
           begin: const Offset(1.0, 1.0),
           end: Offset(_lrcScale, _lrcScale),
           duration: 300.ms,
@@ -242,7 +246,7 @@ class _LyricsRenderState extends State<LyricsRender> {
       context,
     ).colorScheme.onSurface.withValues(alpha: 0.2);
 
-    final dynamicPadding=context.width / 2 * (1 - 1 / _lrcScale);
+    final dynamicPadding = context.width / 2 * (1 - 1 / _lrcScale);
 
     return Listener(
       onPointerSignal: (event) {
@@ -258,8 +262,18 @@ class _LyricsRenderState extends State<LyricsRender> {
           final lrcPadding = EdgeInsets.only(
             top: 16,
             bottom: 16,
-            left: _settingController.lrcAlignment.value==2? dynamicPadding:16,
-            right: _settingController.lrcAlignment.value==0? dynamicPadding:16,
+            left:
+                _settingController.lrcAlignment.value == 2
+                    ? dynamicPadding
+                    : _settingController.lrcAlignment.value == 1
+                    ? dynamicPadding / 2
+                    : 16,
+            right:
+                _settingController.lrcAlignment.value == 0
+                    ? dynamicPadding
+                    : _settingController.lrcAlignment.value == 1
+                    ? dynamicPadding / 2
+                    : 16,
           );
 
           if (currentLyrics == null ||
