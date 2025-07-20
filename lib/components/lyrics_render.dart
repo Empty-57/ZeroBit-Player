@@ -264,7 +264,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                   _audioController.audioSetPositon(pos: lrcEntry.start);
                 }.throttle(ms: 500),
                 style: TextButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: _borderRadius),
+                  shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   overlayColor: hoverColor,
                 ),
