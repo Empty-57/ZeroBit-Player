@@ -124,7 +124,8 @@ class _LyricsRenderState extends State<LyricsRender> {
                   }
 
                   if ((isCurrent && currWordIndex == wordIndex)) {
-                    return Obx(() {
+                    return RepaintBoundary(
+                      child: Obx(() {
                       final progress =
                           _lyricController.wordProgress.value / 100;
                       return ShaderMask(
@@ -160,7 +161,8 @@ class _LyricsRenderState extends State<LyricsRender> {
                           softWrap: true,
                         ),
                       );
-                    });
+                    }),
+                    );
                   }
 
                   return Text(
