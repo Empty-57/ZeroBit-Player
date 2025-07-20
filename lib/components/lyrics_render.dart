@@ -116,7 +116,6 @@ class _LyricsRenderState extends State<LyricsRender> {
           .animate(target: isCurrent ? 1 : 0)
           .custom(
             duration: 300.ms,
-            curve: Curves.easeOut,
             builder: (_, value, _) {
               return Text(
                 text_,
@@ -193,7 +192,6 @@ class _LyricsRenderState extends State<LyricsRender> {
                           .animate(target: isCurrent ? 0 : 1)
                           .custom(
                             duration: 300.ms,
-                            curve: Curves.easeOut,
                             builder: (_, value, _) {
                               return Text(
                                 entry.lyricWord,
