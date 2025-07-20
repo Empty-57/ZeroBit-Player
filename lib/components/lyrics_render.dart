@@ -167,7 +167,7 @@ class _LyricsRenderState extends State<LyricsRender> {
 
                   return Text(
                     entry.lyricWord,
-                    style: style.copyWith(color: style.color),
+                    style: style,
                     softWrap: true,
                   );
                 }).toList(),
