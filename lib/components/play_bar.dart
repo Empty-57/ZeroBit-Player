@@ -189,7 +189,7 @@ class _PlayBarState extends State<PlayBar> {
 
   // 构建播放条主体部分
   Widget _buildPlayBarBody(BuildContext context, AudioCtrlWidget audioCtrlWidget) {
-    final timeTextStyle = generalTextStyle(ctx: context, size: 'sm', color: Theme.of(context).colorScheme.primary.withOpacity(0.6));
+    final timeTextStyle = generalTextStyle(ctx: context, size: 'sm', color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6));
 
     return Stack(
       children: [
