@@ -183,7 +183,7 @@ List<WordEntry> _processWords(
     final curr = WordEntry(
       start: _msToSec(m.group(startIdx)!),
       duration: _msToSec(m.group(durIdx)!),
-      lyricWord: m.group(textIdx)!.replaceAll('\n', '').trim(),
+      lyricWord: m.group(textIdx)!.replaceAll('\n', ''),
     );
     if (words.isNotEmpty && _shouldMergeWords(curr, words.last)) {
       final last = words.last;
