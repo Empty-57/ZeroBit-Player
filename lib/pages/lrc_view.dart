@@ -64,6 +64,7 @@ class _LrcSearchController extends GetxController {
         offset: currentNetLrcOffest.value,
         limit: 5,
       );
+      isLoading.value = false;
     } finally {
       isLoading.value = false;
     }
