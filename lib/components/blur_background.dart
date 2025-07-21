@@ -18,11 +18,7 @@ class BlurWithCoverBackground extends StatelessWidget {
   Widget get _cover=>Transform.scale(
     scale: coverScale,
     child: Obx(
-                () => AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  switchInCurve: Curves.easeIn,
-                  switchOutCurve: Curves.easeOut,
-                  child: SizedBox.expand(
+                () => SizedBox.expand(
                     child: Image.memory(
                       cover.value,
                       key: ValueKey(cover.value.hashCode),
