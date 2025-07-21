@@ -81,7 +81,133 @@ class _ScaledTranslateGradientTransform extends GradientTransform {
   @override
   Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
     // 先将x轴扩大2倍，然后平移x轴 其实应该是扩大3倍，但是2倍视觉效果更好
-    return Matrix4.diagonal3Values(2.0, 1.0, 1.0)..translate(dx, 0.0, 0.0);
+    return Matrix4.identity()
+      ..scale(2.0, 1.0, 1.0)
+      ..translate(dx, 0.0, 0.0);
+  }
+}
+
+class _LrcLyricWidget extends StatelessWidget {
+  final String text;
+  final TextStyle style;
+  final bool isCurrent;
+  final int lrcAlignmentIndex;
+
+  const _LrcLyricWidget({
+    required this.text,
+    required this.style,
+    required this.isCurrent,
+    required this.lrcAlignmentIndex,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(text, style: style, softWrap: true)
+        .animate(target: isCurrent ? 1 : 0)
+        .custom(
+          duration: 300.ms,
+          builder: (_, value, child) {
+            return Text(
+              text,
+              style: style.copyWith(
+                color: Color.lerp(
+                  style.color,
+                  style.color?.withValues(alpha: _highLightAlpha),
+                  value,
+                ),
+              ),
+              softWrap: true,
+            );
+          },
+        )
+        .scale(
+          alignment: _lrcScaleAlignment[lrcAlignmentIndex],
+          begin: const Offset(1.0, 1.0),
+          end: const Offset(_lrcScale, _lrcScale),
+          duration: 300.ms,
+          curve: Curves.easeInOutQuad,
+        );
+  }
+}
+
+class _KaraOkLyricWidget extends StatelessWidget {
+  final List<WordEntry> text;
+  final TextStyle style;
+  final bool isCurrent;
+  final int index;
+  final int lrcAlignmentIndex;
+
+  const _KaraOkLyricWidget({
+    required this.text,
+    required this.style,
+    required this.isCurrent,
+    required this.index,
+    required this.lrcAlignmentIndex,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final currWordIndex = _lyricController.currentWordIndex.value;
+
+      if (isCurrent) {
+        return Wrap(
+          crossAxisAlignment: WrapCrossAlignment.end,
+          children: text.asMap().entries.map((entry) {
+            final wordIndex = entry.key;
+            final word = entry.value.lyricWord;
+
+            if (wordIndex == currWordIndex) {
+              return Obx(() => _HighlightedWord(
+                    text: word,
+                    progress: _lyricController.wordProgress.value / 100.0,
+                    style: style,
+                  ));
+            } else if (wordIndex < currWordIndex) {
+              return Text(
+                word,
+                style: style.copyWith(
+                  color: style.color?.withValues(alpha: _highLightAlpha),
+                ),
+                softWrap: true,
+              );
+            } else {
+              return Text(word, style: style, softWrap: true);
+            }
+          }).toList(),
+        );
+      }
+      else {
+        final currentLineIndex = _lyricController.currentLineIndex.value;
+        // 刚播放过的上一行，执行一个淡出动画
+
+        if (currentLineIndex - index == 1) {
+          return TweenAnimationBuilder<Color?>(
+            tween: ColorTween(
+              begin: style.color?.withValues(alpha: _highLightAlpha),
+              end: style.color,
+            ),
+            duration: const Duration(milliseconds: 300),
+            builder: (_, color, _) => Text(
+              text.map((e) => e.lyricWord).join(),
+              style: style.copyWith(color: color),
+            ),
+          );
+        }
+        return Text(
+          text.map((e) => e.lyricWord).join(),
+          style: style,
+          softWrap: true,
+        );
+
+      }
+    }).animate(target: isCurrent ? 1 : 0).scale(
+        alignment: _lrcScaleAlignment[lrcAlignmentIndex],
+        begin: const Offset(1.0, 1.0),
+        end: const Offset(_lrcScale, _lrcScale),
+        duration: 300.ms,
+        curve: Curves.easeInOutQuad,
+      );
   }
 }
 
@@ -102,133 +228,6 @@ class _LyricsRenderState extends State<LyricsRender> {
         _lyricController.scrollToCenter();
       }
     });
-  }
-
-  Widget lrcLyric<T>({
-    required T text,
-    required TextStyle style,
-    required bool isCurrent,
-    required int index,
-  }) {
-    final text_ = text as String;
-    return Obx(
-      () => Text(text_, style: style, softWrap: true)
-          .animate(target: isCurrent ? 1 : 0)
-          .custom(
-            duration: 300.ms,
-            builder: (_, value, _) {
-              return Text(
-                text_,
-                style: style.copyWith(
-                  color: Color.lerp(
-                    style.color,
-                    style.color?.withValues(alpha: _highLightAlpha),
-                    value,
-                  ),
-                ),
-                softWrap: true,
-              );
-            },
-          )
-          .scale(
-            alignment:
-                _lrcScaleAlignment[_settingController.lrcAlignment.value],
-            begin: Offset(1.0, 1.0),
-            end: Offset(_lrcScale, _lrcScale),
-            duration: 300.ms,
-            curve: Curves.easeInOutQuad,
-          ),
-    );
-  }
-
-  Widget karaOkLyric<T>({
-    required T text,
-    required TextStyle style,
-    required bool isCurrent,
-    required int index,
-  }) {
-    final text_ = text as List<WordEntry>;
-
-    return Obx(() {
-          final currWordIndex = _lyricController.currentWordIndex.value;
-          return Wrap(
-            children:
-                text_.asMap().entries.map((v) {
-                  final entry = v.value;
-                  final wordIndex = v.key;
-
-                  return RepaintBoundary(
-                    child: Builder(
-                      builder: (_) {
-                        if (isCurrent) {
-                          if (currWordIndex == wordIndex) {
-                            return Obx(() {
-                              return _HighlightedWord(
-                                text: entry.lyricWord,
-                                progress:
-                                    _lyricController.wordProgress.value / 100.0,
-                                style: style,
-                              );
-                            });
-                          }
-
-                          if (wordIndex < currWordIndex) {
-                            return Text(
-                              entry.lyricWord,
-                              style: style.copyWith(
-                                color: style.color?.withValues(
-                                  alpha: _highLightAlpha,
-                                ),
-                              ),
-                              softWrap: true,
-                            );
-                          }
-
-                          return Text(
-                            entry.lyricWord,
-                            style: style,
-                            softWrap: true,
-                          );
-                        } else {
-                          final currentLineIndex =
-                              _lyricController.currentLineIndex.value;
-                          if (currentLineIndex - index == 1) {
-                            return TweenAnimationBuilder<Color?>(
-                              tween: ColorTween(
-                                begin: style.color?.withValues(
-                                  alpha: _highLightAlpha,
-                                ),
-                                end: style.color,
-                              ),
-                              duration: const Duration(milliseconds: 300),
-                              builder: (_, color, _) {
-                                return Text(
-                                  entry.lyricWord,
-                                  style: style.copyWith(color: color),
-                                );
-                              },
-                            );
-                          }
-                          return Text(
-                            entry.lyricWord,
-                            style: style,
-                            softWrap: true,
-                          );
-                        }
-                      },
-                    ),
-                  );
-                }).toList(),
-          );
-        })
-        .animate(target: isCurrent ? 1 : 0)
-        .scale(
-          alignment: _lrcScaleAlignment[_settingController.lrcAlignment.value],
-          begin: const Offset(1.0, 1.0),
-          end: Offset(_lrcScale, _lrcScale),
-          duration: 300.ms,
-          curve: Curves.easeInOutQuad,
-        );
   }
 
   @override
@@ -291,19 +290,6 @@ class _LyricsRenderState extends State<LyricsRender> {
 
           final String lrcType = currentLyrics.type;
 
-          late final Widget Function<T>({
-            required T text,
-            required TextStyle style,
-            required bool isCurrent,
-            required int index,
-          })
-          lyricWidget;
-          if (lrcType == LyricFormat.lrc) {
-            lyricWidget = lrcLyric;
-          } else {
-            lyricWidget = karaOkLyric;
-          }
-
           return ScrollablePositionedList.builder(
             initialScrollIndex: 0,
             initialAlignment: 0.5,
@@ -326,69 +312,70 @@ class _LyricsRenderState extends State<LyricsRender> {
                 return const SizedBox.shrink();
               }
 
-              return TextButton(
-                onPressed: () {
-                  _audioController.audioSetPositon(pos: lrcEntry.start);
-                }.throttle(ms: 500),
-                style: TextButton.styleFrom(
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: _borderRadius,
-                  ),
-                  padding: lrcPadding,
-                  overlayColor: hoverColor,
-                ),
-                child: FractionallySizedBox(
-                  widthFactor: 1,
-                  child: Obx(() {
-                    final isCurrent =
-                        index == _lyricController.currentLineIndex.value;
-                    final isPointerScrolling =
-                        _lyricController.isPointerScroll.value;
+              return Obx(() {
+                final isCurrent = index == _lyricController.currentLineIndex.value;
+                final isPointerScrolling = _lyricController.isPointerScroll.value;
 
-                    final Widget content = Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment:
-                          _lrcAlignment[_settingController.lrcAlignment.value],
-                      children: [
-                        lyricWidget(
-                          text: lrcEntry.lyricText,
-                          style: lyricStyle,
-                          isCurrent: isCurrent,
-                          index: index,
-                        ),
-                        if (lrcEntry.translate.isNotEmpty)
-                          Text(
-                            lrcEntry.translate,
-                            style: lyricStyle,
-                            softWrap: true,
-                          ),
-                      ],
-                    );
-
-                    // 此处有个开关模糊功能 isBlurEnabled
-                    // if ( isPointerScrolling || isCurrent) {
-                    //   return content;
-                    // }
-
-                    double sigma =
-                        (_lyricController.currentLineIndex.value - index)
-                            .abs()
-                            .clamp(0.0, 4.0)
-                            .toDouble();
-                    if (isPointerScrolling || isCurrent) {
-                      sigma = 0;
-                    }
-
-                    return ImageFiltered(
-                      imageFilter: ImageFilter.blur(
-                        sigmaX: sigma,
-                        sigmaY: sigma,
+                final Widget content = Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: _lrcAlignment[_settingController.lrcAlignment.value],
+                  children: [
+                    if (lrcType == LyricFormat.lrc)
+                      _LrcLyricWidget(
+                        text: lrcEntry.lyricText as String,
+                        style: lyricStyle,
+                        isCurrent: isCurrent,
+                        lrcAlignmentIndex: _settingController.lrcAlignment.value,
+                      )
+                    else
+                      _KaraOkLyricWidget(
+                        text: lrcEntry.lyricText as List<WordEntry>,
+                        style: lyricStyle,
+                        isCurrent: isCurrent,
+                        index: index,
+                        lrcAlignmentIndex: _settingController.lrcAlignment.value,
                       ),
-                      child: RepaintBoundary(child: content),
-                    );
-                  }),
-                ),
-              );
+                    if (lrcEntry.translate.isNotEmpty)
+                      Text(
+                        lrcEntry.translate,
+                        style: lyricStyle,
+                        softWrap: true,
+                      ),
+                  ],
+                );
+
+                final Widget lyricLine = RepaintBoundary(
+                  child: FractionallySizedBox(
+                    widthFactor: 1,
+                    child: content,
+                  ),
+                );
+
+                double sigma =(_lyricController.currentLineIndex.value - index)
+                        .abs()
+                        .clamp(0.0, 4.0)
+                        .toDouble();
+                // 此有模糊开关
+                if(isPointerScrolling || isCurrent){
+                  sigma=0;
+                }
+
+                return TextButton(
+                  onPressed: () {
+                    _audioController.audioSetPositon(pos: lrcEntry.start);
+                  }.throttle(ms: 500),
+                  style: TextButton.styleFrom(
+                    shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
+                    padding: lrcPadding,
+                    overlayColor: hoverColor,
+                  ),
+
+                  child: ImageFiltered(
+                          imageFilter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+                          child: lyricLine,
+                        ),
+                );
+              });
             },
           );
         }),
