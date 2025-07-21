@@ -113,7 +113,6 @@ void main() async {
   Get.put(OperateArea());
   Get.put(SettingController());
   Get.put(MusicCacheController());
-  Get.put(AudioController());
   Get.put(ThemeService());
 
 
