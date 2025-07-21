@@ -78,7 +78,7 @@ class AudioCtrlWidget {
 
   Widget get volumeSet => MenuAnchor(
     menuChildren: [
-      Column(
+      Obx(()=>Column(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           Text(
@@ -107,7 +107,7 @@ class AudioCtrlWidget {
             ),
           ),
         ],
-      ),
+      )),
     ],
     style: MenuStyle(
       padding: WidgetStatePropertyAll(const EdgeInsets.only(top: 16)),
