@@ -292,7 +292,6 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       child: Obx(() {
         return Image.memory(
             widget.controller.headCover.value,
-            key: ValueKey(widget.controller.headCover.value.hashCode),
             cacheWidth: _coverBigRenderSize,
             cacheHeight: _coverBigRenderSize,
             height: _headCoverSize,
