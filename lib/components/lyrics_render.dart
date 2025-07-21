@@ -6,7 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
-import 'package:zerobit_player/tools/general_style.dart';
+import '../tools/general_style.dart';
 
 import '../getxController/audio_ctrl.dart';
 import '../getxController/lyric_ctrl.dart';
@@ -17,9 +17,6 @@ const double _audioCtrlBarHeight = 96;
 const double _controllerBarHeight = 48;
 const double _highLightAlpha = 0.8;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
-final AudioController _audioController = Get.find<AudioController>();
-final SettingController _settingController = Get.find<SettingController>();
-final LyricController _lyricController = Get.find<LyricController>();
 
 const _lrcAlignment = [
   CrossAxisAlignment.start,
@@ -136,6 +133,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
   final bool isCurrent;
   final int index;
   final int lrcAlignmentIndex;
+  final LyricController lyricController;
 
   const _KaraOkLyricWidget({
     required this.text,
@@ -143,44 +141,49 @@ class _KaraOkLyricWidget extends StatelessWidget {
     required this.isCurrent,
     required this.index,
     required this.lrcAlignmentIndex,
+    required this.lyricController,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final currWordIndex = _lyricController.currentWordIndex.value;
+    Widget content;
 
-      if (isCurrent) {
+    if (isCurrent) {
+      content = Obx(() {
+        final currWordIndex = lyricController.currentWordIndex.value;
         return Wrap(
           crossAxisAlignment: WrapCrossAlignment.end,
-          children: text.asMap().entries.map((entry) {
-            final wordIndex = entry.key;
-            final word = entry.value.lyricWord;
+          children:
+              text.asMap().entries.map((entry) {
+                final wordIndex = entry.key;
+                final word = entry.value.lyricWord;
 
-            if (wordIndex == currWordIndex) {
-              return Obx(() => _HighlightedWord(
-                    text: word,
-                    progress: _lyricController.wordProgress.value / 100.0,
-                    style: style,
-                  ));
-            } else if (wordIndex < currWordIndex) {
-              return Text(
-                word,
-                style: style.copyWith(
-                  color: style.color?.withValues(alpha: _highLightAlpha),
-                ),
-                softWrap: true,
-              );
-            } else {
-              return Text(word, style: style, softWrap: true);
-            }
-          }).toList(),
+                if (wordIndex == currWordIndex) {
+                  return Obx(
+                    () => _HighlightedWord(
+                      text: word,
+                      progress: lyricController.wordProgress.value / 100.0,
+                      style: style,
+                    ),
+                  );
+                } else if (wordIndex < currWordIndex) {
+                  return Text(
+                    word,
+                    style: style.copyWith(
+                      color: style.color?.withValues(alpha: _highLightAlpha),
+                    ),
+                    softWrap: true,
+                  );
+                } else {
+                  return Text(word, style: style, softWrap: true);
+                }
+              }).toList(),
         );
-      }
-      else {
-        final currentLineIndex = _lyricController.currentLineIndex.value;
-        // 刚播放过的上一行，执行一个淡出动画
-
+      });
+    } else {
+      final plainText = text.map((e) => e.lyricWord).join();
+      content = Obx(() {
+        final currentLineIndex = lyricController.currentLineIndex.value;
         if (currentLineIndex - index == 1) {
           return TweenAnimationBuilder<Color?>(
             tween: ColorTween(
@@ -188,26 +191,31 @@ class _KaraOkLyricWidget extends StatelessWidget {
               end: style.color,
             ),
             duration: const Duration(milliseconds: 300),
-            builder: (_, color, _) => Text(
-              text.map((e) => e.lyricWord).join(),
-              style: style.copyWith(color: color),
-            ),
+            builder:
+                (_, color, __) => Text(
+                  plainText,
+                  style: style.copyWith(color: color),
+                  softWrap: true,
+                ),
           );
         }
-        return Text(
-          text.map((e) => e.lyricWord).join(),
-          style: style,
-          softWrap: true,
-        );
+        return Text(plainText, style: style, softWrap: true);
+      });
+    }
 
-      }
-    }).animate(target: isCurrent ? 1 : 0).scale(
-        alignment: _lrcScaleAlignment[lrcAlignmentIndex],
-        begin: const Offset(1.0, 1.0),
-        end: const Offset(_lrcScale, _lrcScale),
-        duration: 300.ms,
-        curve: Curves.easeInOutQuad,
-      );
+    return Animate(
+      target: isCurrent ? 1 : 0,
+      effects: [
+        ScaleEffect(
+          alignment: _lrcScaleAlignment[lrcAlignmentIndex],
+          begin: const Offset(1.0, 1.0),
+          end: const Offset(_lrcScale, _lrcScale),
+          duration: 300.ms,
+          curve: Curves.easeInOutQuad,
+        ),
+      ],
+      child: content,
+    );
   }
 }
 
@@ -219,6 +227,10 @@ class LyricsRender extends StatefulWidget {
 }
 
 class _LyricsRenderState extends State<LyricsRender> {
+  final AudioController _audioController = Get.find<AudioController>();
+  final SettingController _settingController = Get.find<SettingController>();
+  final LyricController _lyricController = Get.find<LyricController>();
+
   @override
   void initState() {
     super.initState();
@@ -228,6 +240,11 @@ class _LyricsRenderState extends State<LyricsRender> {
         _lyricController.scrollToCenter();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -244,7 +261,6 @@ class _LyricsRenderState extends State<LyricsRender> {
     final hoverColor = Theme.of(
       context,
     ).colorScheme.onSurface.withValues(alpha: 0.2);
-
     final dynamicPadding = context.width / 2 * (1 - 1 / _lrcScale);
 
     return Listener(
@@ -302,6 +318,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                       _controllerBarHeight) /
                   2,
             ),
+            minCacheExtent: 48.0,
             itemBuilder: (BuildContext context, int index) {
               final lrcEntry = parsedLrc[index];
 
@@ -313,19 +330,23 @@ class _LyricsRenderState extends State<LyricsRender> {
               }
 
               return Obx(() {
-                final isCurrent = index == _lyricController.currentLineIndex.value;
-                final isPointerScrolling = _lyricController.isPointerScroll.value;
+                final isCurrent =
+                    index == _lyricController.currentLineIndex.value;
+                final isPointerScrolling =
+                    _lyricController.isPointerScroll.value;
 
                 final Widget content = Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: _lrcAlignment[_settingController.lrcAlignment.value],
+                  crossAxisAlignment:
+                      _lrcAlignment[_settingController.lrcAlignment.value],
                   children: [
                     if (lrcType == LyricFormat.lrc)
                       _LrcLyricWidget(
                         text: lrcEntry.lyricText as String,
                         style: lyricStyle,
                         isCurrent: isCurrent,
-                        lrcAlignmentIndex: _settingController.lrcAlignment.value,
+                        lrcAlignmentIndex:
+                            _settingController.lrcAlignment.value,
                       )
                     else
                       _KaraOkLyricWidget(
@@ -333,7 +354,9 @@ class _LyricsRenderState extends State<LyricsRender> {
                         style: lyricStyle,
                         isCurrent: isCurrent,
                         index: index,
-                        lrcAlignmentIndex: _settingController.lrcAlignment.value,
+                        lrcAlignmentIndex:
+                            _settingController.lrcAlignment.value,
+                        lyricController: _lyricController,
                       ),
                     if (lrcEntry.translate.isNotEmpty)
                       Text(
@@ -345,19 +368,17 @@ class _LyricsRenderState extends State<LyricsRender> {
                 );
 
                 final Widget lyricLine = RepaintBoundary(
-                  child: FractionallySizedBox(
-                    widthFactor: 1,
-                    child: content,
-                  ),
+                  child: FractionallySizedBox(widthFactor: 1, child: content),
                 );
 
-                double sigma =(_lyricController.currentLineIndex.value - index)
+                double sigma =
+                    (_lyricController.currentLineIndex.value - index)
                         .abs()
                         .clamp(0.0, 4.0)
                         .toDouble();
                 // 此有模糊开关
-                if(isPointerScrolling || isCurrent){
-                  sigma=0;
+                if (isPointerScrolling || isCurrent) {
+                  sigma = 0;
                 }
 
                 return TextButton(
@@ -365,15 +386,17 @@ class _LyricsRenderState extends State<LyricsRender> {
                     _audioController.audioSetPositon(pos: lrcEntry.start);
                   }.throttle(ms: 500),
                   style: TextButton.styleFrom(
-                    shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: _borderRadius,
+                    ),
                     padding: lrcPadding,
                     overlayColor: hoverColor,
                   ),
 
                   child: ImageFiltered(
-                          imageFilter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-                          child: lyricLine,
-                        ),
+                    imageFilter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+                    child: lyricLine,
+                  ),
                 );
               });
             },
