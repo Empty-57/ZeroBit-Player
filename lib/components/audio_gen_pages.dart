@@ -290,9 +290,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     return ClipRRect(
       borderRadius: _coverBorderRadius,
       child: Obx(() {
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: Image.memory(
+        return Image.memory(
             widget.controller.headCover.value,
             key: ValueKey(widget.controller.headCover.value.hashCode),
             cacheWidth: _coverBigRenderSize,
