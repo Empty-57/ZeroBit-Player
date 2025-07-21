@@ -106,13 +106,13 @@ void main() async {
   await Hive.openBox<SettingCache>(HiveBoxes.settingCacheBox);
   await Hive.openBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
 
-  Get.put(AudioController());
   Get.put(AudioSource());
-  Get.put(LyricController());
   Get.put(UserPlayListController());
   Get.put(OperateArea());
   Get.put(SettingController());
   Get.put(MusicCacheController());
+  Get.put(AudioController());
+  Get.put(LyricController());
   Get.put(ThemeService());
 
 
