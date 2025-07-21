@@ -27,10 +27,6 @@ class BlurWithCoverBackground extends StatelessWidget {
                       gaplessPlayback: true,
                     ),
                   ),
-                  transitionBuilder: (Widget child, Animation<double> anim) {
-                    return FadeTransition(opacity: anim, child: child);
-                  },
-                ),
               ),
   );
 
