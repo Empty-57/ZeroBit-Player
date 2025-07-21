@@ -299,8 +299,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
             width: _headCoverSize,
             fit: BoxFit.cover,
             gaplessPlayback: true,
-          ),
-        );
+          );
       }),
     );
   }
