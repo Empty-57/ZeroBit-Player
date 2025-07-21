@@ -21,7 +21,6 @@ class BlurWithCoverBackground extends StatelessWidget {
                 () => SizedBox.expand(
                     child: Image.memory(
                       cover.value,
-                      key: ValueKey(cover.value.hashCode),
                       cacheWidth: _coverBigRenderSize,
                       cacheHeight: _coverBigRenderSize,
                       fit: BoxFit.cover,
