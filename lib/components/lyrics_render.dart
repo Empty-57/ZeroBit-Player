@@ -174,6 +174,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
                       text: word,
                       progress: lyricController.wordProgress.value / 100.0,
                       style: style,
+                      strutStyle: strutStyle,
                     ),
                   );
                 } else if (wordIndex < currWordIndex) {
