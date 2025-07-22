@@ -263,6 +263,11 @@ class _LyricsRenderState extends State<LyricsRender> {
       weight: FontWeight.w600,
     );
 
+    const strutStyle = StrutStyle(
+      fontSize: 24,
+      forceStrutHeight: true,
+    );
+
     final hoverColor = Theme.of(
       context,
     ).colorScheme.onSurface.withValues(alpha: 0.2);
