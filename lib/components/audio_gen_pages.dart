@@ -290,15 +290,22 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     return ClipRRect(
       borderRadius: _coverBorderRadius,
       child: Obx(() {
-        return Image.memory(
+        return AnimatedSwitcher(
+          duration: Duration(milliseconds: 300),
+          transitionBuilder:
+              (child, anim) =>
+                  FadeTransition(opacity: anim, child: child),
+          child: Image.memory(
             widget.controller.headCover.value,
+            key: ValueKey(widget.controller.headCover.value.hashCode),
             cacheWidth: _coverBigRenderSize,
             cacheHeight: _coverBigRenderSize,
             height: _headCoverSize,
             width: _headCoverSize,
             fit: BoxFit.cover,
             gaplessPlayback: true,
-          );
+          ),
+        );
       }),
     );
   }
