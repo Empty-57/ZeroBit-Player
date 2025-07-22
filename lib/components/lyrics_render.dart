@@ -212,7 +212,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
                 ),
           );
         }
-        return Text(plainText, style: style, softWrap: true,textAlign: textAlign,);
+        return Text(plainText, style: style, softWrap: true,textAlign: textAlign,strutStyle: strutStyle,);
       });
     }
 
