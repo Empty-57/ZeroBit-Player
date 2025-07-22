@@ -371,6 +371,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                             _settingController.lrcAlignment.value,
                         lyricController: _lyricController,
                         textAlign: textAlign,
+                        strutStyle: strutStyle,
                       ),
                     if (lrcEntry.translate.isNotEmpty)
                       Text(
