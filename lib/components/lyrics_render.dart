@@ -107,7 +107,7 @@ class _LrcLyricWidget extends StatelessWidget {
         .animate(target: isCurrent ? 1 : 0)
         .custom(
           duration: 300.ms,
-          builder: (_, value, child) {
+          builder: (_, value, _) {
             return Text(
               text,
               style: style.copyWith(
