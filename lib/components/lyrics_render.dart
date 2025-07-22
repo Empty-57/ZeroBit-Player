@@ -183,6 +183,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
                     style: style.copyWith(
                       color: style.color?.withValues(alpha: _highLightAlpha),
                     ),
+                    strutStyle: strutStyle,
                   );
                 } else {
                   return Text(word, style: style);
