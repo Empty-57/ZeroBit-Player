@@ -207,7 +207,8 @@ class _KaraOkLyricWidget extends StatelessWidget {
                   plainText,
                   style: style.copyWith(color: color),
                   softWrap: true,
-                  textAlign: textAlign
+                  textAlign: textAlign,
+                  strutStyle: strutStyle,
                 ),
           );
         }
