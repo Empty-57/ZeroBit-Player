@@ -34,6 +34,7 @@ class _HighlightedWord extends StatelessWidget {
   final String text;
   final double progress;
   final TextStyle style;
+  final StrutStyle strutStyle;
 
   const _HighlightedWord({
     required this.text,
