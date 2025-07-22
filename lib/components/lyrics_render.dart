@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
@@ -292,24 +293,25 @@ class _LyricsRenderState extends State<LyricsRender> {
         child: Obx(() {
           final currentLyrics = _audioController.currentLyrics.value;
           final parsedLrc = currentLyrics?.parsedLrc;
+          final lrcAlignment= _settingController.lrcAlignment.value;
           final lrcPadding = EdgeInsets.only(
             top: 16,
             bottom: 16,
             left:
-                _settingController.lrcAlignment.value == 2
+                lrcAlignment == 2
                     ? dynamicPadding
-                    : _settingController.lrcAlignment.value == 1
+                    : lrcAlignment == 1
                     ? dynamicPadding / 2
                     : 16,
             right:
-                _settingController.lrcAlignment.value == 0
+                lrcAlignment == 0
                     ? dynamicPadding
-                    : _settingController.lrcAlignment.value == 1
+                    : lrcAlignment == 1
                     ? dynamicPadding / 2
                     : 16,
           );
 
-          final textAlign= _settingController.lrcAlignment.value==0?TextAlign.left:_settingController.lrcAlignment.value==1?TextAlign.center:TextAlign.right;
+          final textAlign= lrcAlignment==0?TextAlign.left:lrcAlignment==1?TextAlign.center:TextAlign.right;
 
           if (currentLyrics == null ||
               parsedLrc is! List<LyricEntry> ||
@@ -358,15 +360,14 @@ class _LyricsRenderState extends State<LyricsRender> {
                 final Widget content = Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment:
-                      _lrcAlignment[_settingController.lrcAlignment.value],
+                      _lrcAlignment[lrcAlignment],
                   children: [
                     if (lrcType == LyricFormat.lrc)
                       _LrcLyricWidget(
                         text: lrcEntry.lyricText as String,
                         style: lyricStyle,
                         isCurrent: isCurrent,
-                        lrcAlignmentIndex:
-                            _settingController.lrcAlignment.value,
+                        lrcAlignmentIndex: lrcAlignment,
                         textAlign: textAlign,
                       )
                     else
@@ -375,8 +376,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                         style: lyricStyle,
                         isCurrent: isCurrent,
                         index: index,
-                        lrcAlignmentIndex:
-                            _settingController.lrcAlignment.value,
+                        lrcAlignmentIndex: lrcAlignment,
                         lyricController: _lyricController,
                         textAlign: textAlign,
                         strutStyle: strutStyle,
