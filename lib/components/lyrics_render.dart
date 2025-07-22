@@ -66,7 +66,6 @@ class _HighlightedWord extends StatelessWidget {
       child: Text(
         text,
         style: style.copyWith(color: style.color?.withValues(alpha: 1)),
-        softWrap: true,
       ),
     );
   }
@@ -89,17 +88,19 @@ class _LrcLyricWidget extends StatelessWidget {
   final TextStyle style;
   final bool isCurrent;
   final int lrcAlignmentIndex;
+  final TextAlign textAlign;
 
   const _LrcLyricWidget({
     required this.text,
     required this.style,
     required this.isCurrent,
     required this.lrcAlignmentIndex,
+    required this.textAlign
   });
 
   @override
   Widget build(BuildContext context) {
-    return Text(text, style: style, softWrap: true)
+    return Text(text, style: style, textAlign: textAlign,softWrap: true)
         .animate(target: isCurrent ? 1 : 0)
         .custom(
           duration: 300.ms,
@@ -113,6 +114,7 @@ class _LrcLyricWidget extends StatelessWidget {
                   value,
                 ),
               ),
+              textAlign: textAlign,
               softWrap: true,
             );
           },
@@ -134,6 +136,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
   final int index;
   final int lrcAlignmentIndex;
   final LyricController lyricController;
+  final TextAlign textAlign;
 
   const _KaraOkLyricWidget({
     required this.text,
@@ -142,6 +145,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
     required this.index,
     required this.lrcAlignmentIndex,
     required this.lyricController,
+    required this.textAlign,
   });
 
   @override
@@ -152,6 +156,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
       content = Obx(() {
         final currWordIndex = lyricController.currentWordIndex.value;
         return Wrap(
+          alignment: lrcAlignmentIndex==0? WrapAlignment.start:lrcAlignmentIndex==1? WrapAlignment.center:WrapAlignment.end,
           crossAxisAlignment: WrapCrossAlignment.end,
           children:
               text.asMap().entries.map((entry) {
@@ -172,10 +177,9 @@ class _KaraOkLyricWidget extends StatelessWidget {
                     style: style.copyWith(
                       color: style.color?.withValues(alpha: _highLightAlpha),
                     ),
-                    softWrap: true,
                   );
                 } else {
-                  return Text(word, style: style, softWrap: true);
+                  return Text(word, style: style);
                 }
               }).toList(),
         );
@@ -196,10 +200,11 @@ class _KaraOkLyricWidget extends StatelessWidget {
                   plainText,
                   style: style.copyWith(color: color),
                   softWrap: true,
+                  textAlign: textAlign
                 ),
           );
         }
-        return Text(plainText, style: style, softWrap: true);
+        return Text(plainText, style: style, softWrap: true,textAlign: textAlign,);
       });
     }
 
@@ -291,6 +296,8 @@ class _LyricsRenderState extends State<LyricsRender> {
                     : 16,
           );
 
+          final textAlign= _settingController.lrcAlignment.value==0?TextAlign.left:_settingController.lrcAlignment.value==1?TextAlign.center:TextAlign.right;
+
           if (currentLyrics == null ||
               parsedLrc is! List<LyricEntry> ||
               parsedLrc.isEmpty) {
@@ -347,6 +354,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                         isCurrent: isCurrent,
                         lrcAlignmentIndex:
                             _settingController.lrcAlignment.value,
+                        textAlign: textAlign,
                       )
                     else
                       _KaraOkLyricWidget(
@@ -357,12 +365,14 @@ class _LyricsRenderState extends State<LyricsRender> {
                         lrcAlignmentIndex:
                             _settingController.lrcAlignment.value,
                         lyricController: _lyricController,
+                        textAlign: textAlign,
                       ),
                     if (lrcEntry.translate.isNotEmpty)
                       Text(
                         lrcEntry.translate,
                         style: lyricStyle,
                         softWrap: true,
+                        textAlign: textAlign,
                       ),
                   ],
                 );
