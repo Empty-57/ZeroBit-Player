@@ -68,6 +68,7 @@ class _HighlightedWord extends StatelessWidget {
       child: Text(
         text,
         style: style.copyWith(color: style.color?.withValues(alpha: 1)),
+        strutStyle: strutStyle,
       ),
     );
   }
