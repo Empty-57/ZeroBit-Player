@@ -140,6 +140,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
   final int lrcAlignmentIndex;
   final LyricController lyricController;
   final TextAlign textAlign;
+  final StrutStyle strutStyle;
 
   const _KaraOkLyricWidget({
     required this.text,
