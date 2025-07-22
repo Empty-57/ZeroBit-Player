@@ -150,6 +150,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
     required this.lrcAlignmentIndex,
     required this.lyricController,
     required this.textAlign,
+    required this.strutStyle
   });
 
   @override
