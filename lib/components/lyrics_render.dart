@@ -329,10 +329,12 @@ class _LyricsRenderState extends State<LyricsRender> {
           final String lrcType = currentLyrics.type;
 
           return ScrollablePositionedList.builder(
+            key: ValueKey(currentLyrics.hashCode),
+            itemCount: parsedLrc.length,
             initialScrollIndex: 0,
             initialAlignment: 0.5,
-            itemCount: parsedLrc.length,
             itemScrollController: _lyricController.lrcViewScrollController,
+            minCacheExtent: 48.0,
             padding: EdgeInsets.symmetric(
               vertical:
                   (context.height -
@@ -340,7 +342,6 @@ class _LyricsRenderState extends State<LyricsRender> {
                       _controllerBarHeight) /
                   2,
             ),
-            minCacheExtent: 48.0,
             itemBuilder: (BuildContext context, int index) {
               final lrcEntry = parsedLrc[index];
 
