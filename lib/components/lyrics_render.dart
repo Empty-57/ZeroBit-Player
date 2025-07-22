@@ -40,6 +40,7 @@ class _HighlightedWord extends StatelessWidget {
     required this.text,
     required this.progress,
     required this.style,
+    required this.strutStyle
   });
 
   @override
