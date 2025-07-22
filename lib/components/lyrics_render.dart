@@ -186,7 +186,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
                     strutStyle: strutStyle,
                   );
                 } else {
-                  return Text(word, style: style);
+                  return Text(word, style: style,strutStyle: strutStyle,);
                 }
               }).toList(),
         );
