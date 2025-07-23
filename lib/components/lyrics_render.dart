@@ -203,7 +203,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
             ),
             duration: const Duration(milliseconds: 300),
             builder:
-                (_, color, __) => Text(
+                (_, color, _) => Text(
                   plainText,
                   style: style.copyWith(color: color),
                   softWrap: true,
