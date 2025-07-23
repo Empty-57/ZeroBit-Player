@@ -103,32 +103,25 @@ class _LrcLyricWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text, style: style, textAlign: textAlign,softWrap: true)
-        .animate(target: isCurrent ? 1 : 0)
-        .custom(
-          duration: 300.ms,
-          builder: (_, value, _) {
-            return Text(
-              text,
-              style: style.copyWith(
-                color: Color.lerp(
-                  style.color,
-                  style.color?.withValues(alpha: _highLightAlpha),
-                  value,
-                ),
-              ),
-              textAlign: textAlign,
-              softWrap: true,
-            );
-          },
-        )
-        .scale(
-          alignment: _lrcScaleAlignment[lrcAlignmentIndex],
-          begin: const Offset(1.0, 1.0),
-          end: const Offset(_lrcScale, _lrcScale),
-          duration: 300.ms,
-          curve: Curves.easeInOutQuad,
-        );
+    return AnimatedScale(
+    scale: isCurrent ? _lrcScale : 1.0,
+    duration: const Duration(milliseconds: 300),
+    curve: Curves.easeInOutQuad,
+    alignment: _lrcScaleAlignment[lrcAlignmentIndex],
+    child: AnimatedDefaultTextStyle(
+      duration: const Duration(milliseconds: 300),
+      style: style.copyWith(
+        color: isCurrent
+        ? style.color?.withValues(alpha: _highLightAlpha)
+        : style.color,
+      ),
+      child: Text(
+        text,
+        textAlign: textAlign,
+        softWrap: true,
+      ),
+    ),
+    );
   }
 }
 
@@ -216,17 +209,11 @@ class _KaraOkLyricWidget extends StatelessWidget {
       });
     }
 
-    return Animate(
-      target: isCurrent ? 1 : 0,
-      effects: [
-        ScaleEffect(
-          alignment: _lrcScaleAlignment[lrcAlignmentIndex],
-          begin: const Offset(1.0, 1.0),
-          end: const Offset(_lrcScale, _lrcScale),
-          duration: 300.ms,
-          curve: Curves.easeInOutQuad,
-        ),
-      ],
+    return AnimatedScale(
+      scale: isCurrent ? _lrcScale : 1.0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOutQuad,
+      alignment: _lrcScaleAlignment[lrcAlignmentIndex],
       child: content,
     );
   }
