@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
@@ -314,6 +313,12 @@ class _LyricsRenderState extends State<LyricsRender> {
 
           final String lrcType = currentLyrics.type;
 
+          // 重要: 需要先缓存字段，否则可能造成内存泄漏
+          // 可能 _KaraOkLyricWidget 仍有性能问题
+          final List lineList=parsedLrc.map((v)=> v.lyricText).toList();
+          final List<String> translateList=parsedLrc.map((v)=> v.translate).toList();
+          final List<double> startTime=parsedLrc.map((v)=> v.start).toList();
+
           return ScrollablePositionedList.builder(
             key: ValueKey(currentLyrics.hashCode),
             itemCount: parsedLrc.length,
@@ -321,6 +326,9 @@ class _LyricsRenderState extends State<LyricsRender> {
             initialAlignment: 0.5,
             itemScrollController: _lyricController.lrcViewScrollController,
             minCacheExtent: 48.0,
+            addAutomaticKeepAlives: false,
+            addSemanticIndexes: false,
+            addRepaintBoundaries: false,
             padding: EdgeInsets.symmetric(
               vertical:
                   (context.height -
@@ -329,11 +337,10 @@ class _LyricsRenderState extends State<LyricsRender> {
                   2,
             ),
             itemBuilder: (BuildContext context, int index) {
-              final lrcEntry = parsedLrc[index];
 
               if ((lrcType == LyricFormat.lrc &&
-                      lrcEntry.lyricText.isEmpty &&
-                      lrcEntry.translate.isEmpty) ||
+                      lineList[index].isEmpty &&
+                      translateList[index].isEmpty) ||
                   index == -1) {
                 return const SizedBox.shrink();
               }
@@ -351,7 +358,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                   children: [
                     if (lrcType == LyricFormat.lrc)
                       _LrcLyricWidget(
-                        text: lrcEntry.lyricText as String,
+                        text: lineList[index] as String,
                         style: lyricStyle,
                         isCurrent: isCurrent,
                         lrcAlignmentIndex: lrcAlignment,
@@ -359,7 +366,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                       )
                     else
                       _KaraOkLyricWidget(
-                        text: lrcEntry.lyricText as List<WordEntry>,
+                        text: lineList[index] as List<WordEntry>,
                         style: lyricStyle,
                         isCurrent: isCurrent,
                         index: index,
@@ -368,9 +375,9 @@ class _LyricsRenderState extends State<LyricsRender> {
                         textAlign: textAlign,
                         strutStyle: strutStyle,
                       ),
-                    if (lrcEntry.translate.isNotEmpty)
+                    if (translateList[index].isNotEmpty)
                       Text(
-                        lrcEntry.translate,
+                        translateList[index],
                         style: lyricStyle,
                         softWrap: true,
                         textAlign: textAlign,
@@ -394,7 +401,7 @@ class _LyricsRenderState extends State<LyricsRender> {
 
                 return TextButton(
                   onPressed: () {
-                    _audioController.audioSetPositon(pos: lrcEntry.start);
+                    _audioController.audioSetPositon(pos: startTime[index]);
                   }.throttle(ms: 500),
                   style: TextButton.styleFrom(
                     shape: const RoundedRectangleBorder(
@@ -404,10 +411,13 @@ class _LyricsRenderState extends State<LyricsRender> {
                     overlayColor: hoverColor,
                   ),
 
-                  child: ImageFiltered(
-                    imageFilter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-                    child: lyricLine,
-                  ),
+                  //此处 ImageFiltered 可能会导致内存泄漏 暂不使用
+                  // child: ImageFiltered(
+                  //   imageFilter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+                  //   child: lyricLine,
+                  // ),
+
+                  child: lyricLine,
                 );
               });
             },
