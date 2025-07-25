@@ -391,9 +391,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                   ],
                 );
 
-                final Widget lyricLine = RepaintBoundary(
-                  child: FractionallySizedBox(widthFactor: 1, child: content),
-                );
+                final Widget lyricLine = FractionallySizedBox(widthFactor: 1, child: content);
 
                 double sigma =
                     (_lyricController.currentLineIndex.value - index)
@@ -418,10 +416,10 @@ class _LyricsRenderState extends State<LyricsRender> {
                   ),
 
                   //此处 ImageFiltered 可能会导致内存泄漏 暂不使用
-                  // child: ImageFiltered(
+                  // child: RepaintBoundary(child: ImageFiltered(
                   //   imageFilter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
                   //   child: lyricLine,
-                  // ),
+                  // ),),
 
                   child: lyricLine,
                 );
