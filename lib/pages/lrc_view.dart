@@ -685,7 +685,7 @@ class LrcView extends StatelessWidget {
     final mixSubColor = Color.lerp(
       Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
       themeModeValue == 'dark' ? Colors.white : Colors.black,
-      0.4,
+      0.3,
     );
 
     final activeTrackCover = mixColor ?? Theme.of(context).colorScheme.primary;
