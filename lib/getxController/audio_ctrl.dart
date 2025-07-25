@@ -166,6 +166,20 @@ final currentLyrics = Rxn<ParsedLyricModel>();
       size: Size(150, 150),
     );
 
+    if (generator.vibrantColor != null) {
+      _settingController.themeColor.value =
+          generator.vibrantColor!.color.toARGB32();
+      _settingController.putCache();
+      return;
+    }
+
+    if (generator.mutedColor != null) {
+      _settingController.themeColor.value =
+          generator.mutedColor!.color.toARGB32();
+      _settingController.putCache();
+      return;
+    }
+
     if (generator.dominantColor != null) {
       _settingController.themeColor.value =
           generator.dominantColor!.color.toARGB32();
