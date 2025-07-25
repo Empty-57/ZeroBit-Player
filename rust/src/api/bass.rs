@@ -213,7 +213,7 @@ impl BassApi {
         unsafe {
             (self.wasapi_free)();
         };
-        let result = unsafe { (self.wasapi_init)(-1, 0, 0, 0, WASAPI_BUFFER, 0.0, None, self.stream_handle as *mut c_void) };
+        let result = unsafe { (self.wasapi_init)(-1, 0, 0, 0, WASAPI_BUFFER, 0.0, None, null_mut()) };
         self.or_err_(result)?;
         let ok = unsafe { (self.wasapi_get_info)(&mut info) };
         self.or_err_(ok)?;
