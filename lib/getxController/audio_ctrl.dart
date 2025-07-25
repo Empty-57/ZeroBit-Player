@@ -185,6 +185,10 @@ final currentLyrics = Rxn<ParsedLyricModel>();
           generator.dominantColor!.color.toARGB32();
       _settingController.putCache();
     }
+
+    _settingController.themeColor.value =0xff27272a;
+    _settingController.putCache();
+
   }
 
   void syncCurrentIndex() {
