@@ -503,7 +503,7 @@ impl BassApi {
                 CHANS.lock().unwrap().unwrap_or(2),
                 flags,
                 WASAPI_BUFFER,
-                0.0,
+                0.05,
                 None,
                 self.stream_handle as *mut c_void,
             )
