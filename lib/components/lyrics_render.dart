@@ -34,12 +34,14 @@ class _HighlightedWord extends StatelessWidget {
   final double progress;
   final TextStyle style;
   final StrutStyle strutStyle;
+  final double scale;
 
   const _HighlightedWord({
     required this.text,
     required this.progress,
     required this.style,
-    required this.strutStyle
+    required this.strutStyle,
+    required this.scale
   });
 
   @override
@@ -60,7 +62,7 @@ class _HighlightedWord extends StatelessWidget {
             style.color!,
           ],
           stops: const [0.0, 0.333, 0.666],
-          transform: _ScaledTranslateGradientTransform(dx: dx),
+          transform: _ScaledTranslateGradientTransform(dx: dx,scale: scale),
         ).createShader(bounds);
       },
       blendMode: BlendMode.dstIn,
@@ -75,12 +77,14 @@ class _HighlightedWord extends StatelessWidget {
 
 class _ScaledTranslateGradientTransform extends GradientTransform {
   final double dx;
-  const _ScaledTranslateGradientTransform({required this.dx});
+  final double scale;
+  const _ScaledTranslateGradientTransform({required this.dx,required this.scale});
   @override
   Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
-    // 先将x轴扩大2倍，然后平移x轴 其实应该是扩大3倍，但是2倍视觉效果更好
+    // final double scale=entry.value.duration>=1.5 ? 3:2; 动态 scale 视觉效果更好
+    // 先将x轴扩大scale倍，然后平移x轴
     return Matrix4.identity()
-      ..scale(2.0, 1.0, 1.0)
+      ..scale(scale, 1.0, 1.0)
       ..translate(dx, 0.0, 0.0);
   }
 }
@@ -159,6 +163,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
               text.asMap().entries.map((entry) {
                 final wordIndex = entry.key;
                 final word = entry.value.lyricWord;
+                final double scale=entry.value.duration>=1.5 ? 3:2;
 
                 if (wordIndex == currWordIndex) {
                   return Obx(
@@ -167,6 +172,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
                       progress: lyricController.wordProgress.value / 100.0,
                       style: style,
                       strutStyle: strutStyle,
+                      scale: scale,
                     ),
                   );
                 } else if (wordIndex < currWordIndex) {
@@ -252,7 +258,7 @@ class _LyricsRenderState extends State<LyricsRender> {
       ctx: context,
       size: 24,
       color: Theme.of(context).colorScheme.onSecondaryContainer.withValues(
-        alpha: _settingController.themeMode.value == 'dark' ? 0.2 : 0.2,
+        alpha: _settingController.themeMode.value == 'dark' ? 0.2 : 0.3,
       ),
       weight: FontWeight.w600,
     );
