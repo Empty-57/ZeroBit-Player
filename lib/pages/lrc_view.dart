@@ -675,7 +675,7 @@ class LrcView extends StatelessWidget {
   Widget build(BuildContext context) {
     double coverSize = (context.width * 0.3).clamp(300, 500);
     final halfWidth = context.width / 2;
-    final themeModeValue = _settingController.themeMode.value; // 在Obx外读取
+    final themeModeValue = _settingController.themeMode.value;
 
     final mixColor = Color.lerp(
       Theme.of(context).colorScheme.primary,
