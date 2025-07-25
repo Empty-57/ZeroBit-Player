@@ -680,7 +680,7 @@ class LrcView extends StatelessWidget {
     final mixColor = Color.lerp(
       Theme.of(context).colorScheme.primary,
       themeModeValue == 'dark' ? Colors.white : Colors.black,
-      0.4,
+      0.3,
     );
     final mixSubColor = Color.lerp(
       Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
