@@ -80,8 +80,8 @@ class _FolderManagerDialog extends StatelessWidget {
               actionsAlignment: MainAxisAlignment.end,
               actions: <Widget>[
                 SizedBox(
-                  width: context.width/2,
-                  height: context.height/2,
+                  width: context.width / 2,
+                  height: context.height / 2,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,12 +138,13 @@ class _FolderManagerDialog extends StatelessWidget {
                         }),
                       ),
                       Obx(
-                        () => Text(
-                          _musicCacheController.currentScanPath.value,
-                          style: generalTextStyle(
-                            ctx: context,
-                            size: 'md',
-                            color: Theme.of(context).colorScheme.primary,
+                        () => Visibility(
+                          visible:
+                              _musicCacheController.currentScanPath.value == ''
+                                  ? false
+                                  : true,
+                          child: const Center(
+                            child: CircularProgressIndicator(),
                           ),
                         ),
                       ),
@@ -272,10 +273,10 @@ class _ApiDropMenu extends StatelessWidget {
         () => CustomBtn(
           fn: () {
             if (menuController.isOpen) {
-            menuController.close();
-          } else {
-            menuController.open();
-          }
+              menuController.close();
+            } else {
+              menuController.open();
+            }
           },
           icon: PhosphorIconsLight.plugs,
           label: _settingController.apiMap[_settingController.apiIndex.value],
@@ -432,8 +433,8 @@ class _FontFamilyDialog extends StatelessWidget {
               actionsAlignment: MainAxisAlignment.end,
               actions: <Widget>[
                 SizedBox(
-                  width: context.width/2,
-                  height: context.height/2,
+                  width: context.width / 2,
+                  height: context.height / 2,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
