@@ -501,6 +501,117 @@ class _FontFamilyDialog extends StatelessWidget {
   }
 }
 
+class _LrcFontSizeDropMenu extends StatelessWidget {
+  const _LrcFontSizeDropMenu();
+
+  @override
+  Widget build(BuildContext context) {
+    const double btnW = 108;
+
+    final menuController = MenuController();
+    final fontSizeList =
+        List.generate(21, (index) => index + 16).map((i) {
+          return CustomBtn(
+            fn: () {
+              _settingController.lrcFontSize.value = i;
+              _settingController.putCache(isSaveFolders: false);
+              menuController.close();
+            },
+            btnWidth: btnW,
+            btnHeight: _setBtnHeight,
+            label: i.toString(),
+            mainAxisAlignment: MainAxisAlignment.center,
+            backgroundColor: Colors.transparent,
+          );
+        }).toList();
+
+    return MenuAnchor(
+      menuChildren: fontSizeList,
+      controller: menuController,
+      consumeOutsideTap: true,
+      style: MenuStyle(
+        maximumSize: WidgetStatePropertyAll(
+          Size.fromHeight(context.height / 2),
+        ),
+      ),
+      child: Obx(
+        () => CustomBtn(
+          fn: () {
+            if (menuController.isOpen) {
+              menuController.close();
+            } else {
+              menuController.open();
+            }
+          },
+          label: '${_settingController.lrcFontSize.value}',
+          btnHeight: _setBtnHeight,
+          btnWidth: btnW,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          overlayColor: Theme.of(context).colorScheme.surfaceContainer,
+          contentColor: Theme.of(context).colorScheme.onPrimary,
+          mainAxisAlignment: MainAxisAlignment.center,
+        ),
+      ),
+    );
+  }
+}
+
+class _LrcFontWeightDropMenu extends StatelessWidget {
+  const _LrcFontWeightDropMenu();
+
+  @override
+  Widget build(BuildContext context) {
+    const double btnW = 108;
+
+    final menuController = MenuController();
+    final fontSizeList =
+        List.generate(9, (index) => index).map((i) {
+          return CustomBtn(
+            fn: () {
+              _settingController.lrcFontWeight.value = i;
+              _settingController.putCache(isSaveFolders: false);
+              menuController.close();
+            },
+            btnWidth: btnW,
+            btnHeight: _setBtnHeight,
+            label: (i * 100 + 100).toString(),
+            mainAxisAlignment: MainAxisAlignment.center,
+            backgroundColor: Colors.transparent,
+          );
+        }).toList();
+
+    return MenuAnchor(
+      menuChildren: fontSizeList,
+      controller: menuController,
+      consumeOutsideTap: true,
+      style: MenuStyle(
+        maximumSize: WidgetStatePropertyAll(
+          Size.fromHeight(context.height / 2),
+        ),
+      ),
+      child: Obx(
+        () => CustomBtn(
+          fn: () {
+            if (menuController.isOpen) {
+              menuController.close();
+            } else {
+              menuController.open();
+            }
+          },
+          label:
+              (_settingController.lrcFontWeight.value * 100 + 100).toString(),
+          btnHeight: _setBtnHeight,
+          btnWidth: btnW,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          overlayColor: Theme.of(context).colorScheme.surfaceContainer,
+          contentColor: Theme.of(context).colorScheme.onPrimary,
+          mainAxisAlignment: MainAxisAlignment.center,
+        ),
+      ),
+    );
+  }
+}
+
 class Setting extends StatelessWidget {
   const Setting({super.key});
 
@@ -540,68 +651,186 @@ class Setting extends StatelessWidget {
             ),
           ),
 
-          const _SetDivider(title: '常规'),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(right: 8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 16,
+                children: [
+                  const _SetDivider(title: '常规'),
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Text('歌曲文件夹', style: generalTextStyle(ctx: context, size: 'lg')),
-              const _FolderManagerDialog(),
-            ],
-          ),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Text('API源', style: generalTextStyle(ctx: context, size: 'lg')),
-              const _ApiDropMenu(),
-            ],
-          ),
-
-          const _SetDivider(title: '个性化'),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Text('主题色', style: generalTextStyle(ctx: context, size: 'lg')),
-              const _ColorPicker(),
-            ],
-          ),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Text('动态主题色', style: generalTextStyle(ctx: context, size: 'lg')),
-              Material(
-                color: Colors.transparent,
-                child: Obx(
-                  () => Switch(
-                    value: _settingController.dynamicThemeColor.value,
-                    trackColor: switchTrackColor,
-                    thumbColor: WidgetStatePropertyAll(
-                      Theme.of(context).colorScheme.onPrimary,
-                    ),
-                    onChanged: (bool value) {
-                      _settingController.dynamicThemeColor.value = value;
-                      _settingController.putCache();
-                    },
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        '歌曲文件夹',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      const _FolderManagerDialog(),
+                    ],
                   ),
-                ),
-              ),
-            ],
-          ),
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Text('字体', style: generalTextStyle(ctx: context, size: 'lg')),
-              const _FontFamilyDialog(),
-            ],
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        'API源',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      const _ApiDropMenu(),
+                    ],
+                  ),
+
+                  const _SetDivider(title: '个性化'),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        '主题色',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      const _ColorPicker(),
+                    ],
+                  ),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        '动态主题色',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      Material(
+                        color: Colors.transparent,
+                        child: Obx(
+                          () => Switch(
+                            value: _settingController.dynamicThemeColor.value,
+                            trackColor: switchTrackColor,
+                            thumbColor: WidgetStatePropertyAll(
+                              Theme.of(context).colorScheme.onPrimary,
+                            ),
+                            onChanged: (bool value) {
+                              _settingController.dynamicThemeColor.value =
+                                  value;
+                              _settingController.putCache();
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        '字体',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      const _FontFamilyDialog(),
+                    ],
+                  ),
+
+                  const _SetDivider(title: '歌词样式'),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        '字号',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      const _LrcFontSizeDropMenu(),
+                    ],
+                  ),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        '字重',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      const _LrcFontWeightDropMenu(),
+                    ],
+                  ),
+
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        '预览',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      FractionallySizedBox(
+                        widthFactor: 1,
+                        child: Obx(() {
+                          final lyricStyle = generalTextStyle(
+                            ctx: context,
+                            size: _settingController.lrcFontSize.value,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSecondaryContainer.withValues(
+                              alpha:
+                                  _settingController.themeMode.value == 'dark'
+                                      ? 0.2
+                                      : 0.3,
+                            ),
+                            weight:
+                                FontWeight.values[_settingController
+                                    .lrcFontWeight
+                                    .value],
+                          );
+
+                          final strutStyle = StrutStyle(
+                            fontSize:
+                                _settingController.lrcFontSize.value.toDouble(),
+                            forceStrutHeight: true,
+                          );
+
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Transform.scale(
+                                scale: 1.1,
+                                child: Text(
+                                  '预览 Preview プレビューです 123',
+                                  style: lyricStyle.copyWith(
+                                    color: lyricStyle.color?.withValues(
+                                      alpha: 0.8,
+                                    ),
+                                  ),
+                                  strutStyle: strutStyle,
+                                ),
+                              ),
+                              Text(
+                                '预览 Preview プレビューです 123',
+                                style: lyricStyle,
+                                strutStyle: strutStyle,
+                              ),
+                            ],
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 96),
+                ],
+              ),
+            ),
           ),
         ],
       ),

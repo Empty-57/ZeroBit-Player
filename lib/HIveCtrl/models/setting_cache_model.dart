@@ -11,6 +11,8 @@ class SettingCache {
   final bool dynamicThemeColor;
   final String fontFamily;
   final int lrcAlignment;
+  final int lrcFontSize;
+  final int lrcFontWeight;
 
   const SettingCache({
     required this.themeMode,
@@ -25,5 +27,7 @@ class SettingCache {
     required this.dynamicThemeColor,
     required this.fontFamily,
     required this.lrcAlignment,
+    required this.lrcFontSize,
+    required this.lrcFontWeight,
   });
 }

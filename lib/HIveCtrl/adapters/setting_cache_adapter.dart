@@ -22,6 +22,8 @@ class SettingCacheAdapter extends TypeAdapter<SettingCache> {
       dynamicThemeColor: reader.readBool(),
       fontFamily: reader.readString(),
       lrcAlignment: reader.readInt(),
+      lrcFontSize: reader.readInt(),
+      lrcFontWeight: reader.readInt(),
     );
   }
 
@@ -39,5 +41,7 @@ class SettingCacheAdapter extends TypeAdapter<SettingCache> {
     writer.writeBool(obj.dynamicThemeColor);
     writer.writeString(obj.fontFamily);
     writer.writeInt(obj.lrcAlignment);
+    writer.writeInt(obj.lrcFontSize);
+    writer.writeInt(obj.lrcFontWeight);
   }
 }

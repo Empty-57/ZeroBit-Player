@@ -274,15 +274,15 @@ class _LyricsRenderState extends State<LyricsRender> {
   Widget build(BuildContext context) {
     final lyricStyle = generalTextStyle(
       ctx: context,
-      size: 24,
+      size: _settingController.lrcFontSize.value,
       color: Theme.of(context).colorScheme.onSecondaryContainer.withValues(
         alpha: _settingController.themeMode.value == 'dark' ? 0.2 : 0.3,
       ),
-      weight: FontWeight.w600,
+      weight: FontWeight.values[_settingController.lrcFontWeight.value],
     );
 
-    const strutStyle = StrutStyle(
-      fontSize: 24,
+    final strutStyle = StrutStyle(
+      fontSize: _settingController.lrcFontSize.value.toDouble(),
       forceStrutHeight: true,
     );
 

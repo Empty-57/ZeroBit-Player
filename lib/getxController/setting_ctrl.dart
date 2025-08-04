@@ -31,6 +31,10 @@ class SettingController extends GetxController {
 
   final lrcAlignment=0.obs;
 
+  final lrcFontSize=24.obs; // 16-36
+
+  final lrcFontWeight=5.obs; // 0-8  w100-w900
+
 
   final Map<int,String> apiMap={
     0:"QQ音乐",
@@ -85,6 +89,8 @@ class SettingController extends GetxController {
       dynamicThemeColor.value=cache.dynamicThemeColor;
       fontFamily.value=cache.fontFamily;
       lrcAlignment.value=cache.lrcAlignment;
+      lrcFontSize.value=cache.lrcFontSize;
+      lrcFontWeight.value=cache.lrcFontWeight;
     }
 
     await setVolume(vol: cache?.volume??1.0);
@@ -111,6 +117,8 @@ class SettingController extends GetxController {
         dynamicThemeColor: dynamicThemeColor.value,
         fontFamily: fontFamily.value,
         lrcAlignment: lrcAlignment.value,
+        lrcFontSize: lrcFontSize.value,
+        lrcFontWeight: lrcFontWeight.value,
       ),
       key: _key,
     );
