@@ -190,28 +190,46 @@ class _KaraOkLyricWidget extends StatelessWidget {
         );
       });
     } else {
-      final plainText = text.map((e) => e.lyricWord).join();
-      content = Obx(() {
-        final currentLineIndex = lyricController.currentLineIndex.value;
-        if (currentLineIndex - index == 1) {
-          return TweenAnimationBuilder<Color?>(
-            tween: ColorTween(
-              begin: style.color?.withValues(alpha: _highLightAlpha),
-              end: style.color,
-            ),
-            duration: const Duration(milliseconds: 300),
-            builder:
-                (_, color, _) => Text(
-                  plainText,
-                  style: style.copyWith(color: color),
-                  softWrap: true,
-                  textAlign: textAlign,
-                  strutStyle: strutStyle,
-                ),
+       content = Obx(() {
+    final currentLineIndex = lyricController.currentLineIndex.value;
+
+    // 检查是否是刚播放完的上一行
+    if (currentLineIndex - index == 1) {
+      return TweenAnimationBuilder<Color?>(
+        tween: ColorTween(
+          begin: style.color?.withValues(alpha: _highLightAlpha),
+          end: style.color,
+        ),
+        duration: const Duration(milliseconds: 300),
+        builder: (_, color, __) {
+          return Wrap(
+            alignment: lrcAlignmentIndex==0? WrapAlignment.start:lrcAlignmentIndex==1? WrapAlignment.center:WrapAlignment.end,
+            crossAxisAlignment: WrapCrossAlignment.end,
+            children: text.map((wordEntry) {
+              return Text(
+                wordEntry.lyricWord,
+                style: style.copyWith(color: color),
+                strutStyle: strutStyle,
+              );
+            }).toList(),
           );
-        }
-        return Text(plainText, style: style, softWrap: true,textAlign: textAlign,strutStyle: strutStyle,);
-      });
+        },
+      );
+    }
+
+    // 对于其他所有非当前行，直接使用基础样式构建 Wrap
+    return Wrap(
+      alignment: lrcAlignmentIndex==0? WrapAlignment.start:lrcAlignmentIndex==1? WrapAlignment.center:WrapAlignment.end,
+      crossAxisAlignment: WrapCrossAlignment.end,
+      children: text.map((wordEntry) {
+        return Text(
+          wordEntry.lyricWord,
+          style: style,
+          strutStyle: strutStyle,
+        );
+      }).toList(),
+    );
+  });
     }
 
     return AnimatedScale(
