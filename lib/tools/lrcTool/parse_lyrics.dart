@@ -99,7 +99,7 @@ List<LyricEntry> _mergeTranslations(
   if (type == LyricFormat.qrc) {
     getTranslate = (e) => e.lyricText == '//' ? ' ' : e.lyricText;
   }
-  final tolerance = (type ==  LyricFormat.qrc || type ==  LyricFormat.lrc) ? 0.3 : 0.8;
+  final tolerance = (type ==  LyricFormat.qrc || type ==  LyricFormat.lrc) ? 0.1 : 0.8;
 
   for (var i = 0; i < mainEntries.length; i++) {
     final curr = mainEntries[i];
