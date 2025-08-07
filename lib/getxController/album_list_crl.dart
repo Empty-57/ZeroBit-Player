@@ -65,6 +65,9 @@ class AlbumListController extends GetxController with AudioControllerGenClass{
         data: a,
       ).compareTo(getSortType(type: type, data: b)),
     );
+    if (_settingController.isReverse.value) {
+      itemReverse();
+    }
   }
 
   @override

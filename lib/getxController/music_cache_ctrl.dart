@@ -45,11 +45,8 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
   void loadData() {
     items.value = _musicCacheBox.getAll();
     itemReSort(type: _settingController.sortMap[OperateArea.allMusic]);
-    if (_settingController.isReverse.value) {
-      itemReverse();
-    }
     _loadItem4Artist();
-    _loadData4Album();
+    _loadItem4Album();
   }
 
   String _getLetter({required String str}){
@@ -75,7 +72,7 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
     artistHasLetter.sort((a,b)=>a.compareTo(b));
   }
 
-  void _loadData4Album(){
+  void _loadItem4Album(){
     albumItemsDict.value.clear();
     albumHasLetter.clear();
     for (var v in items) {
@@ -98,6 +95,9 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
         data: a,
       ).compareTo(getSortType(type: type, data: b)),
     );
+    if (_settingController.isReverse.value) {
+      itemReverse();
+    }
   }
 
   @override
