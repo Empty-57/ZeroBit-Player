@@ -206,7 +206,7 @@ class _MetadataEditorState extends State<_MetadataEditor> {
       ),
     );
 
-    // 同步到其他列表 (逻辑不变)
+    // 同步到其他列表
     switch (widget.operateArea) {
       case OperateArea.playList:
         PlayListController.audioListSyncMetadata(index: widget.index, newCache: newCache);
