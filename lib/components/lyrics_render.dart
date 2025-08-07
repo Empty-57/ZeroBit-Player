@@ -81,7 +81,7 @@ class _ScaledTranslateGradientTransform extends GradientTransform {
   const _ScaledTranslateGradientTransform({required this.dx,required this.scale});
   @override
   Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
-    // final double scale=entry.value.duration>=1.5 ? 3:2; 动态 scale 视觉效果更好
+    // final double scale=entry.value.duration>=1.0 ? 3:2; 动态 scale 视觉效果更好
     // 先将x轴扩大scale倍，然后平移x轴
     return Matrix4.identity()
       ..scale(scale, 1.0, 1.0)
@@ -163,7 +163,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
               text.asMap().entries.map((entry) {
                 final wordIndex = entry.key;
                 final word = entry.value.lyricWord;
-                final double scale=entry.value.duration>=1.5 ? 3:2;
+                final double scale=entry.value.duration>=1.0 ? 3:2;
 
                 if (wordIndex == currWordIndex) {
                   return Obx(

@@ -14,6 +14,8 @@ const _neSearchUrl = "https://music.163.com/api/cloudsearch/pc";
 const _qmLrcUrl = "https://c.y.qq.com/qqmusic/fcgi-bin/lyric_download.fcg";
 const _neLrcUrl = "https://music.163.com/api/song/lyric";
 
+const _qmCoverSize=800; // 150, 300, 500, 800
+
 final _dio = Dio();
 
 final SettingController _settingController = Get.find<SettingController>();
@@ -55,9 +57,9 @@ Future<dynamic> _qmSaveCoverByText({required String text, required String songPa
   try {
     final Map<String, dynamic> data = await _qmSearchByText(text: text, offset: 1, limit: 1);
     final midList = data["data"]?["song"]?["list"];
-    final mid = midList!=null ? (midList[0]?["albummid"]):null;
-    if (mid != null) {
-      picUrl = "https://y.gtimg.cn/music/photo_new/T002R800x800M000$mid.jpg";
+    final String? mid = midList!=null ? (midList[0]?["albummid"]).toString().trim():null;
+    if (mid != null && mid.isNotEmpty) {
+      picUrl = "https://y.gtimg.cn/music/photo_new/T002R${_qmCoverSize}x${_qmCoverSize}M000$mid.jpg";
       return await _saveNetCover(songPath: songPath, picUrl: picUrl,saveCover: saveCover!);
     }
   } catch (e) {

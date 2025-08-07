@@ -59,7 +59,7 @@ class MusicTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Widget cover = AsyncCover(path: metadata.path, music: metadata);
+    final Widget cover = AsyncCover(music: metadata);
 
     return Obx(() {
       final isPlaying = _audioController.currentPath.value == metadata.path;
@@ -142,9 +142,8 @@ const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 const int _coverSmallRenderSize = 150;
 
 class AsyncCover extends StatelessWidget {
-  final String path;
   final MusicCache music;
-  const AsyncCover({super.key, required this.path, required this.music});
+  const AsyncCover({super.key, required this.music});
 
   Widget _renderCover() {
     return ClipRRect(
@@ -162,13 +161,13 @@ class AsyncCover extends StatelessWidget {
   }
 
   Future<Uint8List?> _loadCover() async {
-    final coverData = await getCover(path: path, sizeFlag: 0);
+    final coverData = await getCover(path: music.path, sizeFlag: 0);
     if (coverData == null) {
       final title = music.title;
       final artist = music.artist.isNotEmpty ? ' - ${music.artist}' : '';
       final coverData_ = await saveCoverByText(
         text: title + artist,
-        songPath: path,
+        songPath: music.path,
       );
       if (coverData_ != null && coverData_.isNotEmpty) {
         return Uint8List.fromList(coverData_);
