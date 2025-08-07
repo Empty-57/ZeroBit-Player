@@ -685,6 +685,34 @@ class Setting extends StatelessWidget {
                     ],
                   ),
 
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        '自动下载选择的歌词',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      Material(
+                        color: Colors.transparent,
+                        child: Obx(
+                          () => Switch(
+                            value: _settingController.autoDownloadLrc.value,
+                            trackColor: switchTrackColor,
+                            thumbColor: WidgetStatePropertyAll(
+                              Theme.of(context).colorScheme.onPrimary,
+                            ),
+                            onChanged: (bool value) {
+                              _settingController.autoDownloadLrc.value =
+                                  value;
+                              _settingController.putCache();
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
                   const _SetDivider(title: '个性化'),
 
                   Row(

@@ -2,7 +2,7 @@ abstract class TimedEntry {
   double get start;
   double get nextTime;
 }
-/// 时间轴条目
+/// 行时间轴
 class LyricEntry<T> implements TimedEntry {
   @override
   final double start;
@@ -33,7 +33,7 @@ class LyricEntry<T> implements TimedEntry {
   }
 }
 
-/// 逐字时间轴
+/// 字时间轴
 class WordEntry implements TimedEntry {
   @override
   final double start;

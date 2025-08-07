@@ -24,6 +24,7 @@ class SettingCacheAdapter extends TypeAdapter<SettingCache> {
       lrcAlignment: reader.readInt(),
       lrcFontSize: reader.readInt(),
       lrcFontWeight: reader.readInt(),
+      autoDownloadLrc: reader.readBool(),
     );
   }
 
@@ -43,5 +44,6 @@ class SettingCacheAdapter extends TypeAdapter<SettingCache> {
     writer.writeInt(obj.lrcAlignment);
     writer.writeInt(obj.lrcFontSize);
     writer.writeInt(obj.lrcFontWeight);
+    writer.writeBool(obj.autoDownloadLrc);
   }
 }

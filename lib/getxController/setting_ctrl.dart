@@ -35,6 +35,7 @@ class SettingController extends GetxController {
 
   final lrcFontWeight=5.obs; // 0-8  w100-w900
 
+  final autoDownloadLrc=true.obs;
 
   final Map<int,String> apiMap={
     0:"QQ音乐",
@@ -91,6 +92,7 @@ class SettingController extends GetxController {
       lrcAlignment.value=cache.lrcAlignment;
       lrcFontSize.value=cache.lrcFontSize;
       lrcFontWeight.value=cache.lrcFontWeight;
+      autoDownloadLrc.value=cache.autoDownloadLrc;
     }
 
     await setVolume(vol: cache?.volume??1.0);
@@ -119,6 +121,7 @@ class SettingController extends GetxController {
         lrcAlignment: lrcAlignment.value,
         lrcFontSize: lrcFontSize.value,
         lrcFontWeight: lrcFontWeight.value,
+        autoDownloadLrc: autoDownloadLrc.value,
       ),
       key: _key,
     );

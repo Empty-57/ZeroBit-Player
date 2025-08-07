@@ -13,6 +13,7 @@ class SettingCache {
   final int lrcAlignment;
   final int lrcFontSize;
   final int lrcFontWeight;
+  final bool autoDownloadLrc;
 
   const SettingCache({
     required this.themeMode,
@@ -29,5 +30,6 @@ class SettingCache {
     required this.lrcAlignment,
     required this.lrcFontSize,
     required this.lrcFontWeight,
+    required this.autoDownloadLrc,
   });
 }

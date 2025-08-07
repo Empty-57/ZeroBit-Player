@@ -7,6 +7,7 @@ import 'package:zerobit_player/components/blur_background.dart';
 import 'package:zerobit_player/components/lyrics_render.dart';
 import 'package:zerobit_player/tools/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
+import 'package:zerobit_player/tools/lrcTool/save_lyric.dart';
 
 import '../components/audio_ctrl_btn.dart';
 import '../components/window_ctrl_bar.dart';
@@ -203,6 +204,11 @@ class _SearchResultItem extends StatelessWidget {
             type: type,
           );
         }
+
+        if(_settingController.autoDownloadLrc.value){
+          saveLyrics(path: _audioController.currentPath.value, lrcData: v.lyric);
+        }
+
         Navigator.pop(context);
       },
       style: TextButton.styleFrom(
