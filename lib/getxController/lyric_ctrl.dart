@@ -19,6 +19,16 @@ class LyricController extends GetxController {
   final wordProgress = 0.0.obs;
   double _wordProgressIncrement = 0;
 
+  final cancelScale=false.obs;
+
+  final showInterlude =false.obs;
+
+  double interval =0;
+
+  int wordsLen =0;
+
+  static const _lowIntervalThreshold = 90;
+
   WordEntry? _currentWord;
 
   List<WordEntry>? _currentLine;
@@ -45,12 +55,30 @@ class LyricController extends GetxController {
           wordIndex = 0;
         }
         _currentWord = _currentLine![wordIndex];
+
+        final rowCurrentLine=lyrics[lineIndex];
+        final lastWord=_currentLine![_currentLine!.length-1];
+        interval= rowCurrentLine.nextTime - (lastWord.start + lastWord.duration);
+        wordsLen = _currentLine!.length;
       },
       condition:
           () =>
               (_audioController.currentLyrics.value?.type ?? LyricFormat.lrc) !=
               LyricFormat.lrc,
     );
+
+    ever(wordProgress, (_){
+      final isNotLast= currentWordIndex.value!=wordsLen-1;
+      final threshold = interval >= 4 ? _lowIntervalThreshold : 150;
+      final isThresholdValid = wordProgress.value < threshold;
+
+      final isLast= currentWordIndex.value==wordsLen-1;
+
+      cancelScale.value = isNotLast || isThresholdValid;
+
+      // return (index) => (current === index) && isLast&&interval >= 4&&process>=(lowThreshold+10)&&interlude<=95&&lrcCurrentIndex.value<parsedLyrics.value.length-1;
+      // showInterlude.value= isLast&&interval >= 4&&wordProgress.value>=(_lowIntervalThreshold+10)&&interlude<=95&&currentLineIndex.value<_audioController.currentLyrics.value?.parsedLrc?.length-1;
+    });
 
     // 增量计算:  total/(duration/loopTime)
     // 百分比: total=100 字持续时间: duration(Ms) 轮询间隔: loopTime=20(Ms)

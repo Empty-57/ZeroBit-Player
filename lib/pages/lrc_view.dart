@@ -462,6 +462,7 @@ class LrcView extends StatelessWidget {
                           height: coverSize,
                           width: coverSize,
                           fit: BoxFit.cover,
+                          gaplessPlayback: true,
                         ),
                       ),
                     ),

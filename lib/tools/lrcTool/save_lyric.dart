@@ -26,6 +26,7 @@ Future<void> saveLyrics({required String? path ,required Get4NetLrcModel? lrcDat
 
     final deleteQrcFile = File(p.join(dir, '$baseName${LyricFormat.qrc}'));
     final deleteYrcFile = File(p.join(dir, '$baseName${LyricFormat.yrc}'));
+    final deleteLrcFile = File(p.join(dir, '$baseName${LyricFormat.lrc}'));
 
     if (await deleteQrcFile.exists()) {
       await deleteQrcFile.delete();
@@ -33,6 +34,10 @@ Future<void> saveLyrics({required String? path ,required Get4NetLrcModel? lrcDat
 
     if (await deleteYrcFile.exists()) {
       await deleteYrcFile.delete();
+    }
+
+    if (await deleteLrcFile.exists()) {
+      await deleteLrcFile.delete();
     }
 
     final newLrcFile = File(p.join(dir, '$baseName$lyricType'));

@@ -16,7 +16,12 @@ const _neLrcUrl = "https://music.163.com/api/song/lyric";
 
 const _qmCoverSize=800; // 150, 300, 500, 800
 
-final _dio = Dio();
+final _dio = Dio(BaseOptions(
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+      'Connection': 'keep-alive',
+    },
+  ));
 
 final SettingController _settingController = Get.find<SettingController>();
 

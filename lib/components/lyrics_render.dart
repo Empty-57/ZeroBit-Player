@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
@@ -137,6 +138,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
   final LyricController lyricController;
   final TextAlign textAlign;
   final StrutStyle strutStyle;
+  final bool cancelScale;
 
   const _KaraOkLyricWidget({
     required this.text,
@@ -146,7 +148,8 @@ class _KaraOkLyricWidget extends StatelessWidget {
     required this.lrcAlignmentIndex,
     required this.lyricController,
     required this.textAlign,
-    required this.strutStyle
+    required this.strutStyle,
+    required this.cancelScale,
   });
 
   @override
@@ -233,7 +236,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
     }
 
     return AnimatedScale(
-      scale: isCurrent ? _lrcScale : 1.0,
+      scale: isCurrent&&cancelScale ? _lrcScale : 1.0,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOutQuad,
       alignment: _lrcScaleAlignment[lrcAlignmentIndex],
@@ -280,6 +283,8 @@ class _LyricsRenderState extends State<LyricsRender> {
       ),
       weight: FontWeight.values[_settingController.lrcFontWeight.value],
     );
+
+    final tsLyricStyle=lyricStyle.copyWith(fontSize: lyricStyle.fontSize!-4);
 
     final strutStyle = StrutStyle(
       fontSize: _settingController.lrcFontSize.value.toDouble(),
@@ -398,14 +403,18 @@ class _LyricsRenderState extends State<LyricsRender> {
                         lyricController: _lyricController,
                         textAlign: textAlign,
                         strutStyle: strutStyle,
+                        cancelScale: _lyricController.cancelScale.value,
                       ),
                     if (translateList[index].isNotEmpty)
                       Text(
                         translateList[index],
-                        style: lyricStyle,
+                        style: tsLyricStyle,
                         softWrap: true,
                         textAlign: textAlign,
                       ),
+
+                    if(isCurrent&&_lyricController.interval>4)
+                      Text("textInt")
                   ],
                 );
 
@@ -434,10 +443,13 @@ class _LyricsRenderState extends State<LyricsRender> {
                   ),
 
                   //此处 ImageFiltered 可能会导致内存泄漏 暂不使用
-                  // child: RepaintBoundary(child: ImageFiltered(
+                  // child:ImageFiltered(
                   //   imageFilter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-                  //   child: lyricLine,
-                  // ),),
+                  //   child: RepaintBoundary(child: lyricLine),
+                  // ),
+
+                  // 动画版
+                  // child: lyricLine.animate().blurXY(duration: 150.ms,begin: 0,end: sigma),
 
                   child: lyricLine,
                 );
