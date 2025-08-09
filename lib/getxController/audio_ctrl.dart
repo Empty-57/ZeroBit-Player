@@ -103,7 +103,7 @@ final currentLyrics = Rxn<ParsedLyricModel>();
     super.onInit();
 
     ever(currentMs100, (_) {
-      if (currentMetadata.value.path.isNotEmpty && playListCacheItems.isNotEmpty) {
+      if (currentMetadata.value.duration>0 &&currentMetadata.value.path.isNotEmpty && playListCacheItems.isNotEmpty) {
         progress.value = (currentMs100.value /currentMetadata.value.duration)
             .clamp(0.0, 1.0);
       } else {
