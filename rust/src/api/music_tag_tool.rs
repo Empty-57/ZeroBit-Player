@@ -8,9 +8,30 @@ use lofty::probe::Probe;
 use lofty::read_from_path;
 use lofty::tag::Tag;
 use std::borrow::Cow;
+use std::fs;
 use std::io::Cursor;
 use std::io::ErrorKind as IoErrorKind;
 use std::path::Path;
+use std::time::Duration;
+use windows::core::HSTRING;
+use windows::Storage::StorageFile;
+
+fn get_duration_with_win(path: impl AsRef<Path>) -> Result<f32, windows::core::Error> {
+    let path_str = path.as_ref().to_str().unwrap_or("");
+    let hstring_path = HSTRING::from(path_str);
+    
+    let storage_file = StorageFile::GetFileFromPathAsync(&hstring_path)?.get()?;
+    
+    let music_properties = storage_file
+        .Properties()?
+        .GetMusicPropertiesAsync()?
+        .get()?;
+    
+    let duration : Duration = music_properties.Duration()?.into();
+    let duration:f32  =duration.as_secs_f32();
+
+    Ok(duration)
+}
 
 pub struct EditableMetadata {
     pub title: Option<String>,
@@ -30,7 +51,11 @@ pub struct AudioMetadata {
     pub path: String,
 }
 
-fn handle_get_cover_error(err: LoftyError, path: &Path, options: ParseOptions) -> Option<TaggedFile> {
+fn handle_get_cover_error(
+    err: LoftyError,
+    path: &Path,
+    options: ParseOptions,
+) -> Option<TaggedFile> {
     match err.kind() {
         LoftyErrorKind::Io(inner) if inner.kind() == IoErrorKind::UnexpectedEof => {
             Probe::open(path).ok()?.options(options).read().ok()
@@ -63,6 +88,17 @@ impl AudioMetadata {
 
     fn get_tag(path: &String, err_msg: &str) -> Option<Tag> {
         let path_ = Path::new(&path);
+
+        let metadata = fs::metadata(path).expect("Unable to get file metadata");
+        let mut permissions = metadata.permissions();
+
+        //检查文件是否为只读
+        if permissions.readonly() {
+            #[allow(clippy::permissions_set_readonly_false)]
+            permissions.set_readonly(false);
+            fs::set_permissions(path, permissions).expect("File permissions cannot be modified");
+        }
+
         let mut tagged_file = match read_from_path(path_) {
             Ok(v) => v,
             Err(err) => {
@@ -112,6 +148,14 @@ impl AudioMetadata {
         };
 
         let properties = tagged_file.properties();
+        
+        let primary_duration = properties.duration();
+        
+        let duration: f32 = if primary_duration == Duration::ZERO { 
+            get_duration_with_win(path_).unwrap_or(0.0) 
+        } else { 
+            primary_duration.as_secs_f32()
+        };
 
         if let Some(tag) = tagged_file
             .primary_tag()
@@ -137,7 +181,7 @@ impl AudioMetadata {
                 artist,
                 album: tag.album().unwrap_or(Cow::Borrowed("UNKNOWN")).to_string(),
                 genre: tag.genre().unwrap_or(Cow::Borrowed("UNKNOWN")).to_string(),
-                duration: properties.duration().as_secs_f32(),
+                duration,
                 bitrate: properties.audio_bitrate(),
                 sample_rate: properties.sample_rate(),
                 path: path_.to_string_lossy().to_string(),
@@ -153,7 +197,7 @@ impl AudioMetadata {
             artist: "UNKNOWN".to_string(),
             album: "UNKNOWN".to_string(),
             genre: "UNKNOWN".to_string(),
-            duration: properties.duration().as_secs_f32(),
+            duration,
             bitrate: properties.audio_bitrate(),
             sample_rate: properties.sample_rate(),
             path: path_.to_string_lossy().to_string(),

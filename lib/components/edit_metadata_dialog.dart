@@ -188,7 +188,11 @@ class _MetadataEditorState extends State<_MetadataEditor> {
       }
 
       if (coverBytes != null) {
-        await editCover(path: widget.metadata.path, src: coverBytes);
+        try{
+          await editCover(path: widget.metadata.path, src: coverBytes);
+        }catch(e){
+          debugPrint(e.toString());
+        }
         // 清除旧的封面缓存，让它下次重新加载
         _musicCacheController.items[widget.index].src = null;
       }

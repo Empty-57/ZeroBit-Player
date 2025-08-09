@@ -6,7 +6,7 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `edit_cover`, `edit_tags`, `get_cover`, `get_tag`, `handle_get_cover_error`, `new`, `render_tags`
+// These functions are ignored because they are not marked as `pub`: `edit_cover`, `edit_tags`, `get_cover`, `get_duration_with_win`, `get_tag`, `handle_get_cover_error`, `new`, `render_tags`
 
 Future<AudioMetadata> getMetadata({required String path}) =>
     RustLib.instance.api.crateApiMusicTagToolGetMetadata(path: path);
