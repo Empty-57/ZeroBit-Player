@@ -42,7 +42,7 @@ class _HighlightedWord extends StatelessWidget {
     required this.progress,
     required this.style,
     required this.strutStyle,
-    required this.scale
+    required this.scale,
   });
 
   @override
@@ -63,7 +63,7 @@ class _HighlightedWord extends StatelessWidget {
             style.color!,
           ],
           stops: const [0.0, 0.333, 0.666],
-          transform: _ScaledTranslateGradientTransform(dx: dx,scale: scale),
+          transform: _ScaledTranslateGradientTransform(dx: dx, scale: scale),
         ).createShader(bounds);
       },
       blendMode: BlendMode.dstIn,
@@ -79,7 +79,10 @@ class _HighlightedWord extends StatelessWidget {
 class _ScaledTranslateGradientTransform extends GradientTransform {
   final double dx;
   final double scale;
-  const _ScaledTranslateGradientTransform({required this.dx,required this.scale});
+  const _ScaledTranslateGradientTransform({
+    required this.dx,
+    required this.scale,
+  });
   @override
   Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
     // final double scale=entry.value.duration>=1.0 ? 3:2; 动态 scale 视觉效果更好
@@ -102,29 +105,26 @@ class _LrcLyricWidget extends StatelessWidget {
     required this.style,
     required this.isCurrent,
     required this.lrcAlignmentIndex,
-    required this.textAlign
+    required this.textAlign,
   });
 
   @override
   Widget build(BuildContext context) {
     return AnimatedScale(
-    scale: isCurrent ? _lrcScale : 1.0,
-    duration: const Duration(milliseconds: 300),
-    curve: Curves.easeInOutQuad,
-    alignment: _lrcScaleAlignment[lrcAlignmentIndex],
-    child: AnimatedDefaultTextStyle(
+      scale: isCurrent ? _lrcScale : 1.0,
       duration: const Duration(milliseconds: 300),
-      style: style.copyWith(
-        color: isCurrent
-        ? style.color?.withValues(alpha: _highLightAlpha)
-        : style.color,
+      curve: Curves.easeInOutQuad,
+      alignment: _lrcScaleAlignment[lrcAlignmentIndex],
+      child: AnimatedDefaultTextStyle(
+        duration: const Duration(milliseconds: 300),
+        style: style.copyWith(
+          color:
+              isCurrent
+                  ? style.color?.withValues(alpha: _highLightAlpha)
+                  : style.color,
+        ),
+        child: Text(text, textAlign: textAlign, softWrap: true),
       ),
-      child: Text(
-        text,
-        textAlign: textAlign,
-        softWrap: true,
-      ),
-    ),
     );
   }
 }
@@ -160,13 +160,18 @@ class _KaraOkLyricWidget extends StatelessWidget {
       content = Obx(() {
         final currWordIndex = lyricController.currentWordIndex.value;
         return Wrap(
-          alignment: lrcAlignmentIndex==0? WrapAlignment.start:lrcAlignmentIndex==1? WrapAlignment.center:WrapAlignment.end,
+          alignment:
+              lrcAlignmentIndex == 0
+                  ? WrapAlignment.start
+                  : lrcAlignmentIndex == 1
+                  ? WrapAlignment.center
+                  : WrapAlignment.end,
           crossAxisAlignment: WrapCrossAlignment.end,
           children:
               text.asMap().entries.map((entry) {
                 final wordIndex = entry.key;
                 final word = entry.value.lyricWord;
-                final double scale=entry.value.duration>=1.0 ? 3:2;
+                final double scale = entry.value.duration >= 1.0 ? 3 : 2;
 
                 if (wordIndex == currWordIndex) {
                   return Obx(
@@ -187,56 +192,68 @@ class _KaraOkLyricWidget extends StatelessWidget {
                     strutStyle: strutStyle,
                   );
                 } else {
-                  return Text(word, style: style,strutStyle: strutStyle,);
+                  return Text(word, style: style, strutStyle: strutStyle);
                 }
               }).toList(),
         );
       });
     } else {
-       content = Obx(() {
-    final currentLineIndex = lyricController.currentLineIndex.value;
+      content = Obx(() {
+        final currentLineIndex = lyricController.currentLineIndex.value;
 
-    // 检查是否是刚播放完的上一行
-    if (currentLineIndex - index == 1) {
-      return TweenAnimationBuilder<Color?>(
-        tween: ColorTween(
-          begin: style.color?.withValues(alpha: _highLightAlpha),
-          end: style.color,
-        ),
-        duration: const Duration(milliseconds: 300),
-        builder: (_, color, __) {
-          return Wrap(
-            alignment: lrcAlignmentIndex==0? WrapAlignment.start:lrcAlignmentIndex==1? WrapAlignment.center:WrapAlignment.end,
-            crossAxisAlignment: WrapCrossAlignment.end,
-            children: text.map((wordEntry) {
-              return Text(
-                wordEntry.lyricWord,
-                style: style.copyWith(color: color),
-                strutStyle: strutStyle,
+        // 检查是否是刚播放完的上一行
+        if (currentLineIndex - index == 1) {
+          return TweenAnimationBuilder<Color?>(
+            tween: ColorTween(
+              begin: style.color?.withValues(alpha: _highLightAlpha),
+              end: style.color,
+            ),
+            duration: const Duration(milliseconds: 300),
+            builder: (_, color, __) {
+              return Wrap(
+                alignment:
+                    lrcAlignmentIndex == 0
+                        ? WrapAlignment.start
+                        : lrcAlignmentIndex == 1
+                        ? WrapAlignment.center
+                        : WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.end,
+                children:
+                    text.map((wordEntry) {
+                      return Text(
+                        wordEntry.lyricWord,
+                        style: style.copyWith(color: color),
+                        strutStyle: strutStyle,
+                      );
+                    }).toList(),
               );
-            }).toList(),
+            },
           );
-        },
-      );
-    }
+        }
 
-    // 对于其他所有非当前行，直接使用基础样式构建 Wrap
-    return Wrap(
-      alignment: lrcAlignmentIndex==0? WrapAlignment.start:lrcAlignmentIndex==1? WrapAlignment.center:WrapAlignment.end,
-      crossAxisAlignment: WrapCrossAlignment.end,
-      children: text.map((wordEntry) {
-        return Text(
-          wordEntry.lyricWord,
-          style: style,
-          strutStyle: strutStyle,
+        // 对于其他所有非当前行，直接使用基础样式构建 Wrap
+        return Wrap(
+          alignment:
+              lrcAlignmentIndex == 0
+                  ? WrapAlignment.start
+                  : lrcAlignmentIndex == 1
+                  ? WrapAlignment.center
+                  : WrapAlignment.end,
+          crossAxisAlignment: WrapCrossAlignment.end,
+          children:
+              text.map((wordEntry) {
+                return Text(
+                  wordEntry.lyricWord,
+                  style: style,
+                  strutStyle: strutStyle,
+                );
+              }).toList(),
         );
-      }).toList(),
-    );
-  });
+      });
     }
 
     return AnimatedScale(
-      scale: isCurrent&&cancelScale ? _lrcScale : 1.0,
+      scale: isCurrent && cancelScale ? _lrcScale : 1.0,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOutQuad,
       alignment: _lrcScaleAlignment[lrcAlignmentIndex],
@@ -284,7 +301,9 @@ class _LyricsRenderState extends State<LyricsRender> {
       weight: FontWeight.values[_settingController.lrcFontWeight.value],
     );
 
-    final tsLyricStyle=lyricStyle.copyWith(fontSize: lyricStyle.fontSize!-4);
+    final tsLyricStyle = lyricStyle.copyWith(
+      fontSize: lyricStyle.fontSize! - 4,
+    );
 
     final strutStyle = StrutStyle(
       fontSize: _settingController.lrcFontSize.value.toDouble(),
@@ -307,7 +326,7 @@ class _LyricsRenderState extends State<LyricsRender> {
         child: Obx(() {
           final currentLyrics = _audioController.currentLyrics.value;
           final parsedLrc = currentLyrics?.parsedLrc;
-          final lrcAlignment= _settingController.lrcAlignment.value;
+          final lrcAlignment = _settingController.lrcAlignment.value;
           final lrcPadding = EdgeInsets.only(
             top: 16,
             bottom: 16,
@@ -325,7 +344,12 @@ class _LyricsRenderState extends State<LyricsRender> {
                     : 16,
           );
 
-          final textAlign= lrcAlignment==0?TextAlign.left:lrcAlignment==1?TextAlign.center:TextAlign.right;
+          final textAlign =
+              lrcAlignment == 0
+                  ? TextAlign.left
+                  : lrcAlignment == 1
+                  ? TextAlign.center
+                  : TextAlign.right;
 
           if (currentLyrics == null ||
               parsedLrc is! List<LyricEntry> ||
@@ -344,9 +368,10 @@ class _LyricsRenderState extends State<LyricsRender> {
 
           // 重要: 需要先缓存字段，否则可能造成内存泄漏
           // 可能 _KaraOkLyricWidget 仍有性能问题
-          final List lineList=parsedLrc.map((v)=> v.lyricText).toList();
-          final List<String> translateList=parsedLrc.map((v)=> v.translate).toList();
-          final List<double> startTime=parsedLrc.map((v)=> v.start).toList();
+          final List lineList = parsedLrc.map((v) => v.lyricText).toList();
+          final List<String> translateList =
+              parsedLrc.map((v) => v.translate).toList();
+          final List<double> startTime = parsedLrc.map((v) => v.start).toList();
 
           return ScrollablePositionedList.builder(
             key: ValueKey(currentLyrics.hashCode),
@@ -366,7 +391,6 @@ class _LyricsRenderState extends State<LyricsRender> {
                   2,
             ),
             itemBuilder: (BuildContext context, int index) {
-
               if ((lrcType == LyricFormat.lrc &&
                       lineList[index].isEmpty &&
                       translateList[index].isEmpty) ||
@@ -382,8 +406,7 @@ class _LyricsRenderState extends State<LyricsRender> {
 
                 final Widget content = Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment:
-                      _lrcAlignment[lrcAlignment],
+                  crossAxisAlignment: _lrcAlignment[lrcAlignment],
                   children: [
                     if (lrcType == LyricFormat.lrc)
                       _LrcLyricWidget(
@@ -413,12 +436,66 @@ class _LyricsRenderState extends State<LyricsRender> {
                         textAlign: textAlign,
                       ),
 
-                    if(isCurrent&&_lyricController.interval>4)
-                      Text("textInt")
+                    Obx(() {
+                      final show = _lyricController.showInterlude.value;
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 500),
+                        transitionBuilder: (
+                          Widget child,
+                          Animation<double> animation,
+                        ) {
+                          final curvedAnimation = CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutBack,
+                            reverseCurve: Curves.easeOutBack,
+                          );
+                          return SizeTransition(
+                            axis: Axis.vertical,
+                            axisAlignment: 0.0,
+                            sizeFactor: curvedAnimation, // 平滑地改变布局空间
+                            child: ScaleTransition(
+                              scale: curvedAnimation, // 同时进行缩放
+                              child: child,
+                            ),
+                          );
+                        },
+
+                        child:
+                            (isCurrent && show)
+                                ? Obx(
+                                  () => _HighlightedWord(
+                                        text: "  ● ● ●  ",
+                                        progress:
+                                            _lyricController
+                                                .interludeProcess
+                                                .value /
+                                            100,
+                                        style: lyricStyle,
+                                        strutStyle: strutStyle,
+                                        scale: 2,
+                                      )
+                                      .animate(
+                                        onPlay:
+                                            (controller) => controller.repeat(
+                                              reverse: true,
+                                            ),
+                                      )
+                                      .scaleXY(
+                                        end: _lrcScale,
+                                        duration: 1500.ms,
+                                        curve: Curves.easeInOut,
+                                      ),
+                                )
+                                : const SizedBox.shrink(),
+                      );
+                    }),
                   ],
                 );
 
-                final Widget lyricLine = FractionallySizedBox(widthFactor: 1, child: content);
+                final Widget lyricLine = FractionallySizedBox(
+                  widthFactor: 1,
+                  child: content,
+                );
 
                 double sigma =
                     (_lyricController.currentLineIndex.value - index)
@@ -450,7 +527,6 @@ class _LyricsRenderState extends State<LyricsRender> {
 
                   // 动画版
                   // child: lyricLine.animate().blurXY(duration: 150.ms,begin: 0,end: sigma),
-
                   child: lyricLine,
                 );
               });

@@ -23,9 +23,13 @@ class LyricController extends GetxController {
 
   final showInterlude =false.obs;
 
-  double interval =0;
+  final interludeProcess =0.0.obs;
 
-  int wordsLen =0;
+  double _interval =0;
+
+  int _threshold = _lowIntervalThreshold;
+
+  int _wordsLen =0;
 
   static const _lowIntervalThreshold = 90;
 
@@ -58,8 +62,9 @@ class LyricController extends GetxController {
 
         final rowCurrentLine=lyrics[lineIndex];
         final lastWord=_currentLine![_currentLine!.length-1];
-        interval= rowCurrentLine.nextTime - (lastWord.start + lastWord.duration);
-        wordsLen = _currentLine!.length;
+        _interval= rowCurrentLine.nextTime - (lastWord.start + lastWord.duration);
+        _threshold = _interval >= 4 ? _lowIntervalThreshold : 150;
+        _wordsLen = _currentLine!.length;
       },
       condition:
           () =>
@@ -68,16 +73,11 @@ class LyricController extends GetxController {
     );
 
     ever(wordProgress, (_){
-      final isNotLast= currentWordIndex.value!=wordsLen-1;
-      final threshold = interval >= 4 ? _lowIntervalThreshold : 150;
-      final isThresholdValid = wordProgress.value < threshold;
-
-      final isLast= currentWordIndex.value==wordsLen-1;
-
+      final isNotLast= currentWordIndex.value!=_wordsLen-1;
+      final isThresholdValid = wordProgress.value < _threshold;
       cancelScale.value = isNotLast || isThresholdValid;
-
-      // return (index) => (current === index) && isLast&&interval >= 4&&process>=(lowThreshold+10)&&interlude<=95&&lrcCurrentIndex.value<parsedLyrics.value.length-1;
-      // showInterlude.value= isLast&&interval >= 4&&wordProgress.value>=(_lowIntervalThreshold+10)&&interlude<=95&&currentLineIndex.value<_audioController.currentLyrics.value?.parsedLrc?.length-1;
+      final int len =(_audioController.currentLyrics.value?.parsedLrc?.length??0) - 1;
+      showInterlude.value= !isNotLast&&_interval >= 4&&wordProgress.value>=(_lowIntervalThreshold+10)&&interludeProcess.value<=95&&currentLineIndex.value<len;
     });
 
     // 增量计算:  total/(duration/loopTime)
@@ -104,6 +104,7 @@ class LyricController extends GetxController {
         hint: currentLineIndex.value,
       );
       if (newLineIndex != currentLineIndex.value) {
+        _interval=0;
         wordProgress.value = 0;
         currentLineIndex.value = newLineIndex;
         if (!isPointerScroll.value) {
@@ -124,8 +125,13 @@ class LyricController extends GetxController {
       );
 
       if (newWordIndex != currentWordIndex.value) {
+        interludeProcess.value=0;
         wordProgress.value = 0;
         currentWordIndex.value = newWordIndex;
+      }
+
+      if (wordProgress.value>=_lowIntervalThreshold+10&&currentWordIndex.value==_wordsLen-1){
+        interludeProcess.value+= 2/_interval;
       }
 
       wordProgress.value += _wordProgressIncrement;
