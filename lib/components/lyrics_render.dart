@@ -526,7 +526,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                   // ),
 
                   // 动画版
-                  // child: lyricLine.animate().blurXY(duration: 150.ms,begin: 0,end: sigma),
+                  // child: lyricLine.animate().blurXY(duration: 300.ms,begin: 0,end: sigma),
                   child: lyricLine,
                 );
               });

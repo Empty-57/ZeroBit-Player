@@ -147,6 +147,7 @@ final currentLyrics = Rxn<ParsedLyricModel>();
 
       windowManager.setTitle("${currentMetadata.value.title} - ${currentMetadata.value.artist}");
       currentCover.value=await getCover(path: currentPath.value, sizeFlag: 1)??kTransparentImage;
+      currentMetadata.value.src=await getCover(path: currentPath.value, sizeFlag: 0)??kTransparentImage;
       await smtcUpdateMetadata(title: currentMetadata.value.title, artist: currentMetadata.value.artist, album: currentMetadata.value.album, coverSrc: currentCover.value);
       debugPrint("currentIndex:set");
       _isSyncing=false;
