@@ -190,7 +190,7 @@ impl AudioMetadata {
 
         AudioMetadata {
             title: path_
-                .file_name()
+                .file_stem()
                 .unwrap_or("UNKNOWN".as_ref())
                 .to_string_lossy()
                 .to_string(),
