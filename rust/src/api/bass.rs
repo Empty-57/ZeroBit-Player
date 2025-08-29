@@ -30,6 +30,7 @@ struct BassApi {
     play: Symbol<'static, BASS_ChannelPlay>,
     pause: Symbol<'static, BASS_ChannelPause>,
     stop: Symbol<'static, BASS_ChannelStop>,
+    get_len:Symbol<'static,BASS_ChannelGetLength>,
     get_pos:Symbol<'static,BASS_ChannelGetPosition>,
     set_pos:Symbol<'static,BASS_ChannelSetPosition>,
     bytes2sec:Symbol<'static,BASS_ChannelBytes2Seconds>,
@@ -141,6 +142,8 @@ impl BassApi {
 
             let stop = lib.get(b"BASS_ChannelStop\0").map_err(|e| e.to_string())?;
 
+            let get_len=lib.get(b"BASS_ChannelGetLength\0").map_err(|e| e.to_string())?;
+            
             let get_pos=lib.get(b"BASS_ChannelGetPosition\0").map_err(|e| e.to_string())?;
             
             let set_pos=lib.get(b"BASS_ChannelSetPosition\0").map_err(|e| e.to_string())?;
@@ -191,6 +194,7 @@ impl BassApi {
                 play,
                 pause,
                 stop,
+                get_len,
                 get_pos,
                 set_pos,
                 bytes2sec,
@@ -423,6 +427,24 @@ impl BassApi {
         
     }
     
+    fn get_len(&mut self) -> f64 {
+        if self.stream_handle==0 {
+            return 0.0;
+        }
+        
+        let len_bytes=unsafe { (self.get_len)(self.stream_handle,BASS_POS_BYTE) };
+        let err_code = unsafe { (self.error_get_code)() };
+        if err_code != 0 {
+            if err_code==BASS_ERROR_HANDLE { 
+                    self.stream_free();
+                }
+            println!("BASS failed, error code: {}", err_code);
+            0.0
+        }else { 
+            unsafe{(self.bytes2sec)(self.stream_handle,len_bytes)}
+        }
+    }
+    
     fn get_pos(&mut self) -> f64{
         if self.stream_handle==0 {
             return 0.0;
@@ -576,6 +598,11 @@ pub fn pause() -> Result<(), String> {
 #[flutter_rust_bridge::frb]
 pub fn stop() -> Result<(), String> {
     BASS_API.lock().unwrap().as_mut().unwrap().stop()
+}
+
+#[flutter_rust_bridge::frb]
+pub fn get_len() -> f64 {
+    BASS_API.lock().unwrap().as_mut().unwrap().get_len()
 }
 
 #[flutter_rust_bridge::frb]

@@ -39,6 +39,9 @@ pub(crate) type BASS_StreamFree = unsafe extern "C" fn(handle: c_uint) -> c_int;
 pub(crate) type BASS_Free = unsafe extern "C" fn() -> c_int;
 pub(crate) type BASS_ErrorGetCode = unsafe extern "C" fn() -> c_int;
 
+pub(crate) type BASS_ChannelGetLength =
+    unsafe extern "C" fn(handle: c_uint, mode: c_uint) -> c_ulonglong;
+
 pub(crate) type BASS_ChannelGetPosition =
     unsafe extern "C" fn(handle: c_uint, mode: c_uint) -> c_ulonglong;
 
@@ -57,7 +60,9 @@ pub(crate) type BASS_ChannelSetSync=unsafe extern "C" fn(handle: c_uint, sync_ty
 
 pub(crate) type BASS_ChannelRemoveSync =unsafe extern "C" fn(handle: c_uint, sync: c_uint) -> c_int;
 
-pub type BASS_PluginLoad = unsafe extern "C" fn(
+pub(crate) type BASS_PluginLoad = unsafe extern "C" fn(
     file: *const c_char, // const char *
     flags: c_uint,       // DWORD
 ) -> c_uint;
+
+

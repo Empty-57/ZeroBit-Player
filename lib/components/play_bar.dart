@@ -312,8 +312,8 @@ class _PlayBarState extends State<PlayBar> {
   // 构建时间显示
   Widget _buildTimeDisplay(TextStyle timeTextStyle) {
     return Obx(() {
-      final duration = _audioController.currentMetadata.value.duration > 0
-          ? formatTime(totalSeconds: _audioController.currentMetadata.value.duration)
+      final duration = _audioController.currentDuration.value > 0
+          ? formatTime(totalSeconds: _audioController.currentDuration.value)
           : "--:--";
       final currentSec = formatTime(totalSeconds: _audioController.currentSec.value);
       return Text("$currentSec / $duration", style: timeTextStyle);

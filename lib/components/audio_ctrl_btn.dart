@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
 
 import 'package:zerobit_player/tools/general_style.dart';
@@ -178,7 +179,7 @@ class AudioCtrlWidget {
   Widget get seekSlide => Obx(() {
     late final double duration;
     if (_audioController.currentMetadata.value.path.isNotEmpty) {
-      duration = _audioController.currentMetadata.value.duration;
+      duration = _audioController.currentDuration.value;
     } else {
       _seekDraggingValue.value = 0.0;
       duration = 9999.0;

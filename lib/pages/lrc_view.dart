@@ -606,9 +606,8 @@ class LrcView extends StatelessWidget {
                             formatTime(
                               totalSeconds:
                                   _audioController
-                                      .currentMetadata
-                                      .value
-                                      .duration,
+                                      .currentDuration
+                                      .value,
                             ),
                             style: timeTotalStyle,
                           ),

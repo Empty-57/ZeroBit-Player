@@ -46,6 +46,8 @@ class AudioController extends GetxController {
         src: null,
       ).obs;
 
+  final currentDuration=0.0.obs;
+
   final currentState = AudioState.stop.obs;
 
   final SettingController _settingController = Get.find<SettingController>();
@@ -115,10 +117,10 @@ class AudioController extends GetxController {
     super.onInit();
 
     ever(currentMs100, (_) {
-      if (currentMetadata.value.duration > 0 &&
+      if (currentDuration.value > 0 &&
           currentMetadata.value.path.isNotEmpty &&
           playListCacheItems.isNotEmpty) {
-        progress.value = (currentMs100.value / currentMetadata.value.duration)
+        progress.value = (currentMs100.value / currentDuration.value)
             .clamp(0.0, 1.0);
       } else {
         progress.value = 0.0;
@@ -159,6 +161,13 @@ class AudioController extends GetxController {
     _isSyncing = true;
     if (_settingController.dynamicThemeColor.value) {
       await _setThemeColor4Cover();
+    }
+
+    if(currentMetadata.value.duration<=0){
+      currentDuration.value=await getLen();
+    }
+    else{
+      currentDuration.value=currentMetadata.value.duration;
     }
 
     final title = currentMetadata.value.title;
@@ -255,6 +264,10 @@ class AudioController extends GetxController {
     currentMs100.value = 0.0;
     currentSec.value = 0.0;
     try {
+      currentState.value = AudioState.playing;
+      await smtcUpdateState(state: currentState.value.index);
+      await playFile(path: metadata.path);
+
       currentPath.value = metadata.path;
       currentMetadata.value = metadata;
 
@@ -263,9 +276,7 @@ class AudioController extends GetxController {
       }
 
       syncCurrentIndex();
-      currentState.value = AudioState.playing;
-      await smtcUpdateState(state: currentState.value.index);
-      await playFile(path: metadata.path);
+
     } catch (e) {
       currentMs100.value = 0.0;
       currentSec.value = 0.0;
