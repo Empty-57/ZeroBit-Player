@@ -162,7 +162,7 @@ class LyricController extends GetxController {
         (_audioController.currentLyrics.value?.parsedLrc?.length ?? 1) - 1,
       ),
       duration: Duration(milliseconds: 500),
-      alignment: 0.5,
+      alignment: 0.4,
       curve: Curves.easeInOut,
     );
   }

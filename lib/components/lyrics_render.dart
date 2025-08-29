@@ -377,7 +377,7 @@ class _LyricsRenderState extends State<LyricsRender> {
             key: ValueKey(currentLyrics.hashCode),
             itemCount: parsedLrc.length,
             initialScrollIndex: 0,
-            initialAlignment: 0.5,
+            initialAlignment: 0.4,
             itemScrollController: _lyricController.lrcViewScrollController,
             minCacheExtent: 48.0,
             addAutomaticKeepAlives: false,
