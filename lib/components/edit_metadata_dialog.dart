@@ -158,7 +158,7 @@ class _MetadataEditorState extends State<_MetadataEditor> {
   Future<void> _fetchNetworkCover() async {
     setState(() => _isLoading = true);
     final title = _titleCtrl.text;
-    final artist = _artistCtrl.text.isNotEmpty ? ' - ${_artistCtrl.text}' : '';
+    final artist = (_artistCtrl.text.isNotEmpty&&_artistCtrl.text!='UNKNOWN') ? ' - ${_artistCtrl.text}' : '';
     final coverData = await saveCoverByText(
       text: title + artist,
       songPath: widget.metadata.path,

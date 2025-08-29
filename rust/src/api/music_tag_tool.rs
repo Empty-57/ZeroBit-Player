@@ -5,7 +5,6 @@ use lofty::file::{TaggedFile, TaggedFileExt};
 use lofty::picture::{MimeType, Picture, PictureType};
 use lofty::prelude::{Accessor, AudioFile, ItemKey, TagExt};
 use lofty::probe::Probe;
-use lofty::read_from_path;
 use lofty::tag::Tag;
 use std::borrow::Cow;
 use std::fs;
@@ -13,6 +12,7 @@ use std::io::Cursor;
 use std::io::ErrorKind as IoErrorKind;
 use std::path::Path;
 use std::time::Duration;
+use lofty::read_from_path;
 use windows::core::HSTRING;
 use windows::Storage::StorageFile;
 
@@ -173,7 +173,7 @@ impl AudioMetadata {
                     .title()
                     .unwrap_or(
                         path_
-                            .file_name()
+                            .file_stem()
                             .unwrap_or("UNKNOWN".as_ref())
                             .to_string_lossy(),
                     )

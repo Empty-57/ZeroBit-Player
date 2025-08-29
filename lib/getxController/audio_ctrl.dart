@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:get/get.dart';
@@ -14,6 +15,7 @@ import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
 import 'package:zerobit_player/tools/lrcTool/get_lyrics.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
+import '../API/apis.dart';
 import '../HIveCtrl/hive_manager.dart';
 import '../HIveCtrl/models/music_cache_model.dart';
 import '../field/audio_source.dart';
@@ -31,17 +33,18 @@ class AudioController extends GetxController {
   final currentSec = 0.0.obs;
   final progress = 0.0.obs;
 
-  late final Rx<MusicCache> currentMetadata=MusicCache(
-    title: '',
-    artist: '',
-    album: '',
-    genre: '',
-    duration: 9999,
-    bitrate: null,
-    sampleRate: null,
-    path: '',
-    src: null,
-  ).obs;
+  late final Rx<MusicCache> currentMetadata =
+      MusicCache(
+        title: '',
+        artist: '',
+        album: '',
+        genre: '',
+        duration: 9999,
+        bitrate: null,
+        sampleRate: null,
+        path: '',
+        src: null,
+      ).obs;
 
   final currentState = AudioState.stop.obs;
 
@@ -51,21 +54,22 @@ class AudioController extends GetxController {
       Get.find<MusicCacheController>();
 
   final UserPlayListController _userPlayListController =
-    Get.find<UserPlayListController>();
+      Get.find<UserPlayListController>();
 
   final _userPlayListCacheBox = HiveManager.userPlayListCacheBox;
 
-  late final RxList<MusicCache> playListCacheItems = [..._musicCacheController.items].obs;
+  late final RxList<MusicCache> playListCacheItems =
+      [..._musicCacheController.items].obs;
 
   MusicCache? _hasNextAudioMetadata;
 
   List get allUserKey => _userPlayListCacheBox.getKeyAll();
 
-  final currentCover=kTransparentImage.obs;
+  final currentCover = kTransparentImage.obs;
 
-  bool _isSyncing=false;
+  bool _isSyncing = false;
 
-final currentLyrics = Rxn<ParsedLyricModel>();
+  final currentLyrics = Rxn<ParsedLyricModel>();
 
   void syncPlayListCacheItems() {
     if (allUserKey.contains(_audioSource.currentAudioSource.value)) {
@@ -81,12 +85,20 @@ final currentLyrics = Rxn<ParsedLyricModel>();
       return;
     }
 
-    if(_musicCacheController.artistItemsDict.value.keys.any((v)=>v.substring(1)+TagSuffix.artistList==_audioSource.currentAudioSource.value)){
+    if (_musicCacheController.artistItemsDict.value.keys.any(
+      (v) =>
+          v.substring(1) + TagSuffix.artistList ==
+          _audioSource.currentAudioSource.value,
+    )) {
       playListCacheItems.value = [...ArtistListController.audioListItems];
       return;
     }
 
-    if(_musicCacheController.albumItemsDict.value.keys.any((v)=>v.substring(1)+TagSuffix.albumList==_audioSource.currentAudioSource.value)){
+    if (_musicCacheController.albumItemsDict.value.keys.any(
+      (v) =>
+          v.substring(1) + TagSuffix.albumList ==
+          _audioSource.currentAudioSource.value,
+    )) {
       playListCacheItems.value = [...AlbumListController.audioListItems];
       return;
     }
@@ -103,8 +115,10 @@ final currentLyrics = Rxn<ParsedLyricModel>();
     super.onInit();
 
     ever(currentMs100, (_) {
-      if (currentMetadata.value.duration>0 &&currentMetadata.value.path.isNotEmpty && playListCacheItems.isNotEmpty) {
-        progress.value = (currentMs100.value /currentMetadata.value.duration)
+      if (currentMetadata.value.duration > 0 &&
+          currentMetadata.value.path.isNotEmpty &&
+          playListCacheItems.isNotEmpty) {
+        progress.value = (currentMs100.value / currentMetadata.value.duration)
             .clamp(0.0, 1.0);
       } else {
         progress.value = 0.0;
@@ -116,51 +130,90 @@ final currentLyrics = Rxn<ParsedLyricModel>();
       syncPlayListCacheItems();
     });
 
-    ever(currentMetadata,(_) async {
-      currentMs100.value=0;
-    currentSec.value=0;
-      try{
+    ever(currentMetadata, (_) async {
+      currentMs100.value = 0;
+      currentSec.value = 0;
+      try {
         _syncInfo();
-      }catch(e){
+      } catch (e) {
         debugPrint(e.toString());
-        _isSyncing=false;
+        _isSyncing = false;
       }
 
-      currentLyrics.value=await getParsedLyric(filePath: currentMetadata.value.path);
+      currentLyrics.value = await getParsedLyric(
+        filePath: currentMetadata.value.path,
+      );
       debugPrint(currentLyrics.value?.type.toString());
-
     });
-
   }
 
-  void _syncInfo()async{
-    if(_isSyncing){return;}
+  void _syncInfo() async {
+    if (_isSyncing) {
+      return;
+    }
 
     if (currentMetadata.value.path.isEmpty) {
-        windowManager.setTitle('ZeroBit Player');
-        return;
-      }
-    _isSyncing=true;
-     if (_settingController.dynamicThemeColor.value) {
-        await _setThemeColor4Cover();
-      }
+      windowManager.setTitle('ZeroBit Player');
+      return;
+    }
+    _isSyncing = true;
+    if (_settingController.dynamicThemeColor.value) {
+      await _setThemeColor4Cover();
+    }
 
-      windowManager.setTitle("${currentMetadata.value.title} - ${currentMetadata.value.artist}");
-      currentCover.value=await getCover(path: currentPath.value, sizeFlag: 1)??kTransparentImage;
-      currentMetadata.value.src=await getCover(path: currentPath.value, sizeFlag: 0)??kTransparentImage;
-      await smtcUpdateMetadata(title: currentMetadata.value.title, artist: currentMetadata.value.artist, album: currentMetadata.value.album, coverSrc: currentCover.value);
-      debugPrint("currentIndex:set");
-      _isSyncing=false;
+    final title = currentMetadata.value.title;
+    final artist =
+        (currentMetadata.value.artist.isNotEmpty &&
+                currentMetadata.value.artist != 'UNKNOWN')
+            ? ' - ${currentMetadata.value.artist}'
+            : '';
+
+    final coverData = await getCover(path: currentPath.value, sizeFlag: 1);
+
+    if (coverData != null && coverData.isNotEmpty) {
+      currentCover.value = coverData;
+    } else {
+      final coverDataNet = await saveCoverByText(
+        text: title + artist,
+        songPath: currentMetadata.value.path,
+        saveCover: false,
+      );
+
+      if (coverDataNet != null && coverDataNet.isNotEmpty) {
+        currentCover.value = Uint8List.fromList(coverDataNet);
+      } else {
+        currentCover.value = kTransparentImage;
+      }
+    }
+
+    if (currentMetadata.value.src == null ||
+        currentMetadata.value.src!.isEmpty) {
+      currentMetadata.value.src =
+          await getCover(path: currentPath.value, sizeFlag: 0) ??
+          playListCacheItems
+              .firstWhere((v) => v.path == currentPath.value)
+              .src ??
+          kTransparentImage;
+    }
+
+    windowManager.setTitle(title + artist);
+    await smtcUpdateMetadata(
+      title: currentMetadata.value.title,
+      artist: currentMetadata.value.artist,
+      album: currentMetadata.value.album,
+      coverSrc: currentCover.value,
+    );
+    debugPrint("currentIndex:set");
+    _isSyncing = false;
   }
 
   Future<void> _setThemeColor4Cover() async {
-    if(currentMetadata.value.path.isEmpty){return;}
+    if (currentMetadata.value.path.isEmpty) {
+      return;
+    }
     final src =
         currentMetadata.value.src ??
-        await getCover(
-          path: currentMetadata.value.path,
-          sizeFlag: 0,
-        ) ??
+        await getCover(path: currentMetadata.value.path, sizeFlag: 0) ??
         kTransparentImage;
     final PaletteGenerator generator = await PaletteGenerator.fromImageProvider(
       MemoryImage(src),
@@ -188,9 +241,8 @@ final currentLyrics = Rxn<ParsedLyricModel>();
       return;
     }
 
-    _settingController.themeColor.value =0xff27272a;
+    _settingController.themeColor.value = 0xff27272a;
     _settingController.putCache();
-
   }
 
   void syncCurrentIndex() {
@@ -201,10 +253,10 @@ final currentLyrics = Rxn<ParsedLyricModel>();
 
   Future<void> audioPlay({required MusicCache metadata}) async {
     currentMs100.value = 0.0;
-    currentSec.value=0.0;
+    currentSec.value = 0.0;
     try {
       currentPath.value = metadata.path;
-      currentMetadata.value=metadata;
+      currentMetadata.value = metadata;
 
       if (!playListCacheItems.any((v) => v.path == metadata.path)) {
         playListCacheItems.add(metadata);
@@ -216,7 +268,7 @@ final currentLyrics = Rxn<ParsedLyricModel>();
       await playFile(path: metadata.path);
     } catch (e) {
       currentMs100.value = 0.0;
-      currentSec.value=0.0;
+      currentSec.value = 0.0;
 
       debugPrint(e.toString());
       currentState.value = AudioState.stop;
@@ -225,7 +277,9 @@ final currentLyrics = Rxn<ParsedLyricModel>();
   }
 
   Future<void> audioResume() async {
-    if (currentMetadata.value.path.isEmpty || playListCacheItems.isEmpty || currentState.value == AudioState.playing) {
+    if (currentMetadata.value.path.isEmpty ||
+        playListCacheItems.isEmpty ||
+        currentState.value == AudioState.playing) {
       return;
     }
     currentState.value = AudioState.playing;
@@ -238,7 +292,9 @@ final currentLyrics = Rxn<ParsedLyricModel>();
   }
 
   Future<void> audioPause() async {
-    if (currentMetadata.value.path.isEmpty || playListCacheItems.isEmpty || currentState.value == AudioState.pause) {
+    if (currentMetadata.value.path.isEmpty ||
+        playListCacheItems.isEmpty ||
+        currentState.value == AudioState.pause) {
       return;
     }
     currentState.value = AudioState.pause;
@@ -309,30 +365,33 @@ final currentLyrics = Rxn<ParsedLyricModel>();
   }
 
   void changePlayMode() {
-    if (_settingController.playMode.value >= 0 && _settingController.playMode.value < 2) {
+    if (_settingController.playMode.value >= 0 &&
+        _settingController.playMode.value < 2) {
       _settingController.playMode.value++;
-    }else{
+    } else {
       _settingController.playMode.value = 0;
     }
     _settingController.putCache();
   }
 
-  void changeLrcAlignment(){
-    if (_settingController.lrcAlignment.value >= 0 && _settingController.lrcAlignment.value < 2) {
+  void changeLrcAlignment() {
+    if (_settingController.lrcAlignment.value >= 0 &&
+        _settingController.lrcAlignment.value < 2) {
       _settingController.lrcAlignment.value++;
-    }else{
+    } else {
       _settingController.lrcAlignment.value = 0;
     }
     _settingController.putCache();
   }
 
   Future<void> _maybeRandomPlay() async {
-    if (_settingController.playMode.value == 2&&playListCacheItems.length>1) {
+    if (_settingController.playMode.value == 2 &&
+        playListCacheItems.length > 1) {
       syncCurrentIndex();
-      for(int i=0;i<10;i++){
-        final index=Random().nextInt(playListCacheItems.length);
-        if(index!=currentIndex.value){
-          currentIndex.value=index;
+      for (int i = 0; i < 10; i++) {
+        final index = Random().nextInt(playListCacheItems.length);
+        if (index != currentIndex.value) {
+          currentIndex.value = index;
           break;
         }
       }
@@ -344,8 +403,8 @@ final currentLyrics = Rxn<ParsedLyricModel>();
       return;
     }
 
-    if(playListCacheItems.length==1){
-      currentIndex.value=0;
+    if (playListCacheItems.length == 1) {
+      currentIndex.value = 0;
     }
 
     await audioPlay(metadata: playListCacheItems[currentIndex.value]);
@@ -356,14 +415,13 @@ final currentLyrics = Rxn<ParsedLyricModel>();
       return;
     }
 
-    if(_settingController.playMode.value != 2){
+    if (_settingController.playMode.value != 2) {
       if (currentIndex.value > 0) {
-      currentIndex.value--;
-    }else{
-      currentIndex.value=playListCacheItems.length-1;
+        currentIndex.value--;
+      } else {
+        currentIndex.value = playListCacheItems.length - 1;
+      }
     }
-    }
-
 
     await _maybeRandomPlay();
   }
@@ -373,16 +431,14 @@ final currentLyrics = Rxn<ParsedLyricModel>();
       return;
     }
 
-    if(_settingController.playMode.value != 2){
-
-    if (currentIndex.value < playListCacheItems.length-1&&currentIndex.value>=0) {
-      currentIndex.value++;
-    }else{
-      currentIndex.value=0;
+    if (_settingController.playMode.value != 2) {
+      if (currentIndex.value < playListCacheItems.length - 1 &&
+          currentIndex.value >= 0) {
+        currentIndex.value++;
+      } else {
+        currentIndex.value = 0;
+      }
     }
-    }
-
-
 
     await _maybeRandomPlay();
   }
@@ -470,12 +526,12 @@ final currentLyrics = Rxn<ParsedLyricModel>();
       return;
     }
 
-    if(selectedList.isEmpty){
+    if (selectedList.isEmpty) {
       showSnackBar(
-      title: "WARNING",
-      msg: "未选择音频！",
-      duration: Duration(milliseconds: 1500),
-    );
+        title: "WARNING",
+        msg: "未选择音频！",
+        duration: Duration(milliseconds: 1500),
+      );
       return;
     }
 
@@ -549,12 +605,12 @@ final currentLyrics = Rxn<ParsedLyricModel>();
       return;
     }
 
-    if(removeList.isEmpty){
+    if (removeList.isEmpty) {
       showSnackBar(
-      title: "WARNING",
-      msg: "未选择音频！",
-      duration: Duration(milliseconds: 1500),
-    );
+        title: "WARNING",
+        msg: "未选择音频！",
+        duration: Duration(milliseconds: 1500),
+      );
       return;
     }
 
@@ -591,13 +647,16 @@ final currentLyrics = Rxn<ParsedLyricModel>();
       return;
     }
     audioSetPositon(pos: currentMs100.value);
-    playListCacheItems[playListCacheItems.indexWhere((v)=>v.path==path)] = newCache;
-    currentMetadata.value=newCache;
-    currentCover.value=await getCover(path: currentPath.value, sizeFlag: 1)??kTransparentImage;
+    playListCacheItems[playListCacheItems.indexWhere((v) => v.path == path)] =
+        newCache;
+    currentMetadata.value = newCache;
+    currentCover.value =
+        await getCover(path: currentPath.value, sizeFlag: 1) ??
+        kTransparentImage;
   }
 
-  void searchInsert({required MusicCache metadata}){
-    if(!playListCacheItems.any((v)=>v.path==metadata.path)){
+  void searchInsert({required MusicCache metadata}) {
+    if (!playListCacheItems.any((v) => v.path == metadata.path)) {
       playListCacheItems.add(metadata);
     }
     audioPlay(metadata: metadata);
