@@ -855,6 +855,37 @@ class Setting extends StatelessWidget {
                     ],
                   ),
 
+                  Tooltip(
+                    message: '此效果比较占用性能',
+                    child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        '歌词行模糊',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      Material(
+                        color: Colors.transparent,
+                        child: Obx(
+                          () => Switch(
+                            value: _settingController.useBlur.value,
+                            trackColor: switchTrackColor,
+                            thumbColor: WidgetStatePropertyAll(
+                              Theme.of(context).colorScheme.onPrimary,
+                            ),
+                            onChanged: (bool value) {
+                              _settingController.useBlur.value =
+                                  value;
+                              _settingController.putCache();
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  ),
+
                   const SizedBox(height: 96),
                 ],
               ),

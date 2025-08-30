@@ -14,6 +14,7 @@ class SettingCache {
   final int lrcFontSize;
   final int lrcFontWeight;
   final bool autoDownloadLrc;
+  final bool useBlur;
 
   const SettingCache({
     required this.themeMode,
@@ -31,5 +32,6 @@ class SettingCache {
     required this.lrcFontSize,
     required this.lrcFontWeight,
     required this.autoDownloadLrc,
+    required this.useBlur,
   });
 }

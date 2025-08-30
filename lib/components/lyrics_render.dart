@@ -15,7 +15,7 @@ import '../tools/lrcTool/lyric_model.dart';
 
 const double _audioCtrlBarHeight = 96;
 const double _controllerBarHeight = 48;
-const double _highLightAlpha = 0.8;
+const double _highLightAlpha = 0.85;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 
 const _lrcAlignment = [
@@ -502,10 +502,17 @@ class _LyricsRenderState extends State<LyricsRender> {
                         .abs()
                         .clamp(0.0, 4.0)
                         .toDouble();
-                // 此有模糊开关
+
                 if (isPointerScrolling || isCurrent) {
                   sigma = 0;
                 }
+
+
+                // double scrollDelay =
+                //     (_lyricController.currentLineIndex.value - index)
+                //         .abs()
+                //         .clamp(0.0, 10.0)
+                //         .toDouble();
 
                 return TextButton(
                   onPressed: () {
@@ -526,8 +533,16 @@ class _LyricsRenderState extends State<LyricsRender> {
                   // ),
 
                   // 动画版
-                  // child: lyricLine.animate().blurXY(duration: 300.ms,begin: 0,end: sigma),
-                  child: lyricLine,
+                  // child: lyricLine.animate().blurXY(duration: 500.ms,begin: 0,end: sigma),
+                  child: _settingController.useBlur.value? lyricLine.animate().blurXY(duration: 500.ms,begin: sigma-1,end: sigma):lyricLine
+                      // .animate(
+                      // key: ValueKey(_lyricController.currentLineIndex.value.hashCode),onComplete: (c)=>c.reverse())
+                      // .moveY(
+                      // duration: (300+50*((scrollDelay/10))).ms,
+                      // curve: Curves.easeOut,
+                      // delay: (20*scrollDelay).ms,
+                      // begin: 0,
+                      // end: -12+-8*((scrollDelay/10))),
                 );
               });
             },
