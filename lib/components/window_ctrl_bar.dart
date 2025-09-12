@@ -20,7 +20,7 @@ final themeMode = _settingController.themeMode;
 const double _controllerBarHeight = 48;
 const double _itemHeight = 64;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
-const double _logoSize = 20.0;
+const double _logoSize = 24.0;
 const int _coverSmallRenderSize = 150;
 
 class _WindowListener extends GetxController with WindowListener {
