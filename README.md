@@ -1,8 +1,8 @@
-<div style="text-align: center;">
+<div align="center">
   <img src="assets/app_icon.ico" alt="logo" width=150 height=150>
 </div>
 
-<p style="text-align: center;">Logo来源：阿里巴巴矢量图库</p>
+<p align="center">Logo来源：阿里巴巴矢量图库</p>
 
 # ZeroBit Player
 一款基于flutter+rust的Material风格本地音乐播放器
@@ -84,7 +84,7 @@ flutter run
 - 若提交BUG,请创建一个新的 issue。尽可能说明复现步骤并提供截图。
 
 ## 感谢
-[coriander_player](https://github.com/Ferry-200/coriander_player): 借鉴了UI设计
-[BASS](https://www.un4seen.com/): 播放器内核
+[coriander_player](https://github.com/Ferry-200/coriander_player): 借鉴了UI设计</br>
+[BASS](https://www.un4seen.com/): 播放器内核</br>
 
 
