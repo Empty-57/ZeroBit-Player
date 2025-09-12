@@ -485,7 +485,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                                                     .interludeProcess
                                                     .value /
                                                 100,
-                                            style: tsLyricStyle,
+                                            style: lyricStyle,
                                             strutStyle: strutStyle,
                                             scale: 2,
                                             textAlign: textAlign,
