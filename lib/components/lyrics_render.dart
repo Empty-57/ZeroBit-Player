@@ -41,7 +41,6 @@ class _HighlightedWord extends StatelessWidget {
   final TextStyle style;
   final StrutStyle strutStyle;
   final double scale;
-  final TextAlign? textAlign;
 
   const _HighlightedWord({
     required this.text,
@@ -49,7 +48,6 @@ class _HighlightedWord extends StatelessWidget {
     required this.style,
     required this.strutStyle,
     required this.scale,
-    this.textAlign,
   });
 
   @override
@@ -78,7 +76,6 @@ class _HighlightedWord extends StatelessWidget {
         text,
         style: style.copyWith(color: style.color?.withValues(alpha: 1)),
         strutStyle: strutStyle,
-        textAlign: textAlign,
       ),
     );
   }
@@ -488,7 +485,6 @@ class _LyricsRenderState extends State<LyricsRender> {
                                             style: lyricStyle,
                                             strutStyle: strutStyle,
                                             scale: 2,
-                                            textAlign: textAlign,
                                           )
                                           .animate(
                                             onPlay:
