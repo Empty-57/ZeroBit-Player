@@ -23,6 +23,11 @@ const _lrcAlignment = [
   CrossAxisAlignment.center,
   CrossAxisAlignment.end,
 ];
+const _lrcMainAlignment = [
+  MainAxisAlignment.start,
+  MainAxisAlignment.center,
+  MainAxisAlignment.end,
+];
 const _lrcScaleAlignment = [
   Alignment.centerLeft,
   Alignment.center,
@@ -36,6 +41,7 @@ class _HighlightedWord extends StatelessWidget {
   final TextStyle style;
   final StrutStyle strutStyle;
   final double scale;
+  final TextAlign? textAlign;
 
   const _HighlightedWord({
     required this.text,
@@ -43,6 +49,7 @@ class _HighlightedWord extends StatelessWidget {
     required this.style,
     required this.strutStyle,
     required this.scale,
+    this.textAlign,
   });
 
   @override
@@ -71,6 +78,7 @@ class _HighlightedWord extends StatelessWidget {
         text,
         style: style.copyWith(color: style.color?.withValues(alpha: 1)),
         strutStyle: strutStyle,
+        textAlign: textAlign,
       ),
     );
   }
@@ -455,6 +463,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                             sizeFactor: curvedAnimation, // 平滑地改变布局空间
                             child: ScaleTransition(
                               scale: curvedAnimation, // 同时进行缩放
+                              alignment: _lrcScaleAlignment[lrcAlignment],
                               child: child,
                             ),
                           );
@@ -463,28 +472,38 @@ class _LyricsRenderState extends State<LyricsRender> {
                         child:
                             (isCurrent && show)
                                 ? Obx(
-                                  () => _HighlightedWord(
-                                        text: "  ● ● ●  ",
-                                        progress:
-                                            _lyricController
-                                                .interludeProcess
-                                                .value /
-                                            100,
-                                        style: lyricStyle,
-                                        strutStyle: strutStyle,
-                                        scale: 2,
-                                      )
-                                      .animate(
-                                        onPlay:
-                                            (controller) => controller.repeat(
-                                              reverse: true,
-                                            ),
-                                      )
-                                      .scaleXY(
-                                        end: _lrcScale,
-                                        duration: 1500.ms,
-                                        curve: Curves.easeInOut,
-                                      ),
+                                  () => Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    mainAxisAlignment:
+                                        _lrcMainAlignment[lrcAlignment],
+                                    children: [
+                                      _HighlightedWord(
+                                            text: "  ● ● ●  ",
+                                            progress:
+                                                _lyricController
+                                                    .interludeProcess
+                                                    .value /
+                                                100,
+                                            style: tsLyricStyle,
+                                            strutStyle: strutStyle,
+                                            scale: 2,
+                                            textAlign: textAlign,
+                                          )
+                                          .animate(
+                                            onPlay:
+                                                (controller) => controller
+                                                    .repeat(reverse: true),
+                                          )
+                                          .scaleXY(
+                                            end: _lrcScale,
+                                            duration: 1500.ms,
+                                            curve: Curves.easeInOut,
+                                            alignment:
+                                                _lrcScaleAlignment[lrcAlignment],
+                                          ),
+                                    ],
+                                  ),
                                 )
                                 : const SizedBox.shrink(),
                       );
@@ -501,10 +520,10 @@ class _LyricsRenderState extends State<LyricsRender> {
 
                 if (!isPointerScrolling && !isCurrent) {
                   sigma =
-                    (_lyricController.currentLineIndex.value - index)
-                        .abs()
-                        .clamp(0.0, 4.0)
-                        .toDouble();
+                      (_lyricController.currentLineIndex.value - index)
+                          .abs()
+                          .clamp(0.0, 4.0)
+                          .toDouble();
                 }
 
                 // double scrollDelay =
@@ -534,6 +553,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                             end: sigma,
                           )
                           : lyricLine,
+
                   // .animate(
                   // key: ValueKey(_lyricController.currentLineIndex.value.hashCode),onComplete: (c)=>c.reverse())
                   // .moveY(
@@ -544,7 +564,6 @@ class _LyricsRenderState extends State<LyricsRender> {
                   // end: -12+-8*((scrollDelay/10))),
 
                   // 以上动态改变宽度模拟弹簧效果
-
                 );
               });
             },
