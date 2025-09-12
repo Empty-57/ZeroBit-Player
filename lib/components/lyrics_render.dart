@@ -497,16 +497,15 @@ class _LyricsRenderState extends State<LyricsRender> {
                   child: content,
                 );
 
-                double sigma =
+                double sigma = 0;
+
+                if (!isPointerScrolling && !isCurrent) {
+                  sigma =
                     (_lyricController.currentLineIndex.value - index)
                         .abs()
                         .clamp(0.0, 4.0)
                         .toDouble();
-
-                if (isPointerScrolling || isCurrent) {
-                  sigma = 0;
                 }
-
 
                 // double scrollDelay =
                 //     (_lyricController.currentLineIndex.value - index)
@@ -526,23 +525,26 @@ class _LyricsRenderState extends State<LyricsRender> {
                     overlayColor: hoverColor,
                   ),
 
-                  //此处 ImageFiltered 可能会导致内存泄漏 暂不使用
-                  // child:ImageFiltered(
-                  //   imageFilter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-                  //   child: RepaintBoundary(child: lyricLine),
-                  // ),
+                  //此处 使用animate().blurXY() 可能会导致内存泄漏
+                  child:
+                      _settingController.useBlur.value
+                          ? lyricLine.animate().blurXY(
+                            duration: 500.ms,
+                            begin: sigma - 1,
+                            end: sigma,
+                          )
+                          : lyricLine,
+                  // .animate(
+                  // key: ValueKey(_lyricController.currentLineIndex.value.hashCode),onComplete: (c)=>c.reverse())
+                  // .moveY(
+                  // duration: (300+50*((scrollDelay/10))).ms,
+                  // curve: Curves.easeOut,
+                  // delay: (20*scrollDelay).ms,
+                  // begin: 0,
+                  // end: -12+-8*((scrollDelay/10))),
 
-                  // 动画版
-                  // child: lyricLine.animate().blurXY(duration: 500.ms,begin: 0,end: sigma),
-                  child: _settingController.useBlur.value? lyricLine.animate().blurXY(duration: 500.ms,begin: sigma-1,end: sigma):lyricLine
-                      // .animate(
-                      // key: ValueKey(_lyricController.currentLineIndex.value.hashCode),onComplete: (c)=>c.reverse())
-                      // .moveY(
-                      // duration: (300+50*((scrollDelay/10))).ms,
-                      // curve: Curves.easeOut,
-                      // delay: (20*scrollDelay).ms,
-                      // begin: 0,
-                      // end: -12+-8*((scrollDelay/10))),
+                  // 以上动态改变宽度模拟弹簧效果
+
                 );
               });
             },
