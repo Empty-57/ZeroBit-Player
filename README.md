@@ -88,4 +88,7 @@ flutter run
 [coriander_player](https://github.com/Ferry-200/coriander_player): 借鉴了UI设计</br>
 [BASS](https://www.un4seen.com/): 播放器内核</br>
 
+## 软件截图
+
+
 
