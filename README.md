@@ -80,8 +80,9 @@ flutter run
 通过输入歌曲信息,搜索更精确的歌词:</br>
 ![search](screenshot/acb15ad5f56ddf999b1a9f9409cc9ca5.png)
 
-## 提交BUG
-- 若提交BUG,请创建一个新的 issue。尽可能说明复现步骤并提供截图。
+## 提交BUG或者PR
+- 若提交BUG,请创建一个新的 issue,尽可能说明复现步骤并提供截图。
+- 若提交PR,请检查代码是否有潜在隐患并尽量做一些优化。
 
 ## 感谢
 [coriander_player](https://github.com/Ferry-200/coriander_player): 借鉴了UI设计</br>
