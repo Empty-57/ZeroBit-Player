@@ -20,6 +20,8 @@ final themeMode = _settingController.themeMode;
 const double _controllerBarHeight = 48;
 const double _itemHeight = 64;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
+const double _logoSize = 20.0;
+const int _coverSmallRenderSize = 150;
 
 class _WindowListener extends GetxController with WindowListener {
   final _isMaximized = false.obs;
@@ -258,13 +260,20 @@ class WindowControllerBar extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
-              spacing: 8,
+              spacing: 4,
               children: [
-                Icon(
-                  PhosphorIconsLight.code,
-                  color: Theme.of(context).colorScheme.onSurface,
-                  size: getIconSize(size: 'lg'),
-                ),
+                ClipRRect(
+                borderRadius: _borderRadius,
+                child: Image.asset(
+                  r'assets/app_icon.ico',
+                  width: _logoSize,
+                  height: _logoSize,
+                  fit: BoxFit.cover,
+                  cacheWidth: _coverSmallRenderSize,
+                  cacheHeight: _coverSmallRenderSize,
+                  gaplessPlayback: true, // 防止图片突然闪烁
+                  ),
+              ),
                 Text(
                   'ZeroBit Player',
                   style: generalTextStyle(ctx: context, size: 'sm'),
