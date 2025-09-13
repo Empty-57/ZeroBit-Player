@@ -93,12 +93,12 @@ flutter run
 [Lofty](https://crates.io/crates/lofty)： 读取音频元数据
 
 ## 软件截图
-![search](screenshot/1.png)
-![search](screenshot/2.png)
-![search](screenshot/3.png)
-![search](screenshot/4.png)
-![search](screenshot/5.png)
-![search](screenshot/6.png)
-![search](screenshot/7.png)
-![search](screenshot/8.png)
-![search](screenshot/9.png)
+![show](screenshot/1.png)
+![show](screenshot/2.png)
+![show](screenshot/3.png)
+![show](screenshot/4.png)
+![show](screenshot/5.png)
+![show](screenshot/6.png)
+![show](screenshot/7.png)
+![show](screenshot/8.png)
+![show](screenshot/9.png)
