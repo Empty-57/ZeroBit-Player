@@ -7,6 +7,8 @@
 # ZeroBit Player
 一款基于flutter+rust的Material风格本地音乐播放器
 
+![show](screenshot/7.png)
+
 ## 安装/快速开始
 ### 安装
 [点击此处安装](https://github.com/Empty-57/ZeroBit-Player/releases/latest)
@@ -78,7 +80,8 @@ flutter run
 
 
 通过输入歌曲信息，搜索更精确的歌词:</br>
-![search](screenshot/acb15ad5f56ddf999b1a9f9409cc9ca5.png)
+
+![search](screenshot/5.png)
 
 ## 提交BUG或者PR
 - 若提交BUG，请创建一个新的 issue，尽可能说明复现步骤并提供截图。
@@ -87,8 +90,15 @@ flutter run
 ## 感谢
 [coriander_player](https://github.com/Ferry-200/coriander_player): 借鉴了UI设计</br>
 [BASS](https://www.un4seen.com/): 播放器内核</br>
+[Lofty](https://crates.io/crates/lofty): 读取音频元数据
 
 ## 软件截图
-
-
-
+![search](screenshot/1.png)
+![search](screenshot/2.png)
+![search](screenshot/3.png)
+![search](screenshot/4.png)
+![search](screenshot/5.png)
+![search](screenshot/6.png)
+![search](screenshot/7.png)
+![search](screenshot/8.png)
+![search](screenshot/9.png)
