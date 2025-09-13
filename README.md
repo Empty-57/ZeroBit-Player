@@ -68,7 +68,7 @@ flutter run
 若开启了自动下载选择的歌词，则会在选择歌词后，自动在音频同目录下创建原文文件和翻译文件（如果有）</br>
 
 若选择了`.lrc`格式的歌词，会将相同时间戳的歌词行第一行作为原文，第二行作为翻译，若没有相同时间戳的歌词行，则会通过 ` / ` 分割歌词行，` / `前面的作为原文，` / `后面的作为翻译</br>
-例如:</br>
+例如：</br>
 ```
 [00:24.21]ちょっと魔がさしたんだ    这一行将会作为原文
 [00:24.21]我是有点鬼迷心窍了       这一行将会作为翻译
@@ -79,7 +79,7 @@ flutter run
 ```
 
 
-通过输入歌曲信息，搜索更精确的歌词:</br>
+通过输入歌曲信息，搜索更精确的歌词：</br>
 
 ![search](screenshot/5.png)
 
@@ -88,9 +88,9 @@ flutter run
 - 若提交PR，请检查代码是否有潜在隐患并尽量做一些优化。
 
 ## 感谢
-[coriander_player](https://github.com/Ferry-200/coriander_player): 借鉴了UI设计</br>
-[BASS](https://www.un4seen.com/): 播放器内核</br>
-[Lofty](https://crates.io/crates/lofty): 读取音频元数据
+[coriander_player](https://github.com/Ferry-200/coriander_player)： 借鉴了UI设计</br>
+[BASS](https://www.un4seen.com/)： 播放器内核</br>
+[Lofty](https://crates.io/crates/lofty)： 读取音频元数据
 
 ## 软件截图
 ![search](screenshot/1.png)
