@@ -49,7 +49,7 @@ Future<dynamic> _qmSearchByText({required String text, required int offset, requ
   final response = await _dio.get(
     _qmSearchUrl,
     queryParameters: {"format": 'json', "w": text, "n": limit, "p": offset},
-    options: Options(responseType: ResponseType.json),
+    options: Options(responseType: ResponseType.plain),
   );
   if (response.data != null) {
     return jsonDecode(response.data);
@@ -81,7 +81,7 @@ Future<Get4NetLrcModel?> _qmGetLrc({required int id})async{
       "lrctype":'4',
       "musicid":id,
     },
-    options: Options(responseType: ResponseType.json),
+    options: Options(responseType: ResponseType.plain),
   );
 
   final String? body = response.data?.toString();
@@ -171,7 +171,7 @@ Future<dynamic> _neSearchByText({required String text, required int offset, requ
       "total": true,
       "limit": limit,
     },
-    options: Options(responseType: ResponseType.json),
+    options: Options(responseType: ResponseType.plain),
   );
   if (response.data != null) {
     return jsonDecode(response.data);
@@ -210,7 +210,7 @@ final response = await _dio.get(
       "tv":-1,
       "os":'pc'
     },
-    options: Options(responseType: ResponseType.json),
+    options: Options(responseType: ResponseType.plain),
   );
 final body = response.data as String?;
 if (body == null || body.isEmpty) {
