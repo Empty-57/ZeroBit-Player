@@ -687,8 +687,9 @@ class _CheckVersion extends StatelessWidget {
                     .map((v) => int.parse(v))
                     .toList();
             if (latestVer[0] > localVer[0] ||
-                latestVer[1] > localVer[1] ||
-                latestVer[2] > localVer[2]) {
+                (latestVer[0] == localVer[0]&&latestVer[1] > localVer[1]) ||
+                (latestVer[0] == localVer[0]&&latestVer[1] == localVer[1]&&latestVer[2] > localVer[2]) )
+            {
               final repoInfo = _RepoInfo(
                 version: jsonData['tag_name'].toString(),
                 updatedTime: DateTime.parse(
