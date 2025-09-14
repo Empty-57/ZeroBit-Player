@@ -27,7 +27,7 @@ const Set<String> _supportedExts = {
   '.wv',
 };
 
-Future<Set<String>> _scanAudioPaths(List<String> folders) async {
+Future<Set<String>> scanAudioPaths(List<String> folders) async {
   final Set<String> paths = {};
   for (final dirPath in folders) {
     final directory = Directory(dirPath);
@@ -83,7 +83,7 @@ Future<void> syncCache() async {
   final audioCtrl = Get.find<AudioController>();
   final musicBox = HiveManager.musicCacheBox;
 
-  final scannedPaths = await _scanAudioPaths(settingCtrl.folders);
+  final scannedPaths = await scanAudioPaths(settingCtrl.folders);
 
   final existingKeys = Set<String>.from(musicBox.getKeyAll());
 

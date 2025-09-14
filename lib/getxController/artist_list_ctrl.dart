@@ -47,9 +47,6 @@ class ArtistListController extends GetxController with AudioControllerGenClass {
             .where((v) => pathList.contains(v.path))
             .toList();
     itemReSort(type: _settingController.sortMap[OperateArea.artistList]);
-    if (_settingController.isReverse.value) {
-      itemReverse();
-    }
 
     if (audioListItems.isNotEmpty) {
       final title = audioListItems[0].title;
@@ -77,14 +74,20 @@ class ArtistListController extends GetxController with AudioControllerGenClass {
 
   @override
   void itemReSort({required int type}) {
-    audioListItems.sort(
+    if(!_settingController.isReverse.value){
+      audioListItems.sort(
       (a, b) => getSortType(
         type: type,
         data: a,
       ).compareTo(getSortType(type: type, data: b)),
     );
-    if (_settingController.isReverse.value) {
-      itemReverse();
+    }else{
+      audioListItems.sort(
+      (b, a) => getSortType(
+        type: type,
+        data: a,
+      ).compareTo(getSortType(type: type, data: b)),
+    );
     }
   }
 

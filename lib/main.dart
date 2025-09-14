@@ -14,6 +14,8 @@ import 'package:zerobit_player/pages/album_list_page.dart';
 import 'package:zerobit_player/pages/album_view_page.dart';
 import 'package:zerobit_player/pages/artist_list_page.dart';
 import 'package:zerobit_player/pages/artist_view_page.dart';
+import 'package:zerobit_player/pages/folders_list_page.dart';
+import 'package:zerobit_player/pages/folders_view_page.dart';
 import 'package:zerobit_player/pages/local_music_page.dart';
 import 'package:zerobit_player/pages/lrc_view.dart';
 import 'package:zerobit_player/pages/playlist_page.dart';
@@ -243,6 +245,8 @@ class MainFrame extends StatelessWidget {
         GetPage(name: AppRoutes.artistList, page: () => const ArtistListPage()),
         GetPage(name: AppRoutes.albumView, page: () => const AlbumViewPage()),
         GetPage(name: AppRoutes.albumList, page: () => const AlbumListPage()),
+        GetPage(name: AppRoutes.foldersView, page: () => const FoldersViewPage()),
+        GetPage(name: AppRoutes.foldersList, page: () => const FoldersListPage()),
         GetPage(name: AppRoutes.lrcView, page: () => const LrcView(),transition: Transition.fade,curve: Curves.fastOutSlowIn,transitionDuration: 300.ms,),
       ],
     )
@@ -283,6 +287,10 @@ class HomePage extends StatelessWidget {
         return const AlbumViewPage();
       case AppRoutes.albumList:
         return const AlbumListPage();
+      case AppRoutes.foldersView:
+        return const FoldersViewPage();
+      case AppRoutes.foldersList:
+        return const FoldersListPage();
     }
     return const LocalMusic();
   }
@@ -329,6 +337,11 @@ class HomePage extends StatelessWidget {
                       label: '歌单',
                       icon: PhosphorIconsLight.playlist,
                       localIndex: AppRoutes.userPlayListOrder,
+                    ),
+                    CustomNavigationBtn(
+                      label: '文件夹',
+                      icon: PhosphorIconsLight.folders,
+                      localIndex: AppRoutes.foldersViewOrder,
                     ),
                     CustomNavigationBtn(
                       label: '设置',

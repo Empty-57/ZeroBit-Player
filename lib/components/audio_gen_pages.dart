@@ -260,7 +260,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       crossAxisAlignment: CrossAxisAlignment.end,
       spacing: 16,
       children: <Widget>[
-        if (widget.operateArea != OperateArea.allMusic) _buildHeaderCover(),
+        if (widget.operateArea != OperateArea.allMusic&&widget.operateArea != OperateArea.foldersList) _buildHeaderCover(),
         Expanded(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

@@ -69,9 +69,6 @@ class PlayListController extends GetxController with AudioControllerGenClass {
     syncCache();
 
     itemReSort(type: _settingController.sortMap[OperateArea.playList]);
-    if (_settingController.isReverse.value) {
-      itemReverse();
-    }
 
     if (audioListItems.isNotEmpty) {
       final title = audioListItems[0].title;
@@ -99,14 +96,20 @@ class PlayListController extends GetxController with AudioControllerGenClass {
 
   @override
   void itemReSort({required int type}) {
-    audioListItems.sort(
+    if(!_settingController.isReverse.value){
+      audioListItems.sort(
       (a, b) => getSortType(
         type: type,
         data: a,
       ).compareTo(getSortType(type: type, data: b)),
     );
-    if (_settingController.isReverse.value) {
-      itemReverse();
+    }else{
+      audioListItems.sort(
+      (b, a) => getSortType(
+        type: type,
+        data: a,
+      ).compareTo(getSortType(type: type, data: b)),
+    );
     }
   }
 

@@ -16,12 +16,14 @@ class SettingController extends GetxController {
     OperateArea.playList:0,
     OperateArea.artistList:0,
     OperateArea.albumList:0,
+    OperateArea.foldersList:0,
   }.obs;
   final viewModeMap=<dynamic,dynamic>{
     OperateArea.allMusic:true, //列表/表格
     OperateArea.playList:true,
     OperateArea.artistList:true,
     OperateArea.albumList:true,
+    OperateArea.foldersList:true,
   }.obs;
   final isReverse=false.obs;
   final themeColor=0xff27272a.obs;
@@ -74,18 +76,34 @@ class SettingController extends GetxController {
       apiIndex.value=cache.apiIndex;
       volume.value=cache.volume;
       folders.value = [...cache.folders];
-      sortMap.value= cache.sortMap.isNotEmpty? Map<dynamic,dynamic>.of(cache.sortMap):{
+      final sortMap_= cache.sortMap.isNotEmpty? Map<dynamic,dynamic>.of(cache.sortMap):{
         OperateArea.allMusic:0,
         OperateArea.playList:0,
         OperateArea.artistList:0,
         OperateArea.albumList:0,
+        OperateArea.foldersList:0,
       };
-      viewModeMap.value=cache.viewModeMap.isNotEmpty? Map<dynamic,dynamic>.of(cache.viewModeMap):{
+
+      if(sortMap.length>sortMap_.length){
+        await putCache();
+      }else{
+        sortMap.value=sortMap_;
+      }
+
+      final viewModeMap_=cache.viewModeMap.isNotEmpty? Map<dynamic,dynamic>.of(cache.viewModeMap):{
         OperateArea.allMusic:true, //列表/表格
         OperateArea.playList:true,
         OperateArea.artistList:true,
         OperateArea.albumList:true,
+        OperateArea.foldersList:true,
       };
+
+      if(viewModeMap.length>viewModeMap_.length){
+        await putCache();
+      }else{
+        viewModeMap.value=viewModeMap_;
+      }
+
       isReverse.value=cache.isReverse;
       themeColor.value=cache.themeColor;
       playMode.value=cache.playMode;

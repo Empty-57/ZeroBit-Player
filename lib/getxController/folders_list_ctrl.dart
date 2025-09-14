@@ -1,18 +1,14 @@
 import 'package:get/get.dart';
-import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/HIveCtrl/models/music_cache_model.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
-import 'dart:typed_data';
-import '../API/apis.dart';
 import '../field/operate_area.dart';
-import '../src/rust/api/music_tag_tool.dart';
 import '../tools/audio_ctrl_mixin.dart';
 import '../tools/get_sort_type.dart';
 import 'music_cache_ctrl.dart';
 
-class AlbumListController extends GetxController with AudioControllerGenClass {
+class FoldersListController extends GetxController with AudioControllerGenClass {
   final List<String> pathList;
-  AlbumListController({required this.pathList});
+  FoldersListController({required this.pathList});
 
   final MusicCacheController _musicCacheController =
       Get.find<MusicCacheController>();
@@ -22,21 +18,16 @@ class AlbumListController extends GetxController with AudioControllerGenClass {
   static final audioListItems = <MusicCache>[].obs;
 
   @override
-  final headCover = kTransparentImage.obs;
-
-  @override
   RxList<MusicCache> get items => audioListItems;
 
   @override
   void onInit() {
-    headCover.value = kTransparentImage;
     super.onInit();
     _loadData();
   }
 
   @override
   void onClose() {
-    headCover.value = kTransparentImage;
     audioListItems.value = [];
     super.onClose();
   }
@@ -46,30 +37,7 @@ class AlbumListController extends GetxController with AudioControllerGenClass {
         _musicCacheController.items
             .where((v) => pathList.contains(v.path))
             .toList();
-    itemReSort(type: _settingController.sortMap[OperateArea.albumList]);
-
-    if (audioListItems.isNotEmpty) {
-      final title = audioListItems[0].title;
-      final artist_ = audioListItems[0].artist;
-      final artist =
-          (artist_.isNotEmpty && artist_ != 'UNKNOWN') ? ' - $artist_' : '';
-      final cover = await getCover(path: audioListItems[0].path, sizeFlag: 1);
-      if (cover != null && cover.isNotEmpty) {
-        headCover.value = cover;
-      } else {
-        final coverDataNet = await saveCoverByText(
-          text: title + artist,
-          songPath: audioListItems[0].path,
-          saveCover: false,
-        );
-
-        if (coverDataNet != null && coverDataNet.isNotEmpty) {
-          headCover.value = Uint8List.fromList(coverDataNet);
-        } else {
-          headCover.value = kTransparentImage;
-        }
-      }
-    }
+    itemReSort(type: _settingController.sortMap[OperateArea.foldersList]);
   }
 
   @override

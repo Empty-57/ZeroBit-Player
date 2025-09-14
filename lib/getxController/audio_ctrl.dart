@@ -7,6 +7,7 @@ import 'package:palette_generator/palette_generator.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/HIveCtrl/models/user_playlist_model.dart';
 import 'package:zerobit_player/components/get_snack_bar.dart';
+import 'package:zerobit_player/getxController/folders_list_ctrl.dart';
 import 'package:zerobit_player/getxController/play_list_ctrl.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
 import 'package:zerobit_player/getxController/user_playlist_ctrl.dart';
@@ -102,6 +103,15 @@ class AudioController extends GetxController {
           _audioSource.currentAudioSource.value,
     )) {
       playListCacheItems.value = [...AlbumListController.audioListItems];
+      return;
+    }
+
+    if (_settingController.folders.any(
+      (v) =>
+          v + TagSuffix.foldersList ==
+          _audioSource.currentAudioSource.value,
+    )) {
+      playListCacheItems.value = [...FoldersListController.audioListItems];
       return;
     }
 

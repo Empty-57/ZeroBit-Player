@@ -3,7 +3,10 @@ import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../field/operate_area.dart';
+import '../getxController/album_list_crl.dart';
+import '../getxController/artist_list_ctrl.dart';
 import '../getxController/audio_ctrl.dart';
+import '../getxController/folders_list_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../getxController/play_list_ctrl.dart';
 import '../tools/general_style.dart';
@@ -72,6 +75,12 @@ class FloatingButton extends StatelessWidget {
         return _musicCacheController.items.indexWhere((m) => m.path == currentPath);
       case OperateArea.playList:
         return PlayListController.audioListItems.indexWhere((m) => m.path == currentPath);
+      case OperateArea.artistList:
+        return ArtistListController.audioListItems.indexWhere((m) => m.path == currentPath);
+      case OperateArea.albumList:
+        return AlbumListController.audioListItems.indexWhere((m) => m.path == currentPath);
+      case OperateArea.foldersList:
+        return FoldersListController.audioListItems.indexWhere((m) => m.path == currentPath);
       default:
         return -1;
     }
@@ -84,7 +93,7 @@ class FloatingButton extends StatelessWidget {
 
     // 头部区域的大致高度，用于计算屏幕中间位置
     // 这个值应该与 AudioGenPages 中的头部高度保持一致
-    final double headerOffset = operateArea == OperateArea.allMusic ? 280 : 384;
+    final double headerOffset = (operateArea == OperateArea.allMusic || operateArea == OperateArea.foldersList) ? 280 : 384;
     final double middleOffset = (screenSize.height - headerOffset) / 2;
 
     // --- ListView 定位逻辑 ---

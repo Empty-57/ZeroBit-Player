@@ -13,6 +13,7 @@ import '../custom_widgets/custom_button.dart';
 import '../getxController/album_list_crl.dart';
 import '../getxController/artist_list_ctrl.dart';
 import '../getxController/audio_ctrl.dart';
+import '../getxController/folders_list_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../getxController/play_list_ctrl.dart';
 import '../src/rust/api/music_tag_tool.dart';
@@ -220,6 +221,9 @@ class _MetadataEditorState extends State<_MetadataEditor> {
         break;
       case OperateArea.albumList:
         AlbumListController.audioListSyncMetadata(index: widget.index, newCache: newCache);
+        break;
+      case OperateArea.foldersList:
+        FoldersListController.audioListSyncMetadata(index: widget.index, newCache: newCache);
         break;
     }
     _audioController.audioListSyncMetadata(path: widget.metadata.path, newCache: newCache);

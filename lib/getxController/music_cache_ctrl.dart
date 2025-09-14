@@ -89,14 +89,20 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
 
   @override
   void itemReSort({required int type}) {
-    items.sort(
+    if(!_settingController.isReverse.value){
+      items.sort(
       (a, b) => getSortType(
         type: type,
         data: a,
       ).compareTo(getSortType(type: type, data: b)),
     );
-    if (_settingController.isReverse.value) {
-      itemReverse();
+    }else{
+      items.sort(
+      (b, a) => getSortType(
+        type: type,
+        data: a,
+      ).compareTo(getSortType(type: type, data: b)),
+    );
     }
   }
 

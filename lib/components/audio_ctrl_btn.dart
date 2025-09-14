@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
 
 import 'package:zerobit_player/tools/general_style.dart';
