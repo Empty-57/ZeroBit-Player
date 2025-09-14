@@ -658,13 +658,15 @@ class LrcView extends StatelessWidget {
                           ),
                         ),
                         _NetLrcDialog(color: mixColor),
-                        GenIconBtn(
-                          tooltip: '桌面歌词',
-                          icon: PhosphorIconsLight.creditCard,
-                          size: _ctrlBtnMinSize,
-                          color: mixColor,
-                          fn: () {},
-                        ),
+                        // GenIconBtn(
+                        //   tooltip: '桌面歌词',
+                        //   icon: PhosphorIconsLight.creditCard,
+                        //   size: _ctrlBtnMinSize,
+                        //   color: mixColor,
+                        //   fn: () {},
+                        // ),
+
+                        //以上： 后续功能
                       ],
                     ),
                   ),
