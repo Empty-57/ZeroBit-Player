@@ -83,6 +83,11 @@ flutter run
 
 ![search](screenshot/5.png)
 
+## 关于歌曲封面
+可以选择本地图片作为封面,也可以点击 `网络封面` 来设置封面</br>
+若使用 `网络封面` 来设置封面，会以当前设置的API源来匹配封面，请尽量正确填写元数据（标题，艺术家，专辑）以提高匹配准确率</br>
+![show](screenshot/10.png)
+
 ## 提交BUG或者PR
 - 若提交BUG，请创建一个新的 issue，尽可能说明复现步骤并提供截图。
 - 若提交PR，请检查代码是否有潜在隐患并尽量做一些优化。
@@ -102,3 +107,4 @@ flutter run
 ![show](screenshot/7.png)
 ![show](screenshot/8.png)
 ![show](screenshot/9.png)
+![show](screenshot/10.png)
