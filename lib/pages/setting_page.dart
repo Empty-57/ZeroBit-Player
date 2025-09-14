@@ -1,11 +1,16 @@
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:zerobit_player/src/rust/api/get_fonts.dart';
+import '../components/get_snack_bar.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../tools/general_style.dart';
 import '../getxController/setting_ctrl.dart';
@@ -17,6 +22,25 @@ final MusicCacheController _musicCacheController =
 List<String> _fontsList = [];
 
 const double _setBtnHeight = 40;
+
+const String _latestRepoApiUrl =
+    "https://api.github.com/repos/Empty-57/ZeroBit-Player/releases/latest";
+const String _latestRepoUrl =
+    "https://github.com/Empty-57/ZeroBit-Player/releases/latest";
+
+class _RepoInfo {
+  final String version;
+  final String updatedTime;
+  final String title;
+  final String body;
+
+  const _RepoInfo({
+    required this.version,
+    required this.updatedTime,
+    required this.title,
+    required this.body,
+  });
+}
 
 class _SetDivider extends StatelessWidget {
   final String title;
@@ -206,9 +230,14 @@ class _FolderManagerDialog extends StatelessWidget {
                                     Navigator.pop(context, 'actions');
                                   }
                                 },
-                                backgroundColor: Colors.transparent,
-                                contentColor:
+                                backgroundColor:
                                     Theme.of(context).colorScheme.primary,
+                                contentColor:
+                                    Theme.of(context).colorScheme.onPrimary,
+                                overlayColor:
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainer,
                                 btnWidth: 72,
                                 btnHeight: 36,
                                 label: "确定",
@@ -379,8 +408,11 @@ class _ColorPicker extends StatelessWidget {
                             _settingController.themeColor.value = themeColor_;
                             _settingController.putCache();
                           },
-                          backgroundColor: Colors.transparent,
-                          contentColor: Theme.of(context).colorScheme.primary,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
+                          contentColor: Theme.of(context).colorScheme.onPrimary,
+                          overlayColor:
+                              Theme.of(context).colorScheme.surfaceContainer,
                           btnWidth: 72,
                           btnHeight: 36,
                           label: "确定",
@@ -612,6 +644,181 @@ class _LrcFontWeightDropMenu extends StatelessWidget {
   }
 }
 
+class _CheckVersion extends StatelessWidget {
+  const _CheckVersion();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomBtn(
+      fn: () async {
+        snackBar() => showSnackBar(
+          title: "ERROR",
+          msg: "获取更新失败",
+          duration: Duration(milliseconds: 3000),
+        );
+
+        try {
+          final dio = Dio(
+            BaseOptions(
+              headers: {
+                'User-Agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+                'Connection': 'keep-alive',
+              },
+            ),
+          );
+          final response = await dio.get(
+            _latestRepoApiUrl,
+            options: Options(responseType: ResponseType.json),
+          );
+          if (response.data != null) {
+            final Map<String, dynamic> jsonData = response.data;
+
+            final List<int> latestVer =
+                jsonData['tag_name']
+                    .toString()
+                    .replaceAll('v', '')
+                    .split('.')
+                    .map((v) => int.parse(v))
+                    .toList();
+            final List<int> localVer =
+                (await PackageInfo.fromPlatform()).version
+                    .split('.')
+                    .map((v) => int.parse(v))
+                    .toList();
+            if (latestVer[0] > localVer[0] ||
+                latestVer[1] > localVer[1] ||
+                latestVer[2] > localVer[2]) {
+              final repoInfo = _RepoInfo(
+                version: jsonData['tag_name'].toString(),
+                updatedTime: DateTime.parse(
+                  jsonData['updated_at'].toString(),
+                ).toLocal().toString().substring(0, 19),
+                title: jsonData['name'].toString(),
+                body: jsonData['body'].toString(),
+              );
+
+              if (context.mounted) {
+                showDialog(
+                  barrierDismissible: true,
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text(repoInfo.title),
+                      titleTextStyle: generalTextStyle(
+                        ctx: context,
+                        size: 'xl',
+                        weight: FontWeight.w600,
+                      ),
+
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(4)),
+                      ),
+                      backgroundColor: Theme.of(context).colorScheme.surface,
+
+                      actionsAlignment: MainAxisAlignment.end,
+                      actions: <Widget>[
+                        SizedBox(
+                          width: context.width / 2,
+                          height: context.height / 2,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: 8,
+                            children: [
+                              Text(
+                                '更新于：${repoInfo.updatedTime}\n更新信息：',
+                                style: generalTextStyle(
+                                  ctx: context,
+                                  size: 'md',
+                                ),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Markdown(data: repoInfo.body),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                spacing: 8,
+                                children: [
+                                  CustomBtn(
+                                    fn: () {
+                                      Navigator.pop(context, 'cancel');
+                                    },
+                                    backgroundColor: Colors.transparent,
+                                    contentColor:
+                                        Theme.of(context).colorScheme.primary,
+                                    btnWidth: 72,
+                                    btnHeight: 36,
+                                    label: "取消",
+                                  ),
+                                  CustomBtn(
+                                    fn: () async {
+                                      Navigator.pop(context, 'action');
+                                      final Uri url = Uri.parse(_latestRepoUrl);
+                                      try {
+                                        await launchUrl(url);
+                                      } catch (e) {
+                                        debugPrint(e.toString());
+                                        showSnackBar(
+                                          title: "ERROR",
+                                          msg: "跳转失败，请前往浏览器下载！",
+                                          duration: Duration(
+                                            milliseconds: 3000,
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    backgroundColor:
+                                        Theme.of(context).colorScheme.primary,
+                                    contentColor:
+                                        Theme.of(context).colorScheme.onPrimary,
+                                    overlayColor:
+                                        Theme.of(
+                                          context,
+                                        ).colorScheme.surfaceContainer,
+                                    btnWidth: 108,
+                                    btnHeight: 36,
+                                    label: "获取更新",
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              }
+            } else {
+              showSnackBar(
+                title: "OK",
+                msg: "目前是最新版本",
+                duration: Duration(milliseconds: 3000),
+              );
+            }
+          } else {
+            snackBar();
+          }
+        } catch (err) {
+          debugPrint(err.toString());
+          snackBar();
+        }
+      },
+      icon: PhosphorIconsLight.spinnerGap,
+      label: '检查更新',
+      btnHeight: _setBtnHeight,
+      btnWidth: 148,
+      mainAxisAlignment: MainAxisAlignment.center,
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      overlayColor: Theme.of(context).colorScheme.surfaceContainer,
+      contentColor: Theme.of(context).colorScheme.onPrimary,
+    );
+  }
+}
+
 class Setting extends StatelessWidget {
   const Setting({super.key});
 
@@ -703,8 +910,7 @@ class Setting extends StatelessWidget {
                               Theme.of(context).colorScheme.onPrimary,
                             ),
                             onChanged: (bool value) {
-                              _settingController.autoDownloadLrc.value =
-                                  value;
+                              _settingController.autoDownloadLrc.value = value;
                               _settingController.putCache();
                             },
                           ),
@@ -858,32 +1064,82 @@ class Setting extends StatelessWidget {
                   Tooltip(
                     message: '此效果比较占用性能',
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        Text(
+                          '歌词行模糊',
+                          style: generalTextStyle(ctx: context, size: 'lg'),
+                        ),
+                        Material(
+                          color: Colors.transparent,
+                          child: Obx(
+                            () => Switch(
+                              value: _settingController.useBlur.value,
+                              trackColor: switchTrackColor,
+                              thumbColor: WidgetStatePropertyAll(
+                                Theme.of(context).colorScheme.onPrimary,
+                              ),
+                              onChanged: (bool value) {
+                                _settingController.useBlur.value = value;
+                                _settingController.putCache();
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const _SetDivider(title: '关于'),
+
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
                       Text(
-                        '歌词行模糊',
+                        '当前版本',
                         style: generalTextStyle(ctx: context, size: 'lg'),
                       ),
-                      Material(
-                        color: Colors.transparent,
-                        child: Obx(
-                          () => Switch(
-                            value: _settingController.useBlur.value,
-                            trackColor: switchTrackColor,
-                            thumbColor: WidgetStatePropertyAll(
-                              Theme.of(context).colorScheme.onPrimary,
-                            ),
-                            onChanged: (bool value) {
-                              _settingController.useBlur.value =
-                                  value;
-                              _settingController.putCache();
+                      SizedBox(
+                        width: 108,
+                        child: Center(
+                          child: FutureBuilder<PackageInfo>(
+                            future: PackageInfo.fromPlatform(),
+                            builder: (context, snapshot) {
+                              final style = generalTextStyle(
+                                ctx: context,
+                                size: 'md',
+                              );
+                              if (snapshot.connectionState ==
+                                  ConnectionState.done) {
+                                if (snapshot.hasData) {
+                                  return Text(
+                                    snapshot.data!.version,
+                                    style: style,
+                                  );
+                                } else {
+                                  return Text('获取版本号失败！', style: style);
+                                }
+                              }
+                              return SizedBox.shrink();
                             },
                           ),
                         ),
                       ),
                     ],
                   ),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        '检查更新',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      const _CheckVersion(),
+                    ],
                   ),
 
                   const SizedBox(height: 96),
