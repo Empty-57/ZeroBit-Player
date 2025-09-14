@@ -48,6 +48,9 @@ dependencies:
   path: ^1.9.1
   fl_charset: ^1.0.2
   scrollable_positioned_list: ^0.3.8
+  package_info_plus: ^9.0.0
+  flutter_markdown_plus: ^1.0.5
+  url_launcher: ^6.3.2
   flutter_rust_bridge: 2.10.0
   rust_lib_zerobit_player:
     path: rust_builder

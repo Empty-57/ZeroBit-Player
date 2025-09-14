@@ -310,6 +310,10 @@ class _LyricsRenderState extends State<LyricsRender> {
       fontSize: lyricStyle.fontSize! - 4,
     );
 
+    final interludeLyricStyle=lyricStyle.copyWith(
+      fontFamily: 'Microsoft YaHei Light'
+    );
+
     final strutStyle = StrutStyle(
       fontSize: _settingController.lrcFontSize.value.toDouble(),
       forceStrutHeight: true,
@@ -482,7 +486,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                                                     .interludeProcess
                                                     .value /
                                                 100,
-                                            style: lyricStyle,
+                                            style: interludeLyricStyle,
                                             strutStyle: strutStyle,
                                             scale: 2,
                                           )
