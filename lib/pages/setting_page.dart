@@ -778,8 +778,9 @@ class _CheckVersion extends StatelessWidget {
                                         Theme.of(
                                           context,
                                         ).colorScheme.surfaceContainer,
-                                    btnWidth: 108,
+                                    btnWidth: 128,
                                     btnHeight: 36,
+                                    icon: PhosphorIconsLight.arrowUpRight,
                                     label: "获取更新",
                                   ),
                                 ],
