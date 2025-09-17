@@ -27,7 +27,19 @@ flutter run
 ```
 
 ### 注意
-编译后要把 BASS 库的 64 位的 `bass.dll`， `bassalac.dll`， `bassape.dll`， `bassdsd.dll`， `bassflac.dll`， `bassmidi.dll`， `bassopus.dll`， `basswasapi.dll`， `basswebm.dll`， `basswv.dll` 放在软件目录的 `BASS` 文件夹下
+编译后要把 BASS 库的 64 位的：
+ - `bass.dll`
+ - `bassalac.dll`
+ - `bassape.dll`
+ - `bassdsd.dll`
+ - `bassflac.dll`
+ - `bassmidi.dll`
+ - `bassopus.dll`
+ - `basswasapi.dll`
+ - `basswebm.dll`
+ - `basswv.dll`
+ - `bass_fx.dll`
+放在软件目录的 `BASS` 文件夹下
 
 ## 特性
 - 支持自定义歌单
@@ -91,6 +103,9 @@ flutter run
 ## 提交BUG或者PR
 - 若提交BUG，请创建一个新的 issue，尽可能说明复现步骤并提供截图。
 - 若提交PR，请检查代码是否有潜在隐患并尽量做一些优化。
+
+## 注意
+若软件发生了严重错误，可尝试到目录 `C:\Users\<用户名>\Documents` 下删除所有 `.hive` 以及同名的 `.lock` 的后缀的文件
 
 ## 感谢
 [coriander_player](https://github.com/Ferry-200/coriander_player)： 借鉴了UI设计</br>

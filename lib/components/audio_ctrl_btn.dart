@@ -4,10 +4,12 @@ import 'package:zerobit_player/tools/func_extension.dart';
 
 import 'package:zerobit_player/tools/general_style.dart';
 
+import '../custom_widgets/custom_button.dart';
 import '../getxController/audio_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 import 'package:get/get.dart';
 
+import '../src/rust/api/bass.dart';
 import '../tools/format_time.dart';
 
 final AudioController _audioController = Get.find<AudioController>();
@@ -37,7 +39,7 @@ class GenIconBtn extends StatelessWidget {
     required this.icon,
     required this.size,
     this.color,
-    this.backgroundColor=Colors.transparent,
+    this.backgroundColor = Colors.transparent,
     required this.fn,
   });
   @override
@@ -76,38 +78,101 @@ class AudioCtrlWidget {
     this.color,
   });
 
+  Widget get speedSet {
+    const double btnW = 72;
+    const double setBtnHeight = 36;
+    final menuController = MenuController();
+    final speedList =
+        List.generate(16, (index) => index + 5).map((i) {
+          final speed = i / 10;
+          return CustomBtn(
+            fn: () async {
+              await setSpeed(speed: speed);
+              menuController.close();
+            },
+            btnWidth: btnW,
+            btnHeight: setBtnHeight,
+            label: speed.toString(),
+            contentColor: Theme.of(context).colorScheme.onSecondaryContainer,
+            mainAxisAlignment: MainAxisAlignment.center,
+            backgroundColor: Colors.transparent,
+          );
+        }).toList();
+    return Theme(
+      // Create a unique theme with `ThemeData`.
+      data: Theme.of(context).copyWith(
+        scrollbarTheme: ScrollbarThemeData(
+          thumbVisibility: WidgetStateProperty.all(false),
+          trackVisibility: WidgetStateProperty.all(false),
+          thickness: WidgetStateProperty.all(0), // 可选：彻底无厚度
+        ),
+      ),
+      child: MenuAnchor(
+        menuChildren: speedList,
+        controller: menuController,
+        style: MenuStyle(
+          maximumSize: WidgetStatePropertyAll(
+            Size.fromHeight(context.height / 2),
+          ),
+          backgroundColor: WidgetStatePropertyAll(
+            Theme.of(
+              context,
+            ).colorScheme.surfaceContainer.withValues(alpha: 0.8),
+          ),
+        ),
+        builder: (_, MenuController controller, Widget? child) {
+          return GenIconBtn(
+            tooltip: "倍速",
+            icon: PhosphorIconsLight.waveform,
+            size: size,
+            color: color,
+            fn: () {
+              if (controller.isOpen) {
+                controller.close();
+              } else {
+                controller.open();
+              }
+            },
+          );
+        },
+      ),
+    );
+  }
+
   Widget get volumeSet => MenuAnchor(
     menuChildren: [
-      Obx(()=>Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          Text(
-            (_settingController.volume.value * 100).round().toString(),
-            style: generalTextStyle(
-              ctx: context,
-              size: 'md',
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.6),
+      Obx(
+        () => Column(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Text(
+              (_settingController.volume.value * 100).round().toString(),
+              style: generalTextStyle(
+                ctx: context,
+                size: 'md',
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.6),
+              ),
             ),
-          ),
-          RotatedBox(
-            quarterTurns: 3,
-            child: Slider(
-              min: 0.0,
-              max: 1.0,
-              value: _settingController.volume.value,
-              onChanged: (v) {
-                _audioController.audioSetVolume(vol: v);
-                _settingController.volume.value = v;
-              },
-              onChangeEnd: (v) {
-                _settingController.putCache();
-              },
+            RotatedBox(
+              quarterTurns: 3,
+              child: Slider(
+                min: 0.0,
+                max: 1.0,
+                value: _settingController.volume.value,
+                onChanged: (v) {
+                  _audioController.audioSetVolume(vol: v);
+                  _settingController.volume.value = v;
+                },
+                onChangeEnd: (v) {
+                  _settingController.putCache();
+                },
+              ),
             ),
-          ),
-        ],
-      )),
+          ],
+        ),
+      ),
     ],
     style: MenuStyle(
       padding: WidgetStatePropertyAll(const EdgeInsets.only(top: 16)),
@@ -139,19 +204,23 @@ class AudioCtrlWidget {
     }.throttle(ms: 500),
   );
 
-  Widget get toggle => Obx(()=>GenIconBtn(
-    tooltip:
-        _audioController.currentState.value == AudioState.playing ? "暂停" : "播放",
-    icon:
-        _audioController.currentState.value == AudioState.playing
-            ? PhosphorIconsFill.pause
-            : PhosphorIconsFill.play,
-    size: size,
-    color: color,
-    fn: () async {
-      await _audioController.audioToggle();
-    }.throttle(ms: 300),
-  ));
+  Widget get toggle => Obx(
+    () => GenIconBtn(
+      tooltip:
+          _audioController.currentState.value == AudioState.playing
+              ? "暂停"
+              : "播放",
+      icon:
+          _audioController.currentState.value == AudioState.playing
+              ? PhosphorIconsFill.pause
+              : PhosphorIconsFill.play,
+      size: size,
+      color: color,
+      fn: () async {
+        await _audioController.audioToggle();
+      }.throttle(ms: 300),
+    ),
+  );
 
   Widget get skipForward => GenIconBtn(
     tooltip: "下一首",
@@ -163,17 +232,19 @@ class AudioCtrlWidget {
     }.throttle(ms: 500),
   );
 
-  Widget get changeMode => Obx(()=>GenIconBtn(
-    tooltip:
-        _settingController.playModeMap[_settingController.playMode.value] ??
-        "单曲循环",
-    icon: _playModeIcons[_settingController.playMode.value],
-    size: size,
-    color: color,
-    fn: () {
-      _audioController.changePlayMode();
-    },
-  ));
+  Widget get changeMode => Obx(
+    () => GenIconBtn(
+      tooltip:
+          _settingController.playModeMap[_settingController.playMode.value] ??
+          "单曲循环",
+      icon: _playModeIcons[_settingController.playMode.value],
+      size: size,
+      color: color,
+      fn: () {
+        _audioController.changePlayMode();
+      },
+    ),
+  );
 
   Widget get seekSlide => Obx(() {
     late final double duration;
@@ -209,4 +280,14 @@ class AudioCtrlWidget {
       },
     );
   });
+
+  Widget get equalizerSet => GenIconBtn(
+    tooltip: "均衡器",
+    icon: PhosphorIconsFill.equalizer,
+    size: size,
+    color: color,
+    fn: () async {
+
+    },
+  );
 }

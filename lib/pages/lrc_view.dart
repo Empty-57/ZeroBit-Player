@@ -624,6 +624,7 @@ class LrcView extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           spacing: 16,
                           children: [
+                            audioCtrlWidget.speedSet,
                             audioCtrlWidget.volumeSet,
                             audioCtrlWidget.skipBack,
                             audioCtrlWidget.toggle,
