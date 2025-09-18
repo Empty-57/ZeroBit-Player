@@ -41,25 +41,59 @@ class SettingController extends GetxController {
 
   final useBlur=false.obs;
 
-  final Map<int,String> apiMap={
+  static const minGain=-12.0;
+  static const maxGain=12.0;
+
+  final equalizerFCenters=[80.0, 100.0, 125.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0, 16000.0];//fCenter:fGain | fCenter: 80.0-16000.0 in Windows  fGain: -12.0db ~ 12.0db
+
+  static const Map<String, List<double>> equalizerGainPresets = {
+    'Default': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+  'Pop': [4.0, 3.0, 2.0, 1.0, 0.0, 0.0, 1.0, 2.0, 3.0, 2.0],
+  'Dance': [6.0, 5.0, 4.0, 2.0, 0.0, -1.0, 0.0, 1.0, 2.0, 1.0],
+  'Blues': [2.0, 2.0, 2.0, 3.0, 2.0, 1.0, 2.0, 1.0, 0.0, -1.0],
+  'Classical': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0],
+  'Jazz': [2.0, 2.0, 1.0, 1.0, 0.0, 0.0, 1.0, 2.0, 1.0, 0.0],
+  'Ballad': [1.0, 1.0, 0.0, 0.0, 2.0, 3.0, 2.0, 1.0, 0.0, -1.0],
+  'Electronic': [5.0, 4.0, 3.0, 0.0, -1.0, -2.0, 0.0, 2.0, 4.0, 5.0],
+  'Rock': [3.0, 2.0, 1.0, 0.0, -1.0, 0.0, 2.0, 3.0, 2.0, 1.0],
+  'Country': [0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 3.0, 2.0, 1.0, 0.0],
+  'Vocal': [-2.0, -1.0, 0.0, 1.0, 3.0, 4.0, 3.0, 1.0, -1.0, -2.0],
+};
+  static const Map<String, String> equalizerGainPresetsText ={
+    'Default': '默认',
+    'Pop': '流行',
+    'Dance': '舞曲',
+    'Blues': '蓝调',
+    'Classical': '古典',
+    'Jazz': '爵士',
+    'Ballad': '慢歌',
+    'Electronic': '电子乐',
+    'Rock': '摇滚',
+    'Country': '乡村',
+    'Vocal': '人声',
+  };
+
+  final equalizerGains=List.generate(10,(_)=>0.0).toList().obs;
+
+  static const Map<int,String> apiMap={
     0:"QQ音乐",
     1:"网易云音乐"
   };
 
-  final Map<int,String> sortType={
+  static const Map<int,String> sortType={
     0:'标题',
     1:'艺术家',
     2:'专辑',
     3:'时长',
   };
 
-  final Map<int,String> playModeMap={
+  static const Map<int,String> playModeMap={
     0:'单曲循环',
     1:'列表循环',
     2:'随机播放',
   };
 
-  final Map<int,String> lrcAlignmentMap={
+  static const Map<int,String> lrcAlignmentMap={
     0:'左对齐',
     1:'居中',
     2:'右对齐',

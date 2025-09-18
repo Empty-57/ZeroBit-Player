@@ -37,7 +37,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.10.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -786478183;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1493889823;
 
 // Section: executor
 
@@ -77,6 +77,40 @@ fn wire__crate__api__bass__audio_event_stream_impl(
                     let output_ok = Result::<_, ()>::Ok({
                         crate::api::bass::audio_event_stream(api_sink);
                     })?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__bass__bass_func__bass_dx_8_parameq_default_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "bass_dx_8_parameq_default",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok(
+                        crate::api::bass::bass_func::BASS_DX8_PARAMEQ::default(),
+                    )?;
                     Ok(output_ok)
                 })())
             }
@@ -620,6 +654,42 @@ fn wire__crate__api__bass__resume_impl(
         },
     )
 }
+fn wire__crate__api__bass__set_eq_params_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "set_eq_params",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_fre_center_index = <i32>::sse_decode(&mut deserializer);
+            let api_gain = <f32>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok({
+                        crate::api::bass::set_eq_params(api_fre_center_index, api_gain);
+                    })?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__bass__set_exclusive_mode_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -711,8 +781,10 @@ fn wire__crate__api__bass__set_speed_impl(
             let api_speed = <f32>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
-                transform_result_sse::<_, String>((move || {
-                    let output_ok = crate::api::bass::set_speed(api_speed)?;
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok({
+                        crate::api::bass::set_speed(api_speed);
+                    })?;
                     Ok(output_ok)
                 })())
             }
@@ -1023,6 +1095,20 @@ impl SseDecode for crate::api::music_tag_tool::AudioMetadata {
     }
 }
 
+impl SseDecode for crate::api::bass::bass_func::BASS_DX8_PARAMEQ {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_fCenter = <f32>::sse_decode(deserializer);
+        let mut var_fBandwidth = <f32>::sse_decode(deserializer);
+        let mut var_fGain = <f32>::sse_decode(deserializer);
+        return crate::api::bass::bass_func::BASS_DX8_PARAMEQ {
+            fCenter: var_fCenter,
+            fBandwidth: var_fBandwidth,
+            fGain: var_fGain,
+        };
+    }
+}
+
 impl SseDecode for crate::api::bass::basswasapi_func::BASS_WASAPI_INFO {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1081,6 +1167,13 @@ impl SseDecode for f64 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         deserializer.cursor.read_f64::<NativeEndian>().unwrap()
+    }
+}
+
+impl SseDecode for i32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        deserializer.cursor.read_i32::<NativeEndian>().unwrap()
     }
 }
 
@@ -1160,13 +1253,6 @@ impl SseDecode for () {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {}
 }
 
-impl SseDecode for i32 {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        deserializer.cursor.read_i32::<NativeEndian>().unwrap()
-    }
-}
-
 fn pde_ffi_dispatcher_primary_impl(
     func_id: i32,
     port: flutter_rust_bridge::for_generated::MessagePort,
@@ -1177,37 +1263,44 @@ fn pde_ffi_dispatcher_primary_impl(
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
         1 => wire__crate__api__bass__audio_event_stream_impl(port, ptr, rust_vec_len, data_len),
-        2 => wire__crate__api__bass__basswasapi_func__bass_wasapi_info_default_impl(
+        2 => wire__crate__api__bass__bass_func__bass_dx_8_parameq_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        3 => wire__crate__api__music_tag_tool__edit_cover_impl(port, ptr, rust_vec_len, data_len),
-        4 => wire__crate__api__music_tag_tool__edit_tags_impl(port, ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__music_tag_tool__get_cover_impl(port, ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__get_fonts__get_fonts_list_impl(port, ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__bass__get_len_impl(port, ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__music_tag_tool__get_metadata_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__bass__get_position_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__bass__get_volume_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__bass__init_bass_impl(port, ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__smtc__init_smtc_impl(port, ptr, rust_vec_len, data_len),
-        13 => wire__crate__api__bass__load_lib_impl(port, ptr, rust_vec_len, data_len),
-        14 => wire__crate__api__bass__pause_impl(port, ptr, rust_vec_len, data_len),
-        15 => wire__crate__api__bass__play_file_impl(port, ptr, rust_vec_len, data_len),
-        16 => wire__crate__api__bass__progress_listen_impl(port, ptr, rust_vec_len, data_len),
-        17 => wire__crate__api__bass__resume_impl(port, ptr, rust_vec_len, data_len),
-        18 => wire__crate__api__bass__set_exclusive_mode_impl(port, ptr, rust_vec_len, data_len),
-        19 => wire__crate__api__bass__set_position_impl(port, ptr, rust_vec_len, data_len),
-        20 => wire__crate__api__bass__set_speed_impl(port, ptr, rust_vec_len, data_len),
-        21 => wire__crate__api__bass__set_volume_impl(port, ptr, rust_vec_len, data_len),
-        22 => wire__crate__api__smtc__smtc_clear_impl(port, ptr, rust_vec_len, data_len),
-        23 => wire__crate__api__smtc__smtc_control_events_impl(port, ptr, rust_vec_len, data_len),
-        24 => wire__crate__api__smtc__smtc_update_metadata_impl(port, ptr, rust_vec_len, data_len),
-        25 => wire__crate__api__smtc__smtc_update_state_impl(port, ptr, rust_vec_len, data_len),
-        26 => wire__crate__api__bass__stop_impl(port, ptr, rust_vec_len, data_len),
-        27 => wire__crate__api__bass__toggle_impl(port, ptr, rust_vec_len, data_len),
+        3 => wire__crate__api__bass__basswasapi_func__bass_wasapi_info_default_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        4 => wire__crate__api__music_tag_tool__edit_cover_impl(port, ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__music_tag_tool__edit_tags_impl(port, ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__music_tag_tool__get_cover_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__get_fonts__get_fonts_list_impl(port, ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__bass__get_len_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__music_tag_tool__get_metadata_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__bass__get_position_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__bass__get_volume_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__bass__init_bass_impl(port, ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__smtc__init_smtc_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire__crate__api__bass__load_lib_impl(port, ptr, rust_vec_len, data_len),
+        15 => wire__crate__api__bass__pause_impl(port, ptr, rust_vec_len, data_len),
+        16 => wire__crate__api__bass__play_file_impl(port, ptr, rust_vec_len, data_len),
+        17 => wire__crate__api__bass__progress_listen_impl(port, ptr, rust_vec_len, data_len),
+        18 => wire__crate__api__bass__resume_impl(port, ptr, rust_vec_len, data_len),
+        19 => wire__crate__api__bass__set_eq_params_impl(port, ptr, rust_vec_len, data_len),
+        20 => wire__crate__api__bass__set_exclusive_mode_impl(port, ptr, rust_vec_len, data_len),
+        21 => wire__crate__api__bass__set_position_impl(port, ptr, rust_vec_len, data_len),
+        22 => wire__crate__api__bass__set_speed_impl(port, ptr, rust_vec_len, data_len),
+        23 => wire__crate__api__bass__set_volume_impl(port, ptr, rust_vec_len, data_len),
+        24 => wire__crate__api__smtc__smtc_clear_impl(port, ptr, rust_vec_len, data_len),
+        25 => wire__crate__api__smtc__smtc_control_events_impl(port, ptr, rust_vec_len, data_len),
+        26 => wire__crate__api__smtc__smtc_update_metadata_impl(port, ptr, rust_vec_len, data_len),
+        27 => wire__crate__api__smtc__smtc_update_state_impl(port, ptr, rust_vec_len, data_len),
+        28 => wire__crate__api__bass__stop_impl(port, ptr, rust_vec_len, data_len),
+        29 => wire__crate__api__bass__toggle_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1250,6 +1343,28 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::music_tag_tool::AudioMetadata
     for crate::api::music_tag_tool::AudioMetadata
 {
     fn into_into_dart(self) -> crate::api::music_tag_tool::AudioMetadata {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::bass::bass_func::BASS_DX8_PARAMEQ {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.fCenter.into_into_dart().into_dart(),
+            self.fBandwidth.into_into_dart().into_dart(),
+            self.fGain.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::bass::bass_func::BASS_DX8_PARAMEQ
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::bass::bass_func::BASS_DX8_PARAMEQ>
+    for crate::api::bass::bass_func::BASS_DX8_PARAMEQ
+{
+    fn into_into_dart(self) -> crate::api::bass::bass_func::BASS_DX8_PARAMEQ {
         self
     }
 }
@@ -1346,6 +1461,15 @@ impl SseEncode for crate::api::music_tag_tool::AudioMetadata {
     }
 }
 
+impl SseEncode for crate::api::bass::bass_func::BASS_DX8_PARAMEQ {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <f32>::sse_encode(self.fCenter, serializer);
+        <f32>::sse_encode(self.fBandwidth, serializer);
+        <f32>::sse_encode(self.fGain, serializer);
+    }
+}
+
 impl SseEncode for crate::api::bass::basswasapi_func::BASS_WASAPI_INFO {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1388,6 +1512,13 @@ impl SseEncode for f64 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         serializer.cursor.write_f64::<NativeEndian>(self).unwrap();
+    }
+}
+
+impl SseEncode for i32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        serializer.cursor.write_i32::<NativeEndian>(self).unwrap();
     }
 }
 
@@ -1458,13 +1589,6 @@ impl SseEncode for u8 {
 impl SseEncode for () {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {}
-}
-
-impl SseEncode for i32 {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        serializer.cursor.write_i32::<NativeEndian>(self).unwrap();
-    }
 }
 
 #[cfg(not(target_family = "wasm"))]

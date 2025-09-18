@@ -418,10 +418,10 @@ class _AudioGenPagesState extends State<AudioGenPages> {
 
   Widget _buildSortButton() {
     final itemMap = {
-      0: [_settingController.sortType[0], PhosphorIconsRegular.textT],
-      1: [_settingController.sortType[1], PhosphorIconsRegular.userFocus],
-      2: [_settingController.sortType[2], PhosphorIconsRegular.vinylRecord],
-      3: [_settingController.sortType[3], PhosphorIconsRegular.clockCountdown],
+      0: [SettingController.sortType[0], PhosphorIconsRegular.textT],
+      1: [SettingController.sortType[1], PhosphorIconsRegular.userFocus],
+      2: [SettingController.sortType[2], PhosphorIconsRegular.vinylRecord],
+      3: [SettingController.sortType[3], PhosphorIconsRegular.clockCountdown],
     };
     if (widget.operateArea == OperateArea.artistList) itemMap.remove(1);
     if (widget.operateArea == OperateArea.albumList) itemMap.remove(2);
@@ -434,7 +434,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         widget.controller.itemReSort(type: entry.key);
         _audioController.syncCurrentIndex();
       },
-      label: _settingController.sortType[_settingController.sortMap[widget.operateArea] as int] ?? "未指定",
+      label: SettingController.sortType[_settingController.sortMap[widget.operateArea] as int] ?? "未指定",
       btnWidth: 128,
       btnHeight: btnHeight,
       itemWidth: 128,

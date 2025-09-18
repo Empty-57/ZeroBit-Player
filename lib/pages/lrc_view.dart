@@ -630,6 +630,7 @@ class LrcView extends StatelessWidget {
                             audioCtrlWidget.toggle,
                             audioCtrlWidget.skipForward,
                             audioCtrlWidget.changeMode,
+                            audioCtrlWidget.equalizerSet,
                           ],
                         ),
                       ),
@@ -644,7 +645,7 @@ class LrcView extends StatelessWidget {
                         Obx(
                           () => GenIconBtn(
                             tooltip:
-                                _settingController
+                                SettingController
                                     .lrcAlignmentMap[_settingController
                                     .lrcAlignment
                                     .value] ??

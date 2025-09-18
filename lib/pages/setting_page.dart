@@ -279,7 +279,7 @@ class _ApiDropMenu extends StatelessWidget {
 
     final menuController = MenuController();
     final apiMenuList =
-        _settingController.apiMap.entries.map((entry) {
+        SettingController.apiMap.entries.map((entry) {
           return CustomBtn(
             fn: () {
               _settingController.apiIndex.value = entry.key;
@@ -308,7 +308,7 @@ class _ApiDropMenu extends StatelessWidget {
             }
           },
           icon: PhosphorIconsLight.plugs,
-          label: _settingController.apiMap[_settingController.apiIndex.value],
+          label: SettingController.apiMap[_settingController.apiIndex.value],
           btnHeight: _setBtnHeight,
           btnWidth: btnW,
           backgroundColor: Theme.of(context).colorScheme.primary,

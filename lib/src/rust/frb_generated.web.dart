@@ -7,6 +7,7 @@
 // ignore_for_file: argument_type_not_assignable
 
 import 'api/bass.dart';
+import 'api/bass/bass_func.dart';
 import 'api/bass/basswasapi_func.dart';
 import 'api/get_fonts.dart';
 import 'api/music_tag_tool.dart';
@@ -40,6 +41,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   AudioMetadata dco_decode_audio_metadata(dynamic raw);
 
   @protected
+  BASS_DX8_PARAMEQ dco_decode_bass_dx_8_parameq(dynamic raw);
+
+  @protected
   BASS_WASAPI_INFO dco_decode_bass_wasapi_info(dynamic raw);
 
   @protected
@@ -59,6 +63,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   double dco_decode_f_64(dynamic raw);
+
+  @protected
+  int dco_decode_i_32(dynamic raw);
 
   @protected
   List<String> dco_decode_list_String(dynamic raw);
@@ -107,6 +114,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   AudioMetadata sse_decode_audio_metadata(SseDeserializer deserializer);
 
   @protected
+  BASS_DX8_PARAMEQ sse_decode_bass_dx_8_parameq(SseDeserializer deserializer);
+
+  @protected
   BASS_WASAPI_INFO sse_decode_bass_wasapi_info(SseDeserializer deserializer);
 
   @protected
@@ -128,6 +138,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   double sse_decode_f_64(SseDeserializer deserializer);
+
+  @protected
+  int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
   List<String> sse_decode_list_String(SseDeserializer deserializer);
@@ -157,9 +170,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_decode_unit(SseDeserializer deserializer);
 
   @protected
-  int sse_decode_i_32(SseDeserializer deserializer);
-
-  @protected
   void sse_encode_AnyhowException(
     AnyhowException self,
     SseSerializer serializer,
@@ -182,6 +192,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_audio_metadata(AudioMetadata self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_bass_dx_8_parameq(
+    BASS_DX8_PARAMEQ self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_bass_wasapi_info(
@@ -212,6 +228,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_f_64(double self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_i_32(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
@@ -245,9 +264,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_unit(void self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_i_32(int self, SseSerializer serializer);
 }
 
 // Section: wire_class

@@ -30,7 +30,8 @@ pub(crate) type BASS_ChannelGetAttribute = unsafe extern "C" fn(
 pub(crate) type BASS_ChannelSetAttribute =
     unsafe extern "C" fn(handle: c_uint, attrib: c_uint, value: c_float) -> c_int;
 
-pub(crate)type BASS_ChannelSlideAttribute=unsafe extern "C" fn (handle: c_uint, attrib: c_uint, value: c_float, time: c_uint) -> c_int;
+pub(crate) type BASS_ChannelSlideAttribute =
+    unsafe extern "C" fn(handle: c_uint, attrib: c_uint, value: c_float, time: c_uint) -> c_int;
 
 pub(crate) type BASS_ChannelPlay = unsafe extern "C" fn(handle: c_uint, restart: c_int) -> c_int;
 pub(crate) type BASS_ChannelPause = unsafe extern "C" fn(handle: c_uint) -> c_int;
@@ -55,15 +56,35 @@ pub(crate) type BASS_ChannelBytes2Seconds =
 pub(crate) type BASS_ChannelSeconds2Bytes =
     unsafe extern "C" fn(handle: c_uint, pos: c_double) -> c_ulonglong;
 
-pub(crate) type SYNCPROC =Option<unsafe extern "C" fn(handle: c_uint, channel: c_uint, data: c_uint, user: *mut c_void)>;
+pub(crate) type SYNCPROC =
+    Option<unsafe extern "C" fn(handle: c_uint, channel: c_uint, data: c_uint, user: *mut c_void)>;
 
-pub(crate) type BASS_ChannelSetSync=unsafe extern "C" fn(handle: c_uint, sync_type: c_uint, param: c_ulonglong, proc: SYNCPROC, user: *mut c_void) -> c_uint;
+pub(crate) type BASS_ChannelSetSync = unsafe extern "C" fn(
+    handle: c_uint,
+    sync_type: c_uint,
+    param: c_ulonglong,
+    proc: SYNCPROC,
+    user: *mut c_void,
+) -> c_uint;
 
-pub(crate) type BASS_ChannelRemoveSync =unsafe extern "C" fn(handle: c_uint, sync: c_uint) -> c_int;
+pub(crate) type BASS_ChannelRemoveSync =
+    unsafe extern "C" fn(handle: c_uint, sync: c_uint) -> c_int;
 
 pub(crate) type BASS_PluginLoad = unsafe extern "C" fn(
     file: *const c_char, // const char *
     flags: c_uint,       // DWORD
 ) -> c_uint;
 
+pub(crate) type BASS_ChannelSetFX =
+    unsafe extern "C" fn(handle: c_uint, type_: c_uint, priority: c_int) -> c_uint;
 
+pub(crate) type BASS_FXSetParameters =
+    unsafe extern "C" fn(handle: c_uint, params: *const c_void) -> c_int;
+
+#[repr(C)]
+#[derive(Default)]
+pub struct BASS_DX8_PARAMEQ {
+    pub fCenter: f32,
+    pub fBandwidth: f32,
+    pub fGain: f32,
+}

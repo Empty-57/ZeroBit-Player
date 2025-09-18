@@ -42,3 +42,5 @@ pub const BASS_SYNC_DEV_FORMAT: u32 = 15;
 pub const BASS_SYNC_THREAD: u32 = 0x20000000; // flag: call sync in other thread
 pub const BASS_SYNC_MIXTIME: u32 = 0x40000000; // flag: sync at mixtime, else at playtime
 pub const BASS_SYNC_ONETIME: u32 = 0x80000000; // flag: sync only once, else continuously
+
+pub const BASS_FX_DX8_PARAMEQ			:u32=7;

@@ -235,7 +235,7 @@ class AudioCtrlWidget {
   Widget get changeMode => Obx(
     () => GenIconBtn(
       tooltip:
-          _settingController.playModeMap[_settingController.playMode.value] ??
+          SettingController.playModeMap[_settingController.playMode.value] ??
           "单曲循环",
       icon: _playModeIcons[_settingController.playMode.value],
       size: size,
@@ -281,13 +281,124 @@ class AudioCtrlWidget {
     );
   });
 
-  Widget get equalizerSet => GenIconBtn(
-    tooltip: "均衡器",
-    icon: PhosphorIconsFill.equalizer,
-    size: size,
-    color: color,
-    fn: () async {
+  Widget get equalizerSet {
+    final fontStyle = generalTextStyle(
+      ctx: context,
+      size: 'sm',
+      color: Theme.of(context).colorScheme.onSecondaryContainer,
+    );
 
-    },
-  );
+    final equalizerSliders =
+        _settingController.equalizerFCenters.indexed.map((v) {
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: 8,
+            children: [
+              Obx(
+                () => Text(
+                  '${_settingController.equalizerGains[v.$1].toStringAsFixed(1)}db',
+                  style: fontStyle,
+                ),
+              ),
+              Obx(
+                () => RotatedBox(
+                  quarterTurns: 3,
+                  child: Slider(
+                    min: SettingController.minGain,
+                    max: SettingController.maxGain,
+                    value: _settingController.equalizerGains[v.$1],
+                    divisions: 48,
+                    onChanged: (gain) async {
+                      _settingController.equalizerGains[v.$1] = gain;
+                    },
+                    onChangeEnd: (gain) async {
+                      _settingController.equalizerGains[v.$1] = gain;
+                      await setEqParams(freCenterIndex: v.$1, gain: gain);
+                      _settingController.putCache();
+                    },
+                  ),
+                ),
+              ),
+              Text(
+                '${v.$2 >= 1000 ? '${(v.$2 / 1000).toInt()}k' : v.$2.toInt()}hz',
+                style: fontStyle,
+              ),
+            ],
+          );
+        }).toList();
+
+    return GenIconBtn(
+      tooltip: "均衡器",
+      icon: PhosphorIconsLight.equalizer,
+      size: size,
+      color: color,
+      fn: () async {
+        showDialog(
+          barrierDismissible: true,
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("均衡器"),
+              titleTextStyle: generalTextStyle(
+                ctx: context,
+                size: 'xl',
+                weight: FontWeight.w600,
+              ),
+
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(4)),
+              ),
+              backgroundColor: Theme.of(context).colorScheme.surface,
+
+              actionsAlignment: MainAxisAlignment.end,
+              actions: <Widget>[
+                SizedBox(
+                  width: context.width / 2,
+                  height: context.height / 2,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 16,
+                    children: [
+                      Wrap(
+                        spacing: 2,
+                        runSpacing: 2,
+                        children:
+                            SettingController.equalizerGainPresets.entries.map((
+                              entry,
+                            ) {
+                              return CustomBtn(
+                                fn: () {
+                                  _settingController.equalizerGains.value =
+                                      entry.value;
+                                },
+                                label:
+                                    SettingController
+                                        .equalizerGainPresetsText[entry.key],
+                                backgroundColor: Colors.transparent,
+                                contentColor:
+                                    Theme.of(context).colorScheme.primary,
+                                btnWidth: 96,
+                                btnHeight: 36,
+                              );
+                            }).toList(),
+                      ),
+                      Expanded(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: equalizerSliders,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 }
