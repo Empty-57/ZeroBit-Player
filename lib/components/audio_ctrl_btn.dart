@@ -10,6 +10,7 @@ import '../getxController/setting_ctrl.dart';
 import 'package:get/get.dart';
 
 import '../src/rust/api/bass.dart';
+import '../tools/diamond_silder_thumb.dart';
 import '../tools/format_time.dart';
 
 final AudioController _audioController = Get.find<AudioController>();
@@ -290,41 +291,58 @@ class AudioCtrlWidget {
 
     final equalizerSliders =
         _settingController.equalizerFCenters.indexed.map((v) {
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            spacing: 8,
-            children: [
-              Obx(
-                () => Text(
-                  '${_settingController.equalizerGains[v.$1].toStringAsFixed(1)}db',
-                  style: fontStyle,
-                ),
-              ),
-              Obx(
-                () => RotatedBox(
-                  quarterTurns: 3,
-                  child: Slider(
-                    min: SettingController.minGain,
-                    max: SettingController.maxGain,
-                    value: _settingController.equalizerGains[v.$1],
-                    divisions: 48,
-                    onChanged: (gain) async {
-                      _settingController.equalizerGains[v.$1] = gain;
-                    },
-                    onChangeEnd: (gain) async {
-                      _settingController.equalizerGains[v.$1] = gain;
-                      await setEqParams(freCenterIndex: v.$1, gain: gain);
-                      _settingController.putCache();
-                    },
+          return SizedBox(
+            width: 48,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              spacing: 8,
+              children: [
+                Obx(
+                  () => Text(
+                    '${_settingController.equalizerGains[v.$1].toStringAsFixed(1)}db',
+                    style: fontStyle,
                   ),
                 ),
-              ),
-              Text(
-                '${v.$2 >= 1000 ? '${(v.$2 / 1000).toInt()}k' : v.$2.toInt()}hz',
-                style: fontStyle,
-              ),
-            ],
+
+                Material(
+                  color: Colors.transparent,
+                  child: SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      trackHeight: 4,
+                      thumbShape: const DiamondSliderThumbShape(
+                        horizontalDiagonal: 16,
+                        verticalDiagonal: 16,
+                      ),
+                    ),
+                    child: Obx(
+                      () => RotatedBox(
+                        quarterTurns: 3,
+                        child: Slider(
+                          min: SettingController.minGain,
+                          max: SettingController.maxGain,
+                          value: _settingController.equalizerGains[v.$1],
+                          divisions: 48,
+                          onChanged: (gain) async {
+                            final newGains = List<double>.from(
+                              _settingController.equalizerGains,
+                            );
+                            newGains[v.$1] = gain;
+                            _settingController.equalizerGains.value = newGains;
+                            await setEqParams(freCenterIndex: v.$1, gain: gain);
+                          },
+                          onChangeEnd: (gain) async {},
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Text(
+                  '${v.$2 >= 1000 ? '${(v.$2 / 1000).toInt()}k' : v.$2.toInt()}hz',
+                  style: fontStyle,
+                ),
+              ],
+            ),
           );
         }).toList();
 
@@ -354,7 +372,7 @@ class AudioCtrlWidget {
               actionsAlignment: MainAxisAlignment.end,
               actions: <Widget>[
                 SizedBox(
-                  width: context.width / 2,
+                  width: context.width * 2 / 3,
                   height: context.height / 2,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -368,19 +386,43 @@ class AudioCtrlWidget {
                             SettingController.equalizerGainPresets.entries.map((
                               entry,
                             ) {
-                              return CustomBtn(
-                                fn: () {
-                                  _settingController.equalizerGains.value =
-                                      entry.value;
-                                },
-                                label:
-                                    SettingController
-                                        .equalizerGainPresetsText[entry.key],
-                                backgroundColor: Colors.transparent,
-                                contentColor:
-                                    Theme.of(context).colorScheme.primary,
-                                btnWidth: 96,
-                                btnHeight: 36,
+                              return Obx(
+                                () => CustomBtn(
+                                  fn: () async {
+                                    _settingController.equalizerGains.value =
+                                        entry.value;
+                                    for (final v in entry.value.indexed) {
+                                      await setEqParams(
+                                        freCenterIndex: v.$1,
+                                        gain: v.$2,
+                                      );
+                                    }
+                                  },
+                                  label:
+                                      SettingController
+                                          .equalizerGainPresetsText[entry.key],
+                                  backgroundColor:
+                                      _settingController.equalizerGains ==
+                                              entry.value
+                                          ? Theme.of(
+                                            context,
+                                          ).colorScheme.primary
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .secondaryContainer
+                                              .withValues(alpha: 0.2),
+                                  contentColor:
+                                      _settingController.equalizerGains ==
+                                              entry.value
+                                          ? Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimary
+                                          : Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                  btnWidth: 96,
+                                  btnHeight: 36,
+                                ),
                               );
                             }).toList(),
                       ),

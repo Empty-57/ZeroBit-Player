@@ -97,10 +97,32 @@ const F_CENTER: [f32; 10] = [
 
 static TARGET_FGAINS: Mutex<[f32; 10]> = Mutex::new([0.0; 10]); // range: -12.0db ~ 12.0db
 
+static EQ_HANDLES: Mutex<[u32; 10]> = Mutex::new([0; 10]);
+
 unsafe extern "C" fn on_end_sync(handle: c_uint, channel: c_uint, data: c_uint, user: *mut c_void) {
     if let Some(sink) = AUDIO_EVENT.lock().unwrap().as_ref() {
         let _ = sink.add(USER_STOPPED);
     }
+}
+
+fn calculate_dynamic_bandwidth_linear(f_center: f32) -> f32 {
+    let min_freq = *F_CENTER.first().unwrap_or(&80.0);
+    let max_freq = *F_CENTER.last().unwrap_or(&16000.0);
+    let min_bandwidth = 8.0; // 对应 max_freq
+    let max_bandwidth = 28.0; // 对应 min_freq
+
+    let clamped_f_center = f_center.clamp(min_freq, max_freq);
+
+    // 计算归一化因子 (0.0 到 1.0)
+    // 当 f_center = min_freq 时，factor = 0.0
+    // 当 f_center = max_freq 时，factor = 1.0
+    let factor = (clamped_f_center - min_freq) / (max_freq - min_freq);
+
+    // 在带宽范围内进行插值
+    // 从 max_bandwidth 线性地减小到 min_bandwidth
+    let bandwidth = max_bandwidth + (min_bandwidth - max_bandwidth) * factor;
+
+    bandwidth.clamp(1.0, 36.0)
 }
 
 impl BassApi {
@@ -439,20 +461,22 @@ impl BassApi {
             if self.stream_handle == 0 {
                 return;
             }
-            let eq = (self.chan_set_fx)(self.stream_handle, BASS_FX_DX8_PARAMEQ, 0); //maybe replace self.stream_handle or set priority
-            if eq == 0 {
-                let err_code = (self.error_get_code)();
-                println!(
-                    "{}",
-                    get_err_info(err_code)
-                        .unwrap_or_else(|| format!("Unknown BASS error | ERR_CODE<{}>", err_code))
-                );
-                return;
-            }
             let mut eq_params = BASS_DX8_PARAMEQ::default();
             for (index, center_fre) in F_CENTER.into_iter().enumerate() {
+                let eq = (self.chan_set_fx)(self.stream_handle, BASS_FX_DX8_PARAMEQ, 0); // maybe replace self.stream_handle or set priority
+                if eq == 0 {
+                    let err_code = (self.error_get_code)();
+                    println!(
+                        "{}",
+                        get_err_info(err_code).unwrap_or_else(|| format!(
+                            "Unknown BASS error | ERR_CODE<{}>",
+                            err_code
+                        ))
+                    );
+                    return;
+                }
                 eq_params.fCenter = center_fre;
-                eq_params.fBandwidth = F_BANDWIDTH;
+                eq_params.fBandwidth = calculate_dynamic_bandwidth_linear(center_fre);
                 eq_params.fGain = TARGET_FGAINS.lock().unwrap()[index];
                 let params_ptr = &eq_params as *const BASS_DX8_PARAMEQ as *const c_void;
                 let ok = (self.fx_set_params)(eq, params_ptr);
@@ -467,33 +491,29 @@ impl BassApi {
                     );
                     continue;
                 }
+                if let Ok(mut handles) = EQ_HANDLES.lock() {
+                    handles[index] = eq;
+                } else {
+                    println!("Failed to acquire lock on EQ_HANDLES.");
+                }
             }
         };
     }
 
-    fn set_eq_params(&mut self, fre_center_index: i32, mut gain: f32) {
-        gain=gain.clamp(-12.0,12.0);
+    fn set_eq_params(&mut self, fre_center_index: i32, gain: f32) {
+        let gain = gain.clamp(-12.0, 12.0);
+        let fre_center_index = fre_center_index as usize;
         unsafe {
-            if self.stream_handle == 0 || !(0..F_CENTER.len() as i32).contains(&fre_center_index) {
-                return;
-            }
-            let eq = (self.chan_set_fx)(self.stream_handle, BASS_FX_DX8_PARAMEQ, 0); //maybe replace self.stream_handle or set priority
-            if eq == 0 {
-                let err_code = (self.error_get_code)();
-                println!(
-                    "{}",
-                    get_err_info(err_code)
-                        .unwrap_or_else(|| format!("Unknown BASS error | ERR_CODE<{}>", err_code))
-                );
+            if self.stream_handle == 0 || !(0..F_CENTER.len()).contains(&fre_center_index) {
                 return;
             }
             let eq_params = BASS_DX8_PARAMEQ {
-                fCenter: F_CENTER[fre_center_index as usize],
-                fBandwidth: F_BANDWIDTH,
+                fCenter: F_CENTER[fre_center_index],
+                fBandwidth: calculate_dynamic_bandwidth_linear(F_CENTER[fre_center_index]),
                 fGain: gain,
             };
             let params_ptr = &eq_params as *const BASS_DX8_PARAMEQ as *const c_void;
-            let ok = (self.fx_set_params)(eq, params_ptr);
+            let ok = (self.fx_set_params)(EQ_HANDLES.lock().unwrap()[fre_center_index], params_ptr);
             if ok == 0 {
                 let err_code = (self.error_get_code)();
                 println!(
@@ -503,7 +523,11 @@ impl BassApi {
                 );
             }
 
-            TARGET_FGAINS.lock().unwrap()[fre_center_index as usize] = gain;
+            if let Ok(mut gains) = TARGET_FGAINS.lock() {
+                gains[fre_center_index] = gain;
+            } else {
+                eprintln!("Failed to acquire lock on TARGET_FGAINS.");
+            }
         }
     }
 

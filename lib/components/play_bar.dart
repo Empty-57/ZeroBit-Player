@@ -6,6 +6,7 @@ import 'package:zerobit_player/tools/format_time.dart';
 import 'package:zerobit_player/tools/general_style.dart';
 
 import '../getxController/audio_ctrl.dart';
+import '../tools/diamond_silder_thumb.dart';
 import '../tools/rect_value_indicator.dart';
 import 'audio_ctrl_btn.dart';
 
@@ -73,62 +74,6 @@ class _ProgressPainter extends CustomPainter {
   }
 }
 
-/// 自定义菱形按钮
-class _DiamondSliderThumbShape extends SliderComponentShape {
-  /// 水平对角线长度
-  final double horizontalDiagonal;
-
-  /// 垂直对角线长度
-  final double verticalDiagonal;
-
-  const _DiamondSliderThumbShape({
-    this.horizontalDiagonal = 12,
-    this.verticalDiagonal = 24,
-  });
-
-  @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) {
-    final width = verticalDiagonal;
-    final height = verticalDiagonal;
-    return Size(width, height);
-  }
-
-  @override
-  void paint(
-    PaintingContext context,
-    Offset center, {
-    required Animation<double> activationAnimation,
-    required Animation<double> enableAnimation,
-    required bool isDiscrete,
-    required TextPainter labelPainter,
-    required RenderBox parentBox,
-    required SliderThemeData sliderTheme,
-    required TextDirection textDirection,
-    required double value,
-    required double textScaleFactor,
-    required Size sizeWithOverflow,
-  }) {
-    final Canvas canvas = context.canvas;
-    final paint =
-        Paint()
-          ..color = sliderTheme.thumbColor ?? Colors.blue
-          ..style = PaintingStyle.fill;
-
-    final hd2 = horizontalDiagonal / 2;
-    final vd2 = verticalDiagonal / 2;
-
-    final path =
-        Path()
-          ..moveTo(center.dx, center.dy - vd2) // 上顶点
-          ..lineTo(center.dx + hd2, center.dy) // 右顶点
-          ..lineTo(center.dx, center.dy + vd2) // 下顶点
-          ..lineTo(center.dx - hd2, center.dy) // 左顶点
-          ..close();
-
-    canvas.drawPath(path, paint);
-  }
-}
-
 class PlayBar extends StatefulWidget {
   const PlayBar({super.key});
 
@@ -169,7 +114,7 @@ class _PlayBarState extends State<PlayBar> {
       data: SliderTheme.of(context).copyWith(
         trackHeight: 1,
         showValueIndicator: ShowValueIndicator.always,
-        thumbShape: const _DiamondSliderThumbShape(horizontalDiagonal: 8, verticalDiagonal: 16),
+        thumbShape: const DiamondSliderThumbShape(horizontalDiagonal: 8, verticalDiagonal: 16),
         activeTrackColor: Colors.transparent,
         thumbColor: Theme.of(context).colorScheme.primary,
         inactiveTrackColor: Colors.transparent,
