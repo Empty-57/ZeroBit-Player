@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
+import 'package:zerobit_player/HIveCtrl/adapters/scalable_setting_adapters.dart';
 import 'package:zerobit_player/HIveCtrl/adapters/user_playlist_adapter.dart';
+import 'package:zerobit_player/HIveCtrl/models/scalable_setting_cache_model.dart';
 import 'package:zerobit_player/HIveCtrl/models/setting_cache_model.dart';
 import 'package:zerobit_player/HIveCtrl/models/user_playlist_model.dart';
 import 'package:zerobit_player/components/play_bar.dart';
@@ -100,13 +102,16 @@ void main() async {
   // await Hive.deleteBoxFromDisk(HiveBoxes.musicCacheBox);
   // await Hive.deleteBoxFromDisk(HiveBoxes.settingCacheBox);
   // await Hive.deleteBoxFromDisk(HiveBoxes.userPlayListCacheBox);
+  // await Hive.deleteBoxFromDisk(HiveBoxes.scalableSettingCacheBox);
 
   Hive.registerAdapter(MusicCacheAdapter());
   Hive.registerAdapter(SettingCacheAdapter());
   Hive.registerAdapter(UserPlayListAdapter());
+  Hive.registerAdapter(ScalableSettingAdapter());
   await Hive.openBox<MusicCache>(HiveBoxes.musicCacheBox);
   await Hive.openBox<SettingCache>(HiveBoxes.settingCacheBox);
   await Hive.openBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
+  await Hive.openBox<ScalableSettingCache>(HiveBoxes.scalableSettingCacheBox);
 
   Get.put(AudioSource());
   Get.put(UserPlayListController());

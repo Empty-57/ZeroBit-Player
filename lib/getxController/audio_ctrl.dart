@@ -70,6 +70,8 @@ class AudioController extends GetxController {
 
   final currentCover = kTransparentImage.obs;
 
+  final currentSpeed=(1.0).obs;
+
   bool _isSyncing = false;
 
   final currentLyrics = Rxn<ParsedLyricModel>();
@@ -277,6 +279,10 @@ class AudioController extends GetxController {
       currentState.value = AudioState.playing;
       await smtcUpdateState(state: currentState.value.index);
       await playFile(path: metadata.path);
+
+      if(currentSpeed.value!=1.0){
+        await setSpeed(speed: currentSpeed.value);
+      }
 
       currentPath.value = metadata.path;
       currentMetadata.value = metadata;

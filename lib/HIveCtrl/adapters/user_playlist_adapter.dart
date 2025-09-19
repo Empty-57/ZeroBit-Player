@@ -7,7 +7,7 @@ import '../hive_types.dart';
 
 class UserPlayListAdapter extends TypeAdapter<UserPlayListCache>{
   @override
-  final int typeId = HiveTypes.userPlayListCache;
+  int get typeId => HiveTypes.userPlayListCache;
 
   @override
   UserPlayListCache read(BinaryReader reader) {

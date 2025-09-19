@@ -4,7 +4,7 @@ import 'package:zerobit_player/HIveCtrl/hive_types.dart';
 
 class MusicCacheAdapter extends TypeAdapter<MusicCache> {
   @override
-  final int typeId = HiveTypes.musicCache;
+  int get typeId => HiveTypes.musicCache;
 
   @override
   MusicCache read(BinaryReader reader) {

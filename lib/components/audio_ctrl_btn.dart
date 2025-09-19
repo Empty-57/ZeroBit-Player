@@ -89,13 +89,18 @@ class AudioCtrlWidget {
           return CustomBtn(
             fn: () async {
               await setSpeed(speed: speed);
+              _audioController.currentSpeed.value=speed;
               menuController.close();
             },
             btnWidth: btnW,
             btnHeight: setBtnHeight,
             label: speed.toString(),
+            icon: _audioController.currentSpeed.value!=speed? null: PhosphorIconsLight.check,
+            iconSize: 'xs',
             contentColor: Theme.of(context).colorScheme.onSecondaryContainer,
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: _audioController.currentSpeed.value!=speed? MainAxisAlignment.end : MainAxisAlignment.spaceBetween,
+            spacing: 0,
+            padding: EdgeInsets.symmetric(horizontal: 12),
             backgroundColor: Colors.transparent,
           );
         }).toList();
@@ -105,7 +110,7 @@ class AudioCtrlWidget {
         scrollbarTheme: ScrollbarThemeData(
           thumbVisibility: WidgetStateProperty.all(false),
           trackVisibility: WidgetStateProperty.all(false),
-          thickness: WidgetStateProperty.all(0), // 可选：彻底无厚度
+          thickness: WidgetStateProperty.all(0),
         ),
       ),
       child: MenuAnchor(
@@ -331,7 +336,9 @@ class AudioCtrlWidget {
                             _settingController.equalizerGains.value = newGains;
                             await setEqParams(freCenterIndex: v.$1, gain: gain);
                           },
-                          onChangeEnd: (gain) async {},
+                          onChangeEnd: (gain) {
+                            _settingController.putScalableCache();
+                          },
                         ),
                       ),
                     ),
@@ -391,6 +398,7 @@ class AudioCtrlWidget {
                                   fn: () async {
                                     _settingController.equalizerGains.value =
                                         entry.value;
+                                    await _settingController.putScalableCache();
                                     for (final v in entry.value.indexed) {
                                       await setEqParams(
                                         freCenterIndex: v.$1,

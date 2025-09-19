@@ -503,6 +503,11 @@ impl BassApi {
     fn set_eq_params(&mut self, fre_center_index: i32, gain: f32) {
         let gain = gain.clamp(-12.0, 12.0);
         let fre_center_index = fre_center_index as usize;
+        if let Ok(mut gains) = TARGET_FGAINS.lock() {
+                gains[fre_center_index] = gain;
+            } else {
+                eprintln!("Failed to acquire lock on TARGET_FGAINS.");
+            }
         unsafe {
             if self.stream_handle == 0 || !(0..F_CENTER.len()).contains(&fre_center_index) {
                 return;
@@ -521,12 +526,6 @@ impl BassApi {
                     get_err_info(err_code)
                         .unwrap_or_else(|| format!("Unknown BASS error | ERR_CODE<{}>", err_code))
                 );
-            }
-
-            if let Ok(mut gains) = TARGET_FGAINS.lock() {
-                gains[fre_center_index] = gain;
-            } else {
-                eprintln!("Failed to acquire lock on TARGET_FGAINS.");
             }
         }
     }

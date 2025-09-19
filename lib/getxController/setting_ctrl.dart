@@ -1,8 +1,10 @@
+import 'package:zerobit_player/HIveCtrl/models/scalable_setting_cache_model.dart';
 import 'package:zerobit_player/HIveCtrl/models/setting_cache_model.dart';
 import 'package:get/get.dart';
 import 'package:zerobit_player/HIveCtrl/hive_manager.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 
+import '../field/scalable_config_keys.dart';
 import '../src/rust/api/bass.dart';
 import '../tools/sync_cache.dart';
 
@@ -101,10 +103,13 @@ class SettingController extends GetxController {
 
 
   final String _key = 'setting';
+  final String _scalableKey = 'scalable_setting';
   final _settingCacheBox = HiveManager.settingCacheBox;
+  final _scalableSettingCacheBox=HiveManager.scalableSettingCacheBox;
 
   void _initHive() async{
     final cache = _settingCacheBox.get(key: _key);
+    final scalableCache=_scalableSettingCacheBox.get(key: _scalableKey);
     if (cache != null) {
       themeMode.value = cache.themeMode;
       apiIndex.value=cache.apiIndex;
@@ -119,6 +124,11 @@ class SettingController extends GetxController {
       };
 
       if(sortMap.length>sortMap_.length){
+
+        for(final entry in sortMap_.entries){
+          sortMap[entry.key]=entry.value;
+        }
+
         await putCache();
       }else{
         sortMap.value=sortMap_;
@@ -133,6 +143,11 @@ class SettingController extends GetxController {
       };
 
       if(viewModeMap.length>viewModeMap_.length){
+
+        for(final entry in viewModeMap_.entries){
+          viewModeMap[entry.key]=entry.value;
+        }
+
         await putCache();
       }else{
         viewModeMap.value=viewModeMap_;
@@ -150,7 +165,26 @@ class SettingController extends GetxController {
       useBlur.value=cache.useBlur;
     }
 
+    if(scalableCache!=null){
+      final config =scalableCache.config;
+      if(config.isNotEmpty){
+
+        if(config.containsKey(ScalableConfigKeys.equalizerGains)){
+          equalizerGains.value=config[ScalableConfigKeys.equalizerGains];
+        }
+
+      }
+    }
+
     await setVolume(vol: cache?.volume??1.0);
+
+    for (final v in equalizerGains.indexed) {
+      await setEqParams(
+        freCenterIndex: v.$1,
+        gain: v.$2,
+      );
+    }
+
   }
 
   @override
@@ -184,5 +218,16 @@ class SettingController extends GetxController {
     if (isSaveFolders) {
       await syncCache();
     }
+  }
+
+  Future<void> putScalableCache()async{
+    _scalableSettingCacheBox.put(
+        data: ScalableSettingCache(
+            config: {
+              ScalableConfigKeys.equalizerGains:equalizerGains,
+            },
+        ),
+        key: _scalableKey
+    );
   }
 }

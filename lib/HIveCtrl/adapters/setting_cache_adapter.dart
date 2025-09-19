@@ -5,7 +5,7 @@ import '../hive_types.dart';
 
 class SettingCacheAdapter extends TypeAdapter<SettingCache> {
   @override
-  final int typeId = HiveTypes.settingCache;
+  int get typeId => HiveTypes.settingCache;
 
   @override
   SettingCache read(BinaryReader reader) {
