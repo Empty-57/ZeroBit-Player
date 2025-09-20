@@ -60,16 +60,27 @@ class _WindowListener extends GetxController with WindowListener {
   }
 
   @override
-  void onWindowEvent(String eventName) {
-    switch (eventName) {
-      case 'maximize':
-        _isMaximized.value = true;
-        break;
-      case 'unmaximize':
-        _isMaximized.value = false;
-        break;
-    }
+  void onWindowMaximize(){
+    _isMaximized.value = true;
   }
+
+  @override
+  void onWindowUnmaximize(){
+    _isMaximized.value = false;
+  }
+
+  @override
+  void onWindowResized() async{
+    final size =await windowManager.getSize();
+    debugPrint('now size | width: ${size.width} height: ${size.height}');
+  }
+
+  @override
+  void onWindowMoved() async{
+    final position=await windowManager.getPosition();
+    debugPrint('now position | x: ${position.dx} y: ${position.dy}');
+  }
+
 }
 
 class _SearchDialog extends StatelessWidget {

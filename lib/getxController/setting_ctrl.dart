@@ -79,7 +79,7 @@ class SettingController extends GetxController {
 
   final equalizerGains=List.generate(10,(_)=>0.0).toList().obs;
 
-  static const lastAudioSourceKey=0;
+  static const lastAudioSourceKey=0; // 因问题，未使用的键值对
   static const lastAudioMetadataKey=1;
   final lastAudioInfo=<int,Object>{lastAudioSourceKey:AudioSource.allMusic,lastAudioMetadataKey:MusicCache(
     title: '',

@@ -142,7 +142,9 @@ class AudioController extends GetxController {
 
     ever(_audioSource.currentAudioSource, (_) {
       syncPlayListCacheItems();
-      _settingController.lastAudioInfo[SettingController.lastAudioSourceKey]=_audioSource.currentAudioSource.value;
+
+      // 有问题 ，此时不同分类的数据还未加载，先取消对音频源的设置
+      // _settingController.lastAudioInfo[SettingController.lastAudioSourceKey]=_audioSource.currentAudioSource.value;
     });
 
     ever(currentMetadata, (_) async {
@@ -162,7 +164,8 @@ class AudioController extends GetxController {
     });
 
     try{
-      _audioSource.currentAudioSource.value=_settingController.lastAudioInfo[SettingController.lastAudioSourceKey] as String;
+      // 有问题 ，此时不同分类的数据还未加载，先取消对音频源的设置
+      // _audioSource.currentAudioSource.value=_settingController.lastAudioInfo[SettingController.lastAudioSourceKey] as String;
       currentMetadata.value=_settingController.lastAudioInfo[SettingController.lastAudioMetadataKey] as MusicCache;
       currentPath.value=currentMetadata.value.path;
       await audioPlay(metadata: currentMetadata.value); // 设置流
