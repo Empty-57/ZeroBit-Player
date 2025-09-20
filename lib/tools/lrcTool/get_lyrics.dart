@@ -58,11 +58,11 @@ Future<String?> _safeReadFile(String filePath) async {
     if(encoding==null){
       return null;
     }
-    debugPrint("encoding: ${encoding.name}");
     final ext = p.extension(filePath).toLowerCase();
+    debugPrint("currentLyrics | encoding: ${encoding.name} ext: $ext");
     final String lrc = encoding.decode(bytes);
     if (ext == LyricFormat.qrc) {
-      if (!lrc.trimLeft().startsWith('<?xml')) {
+      if (!lrc.trimLeft().startsWith('<?xml')&&!lrc.trimLeft().startsWith('<Qrc')) {
         return await qrcDecrypt(encryptedQrc: bytes, isLocal: true);
       }
       return lrc;

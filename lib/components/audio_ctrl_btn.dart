@@ -295,7 +295,7 @@ class AudioCtrlWidget {
     );
 
     final equalizerSliders =
-        _settingController.equalizerFCenters.indexed.map((v) {
+        SettingController.equalizerFCenters.indexed.map((v) {
           return SizedBox(
             width: 48,
             child: Column(

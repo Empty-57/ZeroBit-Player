@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:zerobit_player/HIveCtrl/hive_manager.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 
+import '../HIveCtrl/models/music_cache_model.dart';
+import '../field/audio_source.dart';
 import '../field/scalable_config_keys.dart';
 import '../src/rust/api/bass.dart';
 import '../tools/sync_cache.dart';
@@ -46,7 +48,7 @@ class SettingController extends GetxController {
   static const minGain=-12.0;
   static const maxGain=12.0;
 
-  final equalizerFCenters=[80.0, 100.0, 125.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0, 16000.0];//fCenter:fGain | fCenter: 80.0-16000.0 in Windows  fGain: -12.0db ~ 12.0db
+  static const equalizerFCenters=[80.0, 100.0, 125.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0, 16000.0];//fCenter:fGain | fCenter: 80.0-16000.0 in Windows  fGain: -12.0db ~ 12.0db
 
   static const Map<String, List<double>> equalizerGainPresets = {
     'Default': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
@@ -76,6 +78,20 @@ class SettingController extends GetxController {
   };
 
   final equalizerGains=List.generate(10,(_)=>0.0).toList().obs;
+
+  static const lastAudioSourceKey=0;
+  static const lastAudioMetadataKey=1;
+  final lastAudioInfo=<int,Object>{lastAudioSourceKey:AudioSource.allMusic,lastAudioMetadataKey:MusicCache(
+    title: '',
+    artist: '',
+    album: '',
+    genre: '',
+    duration: 9999,
+    bitrate: null,
+    sampleRate: null,
+    path: '',
+    src: null,
+  )};
 
   static const Map<int,String> apiMap={
     0:"QQ音乐",
@@ -173,6 +189,11 @@ class SettingController extends GetxController {
           equalizerGains.value=config[ScalableConfigKeys.equalizerGains];
         }
 
+        if(config.containsKey(ScalableConfigKeys.lastAudioInfo)){
+          lastAudioInfo[lastAudioSourceKey]=config[ScalableConfigKeys.lastAudioInfo][lastAudioSourceKey];
+          lastAudioInfo[lastAudioMetadataKey]=config[ScalableConfigKeys.lastAudioInfo][lastAudioMetadataKey];
+        }
+
       }
     }
 
@@ -225,6 +246,7 @@ class SettingController extends GetxController {
         data: ScalableSettingCache(
             config: {
               ScalableConfigKeys.equalizerGains:equalizerGains,
+              ScalableConfigKeys.lastAudioInfo:lastAudioInfo,
             },
         ),
         key: _scalableKey

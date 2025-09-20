@@ -125,7 +125,7 @@ class AudioController extends GetxController {
   }
 
   @override
-  void onInit() {
+  void onInit() async {
     super.onInit();
 
     ever(currentMs100, (_) {
@@ -142,6 +142,7 @@ class AudioController extends GetxController {
 
     ever(_audioSource.currentAudioSource, (_) {
       syncPlayListCacheItems();
+      _settingController.lastAudioInfo[SettingController.lastAudioSourceKey]=_audioSource.currentAudioSource.value;
     });
 
     ever(currentMetadata, (_) async {
@@ -153,12 +154,21 @@ class AudioController extends GetxController {
         debugPrint(e.toString());
         _isSyncing = false;
       }
-
+      _settingController.lastAudioInfo[SettingController.lastAudioMetadataKey]=currentMetadata.value;
+      await _settingController.putScalableCache();
       currentLyrics.value = await getParsedLyric(
         filePath: currentMetadata.value.path,
       );
-      debugPrint(currentLyrics.value?.type.toString());
     });
+
+    try{
+      _audioSource.currentAudioSource.value=_settingController.lastAudioInfo[SettingController.lastAudioSourceKey] as String;
+      currentMetadata.value=_settingController.lastAudioInfo[SettingController.lastAudioMetadataKey] as MusicCache;
+      currentPath.value=currentMetadata.value.path;
+      await audioPlay(metadata: currentMetadata.value); // 设置流
+      await audioPause();
+    }catch(_){}
+
   }
 
   void _syncInfo() async {
