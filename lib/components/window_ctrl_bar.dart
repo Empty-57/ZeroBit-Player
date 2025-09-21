@@ -60,27 +60,62 @@ class _WindowListener extends GetxController with WindowListener {
   }
 
   @override
-  void onWindowMaximize(){
+  void onWindowMaximize() {
     _isMaximized.value = true;
+    _settingController.lastWindowInfo[SettingController
+            .lastWindowIsMaximizedKey] =
+        _isMaximized.value;
+    _settingController.putScalableCache();
   }
 
   @override
-  void onWindowUnmaximize(){
+  void onWindowUnmaximize() {
     _isMaximized.value = false;
+    _settingController.lastWindowInfo[SettingController
+            .lastWindowIsMaximizedKey] =
+        _isMaximized.value;
+    _settingController.putScalableCache();
   }
 
   @override
-  void onWindowResized() async{
-    final size =await windowManager.getSize();
+  void onWindowResized() async {
+    final size = await windowManager.getSize();
     debugPrint('now size | width: ${size.width} height: ${size.height}');
+
+    final windowInfoSize =
+        _settingController.lastWindowInfo[SettingController.lastWindowSizeKey]
+            as List<double>?;
+    if (windowInfoSize != null && windowInfoSize.isNotEmpty) {
+      windowInfoSize[SettingController.lastWindowInfoWidthAndDx] = size.width;
+      windowInfoSize[SettingController.lastWindowInfoHeightAndDy] = size.height;
+
+      _settingController.lastWindowInfo[SettingController.lastWindowSizeKey] =
+          windowInfoSize;
+      _settingController.putScalableCache();
+    }
   }
 
   @override
-  void onWindowMoved() async{
-    final position=await windowManager.getPosition();
+  void onWindowMoved() async {
+    final position = await windowManager.getPosition();
     debugPrint('now position | x: ${position.dx} y: ${position.dy}');
-  }
 
+    final windowInfoPosition =
+        _settingController.lastWindowInfo[SettingController
+                .lastWindowPositonKey]
+            as List<double>?;
+    if (windowInfoPosition != null && windowInfoPosition.isNotEmpty) {
+      windowInfoPosition[SettingController.lastWindowInfoWidthAndDx] =
+          position.dx;
+      windowInfoPosition[SettingController.lastWindowInfoHeightAndDy] =
+          position.dy;
+
+      _settingController.lastWindowInfo[SettingController
+              .lastWindowPositonKey] =
+          windowInfoPosition;
+      _settingController.putScalableCache();
+    }
+  }
 }
 
 class _SearchDialog extends StatelessWidget {
@@ -274,17 +309,17 @@ class WindowControllerBar extends StatelessWidget {
               spacing: 4,
               children: [
                 ClipRRect(
-                borderRadius: _borderRadius,
-                child: Image.asset(
-                  r'assets/app_icon.ico',
-                  width: _logoSize,
-                  height: _logoSize,
-                  fit: BoxFit.cover,
-                  cacheWidth: _coverSmallRenderSize,
-                  cacheHeight: _coverSmallRenderSize,
-                  gaplessPlayback: true, // 防止图片突然闪烁
+                  borderRadius: _borderRadius,
+                  child: Image.asset(
+                    r'assets/app_icon.ico',
+                    width: _logoSize,
+                    height: _logoSize,
+                    fit: BoxFit.cover,
+                    cacheWidth: _coverSmallRenderSize,
+                    cacheHeight: _coverSmallRenderSize,
+                    gaplessPlayback: true, // 防止图片突然闪烁
                   ),
-              ),
+                ),
                 Text(
                   'ZeroBit Player',
                   style: generalTextStyle(ctx: context, size: 'sm'),
@@ -297,7 +332,7 @@ class WindowControllerBar extends StatelessWidget {
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
               onPanStart: (details) => windowManager.startDragging(),
-              onDoubleTap: ()=>windowListener.toggleMaximize(),
+              onDoubleTap: () => windowListener.toggleMaximize(),
               child: Container(),
             ),
           ),

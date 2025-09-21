@@ -47,7 +47,7 @@ class AudioController extends GetxController {
         src: null,
       ).obs;
 
-  final currentDuration=0.0.obs;
+  final currentDuration = 0.0.obs;
 
   final currentState = AudioState.stop.obs;
 
@@ -70,7 +70,7 @@ class AudioController extends GetxController {
 
   final currentCover = kTransparentImage.obs;
 
-  final currentSpeed=(1.0).obs;
+  final currentSpeed = (1.0).obs;
 
   bool _isSyncing = false;
 
@@ -109,9 +109,7 @@ class AudioController extends GetxController {
     }
 
     if (_settingController.folders.any(
-      (v) =>
-          v + TagSuffix.foldersList ==
-          _audioSource.currentAudioSource.value,
+      (v) => v + TagSuffix.foldersList == _audioSource.currentAudioSource.value,
     )) {
       playListCacheItems.value = [...FoldersListController.audioListItems];
       return;
@@ -132,8 +130,10 @@ class AudioController extends GetxController {
       if (currentDuration.value > 0 &&
           currentMetadata.value.path.isNotEmpty &&
           playListCacheItems.isNotEmpty) {
-        progress.value = (currentMs100.value / currentDuration.value)
-            .clamp(0.0, 1.0);
+        progress.value = (currentMs100.value / currentDuration.value).clamp(
+          0.0,
+          1.0,
+        );
       } else {
         progress.value = 0.0;
         currentMs100.value = 0.0;
@@ -142,9 +142,9 @@ class AudioController extends GetxController {
 
     ever(_audioSource.currentAudioSource, (_) {
       syncPlayListCacheItems();
-
-      // 有问题 ，此时不同分类的数据还未加载，先取消对音频源的设置
-      // _settingController.lastAudioInfo[SettingController.lastAudioSourceKey]=_audioSource.currentAudioSource.value;
+      _settingController.lastAudioInfo[SettingController
+              .lastAudioPlayPathListKey] =
+          playListCacheItems.map((v) => v.path).toList();
     });
 
     ever(currentMetadata, (_) async {
@@ -156,22 +156,37 @@ class AudioController extends GetxController {
         debugPrint(e.toString());
         _isSyncing = false;
       }
-      _settingController.lastAudioInfo[SettingController.lastAudioMetadataKey]=currentMetadata.value;
+      _settingController.lastAudioInfo[SettingController.lastAudioMetadataKey] =
+          currentMetadata.value;
       await _settingController.putScalableCache();
       currentLyrics.value = await getParsedLyric(
         filePath: currentMetadata.value.path,
       );
     });
 
-    try{
-      // 有问题 ，此时不同分类的数据还未加载，先取消对音频源的设置
-      // _audioSource.currentAudioSource.value=_settingController.lastAudioInfo[SettingController.lastAudioSourceKey] as String;
-      currentMetadata.value=_settingController.lastAudioInfo[SettingController.lastAudioMetadataKey] as MusicCache;
-      currentPath.value=currentMetadata.value.path;
+    try {
+      currentMetadata.value =
+          _settingController.lastAudioInfo[SettingController
+                  .lastAudioMetadataKey]
+              as MusicCache;
+      currentPath.value = currentMetadata.value.path;
       await audioPlay(metadata: currentMetadata.value); // 设置流
       await audioPause();
-    }catch(_){}
 
+      // sync_cache 已经先执行了一次
+      final lastPlayPathList =
+          _settingController.lastAudioInfo[SettingController
+                  .lastAudioPlayPathListKey]
+              as List<String>;
+      if (lastPlayPathList.isNotEmpty) {
+        playListCacheItems.value =
+            _musicCacheController.items
+                .where((v) => lastPlayPathList.contains(v.path))
+                .toList();
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
   }
 
   void _syncInfo() async {
@@ -188,11 +203,10 @@ class AudioController extends GetxController {
       await _setThemeColor4Cover();
     }
 
-    if(currentMetadata.value.duration<=0){
-      currentDuration.value=await getLen();
-    }
-    else{
-      currentDuration.value=currentMetadata.value.duration;
+    if (currentMetadata.value.duration <= 0) {
+      currentDuration.value = await getLen();
+    } else {
+      currentDuration.value = currentMetadata.value.duration;
     }
 
     final title = currentMetadata.value.title;
@@ -293,7 +307,7 @@ class AudioController extends GetxController {
       await smtcUpdateState(state: currentState.value.index);
       await playFile(path: metadata.path);
 
-      if(currentSpeed.value!=1.0){
+      if (currentSpeed.value != 1.0) {
         await setSpeed(speed: currentSpeed.value);
       }
 
@@ -305,7 +319,6 @@ class AudioController extends GetxController {
       }
 
       syncCurrentIndex();
-
     } catch (e) {
       currentMs100.value = 0.0;
       currentSec.value = 0.0;
@@ -525,7 +538,10 @@ class AudioController extends GetxController {
     _hasNextAudioMetadata = metadata;
   }
 
-  void addToAudioList({required MusicCache metadata, required String userKey}) async{
+  void addToAudioList({
+    required MusicCache metadata,
+    required String userKey,
+  }) async {
     if (!allUserKey.contains(userKey)) {
       return;
     }
@@ -561,7 +577,10 @@ class AudioController extends GetxController {
     );
   }
 
-  void addAllToAudioList({required List<MusicCache> selectedList, required String userKey,}) async{
+  void addAllToAudioList({
+    required List<MusicCache> selectedList,
+    required String userKey,
+  }) async {
     if (!allUserKey.contains(userKey)) {
       return;
     }
@@ -606,7 +625,10 @@ class AudioController extends GetxController {
     );
   }
 
-  Future<void> audioRemove({required String userKey, required MusicCache metadata,}) async {
+  Future<void> audioRemove({
+    required String userKey,
+    required MusicCache metadata,
+  }) async {
     switch (userKey) {
       case AudioSource.allMusic:
         await _musicCacheController.remove(metadata: metadata);
@@ -640,7 +662,10 @@ class AudioController extends GetxController {
     }
   }
 
-  void audioRemoveAll({required String userKey, required List<MusicCache> removeList,}) async{
+  void audioRemoveAll({
+    required String userKey,
+    required List<MusicCache> removeList,
+  }) async {
     if (!allUserKey.contains(userKey)) {
       return;
     }
@@ -682,8 +707,11 @@ class AudioController extends GetxController {
     );
   }
 
-  Future<void> audioListSyncMetadata({required String path, required MusicCache newCache,})async{
-    if(playListCacheItems.isEmpty||path!=currentMetadata.value.path){
+  Future<void> audioListSyncMetadata({
+    required String path,
+    required MusicCache newCache,
+  }) async {
+    if (playListCacheItems.isEmpty || path != currentMetadata.value.path) {
       return;
     }
     audioSetPositon(pos: currentMs100.value);
