@@ -211,7 +211,7 @@ class _SortedListViewState extends State<SortedListView> {
     TextStyle subStyle,
   ) {
     if (flattenedList.isEmpty) {
-      return const Center(child: Text("无内容"));
+      return Center(child: Text("无内容",style: generalTextStyle(ctx: context, size: '2xl')));
     }
 
     return ListView.builder(
