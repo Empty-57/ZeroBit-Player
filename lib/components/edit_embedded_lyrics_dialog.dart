@@ -187,11 +187,30 @@ class EditEmbeddedLyricsDialog extends StatelessWidget {
                     ],
                   );
                 }
-                return Center(
-                  child: Text(
-                    "加载出错！",
-                    style: generalTextStyle(ctx: context, size: 'xl'),
+                return AlertDialog(
+                  title: const Text("加载失败"),
+                  titleTextStyle: generalTextStyle(
+                    ctx: context,
+                    size: 'xl',
+                    weight: FontWeight.w600,
                   ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(4)),
+                  ),
+                  actions: [
+                    CustomBtn(
+                      fn: () {
+                        Navigator.pop(context);
+                      },
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      contentColor: Theme.of(context).colorScheme.onPrimary,
+                      overlayColor:
+                          Theme.of(context).colorScheme.surfaceContainer,
+                      btnWidth: 108,
+                      btnHeight: 36,
+                      label: "确定",
+                    ),
+                  ],
                 );
               },
             );
