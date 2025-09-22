@@ -130,9 +130,6 @@ void main() async {
     title: 'ZeroBit Player',
   );
   windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.show();
-    await windowManager.focus();
-
     final lastSize =
         settingController.lastWindowInfo[SettingController.lastWindowSizeKey]
             as List<double>?;
@@ -168,6 +165,10 @@ void main() async {
         await windowManager.unmaximize();
       }
     }
+
+    await windowManager.show();
+    await windowManager.focus();
+
   });
 
   runApp(const MainFrame());

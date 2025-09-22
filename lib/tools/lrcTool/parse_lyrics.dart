@@ -209,9 +209,10 @@ List<WordEntry> _processWords(
 
 /// 解析卡拉 OK 格式歌词并合并翻译
 List<LyricEntry>? parseKaraOkLyric(
-  String? lyricData,
-  String? lyricDataTs, {
-  required String type,
+    {
+    String? lyricData,
+    String? lyricDataTs,
+    required String type,
 }) {
   if (lyricData == null || lyricData.isEmpty) return null;
 

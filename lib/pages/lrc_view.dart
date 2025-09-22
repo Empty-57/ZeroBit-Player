@@ -197,8 +197,8 @@ class _SearchResultItem extends StatelessWidget {
         } else if (type == LyricFormat.yrc || type == LyricFormat.qrc) {
           _audioController.currentLyrics.value = ParsedLyricModel(
             parsedLrc: parseKaraOkLyric(
-              v.lyric!.verbatimLrc,
-              v.lyric!.translate,
+              lyricData:  v.lyric!.verbatimLrc,
+              lyricDataTs:  v.lyric!.translate,
               type: type,
             ),
             type: type,

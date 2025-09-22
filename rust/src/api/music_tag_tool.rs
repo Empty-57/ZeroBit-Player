@@ -5,7 +5,7 @@ use lofty::file::{TaggedFile, TaggedFileExt};
 use lofty::picture::{MimeType, Picture, PictureType};
 use lofty::prelude::{Accessor, AudioFile, ItemKey, TagExt};
 use lofty::probe::Probe;
-use lofty::tag::Tag;
+use lofty::tag::{Tag, TagItem};
 use std::borrow::Cow;
 use std::fs;
 use std::io::Cursor;
@@ -51,7 +51,7 @@ pub struct AudioMetadata {
     pub path: String,
 }
 
-fn handle_get_cover_error(
+fn handle_get_eof_error(
     err: LoftyError,
     path: &Path,
     options: ParseOptions,
@@ -214,9 +214,9 @@ impl AudioMetadata {
         let tagged_file = match Probe::open(path_) {
             Ok(v) => match v.options(options).read() {
                 Ok(f) => f,
-                Err(err) => handle_get_cover_error(err, path_, options)?,
+                Err(err) => handle_get_eof_error(err, path_, options)?,
             },
-            Err(err) => handle_get_cover_error(err, path_, options)?,
+            Err(err) => handle_get_eof_error(err, path_, options)?,
         };
         if let Some(tag) = tagged_file
             .primary_tag()
@@ -225,7 +225,6 @@ impl AudioMetadata {
             if let Some(pic) = tag.pictures().first() {
                 return Some(Vec::from(pic.data()));
             };
-            return None;
         }
         None
     }
@@ -281,6 +280,53 @@ impl AudioMetadata {
                 .expect("Save Cover Err");
         }
     }
+
+    fn get_embedded_lyric(path: String) -> Option<String> {
+        let path_ = Path::new(&path);
+        let tagged_file = match Probe::open(path_) {
+            Ok(v) => match v
+                .options(
+                    ParseOptions::new()
+                        .read_cover_art(false)
+                        .read_properties(false)
+                        .read_tags(true),
+                )
+                .read()
+            {
+                Ok(f) => f,
+                Err(err) => {
+                    println!("Error reading file: {:?}", err.kind());
+                    return None;
+                }
+            },
+            Err(err) => {
+                println!("Error reading TaggedFile: {:?}", err.kind());
+                return None;
+            }
+        };
+
+        if let Some(tag) = tagged_file
+            .primary_tag()
+            .or_else(|| tagged_file.first_tag())
+        {
+            let lyric_items= tag.get_items(&ItemKey::Lyrics).collect::<Vec<&TagItem>>();
+            for item in lyric_items {
+                if let Some(lyric) = item.value().text(){
+                    return Some(lyric.to_string());
+                }
+            }
+        }
+        None
+    }
+    
+    fn edit_embedded_lyric(path: String, lyric: String){
+        if let Some(mut tag) = Self::get_tag(&path, "Error Edit Lyric") {
+            tag.insert_text(ItemKey::Lyrics,lyric);
+            tag.save_to_path(path, WriteOptions::default())
+                .expect("ERROR: Failed to write the tag!");
+        }
+    }
+    
 }
 
 #[flutter_rust_bridge::frb]
@@ -335,3 +381,9 @@ pub fn edit_tags(path: String, data: EditableMetadata) {
 pub fn edit_cover(path: String, src: Vec<u8>) {
     AudioMetadata::edit_cover(path, src)
 }
+
+#[flutter_rust_bridge::frb]
+pub fn get_embedded_lyric(path: String) -> Option<String> { AudioMetadata::get_embedded_lyric(path) }
+
+#[flutter_rust_bridge::frb]
+pub fn edit_embedded_lyric(path: String, lyric: String) {AudioMetadata::edit_embedded_lyric(path, lyric)}

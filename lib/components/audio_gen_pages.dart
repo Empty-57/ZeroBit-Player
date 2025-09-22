@@ -16,6 +16,7 @@ import '../getxController/setting_ctrl.dart';
 import '../tools/audio_ctrl_mixin.dart';
 import '../tools/general_style.dart';
 import '../field/tag_suffix.dart';
+import 'edit_embedded_lyrics_dialog.dart';
 import 'edit_metadata_dialog.dart';
 import 'floating_button.dart';
 import 'get_snack_bar.dart';
@@ -135,6 +136,10 @@ List<Widget> _genMenuItems({
       metadata: metadata,
       index: index,
       operateArea: operateArea,
+    ),
+    EditEmbeddedLyricsDialog(
+      menuController: menuController,
+      metadata: metadata,
     ),
     SubmenuButton(
       style: ButtonStyle(
@@ -498,7 +503,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
 
         double left = position.dx + 16;
         double top = position.dy;
-        final itemCount = widget.operateArea == OperateArea.playList ? 6 : 5;
+        final itemCount = widget.operateArea == OperateArea.playList ? 7 : 6;
         if (top + _menuHeight * (itemCount + 1.5) > Get.height) {
           top = top - _menuHeight * itemCount;
         }

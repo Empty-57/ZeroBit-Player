@@ -20,8 +20,6 @@ import '../src/rust/api/music_tag_tool.dart';
 import '../tools/format_time.dart';
 import '../tools/general_style.dart';
 
-const double _metadataDialogW = 600;
-const double _metadataDialogH = 580;
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 
 const double _bigCoverSize = 200;
@@ -69,7 +67,7 @@ class EditMetadataDialog extends StatelessWidget {
       btnWidth: _menuWidth,
       radius: _menuRadius,
       icon: PhosphorIconsLight.pencilSimpleLine,
-      label: "修改元数据",
+      label: "编辑元数据",
       mainAxisAlignment: MainAxisAlignment.start,
       backgroundColor: Colors.transparent,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -240,7 +238,7 @@ class _MetadataEditorState extends State<_MetadataEditor> {
 
     return AlertDialog(
       title: SizedBox(
-        width: _metadataDialogW,
+        width: context.width/2,
         child: Text(
           widget.metadata.title,
           softWrap: false,
@@ -248,15 +246,15 @@ class _MetadataEditorState extends State<_MetadataEditor> {
           maxLines: 1,
         ),
       ),
-      titleTextStyle: generalTextStyle(ctx: context, size: 20, weight: FontWeight.w700),
+      titleTextStyle: generalTextStyle(ctx: context, size: 'xl', weight: FontWeight.w600),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(4))),
       backgroundColor: Theme.of(context).colorScheme.surface,
       actionsAlignment: MainAxisAlignment.end,
       contentPadding: const EdgeInsets.symmetric(horizontal: 24.0),
       actionsPadding: const EdgeInsets.all(24.0).copyWith(top: 0),
       content: SizedBox(
-        width: _metadataDialogW,
-        height: _metadataDialogH,
+        width: context.width*2/3,
+        height: context.height*2/3,
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

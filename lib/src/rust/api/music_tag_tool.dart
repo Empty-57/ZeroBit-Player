@@ -6,7 +6,7 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `edit_cover`, `edit_tags`, `get_cover`, `get_duration_with_win`, `get_tag`, `handle_get_cover_error`, `new`, `render_tags`
+// These functions are ignored because they are not marked as `pub`: `edit_cover`, `edit_embedded_lyric`, `edit_tags`, `get_cover`, `get_duration_with_win`, `get_embedded_lyric`, `get_tag`, `handle_get_eof_error`, `new`, `render_tags`
 
 Future<AudioMetadata> getMetadata({required String path}) =>
     RustLib.instance.api.crateApiMusicTagToolGetMetadata(path: path);
@@ -22,6 +22,15 @@ Future<void> editTags({required String path, required EditableMetadata data}) =>
 
 Future<void> editCover({required String path, required List<int> src}) =>
     RustLib.instance.api.crateApiMusicTagToolEditCover(path: path, src: src);
+
+Future<String?> getEmbeddedLyric({required String path}) =>
+    RustLib.instance.api.crateApiMusicTagToolGetEmbeddedLyric(path: path);
+
+Future<void> editEmbeddedLyric({required String path, required String lyric}) =>
+    RustLib.instance.api.crateApiMusicTagToolEditEmbeddedLyric(
+      path: path,
+      lyric: lyric,
+    );
 
 class AudioMetadata {
   final String title;

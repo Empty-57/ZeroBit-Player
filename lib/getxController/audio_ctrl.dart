@@ -239,7 +239,7 @@ class AudioController extends GetxController {
       currentMetadata.value.src =
           await getCover(path: currentPath.value, sizeFlag: 0) ??
           playListCacheItems
-              .firstWhere((v) => v.path == currentPath.value)
+              .firstWhere((v) => v.path == currentPath.value,orElse: ()=>currentMetadata.value)
               .src ??
           kTransparentImage;
     }

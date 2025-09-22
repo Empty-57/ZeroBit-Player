@@ -74,8 +74,26 @@ flutter run
 - .yrc
 - .lrc
 
+## 支持读写的元数据格式
+| 音频格式       | 元数据格式                        |
+|------------|------------------------------|
+| AAC (ADTS) | `ID3v2`, `ID3v1`             |
+| Ape        | `APE`, `ID3v2`\*, `ID3v1`    |
+| AIFF       | `ID3v2`, `Text Chunks`       |
+| FLAC       | `Vorbis Comments`, `ID3v2`\* |
+| MP3        | `ID3v2`, `ID3v1`, `APE`      |
+| MP4        | `iTunes-style ilst`          |
+| MPC        | `APE`, `ID3v2`\*, `ID3v1`\*  |
+| Opus       | `Vorbis Comments`            |
+| Ogg Vorbis | `Vorbis Comments`            |
+| Speex      | `Vorbis Comments`            |
+| WAV        | `ID3v2`, `RIFF INFO`         |
+| WavPack    | `APE`, `ID3v1`               |
+\* 由于缺乏官方支持，该标签将是**只读**的
+
 ## 关于歌词
-默认会从音频相同的目录寻找同名的歌词文件，然后寻找同名的`.lrc`文件作为翻译数据，会优先寻找逐字歌词格式，如音频 `a.flac` 会先寻找 `a.qrc` 作为歌词数据，`a.lrc` 将会作为翻译数据（如果存在）
+默认会优先从音频相同的目录寻找同名的歌词文件，然后寻找同名的`.lrc`文件作为翻译数据，会优先寻找逐字歌词格式，如音频 `a.flac` 会先寻找 `a.qrc` 作为歌词数据，`a.lrc` 将会作为翻译数据（如果存在）
+若不存在，则会扫描内嵌歌词</br>
 若都不存在，则需要手动从网络选择歌词</br>
 若开启了自动下载选择的歌词，则会在选择歌词后，自动在音频同目录下创建原文文件和翻译文件（如果有）</br>
 

@@ -14,7 +14,7 @@ const _neSearchUrl = "https://music.163.com/api/cloudsearch/pc";
 const _qmLrcUrl = "https://c.y.qq.com/qqmusic/fcgi-bin/lyric_download.fcg";
 const _neLrcUrl = "https://music.163.com/api/song/lyric";
 
-const _qmCoverSize=800; // 150, 300, 500, 800
+const _coverSize=800; // 150, 300, 500, 800
 
 final _dio = Dio(BaseOptions(
     headers: {
@@ -64,7 +64,7 @@ Future<dynamic> _qmSaveCoverByText({required String text, required String songPa
     final midList = data["data"]?["song"]?["list"];
     final String? mid = midList!=null ? (midList[0]?["albummid"]).toString().trim():null;
     if (mid != null && mid.isNotEmpty) {
-      picUrl = "https://y.gtimg.cn/music/photo_new/T002R${_qmCoverSize}x${_qmCoverSize}M000$mid.jpg";
+      picUrl = "https://y.gtimg.cn/music/photo_new/T002R${_coverSize}x${_coverSize}M000$mid.jpg";
       return await _saveNetCover(songPath: songPath, picUrl: picUrl,saveCover: saveCover!);
     }
   } catch (e) {

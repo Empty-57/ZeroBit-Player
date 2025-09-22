@@ -12,8 +12,6 @@ const int _devrypt = 0;
 
 final Uint8List _qrcKey = Uint8List.fromList(utf8.encode(r'!@#)(*$%123ZXC!@!@#)(NHL'));
 
-// const _krcKey = Uint8List.fromList(utf8.encode(r"@Gaw^2tGQ61-\xce\xd2ni"));
-
 final Uint8List _privKey = Uint8List.fromList([
   0xc3, 0x4a, 0xd6, 0xca, 0x90, 0x67, 0xf7, 0x52,
   0xd8, 0xa1, 0x66, 0x62, 0x9f, 0x5b, 0x09, 0x00,

@@ -5,37 +5,42 @@ import 'package:flutter/cupertino.dart';
 import 'package:path/path.dart' as p;
 import 'package:zerobit_player/tools/lrcTool/parse_lyrics.dart';
 
+import '../../src/rust/api/music_tag_tool.dart';
 import '../qrc_decryptor.dart';
 import 'lyric_model.dart';
 
 /// 支持的歌词扩展名
-const List<String> _lyricExts = [LyricFormat.qrc, LyricFormat.yrc, LyricFormat.lrc];
+const List<String> _lyricExts = [
+  LyricFormat.qrc,
+  LyricFormat.yrc,
+  LyricFormat.lrc,
+];
 const String _lyricTsSuffix = LyricFormat.lrc;
 
-final _encodingOrders=<Encoding>[
-    ascii,
-    eucJp,
-    shiftJis,
-    eucKr,
-    gbk,
-    utf8,
-    windows874,
-    latin1,
-    latin2,
-    latin3,
-    latin4,
-    latinCyrillic,
-    latinArabic,
-    latinGreek,
-    latinHebrew,
-    latin5,
-    latin6,
-    latinThai,
-    latin7,
-    latin8,
-    latin9,
-    latin10,
-  ];
+final _encodingOrders = <Encoding>[
+  ascii,
+  eucJp,
+  shiftJis,
+  eucKr,
+  gbk,
+  utf8,
+  windows874,
+  latin1,
+  latin2,
+  latin3,
+  latin4,
+  latinCyrillic,
+  latinArabic,
+  latinGreek,
+  latinHebrew,
+  latin5,
+  latin6,
+  latinThai,
+  latin7,
+  latin8,
+  latin9,
+  latin10,
+];
 
 /// 获取主歌词路径和翻译歌词路径
 Map<String, dynamic> _getLyricPaths(String filePath) {
@@ -54,15 +59,16 @@ Future<String?> _safeReadFile(String filePath) async {
     if (!await file.exists()) return null;
 
     final bytes = await file.readAsBytes();
-    final encoding=Charset.detect(bytes,orders: _encodingOrders);
-    if(encoding==null){
+    final encoding = Charset.detect(bytes, orders: _encodingOrders);
+    if (encoding == null) {
       return null;
     }
     final ext = p.extension(filePath).toLowerCase();
     debugPrint("currentLyrics | encoding: ${encoding.name} ext: $ext");
     final String lrc = encoding.decode(bytes);
     if (ext == LyricFormat.qrc) {
-      if (!lrc.trimLeft().startsWith('<?xml')&&!lrc.trimLeft().startsWith('<Qrc')) {
+      if (!lrc.trimLeft().startsWith('<?xml') &&
+          !lrc.trimLeft().startsWith('<Qrc')) {
         return await qrcDecrypt(encryptedQrc: bytes, isLocal: true);
       }
       return lrc;
@@ -75,11 +81,15 @@ Future<String?> _safeReadFile(String filePath) async {
   }
 }
 
-class _LyricModel{
+class _LyricModel {
   final String? lyrics;
   final String? lyricsTs;
   final String type;
-  const _LyricModel({required this.lyrics,required this.lyricsTs,required this.type});
+  const _LyricModel({
+    required this.lyrics,
+    required this.lyricsTs,
+    required this.type,
+  });
 }
 
 Future<_LyricModel?> _getLyrics({String? filePath}) async {
@@ -99,7 +109,7 @@ Future<_LyricModel?> _getLyrics({String? filePath}) async {
         lyricsTs = await _safeReadFile(vtsPath);
       }
 
-      return _LyricModel(lyrics: lyrics,lyricsTs: lyricsTs,type: ext,);
+      return _LyricModel(lyrics: lyrics, lyricsTs: lyricsTs, type: ext);
     }
   }
 
@@ -112,21 +122,58 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
 
   final lyricsData = await _getLyrics(filePath: filePath);
 
-  if(lyricsData==null){
+  if (lyricsData == null) {
+    final embeddedLyrics = await getEmbeddedLyric(path: filePath);
+    if (embeddedLyrics == null || embeddedLyrics.isEmpty) {
+      return null;
+    }
+
+    try {
+      final data = jsonDecode(embeddedLyrics);
+      final type=data['type'];
+      final lyrics =data['lyrics'];
+      final lyricsTs =data['lyricsTs'];
+
+      if (type == LyricFormat.lrc) {
+        return ParsedLyricModel(
+          parsedLrc: parseLrc(
+            lyricData: lyrics,
+            lyricDataTs: lyricsTs,
+          ),
+          type: type,
+        );
+      }
+      if (type == LyricFormat.yrc || type == LyricFormat.qrc) {
+        return ParsedLyricModel(
+          parsedLrc: parseKaraOkLyric(
+            lyricData: lyrics,
+            lyricDataTs: lyricsTs,
+            type: type,
+          ),
+          type: type,
+        );
+      }
+    } catch (_) {}
+
     return null;
   }
 
   if (lyricsData.type == LyricFormat.lrc) {
-    return ParsedLyricModel(parsedLrc: parseLrc(lyricData: lyricsData.lyrics),
-      type: lyricsData.type,);
+    return ParsedLyricModel(
+      parsedLrc: parseLrc(lyricData: lyricsData.lyrics),
+      type: lyricsData.type,
+    );
   }
-  if (lyricsData.type == LyricFormat.yrc || lyricsData.type == LyricFormat.qrc) {
-    return ParsedLyricModel(parsedLrc: parseKaraOkLyric(
-        lyricsData.lyrics,
-        lyricsData.lyricsTs,
+  if (lyricsData.type == LyricFormat.yrc ||
+      lyricsData.type == LyricFormat.qrc) {
+    return ParsedLyricModel(
+      parsedLrc: parseKaraOkLyric(
+        lyricData: lyricsData.lyrics,
+        lyricDataTs: lyricsData.lyricsTs,
         type: lyricsData.type,
       ),
-      type: lyricsData.type,);
+      type: lyricsData.type,
+    );
   }
   return null;
 }
