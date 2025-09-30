@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
@@ -8,7 +9,6 @@ import 'package:zerobit_player/components/lyrics_render.dart';
 import 'package:zerobit_player/tools/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import 'package:zerobit_player/tools/lrcTool/save_lyric.dart';
-
 import '../components/audio_ctrl_btn.dart';
 import '../components/window_ctrl_bar.dart';
 import '../getxController/audio_ctrl.dart';
@@ -16,6 +16,7 @@ import '../getxController/setting_ctrl.dart';
 import '../tools/format_time.dart';
 import '../tools/lrcTool/parse_lyrics.dart';
 import '../tools/rect_value_indicator.dart';
+import 'dart:async';
 
 final AudioController _audioController = Get.find<AudioController>();
 final SettingController _settingController = Get.find<SettingController>();
@@ -25,6 +26,9 @@ const double _thumbRadius = 10.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 const double _audioCtrlBarHeight = 96;
 const int _coverRenderSize = 800;
+const double _spectrogramHeight = 100.0;
+const double _spectrogramWidthFactor = 0.94;
+const double _spectrogramWidthFactorDiff = (1-_spectrogramWidthFactor)/2;
 const _lrcAlignmentIcons = [
   PhosphorIconsLight.textAlignLeft,
   PhosphorIconsLight.textAlignCenter,
@@ -32,6 +36,45 @@ const _lrcAlignmentIcons = [
 ];
 final _isBarHover = false.obs;
 final _onlyCover = false.obs;
+
+// --- 频谱图控制器 ---
+class _SpectrogramController extends GetxController{
+  Timer? _spectrogramAnimationTimer;
+
+  @override
+  void onClose() {
+    _cancelSpectrogramAnimationTimer();
+    super.onClose();
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    if(_settingController.showSpectrogram.value){
+      _startSpectrogramAnimationTimer();
+    }
+  }
+
+  void _cancelSpectrogramAnimationTimer(){
+    _spectrogramAnimationTimer?.cancel();
+    _spectrogramAnimationTimer=null;
+  }
+
+  void _startSpectrogramAnimationTimer(){
+    _cancelSpectrogramAnimationTimer();
+    _spectrogramAnimationTimer=Timer.periodic(Duration(milliseconds: 16), (Timer timer) { // 约 60 fps
+      _audioController.getAudioFFt();
+    });
+  }
+
+  void toggleSpectrogramVisibility(){
+    if(_settingController.showSpectrogram.value){
+      _startSpectrogramAnimationTimer();
+    }else{
+      _cancelSpectrogramAnimationTimer();
+    }
+  }
+}
 
 // --- 歌词搜索控制器 ---
 class _LrcSearchController extends GetxController {
@@ -197,16 +240,19 @@ class _SearchResultItem extends StatelessWidget {
         } else if (type == LyricFormat.yrc || type == LyricFormat.qrc) {
           _audioController.currentLyrics.value = ParsedLyricModel(
             parsedLrc: parseKaraOkLyric(
-              lyricData:  v.lyric!.verbatimLrc,
-              lyricDataTs:  v.lyric!.translate,
+              lyricData: v.lyric!.verbatimLrc,
+              lyricDataTs: v.lyric!.translate,
               type: type,
             ),
             type: type,
           );
         }
 
-        if(_settingController.autoDownloadLrc.value){
-          saveLyrics(path: _audioController.currentPath.value, lrcData: v.lyric);
+        if (_settingController.autoDownloadLrc.value) {
+          saveLyrics(
+            path: _audioController.currentPath.value,
+            lrcData: v.lyric,
+          );
         }
 
         Navigator.pop(context);
@@ -536,6 +582,9 @@ class LrcView extends StatelessWidget {
     TextStyle timeCurrentStyle,
     TextStyle timeTotalStyle,
   ) {
+    final _SpectrogramController spectrogramController=Get.put(
+      _SpectrogramController(),
+  );
     final audioCtrlWidget = AudioCtrlWidget(
       context: context,
       size: _ctrlBtnMinSize,
@@ -605,9 +654,7 @@ class LrcView extends StatelessWidget {
                           Text(
                             formatTime(
                               totalSeconds:
-                                  _audioController
-                                      .currentDuration
-                                      .value,
+                                  _audioController.currentDuration.value,
                             ),
                             style: timeTotalStyle,
                           ),
@@ -660,6 +707,24 @@ class LrcView extends StatelessWidget {
                           ),
                         ),
                         _NetLrcDialog(color: mixColor),
+                        Obx(
+                          () => GenIconBtn(
+                            tooltip: '频谱图',
+                            icon:
+                                _settingController.showSpectrogram.value
+                                    ? PhosphorIconsFill.waveTriangle
+                                    : PhosphorIconsLight.waveTriangle,
+                            size: _ctrlBtnMinSize,
+                            color: mixColor,
+                            fn: () {
+                              _settingController.showSpectrogram.value =
+                                  !_settingController.showSpectrogram.value;
+                              _settingController.putScalableCache();
+                              spectrogramController.toggleSpectrogramVisibility();
+                            },
+                          ),
+                        ),
+
                         // GenIconBtn(
                         //   tooltip: '桌面歌词',
                         //   icon: PhosphorIconsLight.creditCard,
@@ -727,6 +792,20 @@ class LrcView extends StatelessWidget {
       color: mixSubColor,
     );
 
+    final spectrogramBarGradient = LinearGradient(
+      begin: Alignment.bottomCenter,
+      end: Alignment.topCenter,
+      colors: [
+        activeTrackCover.withValues(alpha: 0.0),
+        activeTrackCover.withValues(alpha: 0.2),
+        activeTrackCover.withValues(alpha: 0.5),
+      ],
+      stops: [0.0, 0.45, 1.0],
+    );
+    final spectrogramBarLength = AudioController.bassDataFFT512 * 0.5625; // 144
+    final spectrogramBarWidth = (context.width * _spectrogramWidthFactor) / spectrogramBarLength;
+    final spectrogramPaddingWidth=context.width * _spectrogramWidthFactorDiff;
+
     return BlurWithCoverBackground(
       cover: _audioController.currentCover,
       useGradient: false,
@@ -786,6 +865,38 @@ class LrcView extends StatelessWidget {
                             ),
                           ),
                         ),
+                        // --- 频谱图 ---
+                        Positioned(
+                          left: 0,
+                          bottom: 0,
+                          child: Obx(() {
+                            final fftList = [..._audioController.audioFFT];
+                            if (fftList.isEmpty ||
+                                !_settingController.showSpectrogram.value) {
+                              return const SizedBox.shrink();
+                            }
+                            return TweenAnimationBuilder<List<double>>(
+                              tween: _FFTListTween(
+                                begin: fftList,
+                                end: fftList,
+                              ),
+                              duration: const Duration(milliseconds: 100),
+                              builder: (_, value, _) {
+                                return CustomPaint(
+                                  willChange: true,
+                                  size: Size(context.width, _spectrogramHeight),
+                                  painter: SpectrogramPainter(
+                                    fft: value,
+                                    gradient: spectrogramBarGradient,
+                                    length: spectrogramBarLength,
+                                    barWidth: spectrogramBarWidth,
+                                    paddingWidth: spectrogramPaddingWidth,
+                                  ),
+                                );
+                              },
+                            );
+                          }),
+                        ),
                       ],
                     ),
                   ),
@@ -808,5 +919,82 @@ class LrcView extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// 绘制频谱图
+class SpectrogramPainter extends CustomPainter {
+  final List<double> fft;
+  final LinearGradient gradient;
+  final double length;
+  final double barWidth;
+  final double paddingWidth;
+
+  SpectrogramPainter({
+    required this.fft,
+    required this.gradient,
+    required this.length,
+    required this.barWidth,
+    required this.paddingWidth,
+  });
+
+  final _paint = Paint()..style = PaintingStyle.fill;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (fft.isEmpty) {
+      return;
+    }
+
+    int n = 0;
+    for (final data in fft) {
+      if (n > length) {
+        return;
+      }
+
+      final height = data * _spectrogramHeight;
+      final rect = Rect.fromLTWH(
+        n * barWidth + paddingWidth,
+        _spectrogramHeight - height,
+        barWidth *0.5,
+        height,
+      );
+      canvas.drawRect(rect, _paint..shader = gradient.createShader(rect));
+      n++;
+    }
+  }
+
+  @override
+  bool shouldRepaint(SpectrogramPainter oldDelegate) {
+    return !listEquals(oldDelegate.fft, fft); // 如果不需要重绘，返回false
+  }
+}
+
+/// 对 audioFFT `List<double>` 的自定义Tween
+class _FFTListTween extends Tween<List<double>> {
+  _FFTListTween({required super.begin, required super.end});
+
+  @override
+  List<double> lerp(double t) {
+    if (begin == null || end == null) {
+      return [];
+    }
+
+    // 防止 index out range
+    final l = begin!.length <= end!.length ? begin!.length : end!.length;
+
+    return List.generate(l, (index) {
+      return lerpDouble(begin![index], end![index], t)!;
+    });
+  }
+
+  // 辅助函数，用于 double 类型的线性插值
+  double? lerpDouble(double? a, double? b, double t) {
+    if (a == null && b == null) {
+      return null;
+    }
+    a ??= 0.0;
+    b ??= 0.0;
+    return a + (b - a) * t;
   }
 }

@@ -156,7 +156,8 @@ class LyricController extends GetxController {
       return;
     }
 
-    lrcViewScrollController.scrollTo(
+    try{
+      lrcViewScrollController.scrollTo(
       index: currentLineIndex.value.clamp(
         0,
         (_audioController.currentLyrics.value?.parsedLrc?.length ?? 1) - 1,
@@ -165,6 +166,10 @@ class LyricController extends GetxController {
       alignment: 0.4,
       curve: Curves.easeInOut,
     );
+    }catch(e){
+      debugPrint(e.toString());
+    }
+
   }
 
   int _findLrcPos({required double time, required List<TimedEntry>? lyrics, required int hint,}) {

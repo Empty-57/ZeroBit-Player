@@ -372,7 +372,7 @@ class WindowControllerBar extends StatelessWidget {
 
           ControllerButton(
             icon: PhosphorIconsLight.x,
-            hoverColor: Theme.of(context).colorScheme.errorContainer,
+            hoverColor: Colors.red,
             fn: () {
               windowListener.windowClose();
             },

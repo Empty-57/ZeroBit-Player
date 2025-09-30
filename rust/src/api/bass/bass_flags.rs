@@ -44,3 +44,7 @@ pub const BASS_SYNC_MIXTIME: u32 = 0x40000000; // flag: sync at mixtime, else at
 pub const BASS_SYNC_ONETIME: u32 = 0x80000000; // flag: sync only once, else continuously
 
 pub const BASS_FX_DX8_PARAMEQ			:u32=7;
+
+pub const  BASS_DATA_FFT512	 :u32= 0x80000001;	// 512 FFT
+pub const  BASS_DATA_FFT1024 :u32=	0x80000002;	// 1024 FFT
+pub const  BASS_DATA_FFT2048 :u32=	0x80000003;	// 2048 FFT

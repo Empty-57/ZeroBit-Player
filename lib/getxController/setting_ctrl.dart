@@ -48,7 +48,6 @@ class SettingController extends GetxController {
 
   static const minGain = -12.0;
   static const maxGain = 12.0;
-
   static const equalizerFCenters = [
     80.0,
     100.0,
@@ -61,7 +60,6 @@ class SettingController extends GetxController {
     8000.0,
     16000.0,
   ]; //fCenter:fGain | fCenter: 80.0-16000.0 in Windows  fGain: -12.0db ~ 12.0db
-
   static const Map<String, List<double>> equalizerGainPresets = {
     'Default': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
     'Pop': [4.0, 3.0, 2.0, 1.0, 0.0, 0.0, 1.0, 2.0, 3.0, 2.0],
@@ -88,7 +86,6 @@ class SettingController extends GetxController {
     'Country': '乡村',
     'Vocal': '人声',
   };
-
   final equalizerGains = List.generate(10, (_) => 0.0).toList().obs;
 
   static const lastAudioPlayPathListKey = 0;
@@ -118,6 +115,8 @@ class SettingController extends GetxController {
     lastWindowPositonKey: [50, 50],
     lastWindowIsMaximizedKey: false,
   };
+
+  final showSpectrogram=true.obs;
 
   static const Map<int, String> apiMap = {0: "QQ音乐", 1: "网易云音乐"};
 
@@ -202,6 +201,7 @@ class SettingController extends GetxController {
     if (scalableCache != null) {
       final config = scalableCache.config;
       if (config.isNotEmpty) {
+
         if (config.containsKey(ScalableConfigKeys.equalizerGains)) {
           equalizerGains.value = config[ScalableConfigKeys.equalizerGains];
         }
@@ -238,6 +238,11 @@ class SettingController extends GetxController {
                   .lastWindowInfo][lastWindowIsMaximizedKey] ??
               false;
         }
+
+        if(config.containsKey(ScalableConfigKeys.showSpectrogramKey)){
+          showSpectrogram.value=config[ScalableConfigKeys.showSpectrogramKey];
+        }
+
       }
     }
 
@@ -288,6 +293,7 @@ class SettingController extends GetxController {
           ScalableConfigKeys.equalizerGains: equalizerGains,
           ScalableConfigKeys.lastAudioInfo: lastAudioInfo,
           ScalableConfigKeys.lastWindowInfo: lastWindowInfo,
+          ScalableConfigKeys.showSpectrogramKey:showSpectrogram.value,
         },
       ),
       key: _scalableKey,

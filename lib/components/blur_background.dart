@@ -3,7 +3,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../getxController/setting_ctrl.dart';
+
 const int _coverBigRenderSize = 800;
+final SettingController _settingController = Get.find<SettingController>();
 
 class BlurWithCoverBackground extends StatelessWidget {
   final Rx<Uint8List> cover;
@@ -38,7 +41,10 @@ class BlurWithCoverBackground extends StatelessWidget {
           borderRadius: BorderRadius.only(topLeft: Radius.circular(8)),
           child: Container(color: Theme.of(context).colorScheme.surface),
         ),
-        ClipRRect(
+        Opacity(
+          opacity: _settingController.themeMode.value=='dark'? 0.9:0.6,
+          child:
+          ClipRRect(
           borderRadius: BorderRadius.only(topLeft: Radius.circular(8)),
           child: ImageFiltered(
             imageFilter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma,tileMode: TileMode.clamp),
@@ -58,10 +64,10 @@ class BlurWithCoverBackground extends StatelessWidget {
               child: _cover,
             ):_cover,
           ),
-        ),
+        ),),
         if(useMask) ClipRRect(
           borderRadius: BorderRadius.only(topLeft: Radius.circular(8)),
-          child: Container(color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.4)),
+          child: Container(color: Theme.of(context).colorScheme.surface.withValues(alpha: _settingController.themeMode.value=='dark'? 0.4:0.2)),
         ),
         child,
       ],

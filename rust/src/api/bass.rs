@@ -13,6 +13,7 @@ use std::ptr::null_mut;
 use std::sync::Mutex;
 use std::time::Duration;
 use std::{env, iter, thread};
+use std::cmp::{min, Ordering};
 
 pub mod bass_errs;
 pub mod bass_flags;
@@ -32,6 +33,7 @@ struct BassApi {
     play: Symbol<'static, BASS_ChannelPlay>,
     pause: Symbol<'static, BASS_ChannelPause>,
     stop: Symbol<'static, BASS_ChannelStop>,
+    chan_get_data:Symbol<'static,BASS_ChannelGetData>,
     chan_free: Symbol<'static, BASS_ChannelFree>,
     get_len: Symbol<'static, BASS_ChannelGetLength>,
     get_pos: Symbol<'static, BASS_ChannelGetPosition>,
@@ -184,6 +186,8 @@ impl BassApi {
             let pause = lib.get(b"BASS_ChannelPause\0").map_err(|e| e.to_string())?;
 
             let stop = lib.get(b"BASS_ChannelStop\0").map_err(|e| e.to_string())?;
+            
+            let chan_get_data=lib.get(b"BASS_ChannelGetData\0").map_err(|e| e.to_string())?;
 
             let chan_free = lib.get(b"BASS_ChannelFree\0").map_err(|e| e.to_string())?;
 
@@ -261,6 +265,7 @@ impl BassApi {
                 play,
                 pause,
                 stop,
+                chan_get_data,
                 chan_free,
                 get_len,
                 get_pos,
@@ -567,6 +572,57 @@ impl BassApi {
         let result = unsafe { (self.stop)(self.stream_handle) };
         self.or_err_(result)
     }
+    
+    fn chan_get_data(&mut self)->Option<Vec<f32>>{
+        if self.stream_handle == 0 { 
+            return None; 
+        }
+        let data_size = 256; // 512点FFT返回 256个值
+        let mut buffer = vec![0.0f32; data_size];
+        let buffer_ptr = buffer.as_mut_ptr() as *mut c_void;
+        unsafe {
+            let ok= (self.chan_get_data)(self.stream_handle,buffer_ptr,BASS_DATA_FFT512);
+            if ok==0 { 
+                let err_code = (self.error_get_code)();
+                    println!(
+                        "{}",
+                        get_err_info(err_code).unwrap_or_else(|| format!(
+                            "Unknown BASS error | ERR_CODE<{}>",
+                            err_code
+                        ))
+                    );
+                return None; 
+            }
+        };
+        
+        if buffer.len()!=data_size { 
+            buffer.resize(data_size,0.0f32);
+        }
+        
+        // 对数缩放
+        let log_gain_multiplier = 1000.0; // 调高这个值可以更早地看到低幅度变化
+        let log_offset = 1.0;            // 避免 log(0)，并提供一个基础值
+
+        for v in &mut buffer {
+            let transformed_val = (v.abs() * log_gain_multiplier + log_offset).log10();
+            *v=transformed_val;
+        }
+        
+        let min_val = buffer.clone().into_iter().reduce(f32::min).unwrap_or(0.0);
+        let max_val = buffer.clone().into_iter().reduce(f32::max).unwrap_or(1.0);
+        let range=max_val-min_val;
+        
+        for v in &mut buffer {
+            let percentage = if range > 0.0f32 { // 避免除以零
+            ((*v - min_val) / range).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+            *v=percentage;
+        }
+        
+        Some(buffer)
+    }
 
     fn toggle(&mut self) -> Result<(), String> {
         if let Some(state) = self.get_state() {
@@ -830,3 +886,6 @@ pub fn set_eq_params(fre_center_index: i32, gain: f32) {
         .unwrap()
         .set_eq_params(fre_center_index, gain)
 }
+
+#[flutter_rust_bridge::frb]
+pub fn get_chan_data()->Option<Vec<f32>>{ BASS_API.lock().unwrap().as_mut().unwrap().chan_get_data() }

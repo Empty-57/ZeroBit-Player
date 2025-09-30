@@ -6,7 +6,7 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `bass_init`, `calculate_dynamic_bandwidth_linear`, `chan_free`, `fade_in`, `fade_out`, `get_len`, `get_pos`, `get_state`, `get_volume`, `get_wasapi_info`, `listen_progress`, `load`, `on_end_sync`, `or_err_`, `pause`, `play_file`, `resume`, `set_all_eq_params`, `set_eq_params`, `set_exclusive_mode`, `set_pos`, `set_speed`, `set_sync`, `set_volume`, `stop`, `stream_free`, `toggle`
+// These functions are ignored because they are not marked as `pub`: `bass_init`, `calculate_dynamic_bandwidth_linear`, `chan_free`, `chan_get_data`, `fade_in`, `fade_out`, `get_len`, `get_pos`, `get_state`, `get_volume`, `get_wasapi_info`, `listen_progress`, `load`, `on_end_sync`, `or_err_`, `pause`, `play_file`, `resume`, `set_all_eq_params`, `set_eq_params`, `set_exclusive_mode`, `set_pos`, `set_speed`, `set_sync`, `set_volume`, `stop`, `stream_free`, `toggle`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `BassApi`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `drop`
 
@@ -54,3 +54,6 @@ Future<void> setEqParams({required int freCenterIndex, required double gain}) =>
       freCenterIndex: freCenterIndex,
       gain: gain,
     );
+
+Future<Float32List?> getChanData() =>
+    RustLib.instance.api.crateApiBassGetChanData();

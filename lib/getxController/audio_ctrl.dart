@@ -1,6 +1,7 @@
 import 'dart:math';
-import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:get/get.dart';
 import 'package:palette_generator/palette_generator.dart';
@@ -76,6 +77,12 @@ class AudioController extends GetxController {
 
   final currentLyrics = Rxn<ParsedLyricModel>();
 
+  final audioFFT=<double>[].obs;
+
+  final _defaultFFT=List<double>.generate(bassDataFFT512,(i)=>0.0);
+
+  static const bassDataFFT512=256;
+
   void syncPlayListCacheItems() {
     if (allUserKey.contains(_audioSource.currentAudioSource.value)) {
       playListCacheItems.value =
@@ -120,6 +127,21 @@ class AudioController extends GetxController {
         playListCacheItems.value = [..._musicCacheController.items];
         return;
     }
+  }
+
+  void getAudioFFt()async{
+    if(currentState.value==AudioState.pause||currentState.value==AudioState.stop){
+      if(listEquals(audioFFT, _defaultFFT)){
+        return;
+      }
+      audioFFT.value=_defaultFFT;
+      return;
+    }
+
+    final fft = await getChanData();
+      if(fft!=null){
+        audioFFT.value=[...fft];
+      }
   }
 
   @override
@@ -174,6 +196,7 @@ class AudioController extends GetxController {
       await audioPause();
 
       // sync_cache 已经先执行了一次
+      // 此操作放在这个位置的原因： 需要等待 main.dart 中的 await syncCache()先执行完 ， 因为上面两行await任务排在await syncCache();
       final lastPlayPathList =
           _settingController.lastAudioInfo[SettingController
                   .lastAudioPlayPathListKey]
@@ -187,6 +210,7 @@ class AudioController extends GetxController {
     } catch (e) {
       debugPrint(e.toString());
     }
+
   }
 
   void _syncInfo() async {
