@@ -50,10 +50,15 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
   }
 
   String _getLetter({required String str}){
-    final String letter=PinyinHelper.getFirstWordPinyin(str[0]);
+    final str_=str.trim();
+    if(str_.isEmpty){
+      return '#';
+    }
+
+    final String letter=PinyinHelper.getFirstWordPinyin(str_[0]);
 
     if(letter.isEmpty){
-      final String letter=str[0].toUpperCase();
+      final String letter=str_[0].toUpperCase();
       return letter.contains(RegExp(r'[A-Z]'))? letter:'#';
     }
     return letter[0].toUpperCase();

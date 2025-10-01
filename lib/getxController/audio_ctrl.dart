@@ -201,7 +201,7 @@ class AudioController extends GetxController {
           _settingController.lastAudioInfo[SettingController
                   .lastAudioPlayPathListKey]
               as List<String>;
-      if (lastPlayPathList.isNotEmpty) {
+      if (lastPlayPathList.isNotEmpty&&playListCacheItems.isNotEmpty) {
         playListCacheItems.value =
             _musicCacheController.items
                 .where((v) => lastPlayPathList.contains(v.path))
