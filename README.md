@@ -58,25 +58,25 @@ flutter run
 - 支持音频可视化
 
 ## 支持的音频格式
-- .aac
-- .ape
-- .aiff
-- .aif
-- .flac
-- .mp3
-- .mp4 .m4a .m4b .m4p .m4v
-- .mpc
-- .opus
-- .ogg
-- .oga
-- .spx
-- .wav
-- .wv
+- aac
+- ape
+- aiff
+- aif
+- flac
+- mp3
+- mp4 m4a m4b m4p m4v
+- mpc
+- opus
+- ogg
+- oga
+- spx
+- wav
+- wv
 
 ## 支持的歌词格式
-- .qrc
-- .yrc
-- .lrc
+- qrc
+- yrc
+- lrc
 
 ## 支持读写的元数据格式
 | 音频格式       | 元数据格式                        |
