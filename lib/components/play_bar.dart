@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:text_scroll/text_scroll.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/tools/format_time.dart';
@@ -17,7 +18,7 @@ const double _barWidthHalf = 350;
 const double _bottom = 4;
 const double _navigationWidth = 260;
 const double _navigationWidthSmall = 84;
-const double resViewThresholds= 1100;
+const double resViewThresholds = 1100;
 
 const double _radius = 6;
 
@@ -35,17 +36,24 @@ class _ProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progressColor = Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.8);
-    final fgPaint = Paint()..color = progressColor..style = PaintingStyle.fill;
+    final progressColor = Theme.of(
+      context,
+    ).colorScheme.secondaryContainer.withValues(alpha: 0.8);
+    final fgPaint =
+        Paint()
+          ..color = progressColor
+          ..style = PaintingStyle.fill;
 
     return RepaintBoundary(
-      child: Obx(()=>CustomPaint(
-            size: const Size(_barWidth, _barHeight),
-            painter: _ProgressPainter(
-              progress: _audioController.progress.value,
-              fgPaint: fgPaint,
-            ),
-          )),
+      child: Obx(
+        () => CustomPaint(
+          size: const Size(_barWidth, _barHeight),
+          painter: _ProgressPainter(
+            progress: _audioController.progress.value,
+            fgPaint: fgPaint,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -86,55 +94,84 @@ class _PlayBarState extends State<PlayBar> {
 
   @override
   Widget build(BuildContext context) {
-    final audioCtrlWidget = AudioCtrlWidget(context: context, size: _ctrlBtnMinSize);
+    final audioCtrlWidget = AudioCtrlWidget(
+      context: context,
+      size: _ctrlBtnMinSize,
+    );
 
     final screenWidth = context.width;
-        final rightOffset = (screenWidth - (screenWidth > resViewThresholds ? _navigationWidth : _navigationWidthSmall)) / 2 - _barWidthHalf;
+    final rightOffset =
+        (screenWidth -
+                (screenWidth > resViewThresholds
+                    ? _navigationWidth
+                    : _navigationWidthSmall)) /
+            2 -
+        _barWidthHalf;
 
     return Positioned(
-          bottom: _bottom,
-          right: rightOffset,
-          child: ClipRRect(
-            borderRadius: _coverBorderRadius,
-            child: Column(
-              children: [
-                _buildSlider(context, audioCtrlWidget),
-                _buildPlayBarBody(context, audioCtrlWidget),
-              ],
-            ),
-          ),
-        );
+      bottom: _bottom,
+      right: rightOffset,
+      child: ClipRRect(
+        borderRadius: _coverBorderRadius,
+        child: Column(
+          children: [
+            _buildSlider(context, audioCtrlWidget),
+            _buildPlayBarBody(context, audioCtrlWidget),
+          ],
+        ),
+      ),
+    );
   }
 
   // 构建 Slider 部分
   Widget _buildSlider(BuildContext context, AudioCtrlWidget audioCtrlWidget) {
     return Material(
-      color:Colors.transparent,
+      color: Colors.transparent,
       child: SliderTheme(
-      data: SliderTheme.of(context).copyWith(
-        trackHeight: 1,
-        showValueIndicator: ShowValueIndicator.always,
-        thumbShape: const DiamondSliderThumbShape(horizontalDiagonal: 8, verticalDiagonal: 16),
-        activeTrackColor: Colors.transparent,
-        thumbColor: Theme.of(context).colorScheme.primary,
-        inactiveTrackColor: Colors.transparent,
-        overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
-        valueIndicatorShape: const RectangularValueIndicatorShape(width: 48, height: 28, radius: 4),
-        valueIndicatorTextStyle: generalTextStyle(ctx: context, size: 'sm', color: Theme.of(context).colorScheme.onPrimary),
-        mouseCursor: WidgetStateProperty.all(SystemMouseCursors.resizeLeftRight),
+        data: SliderTheme.of(context).copyWith(
+          trackHeight: 1,
+          showValueIndicator: ShowValueIndicator.always,
+          thumbShape: const DiamondSliderThumbShape(
+            horizontalDiagonal: 8,
+            verticalDiagonal: 16,
+          ),
+          activeTrackColor: Colors.transparent,
+          thumbColor: Theme.of(context).colorScheme.primary,
+          inactiveTrackColor: Colors.transparent,
+          overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
+          valueIndicatorShape: const RectangularValueIndicatorShape(
+            width: 48,
+            height: 28,
+            radius: 4,
+          ),
+          valueIndicatorTextStyle: generalTextStyle(
+            ctx: context,
+            size: 'sm',
+            color: Theme.of(context).colorScheme.onPrimary,
+          ),
+          mouseCursor: WidgetStateProperty.all(
+            SystemMouseCursors.resizeLeftRight,
+          ),
+        ),
+        child: Container(
+          width: _barWidth + 16,
+          padding: const EdgeInsets.symmetric(horizontal: 0),
+          child: audioCtrlWidget.seekSlide,
+        ),
       ),
-      child: Container(
-        width: _barWidth + 16,
-        padding: const EdgeInsets.symmetric(horizontal: 0),
-        child: audioCtrlWidget.seekSlide,
-      ),
-    ),
     );
   }
 
   // 构建播放条主体部分
-  Widget _buildPlayBarBody(BuildContext context, AudioCtrlWidget audioCtrlWidget) {
-    final timeTextStyle = generalTextStyle(ctx: context, size: 'sm', color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6));
+  Widget _buildPlayBarBody(
+    BuildContext context,
+    AudioCtrlWidget audioCtrlWidget,
+  ) {
+    final timeTextStyle = generalTextStyle(
+      ctx: context,
+      size: 'sm',
+      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
+    );
 
     return Stack(
       children: [
@@ -166,7 +203,9 @@ class _PlayBarState extends State<PlayBar> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             fixedSize: const Size(_barWidth, _barHeight),
             backgroundColor: Colors.transparent,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_radius)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(_radius),
+            ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -183,21 +222,47 @@ class _PlayBarState extends State<PlayBar> {
     );
   }
 
+  Widget _buildScrollText(String text, TextStyle textStyle) {
+    return TextScroll(
+      text,
+      mode: TextScrollMode.bouncing,
+      fadeBorderSide: FadeBorderSide.both,
+      fadedBorder: true,
+      fadedBorderWidth: 0.05,
+      velocity: Velocity(pixelsPerSecond: Offset(100, 0)),
+      delayBefore: Duration(milliseconds: 500),
+      pauseBetween: Duration(milliseconds: 1000),
+      style: textStyle,
+      textAlign: TextAlign.left,
+    );
+  }
+
   // 构建封面和歌曲信息
   Widget _buildCoverAndInfo(TextStyle timeTextStyle) {
+    final titleStyle = generalTextStyle(
+      ctx: context,
+      size: 'md',
+      color: Theme.of(context).colorScheme.primary,
+    );
+
     return Expanded(
       child: Row(
         spacing: 8,
         children: [
           Obx(() {
-            final src = _audioController.currentMetadata.value.src ?? kTransparentImage;
+            final src =
+                _audioController.currentMetadata.value.src ?? kTransparentImage;
             return Hero(
               tag: 'playingCover',
               child: ClipRRect(
                 borderRadius: _coverBorderRadius,
                 child: FadeInImage(
                   placeholder: MemoryImage(kTransparentImage),
-                  image: ResizeImage(MemoryImage(src), width: _coverRenderSize, height: _coverRenderSize),
+                  image: ResizeImage(
+                    MemoryImage(src),
+                    width: _coverRenderSize,
+                    height: _coverRenderSize,
+                  ),
                   height: _coverSize,
                   width: _coverSize,
                   fit: BoxFit.cover,
@@ -212,20 +277,38 @@ class _PlayBarState extends State<PlayBar> {
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 4,
               children: [
-                Obx(() => Text(
-                  _audioController.currentMetadata.value.title.isNotEmpty ? _audioController.currentMetadata.value.title : "ZeroBit Player",
-                  softWrap: false,
-                  overflow: TextOverflow.fade,
-                  maxLines: 1,
-                  style: generalTextStyle(ctx: context, size: 'md', color: Theme.of(context).colorScheme.primary),
-                )),
-                Obx(() => Text(
-                  _audioController.currentMetadata.value.artist.isNotEmpty ? _audioController.currentMetadata.value.artist : "39",
-                  softWrap: false,
-                  overflow: TextOverflow.fade,
-                  maxLines: 1,
-                  style: timeTextStyle,
-                )),
+                Obx(() {
+                  final title =
+                      _audioController.currentMetadata.value.title.isNotEmpty
+                          ? _audioController.currentMetadata.value.title
+                          : "ZeroBit Player";
+                  return _isBarHover
+                      ? _buildScrollText(title, titleStyle)
+                      : Text(
+                        title,
+                        softWrap: false,
+                        overflow: TextOverflow.fade,
+                        maxLines: 1,
+                        style: titleStyle,
+                        textAlign: TextAlign.left,
+                      );
+                }),
+                Obx(() {
+                  final artist =
+                      _audioController.currentMetadata.value.artist.isNotEmpty
+                          ? _audioController.currentMetadata.value.artist
+                          : "39";
+                  return _isBarHover
+                      ? _buildScrollText(artist, timeTextStyle)
+                      : Text(
+                        artist,
+                        softWrap: false,
+                        overflow: TextOverflow.fade,
+                        maxLines: 1,
+                        style: timeTextStyle,
+                        textAlign: TextAlign.left,
+                      );
+                }),
               ],
             ),
           ),
@@ -257,10 +340,13 @@ class _PlayBarState extends State<PlayBar> {
   // 构建时间显示
   Widget _buildTimeDisplay(TextStyle timeTextStyle) {
     return Obx(() {
-      final duration = _audioController.currentDuration.value > 0
-          ? formatTime(totalSeconds: _audioController.currentDuration.value)
-          : "--:--";
-      final currentSec = formatTime(totalSeconds: _audioController.currentSec.value);
+      final duration =
+          _audioController.currentDuration.value > 0
+              ? formatTime(totalSeconds: _audioController.currentDuration.value)
+              : "--:--";
+      final currentSec = formatTime(
+        totalSeconds: _audioController.currentSec.value,
+      );
       return Text("$currentSec / $duration", style: timeTextStyle);
     });
   }

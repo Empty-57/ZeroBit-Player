@@ -243,8 +243,7 @@ impl AudioMetadata {
             if let Some(genre) = data.genre {
                 tag.set_genre(genre);
             }
-            tag.save_to_path(path, WriteOptions::default())
-                .expect("ERROR: Failed to write the tag!");
+            tag.save_to_path(path, WriteOptions::default()).unwrap_or_else(|e|println!("ERROR: Save Metadata ERR! | {:?}",e));
         }
     }
 
@@ -276,8 +275,7 @@ impl AudioMetadata {
                     output_bytes,
                 ),
             );
-            tag.save_to_path(path, WriteOptions::default())
-                .expect("Save Cover Err");
+            tag.save_to_path(path, WriteOptions::default()).unwrap_or_else(|e|println!("ERROR: Save Cover ERR! | {:?}",e));
         }
     }
 
@@ -322,8 +320,7 @@ impl AudioMetadata {
     fn edit_embedded_lyric(path: String, lyric: String){
         if let Some(mut tag) = Self::get_tag(&path, "Error Edit Lyric") {
             tag.insert_text(ItemKey::Lyrics,lyric);
-            tag.save_to_path(path, WriteOptions::default())
-                .expect("ERROR: Failed to write the tag!");
+            tag.save_to_path(path, WriteOptions::default()).unwrap_or_else(|e|println!("ERROR: Save Lyrics ERR! | {:?}",e));
         }
     }
     

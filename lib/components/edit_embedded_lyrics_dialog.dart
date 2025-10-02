@@ -8,6 +8,7 @@ import '../custom_widgets/custom_button.dart';
 import '../src/rust/api/music_tag_tool.dart';
 import '../tools/general_style.dart';
 import '../tools/lrcTool/lyric_model.dart';
+import 'get_snack_bar.dart';
 
 const double _menuWidth = 180;
 const double _menuHeight = 48;
@@ -161,6 +162,11 @@ class EditEmbeddedLyricsDialog extends StatelessWidget {
                                 jsonData = jsonEncode(lyricsMap);
                               } catch (_) {
                                 Navigator.pop(context);
+                                showSnackBar(
+                                  title: "ERROR",
+                                  msg: "保存失败！",
+                                  duration: Duration(milliseconds: 2000),
+                                );
                               }
 
                               await editEmbeddedLyric(
@@ -170,6 +176,11 @@ class EditEmbeddedLyricsDialog extends StatelessWidget {
 
                               if (context.mounted) {
                                 Navigator.pop(context);
+                                showSnackBar(
+                                  title: "OK",
+                                  msg: "保存成功！",
+                                  duration: Duration(milliseconds: 1500),
+                                );
                               }
                             },
                             backgroundColor:

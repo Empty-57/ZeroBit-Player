@@ -130,6 +130,7 @@ void main() async {
     title: 'ZeroBit Player',
   );
   windowManager.waitUntilReadyToShow(windowOptions, () async {
+    windowManager.setHasShadow(true);
     final lastSize =
         settingController.lastWindowInfo[SettingController.lastWindowSizeKey]
             as List<double>?;

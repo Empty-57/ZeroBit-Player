@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:text_scroll/text_scroll.dart';
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/components/blur_background.dart';
 import 'package:zerobit_player/components/lyrics_render.dart';
@@ -28,17 +29,18 @@ const double _audioCtrlBarHeight = 96;
 const int _coverRenderSize = 800;
 const double _spectrogramHeight = 100.0;
 const double _spectrogramWidthFactor = 0.94;
-const double _spectrogramWidthFactorDiff = (1-_spectrogramWidthFactor)/2;
+const double _spectrogramWidthFactorDiff = (1 - _spectrogramWidthFactor) / 2;
 const _lrcAlignmentIcons = [
   PhosphorIconsLight.textAlignLeft,
   PhosphorIconsLight.textAlignCenter,
   PhosphorIconsLight.textAlignRight,
 ];
 final _isBarHover = false.obs;
+final _isHeadHover = false.obs;
 final _onlyCover = false.obs;
 
 // --- 频谱图控制器 ---
-class _SpectrogramController extends GetxController{
+class _SpectrogramController extends GetxController {
   Timer? _spectrogramAnimationTimer;
 
   @override
@@ -50,27 +52,30 @@ class _SpectrogramController extends GetxController{
   @override
   void onInit() {
     super.onInit();
-    if(_settingController.showSpectrogram.value){
+    if (_settingController.showSpectrogram.value) {
       _startSpectrogramAnimationTimer();
     }
   }
 
-  void _cancelSpectrogramAnimationTimer(){
+  void _cancelSpectrogramAnimationTimer() {
     _spectrogramAnimationTimer?.cancel();
-    _spectrogramAnimationTimer=null;
+    _spectrogramAnimationTimer = null;
   }
 
-  void _startSpectrogramAnimationTimer(){
+  void _startSpectrogramAnimationTimer() {
     _cancelSpectrogramAnimationTimer();
-    _spectrogramAnimationTimer=Timer.periodic(Duration(milliseconds: 16), (Timer timer) { // 约 60 fps
+    _spectrogramAnimationTimer = Timer.periodic(Duration(milliseconds: 16), (
+      Timer timer,
+    ) {
+      // 约 60 fps
       _audioController.getAudioFFt();
     });
   }
 
-  void toggleSpectrogramVisibility(){
-    if(_settingController.showSpectrogram.value){
+  void toggleSpectrogramVisibility() {
+    if (_settingController.showSpectrogram.value) {
       _startSpectrogramAnimationTimer();
-    }else{
+    } else {
       _cancelSpectrogramAnimationTimer();
     }
   }
@@ -461,6 +466,21 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
 class LrcView extends StatelessWidget {
   const LrcView({super.key});
 
+  Widget _buildScrollText(String text, TextStyle textStyle) {
+    return TextScroll(
+      text,
+      mode: TextScrollMode.bouncing,
+      fadeBorderSide: FadeBorderSide.both,
+      fadedBorder: true,
+      fadedBorderWidth: 0.05,
+      velocity: Velocity(pixelsPerSecond: Offset(50, 0)),
+      delayBefore: Duration(milliseconds: 500),
+      pauseBetween: Duration(milliseconds: 1000),
+      style: textStyle,
+      textAlign: TextAlign.left,
+    );
+  }
+
   Widget _buildCoverSide(
     BuildContext ctx,
     double coverSize,
@@ -520,27 +540,40 @@ class LrcView extends StatelessWidget {
           Container(
             width: coverSize - 24,
             margin: const EdgeInsets.only(top: 24),
-            child: Obx(
-              () => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 2,
-                children: [
-                  Text(
-                    _audioController.currentMetadata.value.title,
-                    style: titleStyle,
-                    softWrap: false,
-                    overflow: TextOverflow.fade,
-                    maxLines: 1,
-                  ),
-                  Text(
-                    "${_audioController.currentMetadata.value.artist} - ${_audioController.currentMetadata.value.album}",
-                    style: subTitleStyle,
-                    softWrap: false,
-                    overflow: TextOverflow.fade,
-                    maxLines: 1,
-                  ),
-                ],
-              ),
+            child: MouseRegion(
+              onEnter: (_) => _isHeadHover.value = true,
+              onExit: (_) => _isHeadHover.value = false,
+              child: Obx(() {
+                final title = _audioController.currentMetadata.value.title;
+                final artistAndAlbum =
+                    "${_audioController.currentMetadata.value.artist} - ${_audioController.currentMetadata.value.album}";
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 2,
+                  children: [
+                    _isHeadHover.value
+                        ? _buildScrollText(title, titleStyle)
+                        : Text(
+                          title,
+                          style: titleStyle,
+                          softWrap: false,
+                          overflow: TextOverflow.fade,
+                          maxLines: 1,
+                          textAlign: TextAlign.left,
+                        ),
+                    _isHeadHover.value
+                        ? _buildScrollText(artistAndAlbum, subTitleStyle)
+                        : Text(
+                          artistAndAlbum,
+                          style: subTitleStyle,
+                          softWrap: false,
+                          overflow: TextOverflow.fade,
+                          maxLines: 1,
+                          textAlign: TextAlign.left,
+                        ),
+                  ],
+                );
+              }),
             ),
           ),
         ],
@@ -582,9 +615,9 @@ class LrcView extends StatelessWidget {
     TextStyle timeCurrentStyle,
     TextStyle timeTotalStyle,
   ) {
-    final _SpectrogramController spectrogramController=Get.put(
+    final _SpectrogramController spectrogramController = Get.put(
       _SpectrogramController(),
-  );
+    );
     final audioCtrlWidget = AudioCtrlWidget(
       context: context,
       size: _ctrlBtnMinSize,
@@ -720,7 +753,8 @@ class LrcView extends StatelessWidget {
                               _settingController.showSpectrogram.value =
                                   !_settingController.showSpectrogram.value;
                               _settingController.putScalableCache();
-                              spectrogramController.toggleSpectrogramVisibility();
+                              spectrogramController
+                                  .toggleSpectrogramVisibility();
                             },
                           ),
                         ),
@@ -803,8 +837,9 @@ class LrcView extends StatelessWidget {
       stops: [0.0, 0.45, 1.0],
     );
     final spectrogramBarLength = AudioController.bassDataFFT512 * 0.5625; // 144
-    final spectrogramBarWidth = (context.width * _spectrogramWidthFactor) / spectrogramBarLength;
-    final spectrogramPaddingWidth=context.width * _spectrogramWidthFactorDiff;
+    final spectrogramBarWidth =
+        (context.width * _spectrogramWidthFactor) / spectrogramBarLength;
+    final spectrogramPaddingWidth = context.width * _spectrogramWidthFactorDiff;
 
     return BlurWithCoverBackground(
       cover: _audioController.currentCover,
@@ -956,7 +991,7 @@ class SpectrogramPainter extends CustomPainter {
       final rect = Rect.fromLTWH(
         n * barWidth + paddingWidth,
         _spectrogramHeight - height,
-        barWidth *0.5,
+        barWidth * 0.5,
         height,
       );
       canvas.drawRect(rect, _paint..shader = gradient.createShader(rect));

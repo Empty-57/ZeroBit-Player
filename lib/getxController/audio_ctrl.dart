@@ -187,6 +187,11 @@ class AudioController extends GetxController {
     });
 
     try {
+
+      if(playListCacheItems.isEmpty){
+        return ;
+      }
+
       currentMetadata.value =
           _settingController.lastAudioInfo[SettingController
                   .lastAudioMetadataKey]
@@ -196,12 +201,12 @@ class AudioController extends GetxController {
       await audioPause();
 
       // sync_cache 已经先执行了一次
-      // 此操作放在这个位置的原因： 需要等待 main.dart 中的 await syncCache()先执行完 ， 因为上面两行await任务排在await syncCache();
+      // 此操作放在这个位置的原因： 需要等待 main.dart 中的 await syncCache()先执行完 ， 因为上面两行await任务排在await syncCache();之后
       final lastPlayPathList =
           _settingController.lastAudioInfo[SettingController
                   .lastAudioPlayPathListKey]
               as List<String>;
-      if (lastPlayPathList.isNotEmpty&&playListCacheItems.isNotEmpty) {
+      if (lastPlayPathList.isNotEmpty) {
         playListCacheItems.value =
             _musicCacheController.items
                 .where((v) => lastPlayPathList.contains(v.path))
