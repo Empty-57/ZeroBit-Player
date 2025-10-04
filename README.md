@@ -40,7 +40,9 @@ flutter run
  - `basswv.dll`
  - `bass_fx.dll`
 
-放在软件目录的 `BASS` 文件夹下
+复制到软件目录的 `BASS` 文件夹下
+
+要把[`Zerobit Player Desktop Lyrics`](https://github.com/Empty-57/zerobit_player_desktop_lyrics)编译后的内容复制到软件目录的 `desktop_lyrics` 文件夹下以支持桌面歌词
 
 ## 特性
 - 支持自定义歌单
@@ -56,6 +58,7 @@ flutter run
 - 支持动态主题色
 - 支持SMTC
 - 支持音频可视化
+- 支持桌面歌词
 
 ## 支持的音频格式
 - aac
@@ -138,6 +141,11 @@ flutter run
 [coriander_player](https://github.com/Ferry-200/coriander_player)： 借鉴了UI设计</br>
 [BASS](https://www.un4seen.com/)： 播放器内核</br>
 [Lofty](https://crates.io/crates/lofty)： 读取音频元数据
+
+## 桌面歌词展示
+![show](screenshot/12.png)
+![show](screenshot/13.png)
+![show](screenshot/14.png)
 
 ## 软件截图
 ![show](screenshot/1.png)
