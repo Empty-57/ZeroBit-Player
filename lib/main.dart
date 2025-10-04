@@ -35,6 +35,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'HIveCtrl/adapters/setting_cache_adapter.dart';
 import 'HIveCtrl/models/music_cache_model.dart';
 import 'components/get_snack_bar.dart';
+import 'desktop_lyrics_sever.dart';
 import 'field/app_routes.dart';
 
 import 'package:zerobit_player/custom_widgets/custom_widget.dart';
@@ -46,6 +47,7 @@ import 'HIveCtrl/hive_boxes.dart';
 
 import 'HIveCtrl/adapters/music_cache_adapter.dart';
 import 'field/operate_area.dart';
+import 'getxController/desktop_lyrics_setting_ctrl.dart';
 import 'getxController/lyric_ctrl.dart';
 import 'getxController/music_cache_ctrl.dart';
 import 'getxController/setting_ctrl.dart';
@@ -112,6 +114,8 @@ void main() async {
   Get.put(AudioController());
   Get.put(LyricController());
   Get.put(ThemeService());
+  Get.put(DesktopLyricsSever());
+  Get.put(DesktopLyricsSettingController());
 
   await syncCache();
 
@@ -121,9 +125,20 @@ void main() async {
   final LyricController lyricController = Get.find<LyricController>();
   final SettingController settingController = Get.find<SettingController>();
 
+  double w=1200;
+  double h=800;
+
+  final lastSize =
+        settingController.lastWindowInfo[SettingController.lastWindowSizeKey]
+            as List<double>?;
+    if (lastSize != null && lastSize.isNotEmpty) {
+      w=lastSize[SettingController.lastWindowInfoWidthAndDx];
+      h=lastSize[SettingController.lastWindowInfoHeightAndDy];
+    }
+
   WindowOptions windowOptions = WindowOptions(
     minimumSize: Size(1000, 750),
-    size: Size(1200, 800),
+    size: Size(w, h),
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
@@ -131,18 +146,6 @@ void main() async {
   );
   windowManager.waitUntilReadyToShow(windowOptions, () async {
     windowManager.setHasShadow(true);
-    final lastSize =
-        settingController.lastWindowInfo[SettingController.lastWindowSizeKey]
-            as List<double>?;
-    if (lastSize != null && lastSize.isNotEmpty) {
-      await windowManager.setSize(
-        Size(
-          lastSize[SettingController.lastWindowInfoWidthAndDx],
-          lastSize[SettingController.lastWindowInfoHeightAndDy],
-        ),
-      );
-    }
-
     final lastPosition =
         settingController.lastWindowInfo[SettingController.lastWindowPositonKey]
             as List<double>?;

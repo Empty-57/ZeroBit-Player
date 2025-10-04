@@ -118,6 +118,8 @@ class SettingController extends GetxController {
 
   final showSpectrogram=true.obs;
 
+  final showDesktopLyrics=false.obs;
+
   static const Map<int, String> apiMap = {0: "QQ音乐", 1: "网易云音乐"};
 
   static const Map<int, String> sortType = {
@@ -243,6 +245,10 @@ class SettingController extends GetxController {
           showSpectrogram.value=config[ScalableConfigKeys.showSpectrogramKey];
         }
 
+        if(config.containsKey(ScalableConfigKeys.showDesktopLyricsKey)){
+          showDesktopLyrics.value=config[ScalableConfigKeys.showDesktopLyricsKey];
+        }
+
       }
     }
 
@@ -294,6 +300,7 @@ class SettingController extends GetxController {
           ScalableConfigKeys.lastAudioInfo: lastAudioInfo,
           ScalableConfigKeys.lastWindowInfo: lastWindowInfo,
           ScalableConfigKeys.showSpectrogramKey:showSpectrogram.value,
+          ScalableConfigKeys.showDesktopLyricsKey:showDesktopLyrics.value,
         },
       ),
       key: _scalableKey,

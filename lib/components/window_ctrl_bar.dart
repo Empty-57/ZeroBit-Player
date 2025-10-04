@@ -4,6 +4,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
 import 'package:zerobit_player/theme_manager.dart';
+import '../desktop_lyrics_sever.dart';
 import '../getxController/audio_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../tools/general_style.dart';
@@ -14,6 +15,8 @@ final ThemeService _themeService = Get.find<ThemeService>();
 final MusicCacheController _musicCacheController =
     Get.find<MusicCacheController>();
 final AudioController _audioController = Get.find<AudioController>();
+
+final DesktopLyricsSever _desktopLyricsSever = Get.find<DesktopLyricsSever>();
 
 final themeMode = _settingController.themeMode;
 
@@ -35,6 +38,7 @@ class _WindowListener extends GetxController with WindowListener {
   @override
   void onClose() {
     windowManager.removeListener(this);
+    _desktopLyricsSever.close();
     super.onClose();
   }
 
@@ -124,7 +128,7 @@ class _SearchDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final titleStyle = generalTextStyle(ctx: context, size: 'md');
     final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-    return ControllerButton(
+    return _ControllerButton(
       icon: PhosphorIconsLight.magnifyingGlass,
       fn: () {
         _musicCacheController.searchResult.clear();
@@ -231,13 +235,13 @@ class _SearchDialog extends StatelessWidget {
   }
 }
 
-class ControllerButton extends StatelessWidget {
+class _ControllerButton extends StatelessWidget {
   final IconData icon;
   final Color? hoverColor;
   final VoidCallback fn;
   final String? tooltip;
 
-  const ControllerButton({
+  const _ControllerButton({
     super.key,
     required this.icon,
     this.hoverColor,
@@ -292,7 +296,7 @@ class WindowControllerBar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         spacing: 8,
         children: <Widget>[
-          ControllerButton(
+          _ControllerButton(
             icon:
                 useCaretDown!
                     ? PhosphorIconsLight.caretDown
@@ -340,7 +344,7 @@ class WindowControllerBar extends StatelessWidget {
           if (useSearch!) const _SearchDialog(),
 
           Obx(
-            () => ControllerButton(
+            () => _ControllerButton(
               icon:
                   _settingController.themeMode.value == 'dark'
                       ? PhosphorIconsLight.moon
@@ -353,14 +357,14 @@ class WindowControllerBar extends StatelessWidget {
             ),
           ),
 
-          ControllerButton(
+          _ControllerButton(
             icon: PhosphorIconsLight.minus,
             fn: windowListener.windowMinimize,
             tooltip: "最小化",
           ),
 
           Obx(
-            () => ControllerButton(
+            () => _ControllerButton(
               icon:
                   windowListener._isMaximized.value
                       ? PhosphorIconsLight.cornersIn
@@ -370,7 +374,7 @@ class WindowControllerBar extends StatelessWidget {
             ),
           ),
 
-          ControllerButton(
+          _ControllerButton(
             icon: PhosphorIconsLight.x,
             hoverColor: Colors.red,
             fn: () {

@@ -10,8 +10,10 @@ import 'package:zerobit_player/components/lyrics_render.dart';
 import 'package:zerobit_player/tools/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import 'package:zerobit_player/tools/lrcTool/save_lyric.dart';
+import 'package:zerobit_player/tools/websocket_model.dart';
 import '../components/audio_ctrl_btn.dart';
 import '../components/window_ctrl_bar.dart';
+import '../desktop_lyrics_sever.dart';
 import '../getxController/audio_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 import '../tools/format_time.dart';
@@ -21,6 +23,7 @@ import 'dart:async';
 
 final AudioController _audioController = Get.find<AudioController>();
 final SettingController _settingController = Get.find<SettingController>();
+final DesktopLyricsSever _desktopLyricsSever=Get.find<DesktopLyricsSever>();
 
 const double _ctrlBtnMinSize = 40.0;
 const double _thumbRadius = 10.0;
@@ -759,13 +762,24 @@ class LrcView extends StatelessWidget {
                           ),
                         ),
 
-                        // GenIconBtn(
-                        //   tooltip: '桌面歌词',
-                        //   icon: PhosphorIconsLight.creditCard,
-                        //   size: _ctrlBtnMinSize,
-                        //   color: mixColor,
-                        //   fn: () {},
-                        // ),
+                        Obx(()=>
+                        GenIconBtn(
+                          tooltip: '桌面歌词',
+                          icon: _settingController.showDesktopLyrics.value ? PhosphorIconsFill.creditCard : PhosphorIconsLight.creditCard,
+                          size: _ctrlBtnMinSize,
+                          color: mixColor,
+                          fn: () async{
+                            _settingController.showDesktopLyrics.value=!_settingController.showDesktopLyrics.value;
+                            await _settingController.putScalableCache();
+
+                            if(_settingController.showDesktopLyrics.value){
+                              _desktopLyricsSever.connect();
+                            }else{
+                              _desktopLyricsSever.close();
+                            }
+
+                          },
+                        ),),
 
                         //以上： 后续功能
                       ],

@@ -47,6 +47,10 @@ class WordEntry implements TimedEntry {
     required this.lyricWord,
     this.nextTime = double.infinity
   });
+
+  static Map<String, dynamic> toJson(WordEntry value) =>
+      {'start': value.start, 'duration': value.duration,'lyricWord':value.lyricWord};
+
 }
 
 class ParsedLyricModel{

@@ -11,13 +11,18 @@ import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:zerobit_player/src/rust/api/get_fonts.dart';
 import '../components/get_snack_bar.dart';
+import '../getxController/desktop_lyrics_setting_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../tools/general_style.dart';
 import '../getxController/setting_ctrl.dart';
 
+const double btnW = 108;
 final SettingController _settingController = Get.find<SettingController>();
 final MusicCacheController _musicCacheController =
     Get.find<MusicCacheController>();
+
+final DesktopLyricsSettingController _desktopLyricsSettingController =
+    Get.find<DesktopLyricsSettingController>();
 
 List<String> _fontsList = [];
 
@@ -321,121 +326,224 @@ class _ApiDropMenu extends StatelessWidget {
   }
 }
 
+Widget _getColorPicker(
+  BuildContext context,
+  int initColor,
+  void Function(int color) fn,
+    [bool enableAlpha=false]
+) {
+  final TextEditingController hexController = TextEditingController();
+  int themeColor_ = initColor;
+  return CustomBtn(
+    fn: () {
+      showDialog(
+        barrierDismissible: true,
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('取色器'),
+            titleTextStyle: generalTextStyle(
+              ctx: context,
+              size: 'xl',
+              weight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(4)),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.surface,
+
+            actionsAlignment: MainAxisAlignment.end,
+            actions: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 16,
+                children: [
+                  TextField(
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'Hex RGB',
+                    ),
+                    controller: hexController,
+                    autofocus: true,
+                    inputFormatters: [
+                      UpperCaseTextFormatter(),
+                      FilteringTextInputFormatter.allow(
+                        RegExp(kValidHexPattern),
+                      ),
+                    ],
+                  ),
+
+                  ColorPicker(
+                    pickerAreaBorderRadius: BorderRadius.all(
+                      Radius.circular(4),
+                    ),
+                    pickerColor: Color(themeColor_),
+                    colorPickerWidth: 400,
+                    pickerAreaHeightPercent: 0.7,
+                    enableAlpha: enableAlpha,
+                    displayThumbColor: true,
+                    labelTypes: [],
+                    portraitOnly: true,
+                    hexInputBar: false,
+                    hexInputController: hexController,
+                    onColorChanged: (Color color) {
+                      themeColor_ = color.toARGB32();
+                    },
+                  ),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    spacing: 8,
+                    children: [
+                      CustomBtn(
+                        fn: () {
+                          Navigator.pop(context, 'cancel');
+                        },
+                        backgroundColor: Colors.transparent,
+                        contentColor: Theme.of(context).colorScheme.primary,
+                        btnWidth: 72,
+                        btnHeight: 36,
+                        label: "取消",
+                      ),
+                      CustomBtn(
+                        fn: () {
+                          Navigator.pop(context, 'action');
+                          fn(themeColor_);
+                        },
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        contentColor: Theme.of(context).colorScheme.onPrimary,
+                        overlayColor:
+                            Theme.of(context).colorScheme.surfaceContainer,
+                        btnWidth: 72,
+                        btnHeight: 36,
+                        label: "确定",
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      );
+    },
+    icon: PhosphorIconsLight.palette,
+    label: '取色器',
+    btnHeight: _setBtnHeight,
+    btnWidth: 108,
+    mainAxisAlignment: MainAxisAlignment.center,
+    backgroundColor: Theme.of(context).colorScheme.primary,
+    overlayColor: Theme.of(context).colorScheme.surfaceContainer,
+    contentColor: Theme.of(context).colorScheme.onPrimary,
+  );
+}
+
 class _ColorPicker extends StatelessWidget {
   const _ColorPicker();
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController hexController = TextEditingController();
-    int themeColor_ = _settingController.themeColor.value;
+    return _getColorPicker(context, _settingController.themeColor.value, (
+      color,
+    ) {
+      _settingController.themeColor.value = color;
+      _settingController.putCache();
+    });
+  }
+}
 
-    return CustomBtn(
-      fn: () {
-        showDialog(
-          barrierDismissible: true,
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('取色器'),
-              titleTextStyle: generalTextStyle(
-                ctx: context,
-                size: 'xl',
-                weight: FontWeight.w600,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(4)),
-              ),
-              backgroundColor: Theme.of(context).colorScheme.surface,
+Widget _getFontFamilyDialog(
+  BuildContext context,
+  String label,
+  void Function(int i) fn,
+) {
+  return CustomBtn(
+    fn: () {
+      showDialog(
+        barrierDismissible: true,
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("选择字体"),
+            titleTextStyle: generalTextStyle(
+              ctx: context,
+              size: 'xl',
+              weight: FontWeight.w600,
+            ),
 
-              actionsAlignment: MainAxisAlignment.end,
-              actions: [
-                Column(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(4)),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.surface,
+
+            actionsAlignment: MainAxisAlignment.end,
+            actions: <Widget>[
+              SizedBox(
+                width: context.width / 2,
+                height: context.height / 2,
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 16,
+                  spacing: 8,
                   children: [
-                    TextField(
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Hex RGB',
-                      ),
-                      controller: hexController,
-                      autofocus: true,
-                      inputFormatters: [
-                        UpperCaseTextFormatter(),
-                        FilteringTextInputFormatter.allow(
-                          RegExp(kValidHexPattern),
-                        ),
-                      ],
+                    Text(
+                      "当前字体: $label",
+                      style: generalTextStyle(ctx: context, size: 'md'),
                     ),
-
-                    ColorPicker(
-                      pickerAreaBorderRadius: BorderRadius.all(
-                        Radius.circular(4),
+                    Expanded(
+                      flex: 1,
+                      child: ListView.builder(
+                        itemCount: _fontsList.length,
+                        itemExtent: 36,
+                        cacheExtent: 36 * 1,
+                        itemBuilder: (context, index) {
+                          return TextButton(
+                            onPressed: () {
+                              fn(index);
+                              Navigator.pop(context);
+                            },
+                            style: TextButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            child: Container(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                _fontsList[index],
+                                style: generalTextStyle(
+                                  ctx: context,
+                                  size: 'md',
+                                  fontFamily: _fontsList[index],
+                                ),
+                                softWrap: false,
+                                overflow: TextOverflow.fade,
+                                maxLines: 1,
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                      pickerColor: Color(_settingController.themeColor.value),
-                      colorPickerWidth: 400,
-                      pickerAreaHeightPercent: 0.7,
-                      enableAlpha: false,
-                      displayThumbColor: true,
-                      labelTypes: [],
-                      portraitOnly: true,
-                      hexInputBar: false,
-                      hexInputController: hexController,
-                      onColorChanged: (Color color) {
-                        themeColor_ = color.toARGB32();
-                      },
-                    ),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      spacing: 8,
-                      children: [
-                        CustomBtn(
-                          fn: () {
-                            Navigator.pop(context, 'cancel');
-                          },
-                          backgroundColor: Colors.transparent,
-                          contentColor: Theme.of(context).colorScheme.primary,
-                          btnWidth: 72,
-                          btnHeight: 36,
-                          label: "取消",
-                        ),
-                        CustomBtn(
-                          fn: () {
-                            Navigator.pop(context, 'action');
-                            _settingController.themeColor.value = themeColor_;
-                            _settingController.putCache();
-                          },
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          contentColor: Theme.of(context).colorScheme.onPrimary,
-                          overlayColor:
-                              Theme.of(context).colorScheme.surfaceContainer,
-                          btnWidth: 72,
-                          btnHeight: 36,
-                          label: "确定",
-                        ),
-                      ],
                     ),
                   ],
                 ),
-              ],
-            );
-          },
-        );
-      },
-      icon: PhosphorIconsLight.palette,
-      label: '取色器',
-      btnHeight: _setBtnHeight,
-      btnWidth: 108,
-      mainAxisAlignment: MainAxisAlignment.center,
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      overlayColor: Theme.of(context).colorScheme.surfaceContainer,
-      contentColor: Theme.of(context).colorScheme.onPrimary,
-    );
-  }
+              ),
+            ],
+          );
+        },
+      );
+    },
+    icon: PhosphorIconsLight.textAa,
+    label: '选择字体',
+    btnHeight: _setBtnHeight,
+    btnWidth: 128,
+    mainAxisAlignment: MainAxisAlignment.center,
+    backgroundColor: Theme.of(context).colorScheme.primary,
+    overlayColor: Theme.of(context).colorScheme.surfaceContainer,
+    contentColor: Theme.of(context).colorScheme.onPrimary,
+  );
 }
 
 class _FontFamilyDialog extends StatelessWidget {
@@ -443,94 +551,71 @@ class _FontFamilyDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return _getFontFamilyDialog(context, _settingController.fontFamily.value, (
+      index,
+    ) {
+      _settingController.fontFamily.value = _fontsList[index];
+      _settingController.putCache();
+    });
+  }
+}
+
+List<CustomBtn<dynamic>> _getFontSizeList(void Function(int) fn) {
+  return List.generate(21, (index) => index + 16).map((i) {
     return CustomBtn(
-      fn: () {
-        showDialog(
-          barrierDismissible: true,
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text("选择字体"),
-              titleTextStyle: generalTextStyle(
-                ctx: context,
-                size: 'xl',
-                weight: FontWeight.w600,
-              ),
-
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(4)),
-              ),
-              backgroundColor: Theme.of(context).colorScheme.surface,
-
-              actionsAlignment: MainAxisAlignment.end,
-              actions: <Widget>[
-                SizedBox(
-                  width: context.width / 2,
-                  height: context.height / 2,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 8,
-                    children: [
-                      Text(
-                        "当前字体: ${_settingController.fontFamily.value}",
-                        style: generalTextStyle(ctx: context, size: 'md'),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: ListView.builder(
-                          itemCount: _fontsList.length,
-                          itemExtent: 36,
-                          cacheExtent: 36 * 1,
-                          itemBuilder: (context, index) {
-                            return TextButton(
-                              onPressed: () {
-                                _settingController.fontFamily.value =
-                                    _fontsList[index];
-                                _settingController.putCache();
-                                Navigator.pop(context);
-                              },
-                              style: TextButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              ),
-                              child: Container(
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  _fontsList[index],
-                                  style: generalTextStyle(
-                                    ctx: context,
-                                    size: 'md',
-                                    fontFamily: _fontsList[index],
-                                  ),
-                                  softWrap: false,
-                                  overflow: TextOverflow.fade,
-                                  maxLines: 1,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-      icon: PhosphorIconsLight.textAa,
-      label: '选择字体',
+      fn: () => fn(i),
+      btnWidth: btnW,
       btnHeight: _setBtnHeight,
-      btnWidth: 128,
+      label: i.toString(),
       mainAxisAlignment: MainAxisAlignment.center,
+      backgroundColor: Colors.transparent,
+    );
+  }).toList();
+}
+
+List<CustomBtn<dynamic>> _getFontWeightList(void Function(int) fn) {
+  return List.generate(9, (index) => index).map((i) {
+    return CustomBtn(
+      fn: () => fn(i),
+      btnWidth: btnW,
+      btnHeight: _setBtnHeight,
+      label: (i * 100 + 100).toString(),
+      mainAxisAlignment: MainAxisAlignment.center,
+      backgroundColor: Colors.transparent,
+    );
+  }).toList();
+}
+
+MenuAnchor _getMenuAnchorButton(
+  MenuController menuController,
+  BuildContext context,
+  String label,
+  List<Widget> menuChildren,
+) {
+  return MenuAnchor(
+    menuChildren: menuChildren,
+    controller: menuController,
+    consumeOutsideTap: true,
+    style: MenuStyle(
+      maximumSize: WidgetStatePropertyAll(Size.fromHeight(context.height / 2)),
+    ),
+    child: CustomBtn(
+      fn: () {
+        if (menuController.isOpen) {
+          menuController.close();
+        } else {
+          menuController.open();
+        }
+      },
+      label: label,
+      btnHeight: _setBtnHeight,
+      btnWidth: btnW,
       backgroundColor: Theme.of(context).colorScheme.primary,
       overlayColor: Theme.of(context).colorScheme.surfaceContainer,
       contentColor: Theme.of(context).colorScheme.onPrimary,
-    );
-  }
+      mainAxisAlignment: MainAxisAlignment.center,
+    ),
+  );
 }
 
 class _LrcFontSizeDropMenu extends StatelessWidget {
@@ -538,51 +623,17 @@ class _LrcFontSizeDropMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double btnW = 108;
-
     final menuController = MenuController();
-    final fontSizeList =
-        List.generate(21, (index) => index + 16).map((i) {
-          return CustomBtn(
-            fn: () {
-              _settingController.lrcFontSize.value = i;
-              _settingController.putCache(isSaveFolders: false);
-              menuController.close();
-            },
-            btnWidth: btnW,
-            btnHeight: _setBtnHeight,
-            label: i.toString(),
-            mainAxisAlignment: MainAxisAlignment.center,
-            backgroundColor: Colors.transparent,
-          );
-        }).toList();
-
-    return MenuAnchor(
-      menuChildren: fontSizeList,
-      controller: menuController,
-      consumeOutsideTap: true,
-      style: MenuStyle(
-        maximumSize: WidgetStatePropertyAll(
-          Size.fromHeight(context.height / 2),
-        ),
-      ),
-      child: Obx(
-        () => CustomBtn(
-          fn: () {
-            if (menuController.isOpen) {
-              menuController.close();
-            } else {
-              menuController.open();
-            }
-          },
-          label: '${_settingController.lrcFontSize.value}',
-          btnHeight: _setBtnHeight,
-          btnWidth: btnW,
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          overlayColor: Theme.of(context).colorScheme.surfaceContainer,
-          contentColor: Theme.of(context).colorScheme.onPrimary,
-          mainAxisAlignment: MainAxisAlignment.center,
-        ),
+    return Obx(
+      () => _getMenuAnchorButton(
+        menuController,
+        context,
+        '${_settingController.lrcFontSize.value}',
+        _getFontSizeList((i) {
+          _settingController.lrcFontSize.value = i;
+          _settingController.putCache(isSaveFolders: false);
+          menuController.close();
+        }),
       ),
     );
   }
@@ -593,52 +644,17 @@ class _LrcFontWeightDropMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double btnW = 108;
-
     final menuController = MenuController();
-    final fontSizeList =
-        List.generate(9, (index) => index).map((i) {
-          return CustomBtn(
-            fn: () {
-              _settingController.lrcFontWeight.value = i;
-              _settingController.putCache(isSaveFolders: false);
-              menuController.close();
-            },
-            btnWidth: btnW,
-            btnHeight: _setBtnHeight,
-            label: (i * 100 + 100).toString(),
-            mainAxisAlignment: MainAxisAlignment.center,
-            backgroundColor: Colors.transparent,
-          );
-        }).toList();
-
-    return MenuAnchor(
-      menuChildren: fontSizeList,
-      controller: menuController,
-      consumeOutsideTap: true,
-      style: MenuStyle(
-        maximumSize: WidgetStatePropertyAll(
-          Size.fromHeight(context.height / 2),
-        ),
-      ),
-      child: Obx(
-        () => CustomBtn(
-          fn: () {
-            if (menuController.isOpen) {
-              menuController.close();
-            } else {
-              menuController.open();
-            }
-          },
-          label:
-              (_settingController.lrcFontWeight.value * 100 + 100).toString(),
-          btnHeight: _setBtnHeight,
-          btnWidth: btnW,
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          overlayColor: Theme.of(context).colorScheme.surfaceContainer,
-          contentColor: Theme.of(context).colorScheme.onPrimary,
-          mainAxisAlignment: MainAxisAlignment.center,
-        ),
+    return Obx(
+      () => _getMenuAnchorButton(
+        menuController,
+        context,
+        (_settingController.lrcFontWeight.value * 100 + 100).toString(),
+        _getFontWeightList((i) {
+          _settingController.lrcFontWeight.value = i;
+          _settingController.putCache(isSaveFolders: false);
+          menuController.close();
+        }),
       ),
     );
   }
@@ -687,9 +703,10 @@ class _CheckVersion extends StatelessWidget {
                     .map((v) => int.parse(v))
                     .toList();
             if (latestVer[0] > localVer[0] ||
-                (latestVer[0] == localVer[0]&&latestVer[1] > localVer[1]) ||
-                (latestVer[0] == localVer[0]&&latestVer[1] == localVer[1]&&latestVer[2] > localVer[2]) )
-            {
+                (latestVer[0] == localVer[0] && latestVer[1] > localVer[1]) ||
+                (latestVer[0] == localVer[0] &&
+                    latestVer[1] == localVer[1] &&
+                    latestVer[2] > localVer[2])) {
               final repoInfo = _RepoInfo(
                 version: jsonData['tag_name'].toString(),
                 updatedTime: DateTime.parse(
@@ -818,6 +835,133 @@ class _CheckVersion extends StatelessWidget {
       overlayColor: Theme.of(context).colorScheme.surfaceContainer,
       contentColor: Theme.of(context).colorScheme.onPrimary,
     );
+  }
+}
+
+class _DesktopLrcFontSizeDropMenu extends StatelessWidget {
+  const _DesktopLrcFontSizeDropMenu();
+
+  @override
+  Widget build(BuildContext context) {
+    final menuController = MenuController();
+    return Obx(
+      () => _getMenuAnchorButton(
+        menuController,
+        context,
+        '${_desktopLyricsSettingController.fontSize.value}',
+        _getFontSizeList((i) {
+          _desktopLyricsSettingController.fontSize.value = i;
+          _desktopLyricsSettingController.setFontSize(size: i);
+          menuController.close();
+        }),
+      ),
+    );
+  }
+}
+
+class _DesktopLrcFontWeightDropMenu extends StatelessWidget {
+  const _DesktopLrcFontWeightDropMenu();
+
+  @override
+  Widget build(BuildContext context) {
+    final menuController = MenuController();
+    return Obx(
+      () => _getMenuAnchorButton(
+        menuController,
+        context,
+        '${_desktopLyricsSettingController.fontWeight.value * 100 + 100}',
+        _getFontWeightList((i) {
+          _desktopLyricsSettingController.fontWeight.value = i;
+          _desktopLyricsSettingController.setFontWeight(weight: i);
+          menuController.close();
+        }),
+      ),
+    );
+  }
+}
+
+class _DesktopLrcFontOpacityDropMenu extends StatelessWidget {
+  const _DesktopLrcFontOpacityDropMenu();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: SliderTheme(
+        data: SliderTheme.of(
+          context,
+        ).copyWith(showValueIndicator: ShowValueIndicator.always),
+        child: Obx(
+          () => Slider(
+            min: 0.0,
+            max: 1.0,
+            label: _desktopLyricsSettingController.fontOpacity.value
+                .toStringAsFixed(2),
+            value: _desktopLyricsSettingController.fontOpacity.value,
+
+            onChanged: (v) {
+              _desktopLyricsSettingController.fontOpacity.value = v;
+              _desktopLyricsSettingController.setFontOpacity(opacity: v);
+            },
+            onChangeEnd: (v) {
+              _desktopLyricsSettingController.setFontOpacity(opacity: v);
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopLyricsOverlayColorPicker extends StatelessWidget {
+  const _DesktopLyricsOverlayColorPicker();
+
+  @override
+  Widget build(BuildContext context) {
+    return _getColorPicker(
+      context,
+      _desktopLyricsSettingController.overlayColor.value,
+      (color) {
+        _desktopLyricsSettingController.overlayColor.value = color;
+        _desktopLyricsSettingController.setOverlayColor(color: color);
+      },
+      true
+    );
+  }
+}
+
+class _DesktopLyricsUnderColorPicker extends StatelessWidget {
+  const _DesktopLyricsUnderColorPicker();
+
+  @override
+  Widget build(BuildContext context) {
+    return _getColorPicker(
+      context,
+      _desktopLyricsSettingController.underColor.value,
+      (color) {
+        _desktopLyricsSettingController.underColor.value = color;
+        _desktopLyricsSettingController.setUnderColor(color: color);
+      },
+      true
+    );
+  }
+}
+
+class _DesktopLyricsFontFamilyDialog extends StatelessWidget {
+  const _DesktopLyricsFontFamilyDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(()=>_getFontFamilyDialog(
+      context,
+      _desktopLyricsSettingController.fontFamily.value,
+      (index) {
+        _desktopLyricsSettingController.fontFamily.value = _fontsList[index];
+        _desktopLyricsSettingController.setFontFamily(
+          family: _desktopLyricsSettingController.fontFamily.value,
+        );
+      },
+    ));
   }
 }
 
@@ -1091,6 +1235,80 @@ class Setting extends StatelessWidget {
                         ),
                       ],
                     ),
+                  ),
+
+                  const _SetDivider(title: '桌面歌词样式'),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        '字号',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      const _DesktopLrcFontSizeDropMenu(),
+                    ],
+                  ),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        '字重',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      const _DesktopLrcFontWeightDropMenu(),
+                    ],
+                  ),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        '透明度',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      const _DesktopLrcFontOpacityDropMenu(),
+                    ],
+                  ),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        '已播放颜色',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      const _DesktopLyricsOverlayColorPicker(),
+                    ],
+                  ),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        '未播放颜色',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      const _DesktopLyricsUnderColorPicker(),
+                    ],
+                  ),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        '歌词字体',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      const _DesktopLyricsFontFamilyDialog(),
+                    ],
                   ),
 
                   const _SetDivider(title: '关于'),
