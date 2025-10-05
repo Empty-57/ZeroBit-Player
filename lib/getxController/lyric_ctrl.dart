@@ -83,7 +83,7 @@ class LyricController extends GetxController {
     // 增量计算:  total/(duration/loopTime)
     // 百分比: total=100 字持续时间: duration(Ms) 轮询间隔: loopTime=20(Ms)
     ever(currentWordIndex, (_) {
-      if (_currentWord == null && _currentWord!.duration <= 0) {
+      if (_currentWord == null || _currentWord!.duration <= 0) {
         _wordProgressIncrement = 0;
         return;
       }

@@ -20,12 +20,12 @@ class DesktopLyricsSever extends GetxController {
   final SettingController _settingController = Get.find<SettingController>();
   final _wsUrl = Uri.parse('ws://127.0.0.1:7070');
 
-  late HttpServer? _server;
-  late IOWebSocketChannel? _channel;
-  late StreamSubscription? _listen;
+  HttpServer? _server;
+  IOWebSocketChannel? _channel;
+  StreamSubscription? _listen;
 
-  late Worker _lineWorker;
-  late Worker _ms20Worker;
+  Worker? _lineWorker;
+  Worker? _ms20Worker;
 
   DesktopLyricsSettingController get _desktopLyricsSettingController =>
       Get.find<DesktopLyricsSettingController>();
@@ -50,15 +50,26 @@ class DesktopLyricsSever extends GetxController {
     );
   }
 
-  void _lineWorkerFn() {
+  void lineWorkerFn() {
+    if (_channel == null) {
+      return;
+    }
     final lyrics = _audioController.currentLyrics.value?.parsedLrc;
     int lineIndex = _lyricController.currentLineIndex.value;
     final type = _audioController.currentLyrics.value?.type;
     if (lyrics == null || type == null) {
+      try {
+        final jsonData = jsonEncode(
+          LyricsIOModel.sendData('暂无歌词', '', LyricFormat.lrc),
+        );
+        _add(jsonData);
+      } catch (_) {}
       return;
     }
     if (lineIndex < 0 || lineIndex >= lyrics.length) {
       lineIndex = 0;
+      _lyricController.currentWordIndex.value = 0;
+      _lyricController.wordProgress.value = 0.0;
     }
 
     final currLyrics = lyrics[lineIndex].lyricText;
@@ -69,7 +80,7 @@ class DesktopLyricsSever extends GetxController {
         final jsonData = jsonEncode(
           LyricsIOModel.sendData(currLyrics, translate, type),
         );
-        add(jsonData);
+        _add(jsonData);
       } catch (_) {}
     } else {
       final line =
@@ -81,7 +92,7 @@ class DesktopLyricsSever extends GetxController {
         final jsonData = jsonEncode(
           LyricsIOModel.sendData(line, translate, type),
         );
-        add(jsonData);
+        _add(jsonData);
       } catch (_) {}
     }
   }
@@ -90,7 +101,7 @@ class DesktopLyricsSever extends GetxController {
     _lineWorker = everAll(
       [_lyricController.currentLineIndex, _audioController.currentLyrics],
       (_) {
-        _lineWorkerFn();
+        lineWorkerFn();
       },
     );
   }
@@ -103,7 +114,7 @@ class DesktopLyricsSever extends GetxController {
           _lyricController.wordProgress.value,
         ),
       );
-      add(jsonData);
+      _add(jsonData);
     } catch (_) {}
   }
 
@@ -133,7 +144,7 @@ class DesktopLyricsSever extends GetxController {
             _channel = IOWebSocketChannel(socket);
             _listen = _channel!.stream.listen((message) {
               if (message == 'ok') {
-                _lineWorkerFn();
+                lineWorkerFn();
                 _ms20WorkerFn();
                 _refreshStatus();
                 sendCmd(
@@ -178,7 +189,6 @@ class DesktopLyricsSever extends GetxController {
         dir,
         r'desktop_lyrics\zerobit_player_desktop_lyrics.exe',
       );
-      debugPrint(fullPath);
       await Process.start(fullPath, []);
     } catch (e) {
       debugPrint(e.toString());
@@ -235,7 +245,7 @@ class DesktopLyricsSever extends GetxController {
     } catch (_) {}
   }
 
-  void add(dynamic msg) {
+  void _add(dynamic msg) {
     if (_channel == null) {
       return;
     }
@@ -250,15 +260,23 @@ class DesktopLyricsSever extends GetxController {
   void sendCmd({required String cmdType, required dynamic cmdData}) {
     try {
       final jsonData = jsonEncode(LyricsIOModel.sendCmd(cmdType, cmdData));
-      add(jsonData);
+      _add(jsonData);
     } catch (_) {}
   }
 
-  void close() async {
+  Future<void> close() async {
     try {
-      sendCmd(cmdType: SeverCmdType.shutdown,cmdData: null);
-      _lineWorker.dispose();
-      _ms20Worker.dispose();
+      sendCmd(cmdType: SeverCmdType.shutdown, cmdData: null);
+
+      if (_lineWorker != null) {
+        _lineWorker!.dispose();
+        _lineWorker = null;
+      }
+
+      if (_ms20Worker != null) {
+        _ms20Worker!.dispose();
+        _ms20Worker = null;
+      }
 
       if (_listen != null) {
         await _listen!.cancel();

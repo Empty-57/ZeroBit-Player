@@ -1,5 +1,5 @@
 use image::{load_from_memory, ImageFormat};
-use lofty::config::{ParseOptions, WriteOptions};
+use lofty::config::{ParseOptions, ParsingMode, WriteOptions};
 use lofty::error::{ErrorKind as LoftyErrorKind, LoftyError};
 use lofty::file::{TaggedFile, TaggedFileExt};
 use lofty::picture::{MimeType, Picture, PictureType};
@@ -98,9 +98,30 @@ impl AudioMetadata {
             permissions.set_readonly(false);
             fs::set_permissions(path, permissions).expect("File permissions cannot be modified");
         }
-
-        let mut tagged_file = match read_from_path(path_) {
-            Ok(v) => v,
+        
+        let mut tagged_file = match Probe::open(path_) {
+            Ok(v) => match v
+                .options(
+                    ParseOptions::new()
+                        .parsing_mode(ParsingMode::Relaxed)
+                        .read_cover_art(true)
+                        .read_properties(true)
+                        .read_tags(true),
+                )
+                .guess_file_type()
+            {
+                Ok(f) => match f.read() { 
+                    Ok(v) => v,
+                    Err(err) => {
+                        println!("{}: {:?}", err_msg, err.kind());
+                    return None;
+                    }
+                } ,
+                Err(err) => {
+                    println!("{}: {:?}", err_msg, err.kind());
+                    return None;
+                }
+            },
             Err(err) => {
                 println!("{}: {:?}", err_msg, err.kind());
                 return None;
@@ -125,15 +146,13 @@ impl AudioMetadata {
 
     fn render_tags(path: String) -> Self {
         let path_ = Path::new(&path);
-        let tagged_file = match Probe::open(path_) {
-            Ok(v) => match v
-                .options(
-                    ParseOptions::new()
+        let options=ParseOptions::new()
+                        .parsing_mode(ParsingMode::Relaxed)
                         .read_cover_art(false)
                         .read_properties(true)
-                        .read_tags(true),
-                )
-                .read()
+                        .read_tags(true);
+        let tagged_file = match Probe::open(path_) {
+            Ok(v) => match v.options(options).read()
             {
                 Ok(f) => f,
                 Err(err) => {
@@ -208,6 +227,7 @@ impl AudioMetadata {
         let path_ = Path::new(&path);
 
         let options = ParseOptions::new()
+            .parsing_mode(ParsingMode::Relaxed)
             .read_cover_art(true)
             .read_properties(false)
             .read_tags(true);
@@ -281,15 +301,13 @@ impl AudioMetadata {
 
     fn get_embedded_lyric(path: String) -> Option<String> {
         let path_ = Path::new(&path);
-        let tagged_file = match Probe::open(path_) {
-            Ok(v) => match v
-                .options(
-                    ParseOptions::new()
+        let options=ParseOptions::new()
+                        .parsing_mode(ParsingMode::Relaxed)
                         .read_cover_art(false)
                         .read_properties(false)
-                        .read_tags(true),
-                )
-                .read()
+                        .read_tags(true);
+        let tagged_file = match Probe::open(path_) {
+            Ok(v) => match v.options(options).read()
             {
                 Ok(f) => f,
                 Err(err) => {

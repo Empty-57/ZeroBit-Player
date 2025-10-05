@@ -7,6 +7,7 @@ import 'package:text_scroll/text_scroll.dart';
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/components/blur_background.dart';
 import 'package:zerobit_player/components/lyrics_render.dart';
+import 'package:zerobit_player/tools/func_extension.dart';
 import 'package:zerobit_player/tools/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import 'package:zerobit_player/tools/lrcTool/save_lyric.dart';
@@ -777,8 +778,7 @@ class LrcView extends StatelessWidget {
                             }else{
                               _desktopLyricsSever.close();
                             }
-
-                          },
+                          }.throttle(),
                         ),),
 
                         //以上： 后续功能

@@ -38,13 +38,8 @@ class _WindowListener extends GetxController with WindowListener {
   @override
   void onClose() {
     windowManager.removeListener(this);
-    _desktopLyricsSever.close();
     super.onClose();
   }
-
-  void windowClose() async => await windowManager.close();
-
-  void windowMinimize() async => await windowManager.minimize();
 
   void toggleMaximize() async {
     if (await windowManager.isMaximized()) {
@@ -359,7 +354,9 @@ class WindowControllerBar extends StatelessWidget {
 
           _ControllerButton(
             icon: PhosphorIconsLight.minus,
-            fn: windowListener.windowMinimize,
+            fn: ()async{
+              await windowManager.minimize();
+            },
             tooltip: "最小化",
           ),
 
@@ -377,8 +374,9 @@ class WindowControllerBar extends StatelessWidget {
           _ControllerButton(
             icon: PhosphorIconsLight.x,
             hoverColor: Colors.red,
-            fn: () {
-              windowListener.windowClose();
+            fn: () async{
+              await _desktopLyricsSever.close();
+              await windowManager.close();
             },
             tooltip: "退出",
           ),

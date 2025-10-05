@@ -173,7 +173,7 @@ class AudioController extends GetxController {
       currentMs100.value = 0;
       currentSec.value = 0;
       try {
-        _syncInfo();
+        await _syncInfo();
       } catch (e) {
         debugPrint(e.toString());
         _isSyncing = false;
@@ -218,13 +218,13 @@ class AudioController extends GetxController {
 
   }
 
-  void _syncInfo() async {
+  Future<void> _syncInfo() async {
     if (_isSyncing) {
       return;
     }
 
     if (currentMetadata.value.path.isEmpty) {
-      windowManager.setTitle('ZeroBit Player');
+      await windowManager.setTitle('ZeroBit Player');
       return;
     }
     _isSyncing = true;
@@ -273,7 +273,7 @@ class AudioController extends GetxController {
           kTransparentImage;
     }
 
-    windowManager.setTitle(title + artist);
+    await windowManager.setTitle(title + artist);
     await smtcUpdateMetadata(
       title: currentMetadata.value.title,
       artist: currentMetadata.value.artist,
