@@ -32,6 +32,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RustStreamSink<double> dco_decode_StreamSink_f_64_Sse(dynamic raw);
 
   @protected
+  RustStreamSink<SMTCControlEvent> dco_decode_StreamSink_smtc_control_event_Sse(
+    dynamic raw,
+  );
+
+  @protected
   RustStreamSink<int> dco_decode_StreamSink_u_32_Sse(dynamic raw);
 
   @protected
@@ -92,6 +97,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List? dco_decode_opt_list_prim_u_8_strict(dynamic raw);
 
   @protected
+  SMTCControlEvent dco_decode_smtc_control_event(dynamic raw);
+
+  @protected
+  SMTCState dco_decode_smtc_state(dynamic raw);
+
+  @protected
   int dco_decode_u_32(dynamic raw);
 
   @protected
@@ -105,6 +116,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RustStreamSink<double> sse_decode_StreamSink_f_64_Sse(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  RustStreamSink<SMTCControlEvent> sse_decode_StreamSink_smtc_control_event_Sse(
     SseDeserializer deserializer,
   );
 
@@ -175,6 +191,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List? sse_decode_opt_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
+  SMTCControlEvent sse_decode_smtc_control_event(SseDeserializer deserializer);
+
+  @protected
+  SMTCState sse_decode_smtc_state(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_u_32(SseDeserializer deserializer);
 
   @protected
@@ -192,6 +214,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_StreamSink_f_64_Sse(
     RustStreamSink<double> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_StreamSink_smtc_control_event_Sse(
+    RustStreamSink<SMTCControlEvent> self,
     SseSerializer serializer,
   );
 
@@ -281,6 +309,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     Uint8List? self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_smtc_control_event(
+    SMTCControlEvent self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_smtc_state(SMTCState self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_32(int self, SseSerializer serializer);

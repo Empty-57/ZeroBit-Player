@@ -1311,6 +1311,35 @@ class Setting extends StatelessWidget {
                     ],
                   ),
 
+                  Tooltip(
+                    message: '若开启，桌面歌词窗口将不接受任何鼠标事件',
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        Text(
+                          '是否忽略鼠标事件',
+                          style: generalTextStyle(ctx: context, size: 'lg'),
+                        ),
+                        Material(
+                          color: Colors.transparent,
+                          child: Obx(
+                            () => Switch(
+                              value: _desktopLyricsSettingController.isIgnoreMouseEvents.value,
+                              trackColor: switchTrackColor,
+                              thumbColor: WidgetStatePropertyAll(
+                                Theme.of(context).colorScheme.onPrimary,
+                              ),
+                              onChanged: (bool value) {
+                                _desktopLyricsSettingController.setIgnoreMouseEvents(isIgnore: value);
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                   const _SetDivider(title: '关于'),
 
                   Row(

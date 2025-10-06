@@ -57,7 +57,7 @@ class DesktopLyricsSever extends GetxController {
     final lyrics = _audioController.currentLyrics.value?.parsedLrc;
     int lineIndex = _lyricController.currentLineIndex.value;
     final type = _audioController.currentLyrics.value?.type;
-    if (lyrics == null || type == null) {
+    if (lyrics == null || lyrics.isEmpty || type == null) {
       try {
         final jsonData = jsonEncode(
           LyricsIOModel.sendData('暂无歌词', '', LyricFormat.lrc),
@@ -164,6 +164,7 @@ class DesktopLyricsSever extends GetxController {
                     'isLock': _desktopLyricsSettingController.isLock.value,
                     'dx': _desktopLyricsSettingController.windowDx.value,
                     'dy': _desktopLyricsSettingController.windowDy.value,
+                    'isIgnoreMouseEvents':_desktopLyricsSettingController.isIgnoreMouseEvents.value,
                   },
                 );
               }

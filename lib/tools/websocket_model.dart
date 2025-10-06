@@ -14,6 +14,7 @@ abstract class SeverCmdType {
   static const setUnderColor = 'setUnderColor';
   static const setFontOpacity = 'setFontOpacity';
   static const putConfig = 'putConfig';
+  static const setIgnoreMouseEvents = 'setIgnoreMouseEvents';
 }
 
 abstract class ClientCmdType {

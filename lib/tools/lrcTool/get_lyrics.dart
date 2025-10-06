@@ -116,6 +116,13 @@ Future<_LyricModel?> _getLyrics({String? filePath}) async {
   return null;
 }
 
+bool _isLrc(String text) {
+  if (text.trim().isEmpty) return false;
+  final reg = RegExp(r'\[(\d{2}):(\d{2}\.\d{2,3})](.*?)(\r?\n|$)');
+  if (reg.hasMatch(text)) return true;
+  return false;
+}
+
 /// 主入口，获取已解析的歌词及翻译
 Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
   if (filePath == null || filePath.isEmpty) return null;
@@ -153,7 +160,16 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
           type: type,
         );
       }
-    } catch (_) {}
+    } catch (_) {
+      if(_isLrc(embeddedLyrics)){
+        return ParsedLyricModel(
+          parsedLrc: parseLrc(
+            lyricData: embeddedLyrics,
+          ),
+          type: LyricFormat.lrc,
+        );
+      }
+    }
 
     return null;
   }

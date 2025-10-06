@@ -58,14 +58,27 @@ pub fn init_smtc() -> Result<(), String> {
     Ok(())
 }
 
+#[flutter_rust_bridge::frb]
+pub enum SMTCControlEvent {
+    Play,
+    Pause,
+    Previous,
+    Next,
+    Unknown,
+}
+
+#[flutter_rust_bridge::frb]
+pub enum SMTCState {
+    Paused,
+    Playing,
+}
+
 // enum AudioState { stop, playing, pause }
 #[flutter_rust_bridge::frb]
-pub fn smtc_update_state(state: u32) -> Result<(), String> {
+pub fn smtc_update_state(state: SMTCState) -> Result<(), String> {
     let state = match state {
-        0 => MediaPlaybackStatus::Stopped,
-        1 => MediaPlaybackStatus::Playing,
-        2 => MediaPlaybackStatus::Paused,
-        _ => MediaPlaybackStatus::Stopped,
+        SMTCState::Playing => MediaPlaybackStatus::Playing,
+        SMTCState::Paused => MediaPlaybackStatus::Paused,
     };
     SMTC.lock()
         .unwrap()
@@ -73,6 +86,7 @@ pub fn smtc_update_state(state: u32) -> Result<(), String> {
         .unwrap()
         .SetPlaybackStatus(state)
         .map_err(|e| e.to_string())?;
+    SMTC.lock().unwrap().as_ref().unwrap().DisplayUpdater().map_err(|e|e.to_string())?.Update().map_err(|e|e.to_string()).unwrap_or(());
     Ok(())
 }
 
@@ -113,7 +127,7 @@ pub fn smtc_update_metadata(
 }
 
 #[flutter_rust_bridge::frb]
-pub fn smtc_control_events(sink: StreamSink<u32>) {
+pub fn smtc_control_events(sink: StreamSink<SMTCControlEvent>) {
     SMTC.lock()
         .unwrap()
         .as_ref()
@@ -123,13 +137,15 @@ pub fn smtc_control_events(sink: StreamSink<u32>) {
             SystemMediaTransportControlsButtonPressedEventArgs,
         >::new(move |_, event| {
             let event = match event.as_ref().unwrap().Button().unwrap() {
-                SystemMediaTransportControlsButton::Play => 0,
-                SystemMediaTransportControlsButton::Pause => 1,
-                SystemMediaTransportControlsButton::Next => 2,
-                SystemMediaTransportControlsButton::Previous => 3,
-                _ => 1,
+                SystemMediaTransportControlsButton::Play => SMTCControlEvent::Play,
+                SystemMediaTransportControlsButton::Pause => SMTCControlEvent::Pause,
+                SystemMediaTransportControlsButton::Next => SMTCControlEvent::Next,
+                SystemMediaTransportControlsButton::Previous => SMTCControlEvent::Previous,
+                _=> SMTCControlEvent::Unknown,
             };
-            sink.add(event).unwrap();
+            sink.add(event).unwrap_or_else(|e| {
+            eprintln!("SMTC Event ERR: {:?}", e);
+        });
             Ok(())
         }))
         .unwrap();

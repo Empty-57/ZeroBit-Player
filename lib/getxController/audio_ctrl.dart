@@ -197,8 +197,10 @@ class AudioController extends GetxController {
                   .lastAudioMetadataKey]
               as MusicCache;
       currentPath.value = currentMetadata.value.path;
+      await setVolume(vol: 0.0);
       await audioPlay(metadata: currentMetadata.value); // 设置流
       await audioPause();
+      await setVolume(vol: _settingController.volume.value);
 
       // sync_cache 已经先执行了一次
       // 此操作放在这个位置的原因： 需要等待 main.dart 中的 await syncCache()先执行完 ， 因为上面两行await任务排在await syncCache();之后
@@ -333,7 +335,7 @@ class AudioController extends GetxController {
     currentSec.value = 0.0;
     try {
       currentState.value = AudioState.playing;
-      await smtcUpdateState(state: currentState.value.index);
+      await smtcUpdateState(state: SMTCState.playing);
       await playFile(path: metadata.path);
 
       if (currentSpeed.value != 1.0) {
@@ -366,7 +368,7 @@ class AudioController extends GetxController {
     }
     currentState.value = AudioState.playing;
     try {
-      await smtcUpdateState(state: currentState.value.index);
+      await smtcUpdateState(state: SMTCState.playing);
       await resume();
     } catch (e) {
       showSnackBar(title: "ERR", msg: e.toString());
@@ -381,7 +383,7 @@ class AudioController extends GetxController {
     }
     currentState.value = AudioState.pause;
     try {
-      await smtcUpdateState(state: currentState.value.index);
+      await smtcUpdateState(state: SMTCState.paused);
       await pause();
     } catch (e) {
       showSnackBar(title: "ERR", msg: e.toString());
@@ -392,7 +394,7 @@ class AudioController extends GetxController {
     currentState.value = AudioState.stop;
     currentIndex.value = -1;
     try {
-      await smtcUpdateState(state: currentState.value.index);
+      await smtcUpdateState(state: SMTCState.paused);
       await stop();
     } catch (e) {
       showSnackBar(title: "ERR", msg: e.toString());
@@ -410,7 +412,7 @@ class AudioController extends GetxController {
       currentState.value = AudioState.pause;
     }
     try {
-      await smtcUpdateState(state: currentState.value.index);
+      await smtcUpdateState(state: currentState.value == AudioState.playing? SMTCState.playing: SMTCState.paused);
       await toggle();
     } catch (e) {
       showSnackBar(title: "ERR", msg: e.toString());

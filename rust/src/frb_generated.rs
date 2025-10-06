@@ -983,10 +983,10 @@ fn wire__crate__api__smtc__smtc_control_events_impl(
             };
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_sink =
-                <StreamSink<u32, flutter_rust_bridge::for_generated::SseCodec>>::sse_decode(
-                    &mut deserializer,
-                );
+            let api_sink = <StreamSink<
+                crate::api::smtc::SMTCControlEvent,
+                flutter_rust_bridge::for_generated::SseCodec,
+            >>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, ()>((move || {
@@ -1064,7 +1064,7 @@ fn wire__crate__api__smtc__smtc_update_state_impl(
             };
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_state = <u32>::sse_decode(&mut deserializer);
+            let api_state = <crate::api::smtc::SMTCState>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, String>((move || {
@@ -1151,6 +1151,16 @@ impl SseDecode for flutter_rust_bridge::for_generated::anyhow::Error {
 }
 
 impl SseDecode for StreamSink<f64, flutter_rust_bridge::for_generated::SseCodec> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <String>::sse_decode(deserializer);
+        return StreamSink::deserialize(inner);
+    }
+}
+
+impl SseDecode
+    for StreamSink<crate::api::smtc::SMTCControlEvent, flutter_rust_bridge::for_generated::SseCodec>
+{
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut inner = <String>::sse_decode(deserializer);
@@ -1360,6 +1370,33 @@ impl SseDecode for Option<Vec<u8>> {
     }
 }
 
+impl SseDecode for crate::api::smtc::SMTCControlEvent {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::smtc::SMTCControlEvent::Play,
+            1 => crate::api::smtc::SMTCControlEvent::Pause,
+            2 => crate::api::smtc::SMTCControlEvent::Previous,
+            3 => crate::api::smtc::SMTCControlEvent::Next,
+            4 => crate::api::smtc::SMTCControlEvent::Unknown,
+            _ => unreachable!("Invalid variant for SMTCControlEvent: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::smtc::SMTCState {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::smtc::SMTCState::Paused,
+            1 => crate::api::smtc::SMTCState::Playing,
+            _ => unreachable!("Invalid variant for SMTCState: {}", inner),
+        };
+    }
+}
+
 impl SseDecode for u32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1559,6 +1596,48 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::music_tag_tool::EditableMetad
         self
     }
 }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::smtc::SMTCControlEvent {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Play => 0.into_dart(),
+            Self::Pause => 1.into_dart(),
+            Self::Previous => 2.into_dart(),
+            Self::Next => 3.into_dart(),
+            Self::Unknown => 4.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::smtc::SMTCControlEvent
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::smtc::SMTCControlEvent>
+    for crate::api::smtc::SMTCControlEvent
+{
+    fn into_into_dart(self) -> crate::api::smtc::SMTCControlEvent {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::smtc::SMTCState {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Paused => 0.into_dart(),
+            Self::Playing => 1.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::smtc::SMTCState {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::smtc::SMTCState>
+    for crate::api::smtc::SMTCState
+{
+    fn into_into_dart(self) -> crate::api::smtc::SMTCState {
+        self
+    }
+}
 
 impl SseEncode for flutter_rust_bridge::for_generated::anyhow::Error {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -1568,6 +1647,15 @@ impl SseEncode for flutter_rust_bridge::for_generated::anyhow::Error {
 }
 
 impl SseEncode for StreamSink<f64, flutter_rust_bridge::for_generated::SseCodec> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        unimplemented!("")
+    }
+}
+
+impl SseEncode
+    for StreamSink<crate::api::smtc::SMTCControlEvent, flutter_rust_bridge::for_generated::SseCodec>
+{
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         unimplemented!("")
@@ -1730,6 +1818,41 @@ impl SseEncode for Option<Vec<u8>> {
         if let Some(value) = self {
             <Vec<u8>>::sse_encode(value, serializer);
         }
+    }
+}
+
+impl SseEncode for crate::api::smtc::SMTCControlEvent {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::smtc::SMTCControlEvent::Play => 0,
+                crate::api::smtc::SMTCControlEvent::Pause => 1,
+                crate::api::smtc::SMTCControlEvent::Previous => 2,
+                crate::api::smtc::SMTCControlEvent::Next => 3,
+                crate::api::smtc::SMTCControlEvent::Unknown => 4,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::smtc::SMTCState {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::smtc::SMTCState::Paused => 0,
+                crate::api::smtc::SMTCState::Playing => 1,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
     }
 }
 

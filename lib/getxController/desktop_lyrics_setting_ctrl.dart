@@ -17,8 +17,9 @@ class DesktopLyricsSettingController extends GetxController {
   final isLock = false.obs;
   final windowDx = 50.0.obs;
   final windowDy = 50.0.obs;
+  final isIgnoreMouseEvents = false.obs;
 
-  late SharedPreferences? prefs;
+  SharedPreferences? prefs;
 
   static const int fontSizeMin = 16;
   static const int fontSizeMax = 36;
@@ -36,8 +37,9 @@ class DesktopLyricsSettingController extends GetxController {
     underColor.value = prefs!.getInt('underColor') ?? 0xff0000ff;
     fontOpacity.value = prefs!.getDouble('fontOpacity') ?? 1.0;
     isLock.value = prefs!.getBool('isLock') ?? false;
-    windowDx.value = prefs!.getDouble('dx') ?? 50;
-    windowDy.value = prefs!.getDouble('dy') ?? 50;
+    windowDx.value = prefs!.getDouble('dx') ?? 50.0;
+    windowDy.value = prefs!.getDouble('dy') ?? 50.0;
+    isIgnoreMouseEvents.value=prefs!.getBool('isIgnoreMouseEvents')??false;
   }
 
   void setFontSize({required int size}) {
@@ -134,5 +136,17 @@ class DesktopLyricsSettingController extends GetxController {
       return;
     }
     prefs!.setDouble('dy', dy);
+  }
+
+  void setIgnoreMouseEvents({required bool isIgnore}){
+    isIgnoreMouseEvents.value=isIgnore;
+    _desktopLyricsSever.sendCmd(
+      cmdType: SeverCmdType.setIgnoreMouseEvents,
+      cmdData: isIgnoreMouseEvents.value,
+    );
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setBool('isIgnoreMouseEvents', isIgnore);
   }
 }

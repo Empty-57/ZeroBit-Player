@@ -57,8 +57,6 @@ import 'theme_manager.dart';
 int countMs100 = 0;
 int countSec = 0;
 
-enum AudioAction { play, pause, next, previous }
-
 void main() async {
   // ProcessSignal.sigint.watch().listen((signal) async{
   //   debugPrint("Received SIGTERM: process is exiting.");
@@ -130,10 +128,10 @@ void main() async {
 
   final lastSize =
         settingController.lastWindowInfo[SettingController.lastWindowSizeKey]
-            as List<double>?;
+            as List<num>?;
     if (lastSize != null && lastSize.isNotEmpty) {
-      w=lastSize[SettingController.lastWindowInfoWidthAndDx];
-      h=lastSize[SettingController.lastWindowInfoHeightAndDy];
+      w=lastSize[SettingController.lastWindowInfoWidthAndDx].toDouble();
+      h=lastSize[SettingController.lastWindowInfoHeightAndDy].toDouble();
     }
 
   WindowOptions windowOptions = WindowOptions(
@@ -148,12 +146,12 @@ void main() async {
     windowManager.setHasShadow(true);
     final lastPosition =
         settingController.lastWindowInfo[SettingController.lastWindowPositonKey]
-            as List<double>?;
+            as List<num>?;
     if (lastPosition != null && lastPosition.isNotEmpty) {
       await windowManager.setPosition(
         Offset(
-          lastPosition[SettingController.lastWindowInfoWidthAndDx],
-          lastPosition[SettingController.lastWindowInfoHeightAndDy],
+          lastPosition[SettingController.lastWindowInfoWidthAndDx].toDouble(),
+          lastPosition[SettingController.lastWindowInfoHeightAndDy].toDouble(),
         ),
       );
     }
@@ -208,17 +206,24 @@ void main() async {
   }
 
   try {
-    smtcControlEvents().listen((data) {
-      if (data == AudioAction.play.index || data == AudioAction.pause.index) {
-        audioController.audioToggle.throttle(ms: 300)();
-      }
+    smtcControlEvents().listen((event) {
 
-      if (data == AudioAction.next.index) {
-        audioController.audioToNext.throttle(ms: 500)();
-      }
+      switch(event){
+        case SMTCControlEvent.play:
+          audioController.audioResume.throttle(ms: 300)();
+          break;
+        case SMTCControlEvent.pause:
+          audioController.audioPause.throttle(ms: 300)();
+          break;
+        case SMTCControlEvent.next:
+          audioController.audioToNext.throttle(ms: 500)();
+          break;
+        case SMTCControlEvent.previous:
+          audioController.audioToPrevious.throttle(ms: 500)();
+          break;
+        case SMTCControlEvent.unknown:
+          break;
 
-      if (data == AudioAction.previous.index) {
-        audioController.audioToPrevious.throttle(ms: 500)();
       }
     });
   } catch (e) {

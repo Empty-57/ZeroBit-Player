@@ -111,8 +111,8 @@ class SettingController extends GetxController {
   static const lastWindowInfoWidthAndDx = 0;
   static const lastWindowInfoHeightAndDy = 1;
   final lastWindowInfo = <int, Object>{
-    lastWindowSizeKey: [1200, 800],
-    lastWindowPositonKey: [50, 50],
+    lastWindowSizeKey: <double>[1200.0, 800.0],
+    lastWindowPositonKey: <double>[50.0, 50.0],
     lastWindowIsMaximizedKey: false,
   };
 

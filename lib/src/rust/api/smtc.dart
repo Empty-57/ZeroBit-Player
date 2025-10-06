@@ -8,7 +8,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 Future<void> initSmtc() => RustLib.instance.api.crateApiSmtcInitSmtc();
 
-Future<void> smtcUpdateState({required int state}) =>
+Future<void> smtcUpdateState({required SMTCState state}) =>
     RustLib.instance.api.crateApiSmtcSmtcUpdateState(state: state);
 
 Future<void> smtcUpdateMetadata({
@@ -23,7 +23,11 @@ Future<void> smtcUpdateMetadata({
   coverSrc: coverSrc,
 );
 
-Stream<int> smtcControlEvents() =>
+Stream<SMTCControlEvent> smtcControlEvents() =>
     RustLib.instance.api.crateApiSmtcSmtcControlEvents();
 
 Future<void> smtcClear() => RustLib.instance.api.crateApiSmtcSmtcClear();
+
+enum SMTCControlEvent { play, pause, previous, next, unknown }
+
+enum SMTCState { paused, playing }

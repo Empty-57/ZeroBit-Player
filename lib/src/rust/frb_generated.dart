@@ -147,7 +147,7 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiSmtcSmtcClear();
 
-  Stream<int> crateApiSmtcSmtcControlEvents();
+  Stream<SMTCControlEvent> crateApiSmtcSmtcControlEvents();
 
   Future<void> crateApiSmtcSmtcUpdateMetadata({
     required String title,
@@ -156,7 +156,7 @@ abstract class RustLibApi extends BaseApi {
     required List<int> coverSrc,
   });
 
-  Future<void> crateApiSmtcSmtcUpdateState({required int state});
+  Future<void> crateApiSmtcSmtcUpdateState({required SMTCState state});
 
   Future<void> crateApiBassStop();
 
@@ -956,14 +956,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "smtc_clear", argNames: []);
 
   @override
-  Stream<int> crateApiSmtcSmtcControlEvents() {
-    final sink = RustStreamSink<int>();
+  Stream<SMTCControlEvent> crateApiSmtcSmtcControlEvents() {
+    final sink = RustStreamSink<SMTCControlEvent>();
     unawaited(
       handler.executeNormal(
         NormalTask(
           callFfi: (port_) {
             final serializer = SseSerializer(generalizedFrbRustBinding);
-            sse_encode_StreamSink_u_32_Sse(sink, serializer);
+            sse_encode_StreamSink_smtc_control_event_Sse(sink, serializer);
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
@@ -1027,12 +1027,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<void> crateApiSmtcSmtcUpdateState({required int state}) {
+  Future<void> crateApiSmtcSmtcUpdateState({required SMTCState state}) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_u_32(state, serializer);
+          sse_encode_smtc_state(state, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -1116,6 +1116,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   RustStreamSink<double> dco_decode_StreamSink_f_64_Sse(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    throw UnimplementedError();
+  }
+
+  @protected
+  RustStreamSink<SMTCControlEvent> dco_decode_StreamSink_smtc_control_event_Sse(
+    dynamic raw,
+  ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     throw UnimplementedError();
   }
@@ -1280,6 +1288,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  SMTCControlEvent dco_decode_smtc_control_event(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return SMTCControlEvent.values[raw as int];
+  }
+
+  @protected
+  SMTCState dco_decode_smtc_state(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return SMTCState.values[raw as int];
+  }
+
+  @protected
   int dco_decode_u_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
@@ -1306,6 +1326,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   RustStreamSink<double> sse_decode_StreamSink_f_64_Sse(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    throw UnimplementedError('Unreachable ()');
+  }
+
+  @protected
+  RustStreamSink<SMTCControlEvent> sse_decode_StreamSink_smtc_control_event_Sse(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -1519,6 +1547,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  SMTCControlEvent sse_decode_smtc_control_event(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return SMTCControlEvent.values[inner];
+  }
+
+  @protected
+  SMTCState sse_decode_smtc_state(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return SMTCState.values[inner];
+  }
+
+  @protected
   int sse_decode_u_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getUint32();
@@ -1554,6 +1596,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       self.setupAndSerialize(
         codec: SseCodec(
           decodeSuccessData: sse_decode_f_64,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+      ),
+      serializer,
+    );
+  }
+
+  @protected
+  void sse_encode_StreamSink_smtc_control_event_Sse(
+    RustStreamSink<SMTCControlEvent> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(
+      self.setupAndSerialize(
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_smtc_control_event,
           decodeErrorData: sse_decode_AnyhowException,
         ),
       ),
@@ -1760,6 +1819,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     if (self != null) {
       sse_encode_list_prim_u_8_strict(self, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_smtc_control_event(
+    SMTCControlEvent self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_smtc_state(SMTCState self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected
