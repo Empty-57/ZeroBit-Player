@@ -17,7 +17,11 @@ const Set<String> _supportedExts = {
   '.aif',
   '.flac',
   '.mp3',
-  '.mp4', '.m4a', '.m4b', '.m4p', '.m4v',
+  '.mp4',
+  '.m4a',
+  '.m4b',
+  '.m4p',
+  '.m4v',
   '.mpc',
   '.opus',
   '.ogg',
@@ -47,12 +51,12 @@ Future<Set<String>> scanAudioPaths(List<String> folders) async {
 
 Future<Map<String, MusicCache>> _fetchMetadataBatch(
   Set<String> newPaths,
-  ValueSetter<String> onScanProgress,
+  MusicCacheController ctrl,
 ) async {
   final futures = newPaths.map((path) async {
     try {
-      onScanProgress(path);
       final meta = await getMetadata(path: path);
+      ctrl.currentScanAudio.value = meta.title;
       return MapEntry(
         path,
         MusicCache(
@@ -95,14 +99,11 @@ Future<void> syncCache() async {
   }
 
   if (newPaths.isNotEmpty) {
-    final tagBuffer = await _fetchMetadataBatch(
-      newPaths,
-      (path) => musicCacheCtrl.currentScanPath.value = path,
-    );
+    final tagBuffer = await _fetchMetadataBatch(newPaths, musicCacheCtrl);
     await musicBox.putAll(data: tagBuffer);
   }
 
-  musicCacheCtrl.currentScanPath.value = '';
+  musicCacheCtrl.currentScanAudio.value = '';
   musicCacheCtrl.items.clear();
   musicCacheCtrl.loadData();
 

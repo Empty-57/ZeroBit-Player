@@ -83,6 +83,7 @@ class AudioController extends GetxController {
 
   static const bassDataFFT512=256;
 
+  /// 同步 `playListCacheItems`
   void syncPlayListCacheItems() {
     if (allUserKey.contains(_audioSource.currentAudioSource.value)) {
       playListCacheItems.value =
@@ -129,6 +130,7 @@ class AudioController extends GetxController {
     }
   }
 
+  /// 获取音频FFT数据
   void getAudioFFt()async{
     if(currentState.value==AudioState.pause||currentState.value==AudioState.stop){
       if(listEquals(audioFFT, _defaultFFT)){
@@ -324,12 +326,14 @@ class AudioController extends GetxController {
     _settingController.putCache();
   }
 
+  /// 同步 `currentIndex`
   void syncCurrentIndex() {
     currentIndex.value = playListCacheItems.indexWhere(
       (metadata) => metadata.path == currentPath.value,
     );
   }
 
+  /// 播放音频
   Future<void> audioPlay({required MusicCache metadata}) async {
     currentMs100.value = 0.0;
     currentSec.value = 0.0;
@@ -360,6 +364,7 @@ class AudioController extends GetxController {
     }
   }
 
+  /// 恢复播放
   Future<void> audioResume() async {
     if (currentMetadata.value.path.isEmpty ||
         playListCacheItems.isEmpty ||
@@ -375,6 +380,7 @@ class AudioController extends GetxController {
     }
   }
 
+  /// 暂停
   Future<void> audioPause() async {
     if (currentMetadata.value.path.isEmpty ||
         playListCacheItems.isEmpty ||
@@ -390,6 +396,7 @@ class AudioController extends GetxController {
     }
   }
 
+  /// 停止播放
   Future<void> audioStop() async {
     currentState.value = AudioState.stop;
     currentIndex.value = -1;
@@ -401,6 +408,7 @@ class AudioController extends GetxController {
     }
   }
 
+  /// 切换播放 / 暂停
   Future<void> audioToggle() async {
     if (currentMetadata.value.path.isEmpty || playListCacheItems.isEmpty) {
       return;
@@ -419,6 +427,7 @@ class AudioController extends GetxController {
     }
   }
 
+  /// 获取音量
   Future<double> audioGetVolume() async {
     try {
       return await getVolume();
@@ -428,6 +437,7 @@ class AudioController extends GetxController {
     }
   }
 
+  /// 设置音量
   Future<void> audioSetVolume({required double vol}) async {
     try {
       await setVolume(vol: vol);
@@ -436,6 +446,7 @@ class AudioController extends GetxController {
     }
   }
 
+  /// 跳转进度条
   Future<void> audioSetPositon({required double pos}) async {
     if (currentMetadata.value.path.isEmpty) {
       return;
@@ -448,6 +459,7 @@ class AudioController extends GetxController {
     }
   }
 
+  /// 改变播放模式
   void changePlayMode() {
     if (_settingController.playMode.value >= 0 &&
         _settingController.playMode.value < 2) {
@@ -458,6 +470,7 @@ class AudioController extends GetxController {
     _settingController.putCache();
   }
 
+  /// 改变歌词对齐模式
   void changeLrcAlignment() {
     if (_settingController.lrcAlignment.value >= 0 &&
         _settingController.lrcAlignment.value < 2) {
@@ -494,6 +507,7 @@ class AudioController extends GetxController {
     await audioPlay(metadata: playListCacheItems[currentIndex.value]);
   }
 
+  /// 上一首播放
   Future<void> audioToPrevious() async {
     if (playListCacheItems.isEmpty) {
       return;
@@ -510,6 +524,7 @@ class AudioController extends GetxController {
     await _maybeRandomPlay();
   }
 
+  /// 下一首播放
   Future<void> audioToNext() async {
     if (playListCacheItems.isEmpty) {
       return;
@@ -527,6 +542,7 @@ class AudioController extends GetxController {
     await _maybeRandomPlay();
   }
 
+  /// 自动播放
   Future<void> audioAutoPlay() async {
     if (playListCacheItems.isEmpty) {
       return;
@@ -544,6 +560,7 @@ class AudioController extends GetxController {
     }
   }
 
+  /// 插入到下一首
   void insertNext({required MusicCache metadata}) {
     if (currentMetadata.value.path.isEmpty ||
         currentMetadata.value.path == metadata.path) {
@@ -569,6 +586,7 @@ class AudioController extends GetxController {
     _hasNextAudioMetadata = metadata;
   }
 
+  /// 用于向自定义歌单添加所选的音频
   void addToAudioList({
     required MusicCache metadata,
     required String userKey,
@@ -608,6 +626,7 @@ class AudioController extends GetxController {
     );
   }
 
+  /// 用于向自定义歌单添加所选的所有音频
   void addAllToAudioList({
     required List<MusicCache> selectedList,
     required String userKey,
@@ -656,6 +675,7 @@ class AudioController extends GetxController {
     );
   }
 
+  /// 用于从自定义歌单删除所选的音频
   Future<void> audioRemove({
     required String userKey,
     required MusicCache metadata,
@@ -693,6 +713,7 @@ class AudioController extends GetxController {
     }
   }
 
+  /// 用于从自定义歌单删除所有所选的音频
   void audioRemoveAll({
     required String userKey,
     required List<MusicCache> removeList,
@@ -738,6 +759,7 @@ class AudioController extends GetxController {
     );
   }
 
+  /// 用于同步元数据更改
   Future<void> audioListSyncMetadata({
     required String path,
     required MusicCache newCache,
@@ -754,6 +776,7 @@ class AudioController extends GetxController {
         kTransparentImage;
   }
 
+  /// 若 `metadata` 不在 `playListCacheItems` 内 则添加并播放
   void searchInsert({required MusicCache metadata}) {
     if (!playListCacheItems.any((v) => v.path == metadata.path)) {
       playListCacheItems.add(metadata);

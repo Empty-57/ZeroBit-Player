@@ -25,7 +25,7 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
   final _musicCacheBox = HiveManager.musicCacheBox;
   final SettingController _settingController = Get.find<SettingController>();
 
-  final currentScanPath = ''.obs;
+  final currentScanAudio = ''.obs;
 
   final searchText=''.obs;
 

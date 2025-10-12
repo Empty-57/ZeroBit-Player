@@ -68,7 +68,8 @@ List<LyricEntry> _mergeTranslations(
         final primary = group[0];
         final trans = group[1];
 
-        primary.translate = trans.lyricText.trim();
+        primary.translate = trans.lyricText.trim(); // 合并
+        mainEntries.remove(trans);
       } else {
         // 只有一条时，检查 “ / ” 拆分
         final entry = group[0];

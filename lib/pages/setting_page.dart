@@ -169,11 +169,15 @@ class _FolderManagerDialog extends StatelessWidget {
                       Obx(
                         () => Visibility(
                           visible:
-                              _musicCacheController.currentScanPath.value == ''
+                              _musicCacheController.currentScanAudio.value == ''
                                   ? false
                                   : true,
-                          child: const Center(
-                            child: CircularProgressIndicator(),
+                          child: Text(
+                            '已扫描到：${_musicCacheController.currentScanAudio.value}',
+                            style: generalTextStyle(ctx: context, size: 'md'),
+                            softWrap: true,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ),
@@ -181,7 +185,7 @@ class _FolderManagerDialog extends StatelessWidget {
                       Obx(
                         () => Visibility(
                           visible:
-                              _musicCacheController.currentScanPath.value == ''
+                              _musicCacheController.currentScanAudio.value == ''
                                   ? true
                                   : false,
                           child: Row(
@@ -329,9 +333,9 @@ class _ApiDropMenu extends StatelessWidget {
 Widget _getColorPicker(
   BuildContext context,
   int initColor,
-  void Function(int color) fn,
-    [bool enableAlpha=false]
-) {
+  void Function(int color) fn, [
+  bool enableAlpha = false,
+]) {
   final TextEditingController hexController = TextEditingController();
   int themeColor_ = initColor;
   return CustomBtn(
@@ -925,7 +929,7 @@ class _DesktopLyricsOverlayColorPicker extends StatelessWidget {
         _desktopLyricsSettingController.overlayColor.value = color;
         _desktopLyricsSettingController.setOverlayColor(color: color);
       },
-      true
+      true,
     );
   }
 }
@@ -942,7 +946,7 @@ class _DesktopLyricsUnderColorPicker extends StatelessWidget {
         _desktopLyricsSettingController.underColor.value = color;
         _desktopLyricsSettingController.setUnderColor(color: color);
       },
-      true
+      true,
     );
   }
 }
@@ -952,16 +956,18 @@ class _DesktopLyricsFontFamilyDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(()=>_getFontFamilyDialog(
-      context,
-      _desktopLyricsSettingController.fontFamily.value,
-      (index) {
-        _desktopLyricsSettingController.fontFamily.value = _fontsList[index];
-        _desktopLyricsSettingController.setFontFamily(
-          family: _desktopLyricsSettingController.fontFamily.value,
-        );
-      },
-    ));
+    return Obx(
+      () => _getFontFamilyDialog(
+        context,
+        _desktopLyricsSettingController.fontFamily.value,
+        (index) {
+          _desktopLyricsSettingController.fontFamily.value = _fontsList[index];
+          _desktopLyricsSettingController.setFontFamily(
+            family: _desktopLyricsSettingController.fontFamily.value,
+          );
+        },
+      ),
+    );
   }
 }
 
@@ -1325,13 +1331,17 @@ class Setting extends StatelessWidget {
                           color: Colors.transparent,
                           child: Obx(
                             () => Switch(
-                              value: _desktopLyricsSettingController.isIgnoreMouseEvents.value,
+                              value:
+                                  _desktopLyricsSettingController
+                                      .isIgnoreMouseEvents
+                                      .value,
                               trackColor: switchTrackColor,
                               thumbColor: WidgetStatePropertyAll(
                                 Theme.of(context).colorScheme.onPrimary,
                               ),
                               onChanged: (bool value) {
-                                _desktopLyricsSettingController.setIgnoreMouseEvents(isIgnore: value);
+                                _desktopLyricsSettingController
+                                    .setIgnoreMouseEvents(isIgnore: value);
                               },
                             ),
                           ),

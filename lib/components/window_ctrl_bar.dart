@@ -4,11 +4,14 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
 import 'package:zerobit_player/theme_manager.dart';
+import '../custom_widgets/custom_button.dart';
 import '../desktop_lyrics_sever.dart';
+import '../field/tag_suffix.dart';
 import '../getxController/audio_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../tools/general_style.dart';
 import '../getxController/setting_ctrl.dart';
+import 'get_snack_bar.dart';
 
 final SettingController _settingController = Get.find<SettingController>();
 final ThemeService _themeService = Get.find<ThemeService>();
@@ -177,6 +180,7 @@ class _SearchDialog extends StatelessWidget {
                             itemBuilder: (context, index) {
                               final items =
                                   _musicCacheController.searchResult[index];
+                              final menuController = MenuController();
                               return TextButton(
                                 onPressed: () {
                                   _audioController.searchInsert(
@@ -189,24 +193,99 @@ class _SearchDialog extends StatelessWidget {
                                   ),
                                 ),
                                 child: SizedBox.expand(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                        CrossAxisAlignment.center,
                                     children: [
-                                      Text(
-                                        items.title,
-                                        style: titleStyle,
-                                        softWrap: true,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
+                                      Expanded(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              items.title,
+                                              style: titleStyle,
+                                              softWrap: true,
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                            Text(
+                                              "${items.artist} - ${items.album}",
+                                              style: subStyle,
+                                              softWrap: true,
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      Text(
-                                        "${items.artist} - ${items.album}",
-                                        style: subStyle,
-                                        softWrap: true,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
+                                      _ControllerButton(
+                                        icon:
+                                            PhosphorIconsLight
+                                                .arrowBendDownRight,
+                                        tooltip: '添加到下一首',
+                                        fn: () {
+                                          _audioController.insertNext(
+                                            metadata: items,
+                                          );
+                                        },
+                                      ),
+                                      MenuAnchor(
+                                        menuChildren:
+                                            _audioController.allUserKey.map((
+                                              v,
+                                            ) {
+                                              return MenuItemButton(
+                                                onPressed: () {
+                                                  _audioController
+                                                      .addToAudioList(
+                                                        metadata: items,
+                                                        userKey: v,
+                                                      );
+                                                },
+                                                child: Center(
+                                                  child: Text(
+                                                    v.split(
+                                                      TagSuffix.playList,
+                                                    )[0],
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList(),
+                                        controller: menuController,
+                                        consumeOutsideTap: true,
+                                        style: MenuStyle(
+                                          maximumSize: WidgetStatePropertyAll(
+                                            Size.fromHeight(context.height / 2),
+                                          ),
+                                        ),
+                                        child: _ControllerButton(
+                                          icon: PhosphorIconsLight.plus,
+                                          tooltip: '添加到歌单',
+                                          fn: () {
+                                            if (_audioController
+                                                .allUserKey
+                                                .isEmpty) {
+                                              showSnackBar(
+                                                title: "WARNING",
+                                                msg: "还未创建任何歌单",
+                                                duration: Duration(
+                                                  milliseconds: 1500,
+                                                ),
+                                              );
+                                              return;
+                                            }
+
+                                            if (menuController.isOpen) {
+                                              menuController.close();
+                                            } else {
+                                              menuController.open();
+                                            }
+                                          },
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -353,7 +432,7 @@ class WindowControllerBar extends StatelessWidget {
 
           _ControllerButton(
             icon: PhosphorIconsLight.minus,
-            fn: ()async{
+            fn: () async {
               await windowManager.minimize();
             },
             tooltip: "最小化",
@@ -373,7 +452,7 @@ class WindowControllerBar extends StatelessWidget {
           _ControllerButton(
             icon: PhosphorIconsLight.x,
             hoverColor: Colors.red,
-            fn: () async{
+            fn: () async {
               await smtcClear();
               await _desktopLyricsSever.close();
               await windowManager.close();
