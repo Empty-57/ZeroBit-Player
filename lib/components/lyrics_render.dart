@@ -33,6 +33,11 @@ const _lrcScaleAlignment = [
   Alignment.center,
   Alignment.centerRight,
 ];
+const _lrcWrapAlignment = [
+  WrapAlignment.start,
+  WrapAlignment.center,
+  WrapAlignment.end,
+];
 const _lrcScale = 1.1;
 
 class _HighlightedWord extends StatelessWidget {
@@ -141,7 +146,6 @@ class _KaraOkLyricWidget extends StatelessWidget {
   final int index;
   final int lrcAlignmentIndex;
   final LyricController lyricController;
-  final TextAlign textAlign;
   final StrutStyle strutStyle;
   final bool cancelScale;
 
@@ -152,7 +156,6 @@ class _KaraOkLyricWidget extends StatelessWidget {
     required this.index,
     required this.lrcAlignmentIndex,
     required this.lyricController,
-    required this.textAlign,
     required this.strutStyle,
     required this.cancelScale,
   });
@@ -165,12 +168,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
       content = Obx(() {
         final currWordIndex = lyricController.currentWordIndex.value;
         return Wrap(
-          alignment:
-              lrcAlignmentIndex == 0
-                  ? WrapAlignment.start
-                  : lrcAlignmentIndex == 1
-                  ? WrapAlignment.center
-                  : WrapAlignment.end,
+          alignment:_lrcWrapAlignment[lrcAlignmentIndex],
           crossAxisAlignment: WrapCrossAlignment.end,
           children:
               text.asMap().entries.map((entry) {
@@ -216,12 +214,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
             duration: const Duration(milliseconds: 300),
             builder: (_, color, __) {
               return Wrap(
-                alignment:
-                    lrcAlignmentIndex == 0
-                        ? WrapAlignment.start
-                        : lrcAlignmentIndex == 1
-                        ? WrapAlignment.center
-                        : WrapAlignment.end,
+                alignment: _lrcWrapAlignment[lrcAlignmentIndex],
                 crossAxisAlignment: WrapCrossAlignment.end,
                 children:
                     text.map((wordEntry) {
@@ -238,12 +231,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
 
         // 对于其他所有非当前行，直接使用基础样式构建 Wrap
         return Wrap(
-          alignment:
-              lrcAlignmentIndex == 0
-                  ? WrapAlignment.start
-                  : lrcAlignmentIndex == 1
-                  ? WrapAlignment.center
-                  : WrapAlignment.end,
+          alignment: _lrcWrapAlignment[lrcAlignmentIndex],
           crossAxisAlignment: WrapCrossAlignment.end,
           children:
               text.map((wordEntry) {
@@ -433,7 +421,6 @@ class _LyricsRenderState extends State<LyricsRender> {
                         index: index,
                         lrcAlignmentIndex: lrcAlignment,
                         lyricController: _lyricController,
-                        textAlign: textAlign,
                         strutStyle: strutStyle,
                         cancelScale: _lyricController.cancelScale.value,
                       ),
