@@ -4,7 +4,6 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
 import 'package:zerobit_player/theme_manager.dart';
-import '../custom_widgets/custom_button.dart';
 import '../desktop_lyrics_sever.dart';
 import '../field/tag_suffix.dart';
 import '../getxController/audio_ctrl.dart';
