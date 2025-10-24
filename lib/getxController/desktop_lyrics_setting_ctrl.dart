@@ -19,6 +19,10 @@ class DesktopLyricsSettingController extends GetxController {
   final windowDy = 50.0.obs;
   final isIgnoreMouseEvents = false.obs;
 
+  final lrcAlignment=1.obs;
+
+  static const Map<int, String> lrcAlignmentMap = {0: '左对齐', 1: '居中', 2: '右对齐'};
+
   SharedPreferences? prefs;
 
   static const int fontSizeMin = 16;
@@ -40,6 +44,7 @@ class DesktopLyricsSettingController extends GetxController {
     windowDx.value = prefs!.getDouble('dx') ?? 50.0;
     windowDy.value = prefs!.getDouble('dy') ?? 50.0;
     isIgnoreMouseEvents.value=prefs!.getBool('isIgnoreMouseEvents')??false;
+    lrcAlignment.value=prefs!.getInt('lrcAlignment')??1;
   }
 
   void setFontSize({required int size}) {
@@ -148,5 +153,14 @@ class DesktopLyricsSettingController extends GetxController {
       return;
     }
     prefs!.setBool('isIgnoreMouseEvents', isIgnore);
+  }
+
+  void setLrcAlignment({required int alignment}){
+    lrcAlignment.value=alignment;
+    _desktopLyricsSever.sendCmd(cmdType: SeverCmdType.setLrcAlignment, cmdData: lrcAlignment.value);
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setInt('lrcAlignment', alignment);
   }
 }

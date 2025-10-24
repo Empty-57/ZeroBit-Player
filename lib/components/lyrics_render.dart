@@ -18,7 +18,7 @@ const double _controllerBarHeight = 48;
 const double _highLightAlpha = 0.85;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 
-const _lrcAlignment = [
+const _lrcCrossAlignment = [
   CrossAxisAlignment.start,
   CrossAxisAlignment.center,
   CrossAxisAlignment.end,
@@ -403,7 +403,7 @@ class _LyricsRenderState extends State<LyricsRender> {
 
                 final Widget content = Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: _lrcAlignment[lrcAlignment],
+                  crossAxisAlignment: _lrcCrossAlignment[lrcAlignment],
                   children: [
                     if (lrcType == LyricFormat.lrc)
                       _LrcLyricWidget(

@@ -971,6 +971,50 @@ class _DesktopLyricsFontFamilyDialog extends StatelessWidget {
   }
 }
 
+class _DesktopLyricsAlignmentRadio extends StatelessWidget {
+  const _DesktopLyricsAlignmentRadio();
+
+  @override
+  Widget build(BuildContext context) {
+    final alignment = [0, 1, 2];
+    return Material(
+      child: Wrap(
+        spacing: 8,
+        children:
+            alignment
+                .map(
+                  (v) => Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    spacing: 2,
+                    children: [
+                      Obx(
+                        () => Radio<int>(
+                          value: v,
+                          groupValue:
+                              _desktopLyricsSettingController
+                                  .lrcAlignment
+                                  .value,
+                          onChanged: (int? value) {
+                            _desktopLyricsSettingController.setLrcAlignment(
+                              alignment: value ?? 1,
+                            );
+                          },
+                        ),
+                      ),
+                      Text(
+                        DesktopLyricsSettingController.lrcAlignmentMap[v] ??
+                            '左对齐',
+                      ),
+                    ],
+                  ),
+                )
+                .toList(),
+      ),
+    );
+  }
+}
+
 class Setting extends StatelessWidget {
   const Setting({super.key});
 
@@ -1314,6 +1358,18 @@ class Setting extends StatelessWidget {
                         style: generalTextStyle(ctx: context, size: 'lg'),
                       ),
                       const _DesktopLyricsFontFamilyDialog(),
+                    ],
+                  ),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        '对齐方式',
+                        style: generalTextStyle(ctx: context, size: 'lg'),
+                      ),
+                      const _DesktopLyricsAlignmentRadio(),
                     ],
                   ),
 

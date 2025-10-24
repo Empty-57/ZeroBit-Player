@@ -165,6 +165,7 @@ class DesktopLyricsSever extends GetxController {
                     'dx': _desktopLyricsSettingController.windowDx.value,
                     'dy': _desktopLyricsSettingController.windowDy.value,
                     'isIgnoreMouseEvents':_desktopLyricsSettingController.isIgnoreMouseEvents.value,
+                    'lrcAlignment':_desktopLyricsSettingController.lrcAlignment.value,
                   },
                 );
               }
