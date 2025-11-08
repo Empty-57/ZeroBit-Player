@@ -749,7 +749,7 @@ impl BassApi {
         }
     }
 
-    ///有大问题
+    ///未完成的方法
     fn set_exclusive_mode(&mut self, exclusive: bool) -> Result<(), String> {
         unsafe {
             (self.wasapi_free)();

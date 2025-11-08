@@ -73,7 +73,6 @@ pub enum SMTCState {
     Playing,
 }
 
-// enum AudioState { stop, playing, pause }
 #[flutter_rust_bridge::frb]
 pub fn smtc_update_state(state: SMTCState) -> Result<(), String> {
     let state = match state {

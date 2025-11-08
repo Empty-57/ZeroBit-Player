@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -11,7 +12,6 @@ import 'package:zerobit_player/tools/func_extension.dart';
 import 'package:zerobit_player/tools/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import 'package:zerobit_player/tools/lrcTool/save_lyric.dart';
-import 'package:zerobit_player/tools/websocket_model.dart';
 import '../components/audio_ctrl_btn.dart';
 import '../components/window_ctrl_bar.dart';
 import '../desktop_lyrics_sever.dart';
@@ -24,7 +24,7 @@ import 'dart:async';
 
 final AudioController _audioController = Get.find<AudioController>();
 final SettingController _settingController = Get.find<SettingController>();
-final DesktopLyricsSever _desktopLyricsSever=Get.find<DesktopLyricsSever>();
+final DesktopLyricsSever _desktopLyricsSever = Get.find<DesktopLyricsSever>();
 
 const double _ctrlBtnMinSize = 40.0;
 const double _thumbRadius = 10.0;
@@ -627,6 +627,21 @@ class LrcView extends StatelessWidget {
       size: _ctrlBtnMinSize,
       color: mixColor,
     );
+    final titleStyle = generalTextStyle(ctx: context, size: 'md');
+    final highLightTitleStyle = generalTextStyle(
+      ctx: context,
+      size: 'md',
+      color: Theme.of(context).colorScheme.primary,
+    );
+    final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
+    final highLightSubStyle = generalTextStyle(
+      ctx: context,
+      size: 'sm',
+      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+    );
+    final double itemHeight = 64;
+    final playQueueController = MenuController();
+    final playQueueScrollController = ScrollController();
     return SizedBox(
       height: _audioCtrlBarHeight,
       child: Column(
@@ -676,7 +691,7 @@ class LrcView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   SizedBox(
-                    width: context.width * 0.2,
+                    width: context.width * 0.25,
                     child: Obx(
                       () => Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -721,10 +736,10 @@ class LrcView extends StatelessWidget {
                     ),
                   ),
                   SizedBox(
-                    width: context.width * 0.2,
+                    width: context.width * 0.25,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
-                      spacing: 16,
+                      spacing: 8,
                       children: [
                         Obx(
                           () => GenIconBtn(
@@ -744,6 +759,145 @@ class LrcView extends StatelessWidget {
                           ),
                         ),
                         _NetLrcDialog(color: mixColor),
+                        MenuAnchor(
+                          consumeOutsideTap: true,
+                          menuChildren: [
+                            Container(
+                              height: Get.height - 200,
+                              width: Get.width / 2,
+                              color: Colors.transparent,
+                              padding: EdgeInsets.all(16),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                spacing: 8.0,
+                                children: [
+                                  Text(
+                                    "播放队列",
+                                    style: generalTextStyle(
+                                      ctx: context,
+                                      size: 'xl',
+                                      weight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 1,
+                                    child: Obx(() {
+                                      return ListView.builder(
+                                        itemCount:
+                                            _audioController
+                                                .playListCacheItems
+                                                .length,
+                                        itemExtent: itemHeight,
+                                        cacheExtent: itemHeight * 1,
+                                        controller: playQueueScrollController,
+                                        padding: EdgeInsets.only(
+                                          bottom: itemHeight * 2,
+                                        ),
+                                        itemBuilder: (context, index) {
+                                          final items =
+                                              _audioController
+                                                  .playListCacheItems[index];
+                                          return TextButton(
+                                            onPressed: () async {
+                                              await _audioController.audioPlay(
+                                                metadata: items,
+                                              );
+                                            }.throttle(ms: 300),
+                                            style: TextButton.styleFrom(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: _borderRadius,
+                                              ),
+                                            ),
+                                            child: SizedBox.expand(
+                                              child: Obx(() {
+                                                final subTextStyle =
+                                                    _audioController
+                                                                .currentPath
+                                                                .value !=
+                                                            items.path
+                                                        ? subStyle
+                                                        : highLightSubStyle;
+
+                                                final textStyle =
+                                                    _audioController
+                                                                .currentPath
+                                                                .value !=
+                                                            items.path
+                                                        ? titleStyle
+                                                        : highLightTitleStyle;
+                                                return Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      items.title,
+                                                      style: textStyle,
+                                                      softWrap: true,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      maxLines: 1,
+                                                    ),
+                                                    Text(
+                                                      "${items.artist} - ${items.album}",
+                                                      style: subTextStyle,
+                                                      softWrap: true,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      maxLines: 1,
+                                                    ),
+                                                  ],
+                                                );
+                                              }),
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    }),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          onOpen: () {
+                            SchedulerBinding.instance.addPostFrameCallback((_) {
+                              playQueueScrollController.jumpTo(
+                                (itemHeight *
+                                        _audioController.currentIndex.value)
+                                    .clamp(
+                                      0.0,
+                                      playQueueScrollController
+                                          .position
+                                          .maxScrollExtent,
+                                    ),
+                              );
+                            });
+                          },
+                          style: MenuStyle(
+                            backgroundColor: WidgetStatePropertyAll(
+                              Theme.of(context).colorScheme.surfaceContainer
+                                  .withValues(alpha: 0.8),
+                            ),
+                          ),
+
+                          controller: playQueueController,
+
+                          child: GenIconBtn(
+                            tooltip: '播放列表',
+                            icon: PhosphorIconsLight.queue,
+                            size: _ctrlBtnMinSize,
+                            color: mixColor,
+                            fn: () {
+                              if (playQueueController.isOpen) {
+                                playQueueController.close();
+                              } else {
+                                playQueueController.open();
+                              }
+                            },
+                          ),
+                        ),
                         Obx(
                           () => GenIconBtn(
                             tooltip: '频谱图',
@@ -762,26 +916,33 @@ class LrcView extends StatelessWidget {
                             },
                           ),
                         ),
+                        Obx(
+                          () => GenIconBtn(
+                            tooltip: '桌面歌词',
+                            icon:
+                                _settingController.showDesktopLyrics.value
+                                    ? PhosphorIconsFill.creditCard
+                                    : PhosphorIconsLight.creditCard,
+                            size: _ctrlBtnMinSize,
+                            color: mixColor,
+                            fn:
+                                () async {
+                                  _settingController.showDesktopLyrics.value =
+                                      !_settingController
+                                          .showDesktopLyrics
+                                          .value;
+                                  await _settingController.putScalableCache();
 
-                        Obx(()=>
-                        GenIconBtn(
-                          tooltip: '桌面歌词',
-                          icon: _settingController.showDesktopLyrics.value ? PhosphorIconsFill.creditCard : PhosphorIconsLight.creditCard,
-                          size: _ctrlBtnMinSize,
-                          color: mixColor,
-                          fn: () async{
-                            _settingController.showDesktopLyrics.value=!_settingController.showDesktopLyrics.value;
-                            await _settingController.putScalableCache();
-
-                            if(_settingController.showDesktopLyrics.value){
-                              _desktopLyricsSever.connect();
-                            }else{
-                              _desktopLyricsSever.close();
-                            }
-                          }.throttle(),
-                        ),),
-
-                        //以上： 后续功能
+                                  if (_settingController
+                                      .showDesktopLyrics
+                                      .value) {
+                                    _desktopLyricsSever.connect();
+                                  } else {
+                                    _desktopLyricsSever.close();
+                                  }
+                                }.throttle(),
+                          ),
+                        ),
                       ],
                     ),
                   ),

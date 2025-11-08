@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:zerobit_player/tools/func_extension.dart';
 import 'package:zerobit_player/tools/general_style.dart';
 import 'package:get/get.dart';
 
@@ -211,9 +212,9 @@ class CustomNavigation extends StatelessWidget {
                                 final items =
                                     _audioController.playListCacheItems[index];
                                 return TextButton(
-                                  onPressed: () {
-                                    _audioController.audioPlay(metadata: items);
-                                  },
+                                  onPressed: () async {
+                                    await _audioController.audioPlay(metadata: items);
+                                  }.throttle(ms: 300),
                                   style: TextButton.styleFrom(
                                     shape: RoundedRectangleBorder(
                                       borderRadius: _borderRadius,
