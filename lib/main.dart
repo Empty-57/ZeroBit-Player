@@ -128,10 +128,10 @@ void main() async {
 
   final lastSize =
         settingController.lastWindowInfo[SettingController.lastWindowSizeKey]
-            as List<num>?;
+            as List<double>?;
     if (lastSize != null && lastSize.isNotEmpty) {
-      w=lastSize[SettingController.lastWindowInfoWidthAndDx].toDouble();
-      h=lastSize[SettingController.lastWindowInfoHeightAndDy].toDouble();
+      w=lastSize[SettingController.lastWindowInfoWidthAndDx];
+      h=lastSize[SettingController.lastWindowInfoHeightAndDy];
     }
 
   WindowOptions windowOptions = WindowOptions(

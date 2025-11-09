@@ -111,8 +111,8 @@ class SettingController extends GetxController {
   static const lastWindowInfoWidthAndDx = 0;
   static const lastWindowInfoHeightAndDy = 1;
   final lastWindowInfo = <int, Object>{
-    lastWindowSizeKey: <double>[1200.0, 800.0],
-    lastWindowPositonKey: <double>[50.0, 50.0],
+    lastWindowSizeKey: [1200.0, 800.0],
+    lastWindowPositonKey: [50.0, 50.0],
     lastWindowIsMaximizedKey: false,
   };
 
@@ -231,10 +231,10 @@ class SettingController extends GetxController {
         if (config.containsKey(ScalableConfigKeys.lastWindowInfo)) {
           lastWindowInfo[lastWindowSizeKey] =
               config[ScalableConfigKeys.lastWindowInfo][lastWindowSizeKey] ??
-              [1200, 800];
+              [1200.0, 800.0];
           lastWindowInfo[lastWindowPositonKey] =
               config[ScalableConfigKeys.lastWindowInfo][lastWindowPositonKey] ??
-              [50, 50];
+              [50.0, 50.0];
           lastWindowInfo[lastWindowIsMaximizedKey] =
               config[ScalableConfigKeys
                   .lastWindowInfo][lastWindowIsMaximizedKey] ??
