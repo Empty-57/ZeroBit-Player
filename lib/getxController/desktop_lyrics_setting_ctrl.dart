@@ -20,6 +20,7 @@ class DesktopLyricsSettingController extends GetxController {
   final isIgnoreMouseEvents = false.obs;
 
   final lrcAlignment=1.obs;
+  final useVerticalDisplayMode=false.obs;
 
   static const Map<int, String> lrcAlignmentMap = {0: '左对齐', 1: '居中', 2: '右对齐'};
 
@@ -45,6 +46,7 @@ class DesktopLyricsSettingController extends GetxController {
     windowDy.value = prefs!.getDouble('dy') ?? 50.0;
     isIgnoreMouseEvents.value=prefs!.getBool('isIgnoreMouseEvents')??false;
     lrcAlignment.value=prefs!.getInt('lrcAlignment')??1;
+    useVerticalDisplayMode.value=prefs!.getBool('displayMode')??false;
   }
 
   void setFontSize({required int size}) {
@@ -162,5 +164,14 @@ class DesktopLyricsSettingController extends GetxController {
       return;
     }
     prefs!.setInt('lrcAlignment', alignment);
+  }
+
+  void setUseVerticalDisplayMode({required bool use}){
+    useVerticalDisplayMode.value=use;
+    _desktopLyricsSever.sendCmd(cmdType: SeverCmdType.setDisplayMode, cmdData: useVerticalDisplayMode.value);
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setBool('displayMode', use);
   }
 }

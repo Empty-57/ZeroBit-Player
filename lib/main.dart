@@ -146,12 +146,12 @@ void main() async {
     windowManager.setHasShadow(true);
     final lastPosition =
         settingController.lastWindowInfo[SettingController.lastWindowPositonKey]
-            as List<num>?;
+            as List<double>?;
     if (lastPosition != null && lastPosition.isNotEmpty) {
       await windowManager.setPosition(
         Offset(
-          lastPosition[SettingController.lastWindowInfoWidthAndDx].toDouble(),
-          lastPosition[SettingController.lastWindowInfoHeightAndDy].toDouble(),
+          lastPosition[SettingController.lastWindowInfoWidthAndDx],
+          lastPosition[SettingController.lastWindowInfoHeightAndDy],
         ),
       );
     }

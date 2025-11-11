@@ -189,15 +189,15 @@ class AudioController extends GetxController {
     });
 
     try {
+      final lastMetadata=_settingController.lastAudioInfo[SettingController
+                  .lastAudioMetadataKey]
+              as MusicCache;
 
-      if(playListCacheItems.isEmpty){
+      if(playListCacheItems.isEmpty||lastMetadata.path.isEmpty){
         return ;
       }
 
-      currentMetadata.value =
-          _settingController.lastAudioInfo[SettingController
-                  .lastAudioMetadataKey]
-              as MusicCache;
+      currentMetadata.value = lastMetadata;
       currentPath.value = currentMetadata.value.path;
       await setVolume(vol: 0.0);
       await audioPlay(metadata: currentMetadata.value); // 设置流
@@ -278,12 +278,17 @@ class AudioController extends GetxController {
     }
 
     await windowManager.setTitle(title + artist);
-    await smtcUpdateMetadata(
+    try{
+      await smtcUpdateMetadata(
       title: currentMetadata.value.title,
       artist: currentMetadata.value.artist,
       album: currentMetadata.value.album,
       coverSrc: currentCover.value,
     );
+    }catch(_){
+      await smtcClear();
+      await initSmtc();
+    }
     debugPrint("currentIndex:set");
     _isSyncing = false;
   }
@@ -361,6 +366,8 @@ class AudioController extends GetxController {
       debugPrint(e.toString());
       currentState.value = AudioState.stop;
       showSnackBar(title: "ERR:", msg: e.toString());
+      await smtcClear();
+      await initSmtc();
     }
   }
 

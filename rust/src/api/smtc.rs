@@ -12,7 +12,13 @@ use windows::Storage::Streams::{
     DataWriter, InMemoryRandomAccessStream, RandomAccessStreamReference,
 };
 
-static SMTC: Lazy<Mutex<Option<SystemMediaTransportControls>>> = Lazy::new(|| Mutex::new(None));
+
+struct MediaPlayerInstance {
+    player: MediaPlayer,
+    smtc: SystemMediaTransportControls,
+}
+
+static MEDIA_INSTANCE: Lazy<Mutex<Option<MediaPlayerInstance>>> = Lazy::new(|| Mutex::new(None));
 
 #[flutter_rust_bridge::frb]
 pub fn init_smtc() -> Result<(), String> {
@@ -24,36 +30,19 @@ pub fn init_smtc() -> Result<(), String> {
         .SetIsEnabled(false)
         .map_err(|e| e.to_string())?;
 
-    *SMTC.lock().unwrap() = Some(
-        player
-            .SystemMediaTransportControls()
-            .map_err(|e| e.to_string())?,
-    );
+    let smtc = player
+        .SystemMediaTransportControls()
+        .map_err(|e| e.to_string())?;
 
-    SMTC.lock()
-        .unwrap()
-        .as_ref()
-        .unwrap()
-        .SetIsNextEnabled(true)
-        .map_err(|e| e.to_string())?;
-    SMTC.lock()
-        .unwrap()
-        .as_ref()
-        .unwrap()
-        .SetIsPauseEnabled(true)
-        .map_err(|e| e.to_string())?;
-    SMTC.lock()
-        .unwrap()
-        .as_ref()
-        .unwrap()
-        .SetIsPlayEnabled(true)
-        .map_err(|e| e.to_string())?;
-    SMTC.lock()
-        .unwrap()
-        .as_ref()
-        .unwrap()
-        .SetIsPreviousEnabled(true)
-        .map_err(|e| e.to_string())?;
+    smtc.SetIsNextEnabled(true).map_err(|e| e.to_string())?;
+    smtc.SetIsPauseEnabled(true).map_err(|e| e.to_string())?;
+    smtc.SetIsPlayEnabled(true).map_err(|e| e.to_string())?;
+    smtc.SetIsPreviousEnabled(true).map_err(|e| e.to_string())?;
+    
+    *MEDIA_INSTANCE.lock().unwrap() = Some(MediaPlayerInstance {
+        player,
+        smtc,
+    });
 
     Ok(())
 }
@@ -79,13 +68,14 @@ pub fn smtc_update_state(state: SMTCState) -> Result<(), String> {
         SMTCState::Playing => MediaPlaybackStatus::Playing,
         SMTCState::Paused => MediaPlaybackStatus::Paused,
     };
-    SMTC.lock()
+    MEDIA_INSTANCE.lock()
         .unwrap()
         .as_ref()
         .unwrap()
+        .smtc
         .SetPlaybackStatus(state)
         .map_err(|e| e.to_string())?;
-    SMTC.lock().unwrap().as_ref().unwrap().DisplayUpdater().map_err(|e|e.to_string())?.Update().map_err(|e|e.to_string()).unwrap_or(());
+    MEDIA_INSTANCE.lock().unwrap().as_ref().unwrap().smtc.DisplayUpdater().map_err(|e|e.to_string())?.Update().map_err(|e|e.to_string()).unwrap_or(());
     Ok(())
 }
 
@@ -96,7 +86,7 @@ pub fn smtc_update_metadata(
     album: String,
     cover_src: Vec<u8>,
 ) -> Result<(), windows::core::Error> {
-    let updater = SMTC.lock().unwrap().as_ref().unwrap().DisplayUpdater()?;
+    let updater = MEDIA_INSTANCE.lock().unwrap().as_ref().unwrap().smtc.DisplayUpdater()?;
 
     updater.SetType(MediaPlaybackType::Music)?;
 
@@ -119,18 +109,19 @@ pub fn smtc_update_metadata(
     updater.SetThumbnail(&RandomAccessStreamReference::CreateFromStream(&stream)?)?;
     updater.Update()?;
 
-    if !SMTC.lock().unwrap().as_ref().unwrap().IsEnabled()? {
-        SMTC.lock().unwrap().as_ref().unwrap().SetIsEnabled(true)?;
+    if !MEDIA_INSTANCE.lock().unwrap().as_ref().unwrap().smtc.IsEnabled()? {
+        MEDIA_INSTANCE.lock().unwrap().as_ref().unwrap().smtc.SetIsEnabled(true)?;
     }
     Ok(())
 }
 
 #[flutter_rust_bridge::frb]
 pub fn smtc_control_events(sink: StreamSink<SMTCControlEvent>) {
-    SMTC.lock()
+    MEDIA_INSTANCE.lock()
         .unwrap()
         .as_ref()
         .unwrap()
+        .smtc
         .ButtonPressed(&TypedEventHandler::<
             SystemMediaTransportControls,
             SystemMediaTransportControlsButtonPressedEventArgs,
@@ -152,9 +143,9 @@ pub fn smtc_control_events(sink: StreamSink<SMTCControlEvent>) {
 
 #[flutter_rust_bridge::frb]
 pub fn smtc_clear(){
-    let updater = SMTC.lock().unwrap().as_ref().unwrap().DisplayUpdater().unwrap();
+    let updater = MEDIA_INSTANCE.lock().unwrap().as_ref().unwrap().smtc.DisplayUpdater().unwrap();
     updater.ClearAll().unwrap();
     updater.Update().unwrap();
-    SMTC.lock().unwrap().as_ref().unwrap().SetIsEnabled(false).unwrap();
+    MEDIA_INSTANCE.lock().unwrap().as_ref().unwrap().smtc.SetIsEnabled(false).unwrap();
 }
 

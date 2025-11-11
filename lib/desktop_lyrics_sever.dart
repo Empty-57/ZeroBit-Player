@@ -50,7 +50,7 @@ class DesktopLyricsSever extends GetxController {
     );
   }
 
-  void lineWorkerFn() {
+  void _lineWorkerFn() {
     if (_channel == null) {
       return;
     }
@@ -101,7 +101,7 @@ class DesktopLyricsSever extends GetxController {
     _lineWorker = everAll(
       [_lyricController.currentLineIndex, _audioController.currentLyrics],
       (_) {
-        lineWorkerFn();
+        _lineWorkerFn();
       },
     );
   }
@@ -144,7 +144,7 @@ class DesktopLyricsSever extends GetxController {
             _channel = IOWebSocketChannel(socket);
             _listen = _channel!.stream.listen((message) {
               if (message == 'ok') {
-                lineWorkerFn();
+                _lineWorkerFn();
                 _ms20WorkerFn();
                 _refreshStatus();
                 sendCmd(
@@ -166,6 +166,7 @@ class DesktopLyricsSever extends GetxController {
                     'dy': _desktopLyricsSettingController.windowDy.value,
                     'isIgnoreMouseEvents':_desktopLyricsSettingController.isIgnoreMouseEvents.value,
                     'lrcAlignment':_desktopLyricsSettingController.lrcAlignment.value,
+                    'displayMode':_desktopLyricsSettingController.useVerticalDisplayMode.value,
                   },
                 );
               }

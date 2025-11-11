@@ -1406,6 +1406,36 @@ class Setting extends StatelessWidget {
                     ),
                   ),
 
+                  Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        Text(
+                          '竖排显示',
+                          style: generalTextStyle(ctx: context, size: 'lg'),
+                        ),
+                        Material(
+                          color: Colors.transparent,
+                          child: Obx(
+                            () => Switch(
+                              value:
+                                  _desktopLyricsSettingController
+                                      .useVerticalDisplayMode
+                                      .value,
+                              trackColor: switchTrackColor,
+                              thumbColor: WidgetStatePropertyAll(
+                                Theme.of(context).colorScheme.onPrimary,
+                              ),
+                              onChanged: (bool value) {
+                                _desktopLyricsSettingController
+                                    .setUseVerticalDisplayMode(use: value);
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
                   const _SetDivider(title: '关于'),
 
                   Row(

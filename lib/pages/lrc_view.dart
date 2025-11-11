@@ -227,7 +227,7 @@ class _SearchResultItem extends StatelessWidget {
     if (v == null ||
         v.lyric == null ||
         (v.lyric!.lrc == null && v.lyric!.verbatimLrc == null)) {
-      return const SizedBox.shrink();
+      return const Center(child: Padding(padding: EdgeInsets.symmetric(horizontal: 16,vertical: 16),child: Text("网络错误或没有找到歌词"),));
     }
 
     final String? verbatimLrc = v.lyric!.verbatimLrc;
@@ -315,7 +315,7 @@ class _SearchResultItem extends StatelessWidget {
                         child: Text(
                           "歌词: \n${ts ?? verbatimLrc ?? ''}",
                           softWrap: true,
-                          overflow: TextOverflow.fade,
+                          overflow: TextOverflow.ellipsis,
                           style: textStyle,
                         ),
                       ),
@@ -436,7 +436,7 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
                 return const Center(child: CircularProgressIndicator());
               }
               if (lrcSearchController.currentNetLrc.isEmpty) {
-                return const Center(child: Text("没有找到歌词"));
+                return const Center(child: Text("网络错误或没有找到歌词"));
               }
               return ListView.builder(
                 itemCount: lrcSearchController.currentNetLrc.length,

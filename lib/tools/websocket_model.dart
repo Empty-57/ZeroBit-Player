@@ -16,6 +16,7 @@ abstract class SeverCmdType {
   static const putConfig = 'putConfig';
   static const setIgnoreMouseEvents = 'setIgnoreMouseEvents';
   static const setLrcAlignment = 'setLrcAlignment';
+  static const setDisplayMode = 'setDisplayMode';
 }
 
 abstract class ClientCmdType {
