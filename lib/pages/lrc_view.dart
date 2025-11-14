@@ -117,6 +117,11 @@ class _LrcSearchController extends GetxController {
         offset: currentNetLrcOffest.value,
         limit: 5,
       );
+
+      currentNetLrc.removeWhere((v)=>(v == null ||
+        v.lyric == null ||
+        (v.lyric!.lrc == null && v.lyric!.verbatimLrc == null)));
+
     } finally {
       isLoading.value = false;
     }
@@ -216,7 +221,7 @@ class _GradientSliderTrackShape extends SliderTrackShape {
 
 // --- 搜索结果列表项 ---
 class _SearchResultItem extends StatelessWidget {
-  final SearchLrcModel? lyricInfo;
+  final SearchLrcModel lyricInfo;
   final TextStyle textStyle;
 
   const _SearchResultItem({required this.lyricInfo, required this.textStyle});
@@ -224,12 +229,6 @@ class _SearchResultItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final v = lyricInfo;
-    if (v == null ||
-        v.lyric == null ||
-        (v.lyric!.lrc == null && v.lyric!.verbatimLrc == null)) {
-      return const Center(child: Padding(padding: EdgeInsets.symmetric(horizontal: 16,vertical: 16),child: Text("网络错误或没有找到歌词"),));
-    }
-
     final String? verbatimLrc = v.lyric!.verbatimLrc;
     final String? ts = v.lyric!.translate;
     final String title = v.title;
@@ -315,7 +314,7 @@ class _SearchResultItem extends StatelessWidget {
                         child: Text(
                           "歌词: \n${ts ?? verbatimLrc ?? ''}",
                           softWrap: true,
-                          overflow: TextOverflow.ellipsis,
+                          overflow: TextOverflow.fade,
                           style: textStyle,
                         ),
                       ),
@@ -442,7 +441,7 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
                 itemCount: lrcSearchController.currentNetLrc.length,
                 itemBuilder: (context, index) {
                   return _SearchResultItem(
-                    lyricInfo: lrcSearchController.currentNetLrc[index],
+                    lyricInfo: lrcSearchController.currentNetLrc[index]!,
                     textStyle: textStyle,
                   );
                 },
