@@ -19,17 +19,17 @@ class LyricController extends GetxController {
   final wordProgress = 0.0.obs;
   double _wordProgressIncrement = 0;
 
-  final cancelScale=false.obs;
+  final cancelScale = false.obs;
 
-  final showInterlude =false.obs;
+  final showInterlude = false.obs;
 
-  final interludeProcess =0.0.obs;
+  final interludeProcess = 0.0.obs;
 
-  double _interval =0;
+  double _interval = 0;
 
   int _threshold = _lowIntervalThreshold;
 
-  int _wordsLen =0;
+  int _wordsLen = 0;
 
   static const _lowIntervalThreshold = 90;
 
@@ -60,10 +60,18 @@ class LyricController extends GetxController {
         }
         _currentWord = _currentLine![wordIndex];
 
-        final rowCurrentLine=lyrics[lineIndex];
-        final lastWord=_currentLine![_currentLine!.length-1];
-        _interval= rowCurrentLine.nextTime - (lastWord.start + lastWord.duration);
-        _threshold = _interval >= 4 ? _lowIntervalThreshold : 150;
+        final rowCurrentLine = lyrics[lineIndex];
+        final lastWord = _currentLine![_currentLine!.length - 1];
+        if (_audioController.currentLyrics.value?.type ==
+            LyricFormat.byWordLrc) {
+          _interval = rowCurrentLine.nextTime - (lastWord.start);
+          _threshold = _interval >= 4 ? 2 : 150;
+        } else {
+          _interval =
+              rowCurrentLine.nextTime - (lastWord.start + lastWord.duration);
+          _threshold = _interval >= 4 ? _lowIntervalThreshold : 150;
+        }
+
         _wordsLen = _currentLine!.length;
       },
       condition:
@@ -72,12 +80,24 @@ class LyricController extends GetxController {
               LyricFormat.lrc,
     );
 
-    ever(wordProgress, (_){
-      final isNotLast= currentWordIndex.value!=_wordsLen-1;
+    ever(wordProgress, (_) {
+      final isNotLast = currentWordIndex.value != _wordsLen - 1;
       final isThresholdValid = wordProgress.value < _threshold;
       cancelScale.value = isNotLast || isThresholdValid;
-      final int len =(_audioController.currentLyrics.value?.parsedLrc?.length??0) - 1;
-      showInterlude.value= !isNotLast&&_interval >= 4&&wordProgress.value>=(_lowIntervalThreshold+10)&&interludeProcess.value<=95&&currentLineIndex.value<len;
+      final int len =
+          (_audioController.currentLyrics.value?.parsedLrc?.length ?? 0) - 1;
+      int threshold = _lowIntervalThreshold;
+      int max = 95;
+      if (_audioController.currentLyrics.value?.type == LyricFormat.byWordLrc) {
+        threshold = -8;
+        max = 100;
+      }
+      showInterlude.value =
+          !isNotLast &&
+          _interval >= 4 &&
+          wordProgress.value >= (threshold + 10) &&
+          interludeProcess.value <= max &&
+          currentLineIndex.value < len;
     });
 
     // 增量计算:  total/(duration/loopTime)
@@ -104,7 +124,7 @@ class LyricController extends GetxController {
         hint: currentLineIndex.value,
       );
       if (newLineIndex != currentLineIndex.value) {
-        _interval=0;
+        _interval = 0;
         wordProgress.value = 0;
         currentLineIndex.value = newLineIndex;
         if (!isPointerScroll.value) {
@@ -125,13 +145,18 @@ class LyricController extends GetxController {
       );
 
       if (newWordIndex != currentWordIndex.value) {
-        interludeProcess.value=0;
+        interludeProcess.value = 0;
         wordProgress.value = 0;
         currentWordIndex.value = newWordIndex;
       }
 
-      if (wordProgress.value>=_lowIntervalThreshold+10&&currentWordIndex.value==_wordsLen-1){
-        interludeProcess.value+= 2/_interval;
+      int threshold = _lowIntervalThreshold;
+      if (_audioController.currentLyrics.value?.type == LyricFormat.byWordLrc) {
+        threshold = -8;
+      }
+      if (wordProgress.value >= threshold + 10 &&
+          currentWordIndex.value == _wordsLen - 1) {
+        interludeProcess.value += 2 / _interval;
       }
 
       wordProgress.value += _wordProgressIncrement;
@@ -156,23 +181,26 @@ class LyricController extends GetxController {
       return;
     }
 
-    try{
+    try {
       lrcViewScrollController.scrollTo(
-      index: currentLineIndex.value.clamp(
-        0,
-        (_audioController.currentLyrics.value?.parsedLrc?.length ?? 1) - 1,
-      ),
-      duration: Duration(milliseconds: 500),
-      alignment: 0.4,
-      curve: Curves.easeInOut,
-    );
-    }catch(e){
+        index: currentLineIndex.value.clamp(
+          0,
+          (_audioController.currentLyrics.value?.parsedLrc?.length ?? 1) - 1,
+        ),
+        duration: Duration(milliseconds: 500),
+        alignment: 0.4,
+        curve: Curves.easeInOut,
+      );
+    } catch (e) {
       debugPrint(e.toString());
     }
-
   }
 
-  int _findLrcPos({required double time, required List<TimedEntry>? lyrics, required int hint,}) {
+  int _findLrcPos({
+    required double time,
+    required List<TimedEntry>? lyrics,
+    required int hint,
+  }) {
     if (lyrics == null) {
       return -1;
     }
