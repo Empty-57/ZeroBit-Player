@@ -30,6 +30,7 @@ const int _coverSmallRenderSize = 150;
 
 class _WindowListener extends GetxController with WindowListener {
   final _isMaximized = false.obs;
+  final _isFullScreen = false.obs;
 
   @override
   void onInit() {
@@ -50,6 +51,16 @@ class _WindowListener extends GetxController with WindowListener {
     } else {
       await windowManager.maximize();
       _isMaximized.value = true;
+    }
+  }
+
+  void toggleFullScreen() async {
+    if (await windowManager.isFullScreen()) {
+      await windowManager.setFullScreen(false);
+      _isFullScreen.value = false;
+    } else {
+      await windowManager.setFullScreen(true);
+      _isFullScreen.value = true;
     }
   }
 
@@ -366,9 +377,9 @@ class WindowControllerBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.center,
-        spacing: 8,
+        spacing: 0,
         children: <Widget>[
-          _ControllerButton(
+          Padding(padding: EdgeInsets.only(right: 8),child: _ControllerButton(
             icon:
                 useCaretDown!
                     ? PhosphorIconsLight.caretDown
@@ -377,7 +388,7 @@ class WindowControllerBar extends StatelessWidget {
               Get.back(id: isNestedRoute! ? 1 : null);
             },
             tooltip: "返回",
-          ),
+          ),),
           if (showLogo!)
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -415,7 +426,7 @@ class WindowControllerBar extends StatelessWidget {
 
           if (useSearch!) const _SearchDialog(),
 
-          Obx(
+          Padding(padding: EdgeInsets.only(right: 8,left: 8),child: Obx(
             () => _ControllerButton(
               icon:
                   _settingController.themeMode.value == 'dark'
@@ -427,25 +438,44 @@ class WindowControllerBar extends StatelessWidget {
                       ? "暗色主题"
                       : "亮色主题",
             ),
-          ),
+          ),),
 
-          _ControllerButton(
-            icon: PhosphorIconsLight.minus,
-            fn: () async {
-              await windowManager.minimize();
-            },
-            tooltip: "最小化",
+          Obx(
+            () => Visibility(
+              visible: !windowListener._isFullScreen.value,
+              child: Padding(padding: EdgeInsets.only(right: 8),child: _ControllerButton(
+                icon: PhosphorIconsLight.minus,
+                fn: () async {
+                  await windowManager.minimize();
+                },
+                tooltip: "最小化",
+              ),),
+            ),
           ),
 
           Obx(
-            () => _ControllerButton(
-              icon:
-                  windowListener._isMaximized.value
-                      ? PhosphorIconsLight.cornersIn
-                      : PhosphorIconsLight.cornersOut,
-              fn: windowListener.toggleMaximize,
-              tooltip: windowListener._isMaximized.value ? "还原" : "最大化",
+            () => Visibility(
+              visible: !windowListener._isFullScreen.value,
+              child: _ControllerButton(
+                icon:
+                    windowListener._isMaximized.value
+                        ? PhosphorIconsLight.cornersIn
+                        : PhosphorIconsLight.cornersOut,
+                fn: windowListener.toggleMaximize,
+                tooltip: windowListener._isMaximized.value ? "还原" : "最大化",
+              ),
             ),
+          ),
+
+          Obx(
+            () => Padding(padding: EdgeInsets.only(right: 8,left:windowListener._isFullScreen.value? 0: 8),child: _ControllerButton(
+              icon:
+                  windowListener._isFullScreen.value
+                      ? PhosphorIconsLight.arrowsInSimple
+                      : PhosphorIconsLight.arrowsOutSimple,
+              fn: windowListener.toggleFullScreen,
+              tooltip: windowListener._isFullScreen.value ? "还原" : "全屏",
+            ),),
           ),
 
           _ControllerButton(
