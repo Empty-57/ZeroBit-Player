@@ -205,7 +205,7 @@ class SettingController extends GetxController {
       if (config.isNotEmpty) {
 
         if (config.containsKey(ScalableConfigKeys.equalizerGains)) {
-          equalizerGains.value = config[ScalableConfigKeys.equalizerGains];
+          equalizerGains.value = config[ScalableConfigKeys.equalizerGains]??equalizerGainPresets['Default'];
         }
 
         if (config.containsKey(ScalableConfigKeys.lastAudioInfo)) {
@@ -242,11 +242,11 @@ class SettingController extends GetxController {
         }
 
         if(config.containsKey(ScalableConfigKeys.showSpectrogramKey)){
-          showSpectrogram.value=config[ScalableConfigKeys.showSpectrogramKey];
+          showSpectrogram.value=config[ScalableConfigKeys.showSpectrogramKey]??true;
         }
 
         if(config.containsKey(ScalableConfigKeys.showDesktopLyricsKey)){
-          showDesktopLyrics.value=config[ScalableConfigKeys.showDesktopLyricsKey];
+          showDesktopLyrics.value=config[ScalableConfigKeys.showDesktopLyricsKey]??false;
         }
 
       }
