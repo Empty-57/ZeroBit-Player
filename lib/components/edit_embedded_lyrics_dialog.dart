@@ -116,7 +116,7 @@ class EditEmbeddedLyricsDialog extends StatelessWidget {
                               maxLines: null,
                               decoration: InputDecoration(
                                 border: border,
-                                hintText: "请提供完整的且符合格式要求的歌词数据",
+                                hintText: "请提供完整的且符合格式要求的歌词数据，若使用逐字Lrc或增强型Lrc，将翻译和注音（若有）直接写入此项即可",
                                 hintStyle: hintStyle,
                               ),
                             ),
@@ -128,7 +128,7 @@ class EditEmbeddedLyricsDialog extends StatelessWidget {
                               maxLines: null,
                               decoration: InputDecoration(
                                 border: border,
-                                hintText: "请提供完整的lrc格式的歌词数据",
+                                hintText: "请提供完整的lrc格式的歌词数据，若使用逐字Lrc或增强型Lrc，则不需要填写此项",
                                 hintStyle: hintStyle,
                               ),
                             ),
