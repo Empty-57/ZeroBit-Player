@@ -83,6 +83,8 @@ class AudioController extends GetxController {
 
   static const bassDataFFT512=256;
 
+  final randomPlayedList=<int>[];
+
   /// 同步 `playListCacheItems`
   void syncPlayListCacheItems() {
     if (allUserKey.contains(_audioSource.currentAudioSource.value)) {
@@ -492,12 +494,17 @@ class AudioController extends GetxController {
     if (_settingController.playMode.value == 2 &&
         playListCacheItems.length > 1) {
       syncCurrentIndex();
-      for (int i = 0; i < 10; i++) {
+      for (int i = 0; i < 20; i++) {
         final index = Random().nextInt(playListCacheItems.length);
-        if (index != currentIndex.value) {
-          currentIndex.value = index;
-          break;
+        if(randomPlayedList.length>=playListCacheItems.length){
+          randomPlayedList.clear();
         }
+        if(randomPlayedList.contains(index)){
+          continue;
+        }
+        currentIndex.value = index;
+        randomPlayedList.add(index);
+        break;
       }
     }
 
