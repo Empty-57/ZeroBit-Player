@@ -102,25 +102,25 @@ Future<_LyricModel?> _getLyrics({String? filePath}) async {
   for (final path in mainPaths) {
     final lyrics = await _safeReadFile(path);
     final ext = p.extension(path);
+    String type = ext;
     if (lyrics != null && lyrics.trim().isNotEmpty) {
       String? lyricsTs;
 
-      if (ext != LyricFormat.lrc) {
+      if (ext == LyricFormat.lrc &&
+          (detectLrcType(lyrics) == LrcType.enhanced ||
+              detectLrcType(lyrics) == LrcType.wordByWord)) {
+        type = LyricFormat.byWordLrc;
+      }
+
+      if (type != LyricFormat.lrc) {
         lyricsTs = await _safeReadFile(vtsPath);
       }
 
-      return _LyricModel(lyrics: lyrics, lyricsTs: lyricsTs, type: ext);
+      return _LyricModel(lyrics: lyrics, lyricsTs: lyricsTs, type: type);
     }
   }
 
   return null;
-}
-
-bool _isLrc(String text) {
-  if (text.trim().isEmpty) return false;
-  final reg = RegExp(r'\[(\d{2}):(\d{2}\.\d{2,3})](.*?)(\r?\n|$)');
-  if (reg.hasMatch(text)) return true;
-  return false;
 }
 
 /// 主入口，获取已解析的歌词及翻译
@@ -130,6 +130,7 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
   final lyricsData = await _getLyrics(filePath: filePath);
 
   if (lyricsData == null) {
+    // 此if块需要判断是否为增强型Lrc
     final embeddedLyrics = await getEmbeddedLyric(path: filePath);
     if (embeddedLyrics == null || embeddedLyrics.isEmpty) {
       return null;
@@ -137,16 +138,21 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
 
     try {
       final data = jsonDecode(embeddedLyrics);
-      final type=data['type'];
-      final lyrics =data['lyrics'];
-      final lyricsTs =data['lyricsTs'];
+      String type = data['type'];
+      final lyrics = data['lyrics'];
+      String? lyricsTs = data['lyricsTs'];
 
-      if (type == LyricFormat.lrc) {
+      final detectType = detectLrcType(lyrics);
+      if (type == LyricFormat.lrc &&
+          (detectType == LrcType.enhanced ||
+              detectType == LrcType.wordByWord)) {
+        type = LyricFormat.byWordLrc;
+        lyricsTs = null;
+      }
+
+      if (type == LyricFormat.lrc || type == LyricFormat.byWordLrc) {
         return ParsedLyricModel(
-          parsedLrc: parseLrc(
-            lyricData: lyrics,
-            lyricDataTs: lyricsTs,
-          ),
+          parsedLrc: parseLrc(lyricData: lyrics, lyricDataTs: lyricsTs),
           type: type,
         );
       }
@@ -161,11 +167,16 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
         );
       }
     } catch (_) {
-      if(_isLrc(embeddedLyrics)){
+      final detectType = detectLrcType(embeddedLyrics);
+      if (detectType == LrcType.enhanced || detectType == LrcType.wordByWord) {
         return ParsedLyricModel(
-          parsedLrc: parseLrc(
-            lyricData: embeddedLyrics,
-          ),
+          parsedLrc: parseLrc(lyricData: embeddedLyrics),
+          type: LyricFormat.byWordLrc,
+        );
+      }
+      if (detectType == LrcType.lineByLine) {
+        return ParsedLyricModel(
+          parsedLrc: parseLrc(lyricData: embeddedLyrics),
           type: LyricFormat.lrc,
         );
       }
@@ -174,7 +185,8 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
     return null;
   }
 
-  if (lyricsData.type == LyricFormat.lrc) {
+  if (lyricsData.type == LyricFormat.lrc ||
+      lyricsData.type == LyricFormat.byWordLrc) {
     return ParsedLyricModel(
       parsedLrc: parseLrc(lyricData: lyricsData.lyrics),
       type: lyricsData.type,
