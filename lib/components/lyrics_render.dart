@@ -160,6 +160,21 @@ class _KaraOkLyricWidget extends StatelessWidget {
     required this.cancelScale,
   });
 
+  Widget _createTextWarp({Color? color}){
+    return Wrap(
+                alignment: _lrcWrapAlignment[lrcAlignmentIndex],
+                crossAxisAlignment: WrapCrossAlignment.end,
+                children:
+                    text.map((wordEntry) {
+                      return Text(
+                        wordEntry.lyricWord,
+                        style: style.copyWith(color: color),
+                        strutStyle: strutStyle,
+                      );
+                    }).toList(),
+              );
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget content;
@@ -213,35 +228,13 @@ class _KaraOkLyricWidget extends StatelessWidget {
             ),
             duration: const Duration(milliseconds: 300),
             builder: (_, color, __) {
-              return Wrap(
-                alignment: _lrcWrapAlignment[lrcAlignmentIndex],
-                crossAxisAlignment: WrapCrossAlignment.end,
-                children:
-                    text.map((wordEntry) {
-                      return Text(
-                        wordEntry.lyricWord,
-                        style: style.copyWith(color: color),
-                        strutStyle: strutStyle,
-                      );
-                    }).toList(),
-              );
+              return _createTextWarp(color: color);
             },
           );
         }
 
         // 对于其他所有非当前行，直接使用基础样式构建 Wrap
-        return Wrap(
-          alignment: _lrcWrapAlignment[lrcAlignmentIndex],
-          crossAxisAlignment: WrapCrossAlignment.end,
-          children:
-              text.map((wordEntry) {
-                return Text(
-                  wordEntry.lyricWord,
-                  style: style,
-                  strutStyle: strutStyle,
-                );
-              }).toList(),
-        );
+        return _createTextWarp();
       });
     }
 
@@ -295,6 +288,10 @@ class _LyricsRenderState extends State<LyricsRender> {
     );
 
     final tsLyricStyle = lyricStyle.copyWith(
+      fontSize: lyricStyle.fontSize! - 4,
+    );
+
+    final romaLyricStyle = tsLyricStyle.copyWith(
       fontSize: lyricStyle.fontSize! - 4,
     );
 
@@ -369,6 +366,7 @@ class _LyricsRenderState extends State<LyricsRender> {
           final List<String> translateList =
               parsedLrc.map((v) => v.translate).toList();
           final List<double> startTime = parsedLrc.map((v) => v.start).toList();
+          final List<String> romaList=parsedLrc.map((v) => v.roma).toList();
 
           return ScrollablePositionedList.builder(
             key: ValueKey(currentLyrics.hashCode),
@@ -423,6 +421,12 @@ class _LyricsRenderState extends State<LyricsRender> {
                         lyricController: _lyricController,
                         strutStyle: strutStyle,
                         cancelScale: _lyricController.cancelScale.value,
+                      ),
+                    if(romaList[index].isNotEmpty)Text(
+                        romaList[index],
+                        style: romaLyricStyle,
+                        softWrap: true,
+                        textAlign: textAlign,
                       ),
                     if (translateList[index].isNotEmpty)
                       Text(

@@ -10,12 +10,14 @@ class LyricEntry<T> implements TimedEntry {
   double nextTime;
   T lyricText;
   String translate;
+  String roma;
 
   LyricEntry({
     required this.start,
     this.nextTime = double.infinity,
     required this.lyricText,
     this.translate = '',
+    this.roma=''
   });
 
   @override
@@ -37,15 +39,15 @@ class LyricEntry<T> implements TimedEntry {
 class WordEntry implements TimedEntry {
   @override
   final double start;
-  final double duration;
-  final String lyricWord;
+  double duration;
+  String lyricWord;
   @override
   double nextTime;
   WordEntry({
     required this.start,
     required this.duration,
     required this.lyricWord,
-    this.nextTime = double.infinity
+    this.nextTime = double.infinity,
   });
 
   static Map<String, dynamic> toJson(WordEntry value) =>
@@ -80,4 +82,5 @@ abstract class LyricFormat{
   static const qrc='.qrc';
   static const yrc='.yrc';
   static const lrc='.lrc';
+  static const byWordLrc='.byWordLrc';
 }

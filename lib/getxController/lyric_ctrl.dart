@@ -87,16 +87,14 @@ class LyricController extends GetxController {
       final int len =
           (_audioController.currentLyrics.value?.parsedLrc?.length ?? 0) - 1;
       int threshold = _lowIntervalThreshold;
-      int max = 95;
       if (_audioController.currentLyrics.value?.type == LyricFormat.byWordLrc) {
         threshold = -8;
-        max = 100;
       }
       showInterlude.value =
           !isNotLast &&
           _interval >= 4 &&
           wordProgress.value >= (threshold + 10) &&
-          interludeProcess.value <= max &&
+          interludeProcess.value <= 95 &&
           currentLineIndex.value < len;
     });
 
