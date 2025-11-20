@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zerobit_player/HIveCtrl/models/scalable_setting_cache_model.dart';
 import 'package:zerobit_player/HIveCtrl/models/setting_cache_model.dart';
 import 'package:get/get.dart';
@@ -120,6 +121,9 @@ class SettingController extends GetxController {
 
   final showDesktopLyrics=false.obs;
 
+  final showTranslate=true.obs;
+  final showRoma=false.obs;
+
   static const Map<int, String> apiMap = {0: "QQ音乐", 1: "网易云音乐"};
 
   static const Map<int, String> sortType = {
@@ -138,7 +142,9 @@ class SettingController extends GetxController {
   final _settingCacheBox = HiveManager.settingCacheBox;
   final _scalableSettingCacheBox = HiveManager.scalableSettingCacheBox;
 
-  void _initHive() async {
+  SharedPreferences? prefs;
+
+  Future<void> _initHive() async {
     final cache = _settingCacheBox.get(key: _key);
     final scalableCache = _scalableSettingCacheBox.get(key: _scalableKey);
     if (cache != null) {
@@ -259,10 +265,17 @@ class SettingController extends GetxController {
     }
   }
 
+  Future<void> _initPrefs()async{
+    prefs = await SharedPreferences.getInstance();
+    showTranslate.value=prefs!.getBool('showTranslate')??true;
+    showRoma.value=prefs!.getBool('showRoma')??false;
+  }
+
   @override
-  void onInit() {
-    _initHive();
+  void onInit()async{
     super.onInit();
+    await _initHive();
+    await _initPrefs();
   }
 
   Future<void> putCache({bool isSaveFolders = false}) async {
@@ -306,4 +319,21 @@ class SettingController extends GetxController {
       key: _scalableKey,
     );
   }
+
+  void setShowTranslate({required bool show}){
+    showTranslate.value=show;
+    if(prefs==null){
+      return;
+    }
+    prefs!.setBool('showTranslate', showTranslate.value);
+  }
+
+  void setShowRoma({required bool show}){
+    showRoma.value=show;
+    if(prefs==null){
+      return;
+    }
+    prefs!.setBool('showRoma', showRoma.value);
+  }
+
 }
