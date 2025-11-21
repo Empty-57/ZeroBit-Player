@@ -7,7 +7,6 @@ import '../API/apis.dart';
 import '../field/operate_area.dart';
 import '../src/rust/api/music_tag_tool.dart';
 import '../tools/audio_ctrl_mixin.dart';
-import '../tools/get_sort_type.dart';
 import 'music_cache_ctrl.dart';
 
 class ArtistListController extends GetxController with AudioControllerGenClass {
@@ -20,9 +19,6 @@ class ArtistListController extends GetxController with AudioControllerGenClass {
   final SettingController _settingController = Get.find<SettingController>();
 
   static final audioListItems = <MusicCache>[].obs;
-
-  @override
-  final headCover = kTransparentImage.obs;
 
   @override
   RxList<MusicCache> get items => audioListItems;
@@ -70,30 +66,6 @@ class ArtistListController extends GetxController with AudioControllerGenClass {
         }
       }
     }
-  }
-
-  @override
-  void itemReSort({required int type}) {
-    if(!_settingController.isReverse.value){
-      audioListItems.sort(
-      (a, b) => getSortType(
-        type: type,
-        data: a,
-      ).compareTo(getSortType(type: type, data: b)),
-    );
-    }else{
-      audioListItems.sort(
-      (b, a) => getSortType(
-        type: type,
-        data: a,
-      ).compareTo(getSortType(type: type, data: b)),
-    );
-    }
-  }
-
-  @override
-  void itemReverse() {
-    audioListItems.assignAll(audioListItems.reversed.toList());
   }
 
   static void audioListSyncMetadata({

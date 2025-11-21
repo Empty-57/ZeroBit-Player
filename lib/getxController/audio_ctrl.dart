@@ -85,6 +85,8 @@ class AudioController extends GetxController {
 
   final randomPlayedList=<int>[];
 
+  final navigationIsExtend = true.obs;
+
   /// 同步 `playListCacheItems`
   void syncPlayListCacheItems() {
     if (allUserKey.contains(_audioSource.currentAudioSource.value)) {
