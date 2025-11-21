@@ -8,7 +8,6 @@ import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/tools/search.dart';
 import '../src/rust/api/music_tag_tool.dart';
 import '../tools/audio_ctrl_mixin.dart';
-import '../tools/get_sort_type.dart';
 
 
 class MusicCacheController extends GetxController with AudioControllerGenClass {
@@ -90,30 +89,6 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
       albumHasLetter.addIf(!albumHasLetter.contains(letter), letter);
     }
     albumHasLetter.sort((a,b)=>a.compareTo(b));
-  }
-
-  @override
-  void itemReSort({required int type}) {
-    if(!_settingController.isReverse.value){
-      items.sort(
-      (a, b) => getSortType(
-        type: type,
-        data: a,
-      ).compareTo(getSortType(type: type, data: b)),
-    );
-    }else{
-      items.sort(
-      (b, a) => getSortType(
-        type: type,
-        data: a,
-      ).compareTo(getSortType(type: type, data: b)),
-    );
-    }
-  }
-
-  @override
-  void itemReverse() {
-    items.assignAll(items.reversed.toList());
   }
 
   Future<void> remove({required MusicCache metadata}) async {
