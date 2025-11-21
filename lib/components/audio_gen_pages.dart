@@ -427,6 +427,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       1: [SettingController.sortType[1], PhosphorIconsRegular.userFocus],
       2: [SettingController.sortType[2], PhosphorIconsRegular.vinylRecord],
       3: [SettingController.sortType[3], PhosphorIconsRegular.clockCountdown],
+      4: [SettingController.sortType[4], PhosphorIconsRegular.clockUser],
     };
     if (widget.operateArea == OperateArea.artistList) itemMap.remove(1);
     if (widget.operateArea == OperateArea.albumList) itemMap.remove(2);
@@ -440,7 +441,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         _audioController.syncCurrentIndex();
       },
       label: SettingController.sortType[_settingController.sortMap[widget.operateArea] as int] ?? "未指定",
-      btnWidth: 128,
+      btnWidth: 148,
       btnHeight: btnHeight,
       itemWidth: 128,
       itemHeight: btnHeight,
