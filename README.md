@@ -136,9 +136,9 @@ flutter run
 
 使用[LDDC](https://github.com/chenmozhijin/LDDC)来匹配本地歌词时，可以选择将歌词 `保存到歌曲标签` ，也可以选择将歌词文件 `保存到歌曲文件夹` ，歌词文件名请选择 `与歌曲文件名相同` 
 
-使用[LDDC](https://github.com/chenmozhijin/LDDC)时,为了兼容罗马音，原文，翻译的渲染，请在[LDDC](https://github.com/chenmozhijin/LDDC)的 `设置` 的 `歌词设置` 的 `顺序` 选项卡选择: 罗马音->原文->译文
+使用[LDDC](https://github.com/chenmozhijin/LDDC)时，为了兼容罗马音，原文，翻译的渲染，请在[LDDC](https://github.com/chenmozhijin/LDDC)的 `设置` 的 `歌词设置` 的 `顺序` 选项卡选择: 罗马音->原文->译文
 
-若要搜索歌词,请通过输入歌曲信息，搜索更精确的歌词：</br>
+若要搜索歌词，请通过输入歌曲信息，搜索更精确的歌词：</br>
 
 ![search](screenshot/5.png)
 
@@ -156,7 +156,9 @@ flutter run
 - 若提交PR，请检查代码是否有潜在隐患并尽量做一些优化。
 
 ## 注意
-若软件发生了严重错误，可尝试到目录 `C:\Users\<用户名>\Documents` 下删除所有 `.hive` 以及同名的 `.lock` 的后缀的文件
+若软件发生了严重错误，可尝试到目录 `C:\Users\<用户名>\Documents` 下删除所有 `.hive` 以及同名的 `.lock` 的后缀的配置文件
+
+1.4.4以后的版本，配置文件的位置从 `C:\Users\<用户名>\Documents` 移动到 `C:\Users\<用户名>\Documents\zerobit_config` 
 
 ## 感谢
 [coriander_player](https://github.com/Ferry-200/coriander_player)： 借鉴了UI设计</br>
