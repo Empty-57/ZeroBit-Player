@@ -88,7 +88,7 @@ void main() async {
 
   await initSmtc();
 
-  await Hive.initFlutter();
+  await Hive.initFlutter('zerobit_config');
 
   // await Hive.deleteBoxFromDisk(HiveBoxes.musicCacheBox);
   // await Hive.deleteBoxFromDisk(HiveBoxes.settingCacheBox);
