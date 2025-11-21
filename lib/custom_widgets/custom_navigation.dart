@@ -18,7 +18,7 @@ const double _navigationBtnHeight = 48;
 
 const double _navigationWidth = 260;
 const double _navigationWidthSmall = 64;
-const double resViewThresholds = 1100;
+const double _resViewThresholds = 1100;
 
 final _mainRoutes = AppRoutes.orderMap.keys.toList();
 
@@ -27,7 +27,6 @@ final _playQueueScrollController = ScrollController();
 final AudioController _audioController = Get.find<AudioController>();
 const double _itemHeight = 64;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
-final _isExtend = true.obs;
 
 class CustomNavigationBtn extends StatelessWidget {
   final String label;
@@ -83,8 +82,8 @@ class CustomNavigationBtn extends StatelessWidget {
                 flex: 1,
                 child: Tooltip(
                   message:
-                      context.width > resViewThresholds
-                          ? _isExtend.value
+                      context.width > _resViewThresholds
+                          ? _audioController.navigationIsExtend.value
                               ? label
                               : ""
                           : label,
@@ -99,7 +98,7 @@ class CustomNavigationBtn extends StatelessWidget {
                         color: Theme.of(context).colorScheme.onSurface,
                         size: getIconSize(size: 'md'),
                       ),
-                      if (context.width > resViewThresholds && _isExtend.value)
+                      if (context.width > _resViewThresholds && _audioController.navigationIsExtend.value)
                         Text(
                           label,
                           style: generalTextStyle(ctx: context, size: 'md'),
@@ -164,10 +163,12 @@ class CustomNavigation extends StatelessWidget {
       color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
     );
     return Obx(
-      () => Container(
+      (){
+        final isExtend=_audioController.navigationIsExtend.value;
+        return Container(
         width:
-            context.width > resViewThresholds
-                ? _isExtend.value
+            context.width > _resViewThresholds
+                ? isExtend
                     ? _navigationWidth
                     : _navigationWidthSmall
                 : _navigationWidthSmall,
@@ -329,7 +330,7 @@ class CustomNavigation extends StatelessWidget {
                         ),
                         child: Tooltip(
                           message:
-                              context.width > resViewThresholds ? "" : "播放队列",
+                              context.width > _resViewThresholds ? "" : "播放队列",
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.center,
@@ -342,8 +343,8 @@ class CustomNavigation extends StatelessWidget {
                                 size: getIconSize(size: 'md'),
                               ),
 
-                              if (context.width > resViewThresholds &&
-                                  _isExtend.value)
+                              if (context.width > _resViewThresholds &&
+                                  isExtend)
                                 Text(
                                   "播放队列",
                                   style: generalTextStyle(
@@ -370,9 +371,9 @@ class CustomNavigation extends StatelessWidget {
                     height: _navigationBtnHeight,
                     child: TextButton(
                       onPressed:
-                          context.width > resViewThresholds
+                          context.width > _resViewThresholds
                               ? () {
-                                _isExtend.value = !_isExtend.value;
+                                _audioController.navigationIsExtend.value = !isExtend;
                               }
                               : null,
                       style: TextButton.styleFrom(
@@ -381,30 +382,34 @@ class CustomNavigation extends StatelessWidget {
                         ),
                       ),
                       child: Obx(
-                        () => Tooltip(
+                        (){
+                          final isExtend=_audioController.navigationIsExtend.value;
+                          return Tooltip(
                           message:
-                              _isExtend.value
-                                  ? context.width > resViewThresholds
+                              isExtend
+                                  ? context.width > _resViewThresholds
                                       ? "收起"
                                       : "空间不足"
-                                  : context.width > resViewThresholds
+                                  : context.width > _resViewThresholds
                                   ? "展开"
                                   : "空间不足",
                           child: Icon(
-                            _isExtend.value && context.width > resViewThresholds
+                            isExtend && context.width > _resViewThresholds
                                 ? PhosphorIconsLight.caretLeft
                                 : PhosphorIconsLight.caretRight,
                             color: Theme.of(context).colorScheme.onSurface,
                             size: getIconSize(size: 'md'),
                           ),
-                        ),
+                        );
+                        },
                       ),
                     ),
                   ),
                 ),
               ],
         ),
-      ),
+      );
+      },
     );
   }
 }

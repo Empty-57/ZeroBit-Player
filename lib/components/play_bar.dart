@@ -18,7 +18,7 @@ const double _barWidthHalf = 350;
 const double _bottom = 4;
 const double _navigationWidth = 260;
 const double _navigationWidthSmall = 84;
-const double resViewThresholds = 1100;
+const double _resViewThresholds = 1100;
 
 const double _radius = 6;
 
@@ -99,16 +99,18 @@ class _PlayBarState extends State<PlayBar> {
       size: _ctrlBtnMinSize,
     );
 
-    final screenWidth = context.width;
+    return Obx((){
+      final screenWidth = context.width;
     final rightOffset =
         (screenWidth -
-                (screenWidth > resViewThresholds
-                    ? _navigationWidth
+                (screenWidth > _resViewThresholds
+                    ? _audioController.navigationIsExtend.value
+                        ? _navigationWidth
+                        : _navigationWidthSmall
                     : _navigationWidthSmall)) /
             2 -
         _barWidthHalf;
-
-    return Positioned(
+      return Positioned(
       bottom: _bottom,
       right: rightOffset,
       child: ClipRRect(
@@ -121,6 +123,7 @@ class _PlayBarState extends State<PlayBar> {
         ),
       ),
     );
+    });
   }
 
   // 构建 Slider 部分
