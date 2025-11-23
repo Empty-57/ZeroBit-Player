@@ -10,7 +10,7 @@ import '../getxController/music_cache_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 import '../src/rust/api/music_tag_tool.dart';
 
-const Set<String> _supportedExts = {
+const Set<String> supportedExts = {
   '.aac',
   '.ape',
   '.aiff',
@@ -41,7 +41,7 @@ Future<Set<String>> scanAudioPaths(List<String> folders) async {
       followLinks: false,
     )) {
       if (entity is File &&
-          _supportedExts.contains(p.extension(entity.path).toLowerCase())) {
+          supportedExts.contains(p.extension(entity.path).toLowerCase())) {
         paths.add(entity.path);
       }
     }
@@ -89,7 +89,12 @@ Future<void> syncCache() async {
 
   final scannedPaths = await scanAudioPaths(settingCtrl.folders);
 
-  final existingKeys = Set<String>.from(musicBox.getKeyAll());
+  final existingKeys =
+      musicBox
+          .getKeyAll()
+          .whereType<String>()
+          .where((k) => supportedExts.contains(p.extension(k).toLowerCase()))
+          .toSet(); //清除不是音频格式的路径，防止路径被污染
 
   final newPaths = scannedPaths.difference(existingKeys);
   final removedPaths = existingKeys.difference(scannedPaths);

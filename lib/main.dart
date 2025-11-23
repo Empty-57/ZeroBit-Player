@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
+import 'package:path/path.dart' as p;
 import 'package:zerobit_player/HIveCtrl/adapters/scalable_setting_adapters.dart';
 import 'package:zerobit_player/HIveCtrl/adapters/user_playlist_adapter.dart';
 import 'package:zerobit_player/HIveCtrl/models/scalable_setting_cache_model.dart';
@@ -99,7 +100,11 @@ void main() async {
   Hive.registerAdapter(SettingCacheAdapter());
   Hive.registerAdapter(UserPlayListAdapter());
   Hive.registerAdapter(ScalableSettingAdapter());
-  await Hive.openBox<MusicCache>(HiveBoxes.musicCacheBox);
+
+  final musicBox = await Hive.openBox<MusicCache>(HiveBoxes.musicCacheBox);
+  final keysToDelete = musicBox.keys.where((k) => !supportedExts.contains(p.extension(k).toLowerCase())).toList();
+  await musicBox.deleteAll(keysToDelete);  //清除不是音频格式的路径，防止路径被污染
+
   await Hive.openBox<SettingCache>(HiveBoxes.settingCacheBox);
   await Hive.openBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
   await Hive.openBox<ScalableSettingCache>(HiveBoxes.scalableSettingCacheBox);
@@ -123,16 +128,16 @@ void main() async {
   final LyricController lyricController = Get.find<LyricController>();
   final SettingController settingController = Get.find<SettingController>();
 
-  double w=1200;
-  double h=800;
+  double w = 1200;
+  double h = 800;
 
   final lastSize =
-        settingController.lastWindowInfo[SettingController.lastWindowSizeKey]
-            as List<double>?;
-    if (lastSize != null && lastSize.isNotEmpty) {
-      w=lastSize[SettingController.lastWindowInfoWidthAndDx];
-      h=lastSize[SettingController.lastWindowInfoHeightAndDy];
-    }
+      settingController.lastWindowInfo[SettingController.lastWindowSizeKey]
+          as List<double>?;
+  if (lastSize != null && lastSize.isNotEmpty) {
+    w = lastSize[SettingController.lastWindowInfoWidthAndDx];
+    h = lastSize[SettingController.lastWindowInfoHeightAndDy];
+  }
 
   WindowOptions windowOptions = WindowOptions(
     minimumSize: Size(1000, 750),
@@ -170,7 +175,6 @@ void main() async {
 
     await windowManager.show();
     await windowManager.focus();
-
   });
 
   runApp(const MainFrame());
@@ -207,8 +211,7 @@ void main() async {
 
   try {
     smtcControlEvents().listen((event) {
-
-      switch(event){
+      switch (event) {
         case SMTCControlEvent.play:
           audioController.audioResume.throttle(ms: 300)();
           break;
@@ -223,7 +226,6 @@ void main() async {
           break;
         case SMTCControlEvent.unknown:
           break;
-
       }
     });
   } catch (e) {

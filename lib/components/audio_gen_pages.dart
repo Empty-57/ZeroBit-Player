@@ -77,7 +77,7 @@ List<Widget> _genMenuItems({
   final List<Widget> maybeDel = renderMaybeDel
       ? [
           Divider(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.8),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
             height: 0.5,
             thickness: 0.5,
           ),
@@ -492,7 +492,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     final titleStyle = generalTextStyle(ctx: context, size: 'md');
     final highLightTitleStyle = generalTextStyle(ctx: context, size: 'md', color: Theme.of(context).colorScheme.primary);
     final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-    final highLightSubStyle = generalTextStyle(ctx: context, size: 'sm', color: Theme.of(context).colorScheme.primary.withOpacity(0.8));
+    final highLightSubStyle = generalTextStyle(ctx: context, size: 'sm', color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8));
 
     return RawMenuAnchor(
       controller: _musicMenuCtrl.menuController,
