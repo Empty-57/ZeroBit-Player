@@ -158,7 +158,7 @@ flutter run
 ## 注意
 若软件发生了严重错误，可尝试到目录 `C:\Users\<用户名>\Documents` 下删除所有 `.hive` 以及同名的 `.lock` 的后缀的配置文件
 
-1.4.4以后的版本，配置文件的位置从 `C:\Users\<用户名>\Documents` 移动到 `C:\Users\<用户名>\Documents\zerobit_config` 
+1.4.3以后的版本，配置文件的位置从 `C:\Users\<用户名>\Documents` 移动到 `C:\Users\<用户名>\Documents\zerobit_config` 
 
 ## 感谢
 [coriander_player](https://github.com/Ferry-200/coriander_player)： 借鉴了UI设计</br>
