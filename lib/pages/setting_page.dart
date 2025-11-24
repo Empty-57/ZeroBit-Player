@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:zerobit_player/getxController/audio_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/get_fonts.dart';
 import '../components/get_snack_bar.dart';
 import '../getxController/desktop_lyrics_setting_ctrl.dart';
@@ -1015,6 +1017,182 @@ class _DesktopLyricsAlignmentRadio extends StatelessWidget {
   }
 }
 
+Widget _createHotKeyItem(
+  BuildContext context, {
+  required Rx<HotKey> myHotkey,
+  required void Function(HotKey) fn,
+}) {
+  final hotKey_ = myHotkey;
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    crossAxisAlignment: CrossAxisAlignment.center,
+    spacing: 16,
+    children: [
+      Obx(
+        () => Text(
+          [
+            ...(hotKey_.value.modifiers ?? []).map((e) {
+              final firstPhysicalKey = e.physicalKeys.first;
+              return firstPhysicalKey.keyLabel;
+            }),
+            hotKey_.value.key.keyLabel,
+          ].join(' + '),
+          style: generalTextStyle(ctx: context, size: 'md'),
+        ),
+      ),
+      CustomBtn(
+        fn: () {
+          showDialog(
+            barrierDismissible: true,
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text("设置快捷键"),
+                titleTextStyle: generalTextStyle(
+                  ctx: context,
+                  size: 'xl',
+                  weight: FontWeight.w600,
+                ),
+                content: Obx(
+                  () => Text(
+                    [
+                      ...(hotKey_.value.modifiers ?? []).map((e) {
+                        final firstPhysicalKey = e.physicalKeys.first;
+                        return firstPhysicalKey.keyLabel;
+                      }),
+                      hotKey_.value.key.keyLabel,
+                    ].join(' + '),
+                  ),
+                ),
+                contentTextStyle: generalTextStyle(
+                  ctx: context,
+                  size: 'md',
+                  weight: FontWeight.w100,
+                ),
+
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(4)),
+                ),
+                backgroundColor: Theme.of(context).colorScheme.surface,
+
+                actionsAlignment: MainAxisAlignment.end,
+                actions: <Widget>[
+                  SizedBox(
+                    width: context.width / 3,
+                    height: context.height / 4,
+                    child: Center(
+                      child: Transform.scale(
+                        scale: 1.5,
+                        filterQuality: FilterQuality.high,
+                        child: Obx(
+                          () => HotKeyRecorder(
+                            initalHotKey: hotKey_.value,
+                            onHotKeyRecorded: (hotKey) async {
+                              hotKey_.value = hotKey;
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ).then((_) {
+            fn(hotKey_.value);
+          });
+        },
+        icon: PhosphorIconsLight.option,
+        label: '设置快捷键',
+        btnHeight: _setBtnHeight,
+        btnWidth: 148,
+        mainAxisAlignment: MainAxisAlignment.center,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        overlayColor: Theme.of(context).colorScheme.surfaceContainer,
+        contentColor: Theme.of(context).colorScheme.onPrimary,
+      ),
+    ],
+  );
+}
+
+class _SetHotKeyToggleDialog extends StatelessWidget {
+  const _SetHotKeyToggleDialog();
+
+  AudioController get _audioController => Get.find<AudioController>();
+
+  @override
+  Widget build(BuildContext context) {
+    return _createHotKeyItem(
+      context,
+      myHotkey: _settingController.hotKeyToggle,
+      fn: (h) async {
+        await hotKeyManager.unregister(_settingController.hotKeyToggle.value);
+        // final hotKey_=HotKey(key: h.key,modifiers: h.modifiers,scope: _settingController.hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp);// 因库原因无法使用
+        _settingController.hotKeyToggle.value = h;
+        _settingController.setToggleHid(hid: h.physicalKey.usbHidUsage);
+        await hotKeyManager.register(
+          _settingController.hotKeyToggle.value,
+          keyDownHandler: (hotKey) {
+            _audioController.audioToggle();
+          },
+        );
+      },
+    );
+  }
+}
+
+class _SetHotKeyNextDialog extends StatelessWidget {
+  const _SetHotKeyNextDialog();
+
+  AudioController get _audioController => Get.find<AudioController>();
+
+  @override
+  Widget build(BuildContext context) {
+    return _createHotKeyItem(
+      context,
+      myHotkey: _settingController.hotKeyNext,
+      fn: (h) async {
+        await hotKeyManager.unregister(_settingController.hotKeyNext.value);
+        // final hotKey_=HotKey(key: h.key,modifiers: h.modifiers,scope: _settingController.hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp);// 因库原因无法使用
+        _settingController.hotKeyNext.value = h;
+        _settingController.setNextHid(hid: h.physicalKey.usbHidUsage);
+        await hotKeyManager.register(
+          _settingController.hotKeyNext.value,
+          keyDownHandler: (hotKey) {
+            _audioController.audioToNext();
+          },
+        );
+      },
+    );
+  }
+}
+
+class _SetHotKeyPreviousDialog extends StatelessWidget {
+  const _SetHotKeyPreviousDialog();
+
+  AudioController get _audioController => Get.find<AudioController>();
+
+  @override
+  Widget build(BuildContext context) {
+    return _createHotKeyItem(
+      context,
+      myHotkey: _settingController.hotKeyPrevious,
+      fn: (h) async {
+        await hotKeyManager.unregister(_settingController.hotKeyPrevious.value);
+        // final hotKey_=HotKey(key: h.key,modifiers: h.modifiers,scope: _settingController.hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp);// 因库原因无法使用
+        _settingController.hotKeyPrevious.value = h;
+        _settingController.setPreviousHid(hid: h.physicalKey.usbHidUsage);
+        await hotKeyManager.register(
+          _settingController.hotKeyPrevious.value,
+          keyDownHandler: (hotKey) {
+            _audioController.audioToPrevious();
+          },
+        );
+      },
+    );
+  }
+}
+
 class Setting extends StatelessWidget {
   const Setting({super.key});
 
@@ -1022,6 +1200,42 @@ class Setting extends StatelessWidget {
     if (_fontsList.isEmpty) {
       _fontsList = await getFontsList();
     }
+  }
+
+  Widget _createSetItem({
+    required String text,
+    required Widget child,
+    required BuildContext context,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        Text(text, style: generalTextStyle(ctx: context, size: 'lg')),
+        child,
+      ],
+    );
+  }
+
+  Widget _createRadioBtn({
+    required RxBool value,
+    required WidgetStateProperty<Color?> trackColor,
+    required BuildContext context,
+    required void Function(bool) fn,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: Obx(
+        () => Switch(
+          value: value.value,
+          trackColor: trackColor,
+          thumbColor: WidgetStatePropertyAll(
+            Theme.of(context).colorScheme.onPrimary,
+          ),
+          onChanged: fn,
+        ),
+      ),
+    );
   }
 
   @override
@@ -1064,135 +1278,72 @@ class Setting extends StatelessWidget {
                 children: [
                   const _SetDivider(title: '常规'),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        '歌曲文件夹',
-                        style: generalTextStyle(ctx: context, size: 'lg'),
-                      ),
-                      const _FolderManagerDialog(),
-                    ],
+                  _createSetItem(
+                    text: '歌曲文件夹',
+                    child: const _FolderManagerDialog(),
+                    context: context,
                   ),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        'API源',
-                        style: generalTextStyle(ctx: context, size: 'lg'),
-                      ),
-                      const _ApiDropMenu(),
-                    ],
+                  _createSetItem(
+                    text: 'API源',
+                    child: const _ApiDropMenu(),
+                    context: context,
                   ),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        '自动下载选择的歌词',
-                        style: generalTextStyle(ctx: context, size: 'lg'),
-                      ),
-                      Material(
-                        color: Colors.transparent,
-                        child: Obx(
-                          () => Switch(
-                            value: _settingController.autoDownloadLrc.value,
-                            trackColor: switchTrackColor,
-                            thumbColor: WidgetStatePropertyAll(
-                              Theme.of(context).colorScheme.onPrimary,
-                            ),
-                            onChanged: (bool value) {
-                              _settingController.autoDownloadLrc.value = value;
-                              _settingController.putCache();
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
+                  _createSetItem(
+                    text: '自动下载选择的歌词',
+                    child: _createRadioBtn(
+                      value: _settingController.autoDownloadLrc,
+                      trackColor: switchTrackColor,
+                      context: context,
+                      fn: (bool value) {
+                        _settingController.autoDownloadLrc.value = value;
+                        _settingController.putCache();
+                      },
+                    ),
+                    context: context,
                   ),
 
                   const _SetDivider(title: '个性化'),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        '主题色',
-                        style: generalTextStyle(ctx: context, size: 'lg'),
-                      ),
-                      const _ColorPicker(),
-                    ],
+                  _createSetItem(
+                    text: '主题色',
+                    child: const _ColorPicker(),
+                    context: context,
                   ),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        '动态主题色',
-                        style: generalTextStyle(ctx: context, size: 'lg'),
-                      ),
-                      Material(
-                        color: Colors.transparent,
-                        child: Obx(
-                          () => Switch(
-                            value: _settingController.dynamicThemeColor.value,
-                            trackColor: switchTrackColor,
-                            thumbColor: WidgetStatePropertyAll(
-                              Theme.of(context).colorScheme.onPrimary,
-                            ),
-                            onChanged: (bool value) {
-                              _settingController.dynamicThemeColor.value =
-                                  value;
-                              _settingController.putCache();
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
+                  _createSetItem(
+                    text: '动态主题色',
+                    child: _createRadioBtn(
+                      value: _settingController.dynamicThemeColor,
+                      trackColor: switchTrackColor,
+                      context: context,
+                      fn: (bool value) {
+                        _settingController.dynamicThemeColor.value = value;
+                        _settingController.putCache();
+                      },
+                    ),
+                    context: context,
                   ),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        '字体',
-                        style: generalTextStyle(ctx: context, size: 'lg'),
-                      ),
-                      const _FontFamilyDialog(),
-                    ],
+                  _createSetItem(
+                    text: '字体',
+                    child: const _FontFamilyDialog(),
+                    context: context,
                   ),
 
                   const _SetDivider(title: '歌词样式'),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        '字号',
-                        style: generalTextStyle(ctx: context, size: 'lg'),
-                      ),
-                      const _LrcFontSizeDropMenu(),
-                    ],
+                  _createSetItem(
+                    text: '字号',
+                    child: const _LrcFontSizeDropMenu(),
+                    context: context,
                   ),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        '字重',
-                        style: generalTextStyle(ctx: context, size: 'lg'),
-                      ),
-                      const _LrcFontWeightDropMenu(),
-                    ],
+                  _createSetItem(
+                    text: '字重',
+                    child: const _LrcFontWeightDropMenu(),
+                    context: context,
                   ),
 
                   Column(
@@ -1259,232 +1410,173 @@ class Setting extends StatelessWidget {
 
                   Tooltip(
                     message: '此效果比较占用性能',
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        Text(
-                          '歌词行模糊',
-                          style: generalTextStyle(ctx: context, size: 'lg'),
-                        ),
-                        Material(
-                          color: Colors.transparent,
-                          child: Obx(
-                            () => Switch(
-                              value: _settingController.useBlur.value,
-                              trackColor: switchTrackColor,
-                              thumbColor: WidgetStatePropertyAll(
-                                Theme.of(context).colorScheme.onPrimary,
-                              ),
-                              onChanged: (bool value) {
-                                _settingController.useBlur.value = value;
-                                _settingController.putCache();
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: _createSetItem(
+                      text: '歌词行模糊',
+                      child: _createRadioBtn(
+                        value: _settingController.useBlur,
+                        trackColor: switchTrackColor,
+                        context: context,
+                        fn: (bool value) {
+                          _settingController.useBlur.value = value;
+                          _settingController.putCache();
+                        },
+                      ),
+                      context: context,
                     ),
                   ),
 
                   const _SetDivider(title: '桌面歌词样式'),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        '字号',
-                        style: generalTextStyle(ctx: context, size: 'lg'),
-                      ),
-                      const _DesktopLrcFontSizeDropMenu(),
-                    ],
+                  _createSetItem(
+                    text: '字号',
+                    child: const _DesktopLrcFontSizeDropMenu(),
+                    context: context,
                   ),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        '字重',
-                        style: generalTextStyle(ctx: context, size: 'lg'),
-                      ),
-                      const _DesktopLrcFontWeightDropMenu(),
-                    ],
+                  _createSetItem(
+                    text: '字重',
+                    child: const _DesktopLrcFontWeightDropMenu(),
+                    context: context,
                   ),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        '透明度',
-                        style: generalTextStyle(ctx: context, size: 'lg'),
-                      ),
-                      const _DesktopLrcFontOpacityDropMenu(),
-                    ],
+                  _createSetItem(
+                    text: '透明度',
+                    child: const _DesktopLrcFontOpacityDropMenu(),
+                    context: context,
                   ),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        '已播放颜色',
-                        style: generalTextStyle(ctx: context, size: 'lg'),
-                      ),
-                      const _DesktopLyricsOverlayColorPicker(),
-                    ],
+                  _createSetItem(
+                    text: '已播放颜色',
+                    child: const _DesktopLyricsOverlayColorPicker(),
+                    context: context,
                   ),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        '未播放颜色',
-                        style: generalTextStyle(ctx: context, size: 'lg'),
-                      ),
-                      const _DesktopLyricsUnderColorPicker(),
-                    ],
+                  _createSetItem(
+                    text: '未播放颜色',
+                    child: const _DesktopLyricsUnderColorPicker(),
+                    context: context,
                   ),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        '歌词字体',
-                        style: generalTextStyle(ctx: context, size: 'lg'),
-                      ),
-                      const _DesktopLyricsFontFamilyDialog(),
-                    ],
+                  _createSetItem(
+                    text: '歌词字体',
+                    child: const _DesktopLyricsFontFamilyDialog(),
+                    context: context,
                   ),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        '对齐方式',
-                        style: generalTextStyle(ctx: context, size: 'lg'),
-                      ),
-                      const _DesktopLyricsAlignmentRadio(),
-                    ],
+                  _createSetItem(
+                    text: '对齐方式',
+                    child: const _DesktopLyricsAlignmentRadio(),
+                    context: context,
                   ),
 
                   Tooltip(
                     message: '若开启，桌面歌词窗口将不接受任何鼠标事件',
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        Text(
-                          '是否忽略鼠标事件',
-                          style: generalTextStyle(ctx: context, size: 'lg'),
-                        ),
-                        Material(
-                          color: Colors.transparent,
-                          child: Obx(
-                            () => Switch(
-                              value:
-                                  _desktopLyricsSettingController
-                                      .isIgnoreMouseEvents
-                                      .value,
-                              trackColor: switchTrackColor,
-                              thumbColor: WidgetStatePropertyAll(
-                                Theme.of(context).colorScheme.onPrimary,
-                              ),
-                              onChanged: (bool value) {
-                                _desktopLyricsSettingController
-                                    .setIgnoreMouseEvents(isIgnore: value);
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: _createSetItem(
+                      text: '是否忽略鼠标事件',
+                      child: _createRadioBtn(
+                        value:
+                            _desktopLyricsSettingController.isIgnoreMouseEvents,
+                        trackColor: switchTrackColor,
+                        context: context,
+                        fn: (bool value) {
+                          _desktopLyricsSettingController.setIgnoreMouseEvents(
+                            isIgnore: value,
+                          );
+                        },
+                      ),
+                      context: context,
                     ),
                   ),
 
-                  Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        Text(
-                          '竖排显示',
-                          style: generalTextStyle(ctx: context, size: 'lg'),
-                        ),
-                        Material(
-                          color: Colors.transparent,
-                          child: Obx(
-                            () => Switch(
-                              value:
-                                  _desktopLyricsSettingController
-                                      .useVerticalDisplayMode
-                                      .value,
-                              trackColor: switchTrackColor,
-                              thumbColor: WidgetStatePropertyAll(
-                                Theme.of(context).colorScheme.onPrimary,
-                              ),
-                              onChanged: (bool value) {
-                                _desktopLyricsSettingController
-                                    .setUseVerticalDisplayMode(use: value);
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
+                  _createSetItem(
+                    text: '竖排显示',
+                    child: _createRadioBtn(
+                      value:
+                          _desktopLyricsSettingController
+                              .useVerticalDisplayMode,
+                      trackColor: switchTrackColor,
+                      context: context,
+                      fn: (bool value) {
+                        _desktopLyricsSettingController
+                            .setUseVerticalDisplayMode(use: value);
+                      },
                     ),
+                    context: context,
+                  ),
+
+                  const _SetDivider(title: '快捷键'),
+
+                  // _createSetItem(
+                  //     text: '是否将快捷键应用到全局',
+                  //     child: _createRadioBtn(
+                  //       value:
+                  //           _settingController.hotKeyScope,
+                  //       trackColor: switchTrackColor,
+                  //       context: context,
+                  //       fn: (bool value) async{
+                  //         _settingController.setHotKeyScope(scope: value);
+                  //         await hotKeyManager.unregisterAll();
+                  //         _settingController.initHotKey();
+                  //       },
+                  //     ),
+                  //     context: context,
+                  //   ),
+                  // 此库注册系统级别热键会导致软件崩溃，不使用，此bug处于未解决状态
+                  _createSetItem(
+                    text: '播放/暂停',
+                    child: const _SetHotKeyToggleDialog(),
+                    context: context,
+                  ),
+
+                  _createSetItem(
+                    text: '上一首',
+                    child: const _SetHotKeyPreviousDialog(),
+                    context: context,
+                  ),
+
+                  _createSetItem(
+                    text: '下一首',
+                    child: const _SetHotKeyNextDialog(),
+                    context: context,
+                  ),
 
                   const _SetDivider(title: '关于'),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        '当前版本',
-                        style: generalTextStyle(ctx: context, size: 'lg'),
-                      ),
-                      SizedBox(
-                        width: 108,
-                        child: Center(
-                          child: FutureBuilder<PackageInfo>(
-                            future: PackageInfo.fromPlatform(),
-                            builder: (context, snapshot) {
-                              final style = generalTextStyle(
-                                ctx: context,
-                                size: 'md',
-                              );
-                              if (snapshot.connectionState ==
-                                  ConnectionState.done) {
-                                if (snapshot.hasData) {
-                                  return Text(
-                                    snapshot.data!.version,
-                                    style: style,
-                                  );
-                                } else {
-                                  return Text('获取版本号失败！', style: style);
-                                }
+                  _createSetItem(
+                    text: '当前版本',
+                    child: SizedBox(
+                      width: 108,
+                      child: Center(
+                        child: FutureBuilder<PackageInfo>(
+                          future: PackageInfo.fromPlatform(),
+                          builder: (context, snapshot) {
+                            final style = generalTextStyle(
+                              ctx: context,
+                              size: 'md',
+                            );
+                            if (snapshot.connectionState ==
+                                ConnectionState.done) {
+                              if (snapshot.hasData) {
+                                return Text(
+                                  snapshot.data!.version,
+                                  style: style,
+                                );
+                              } else {
+                                return Text('获取版本号失败！', style: style);
                               }
-                              return SizedBox.shrink();
-                            },
-                          ),
+                            }
+                            return SizedBox.shrink();
+                          },
                         ),
                       ),
-                    ],
+                    ),
+                    context: context,
                   ),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        '检查更新',
-                        style: generalTextStyle(ctx: context, size: 'lg'),
-                      ),
-                      const _CheckVersion(),
-                    ],
+                  _createSetItem(
+                    text: '检查更新',
+                    child: const _CheckVersion(),
+                    context: context,
                   ),
 
                   const SizedBox(height: 96),

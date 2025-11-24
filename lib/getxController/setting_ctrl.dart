@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart';
+import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zerobit_player/HIveCtrl/models/scalable_setting_cache_model.dart';
 import 'package:zerobit_player/HIveCtrl/models/setting_cache_model.dart';
@@ -9,6 +11,7 @@ import '../HIveCtrl/models/music_cache_model.dart';
 import '../field/scalable_config_keys.dart';
 import '../src/rust/api/bass.dart';
 import '../tools/sync_cache.dart';
+import 'audio_ctrl.dart';
 
 class SettingController extends GetxController {
   final themeMode = 'dark'.obs;
@@ -124,6 +127,15 @@ class SettingController extends GetxController {
   final showTranslate=true.obs;
   final showRoma=false.obs;
 
+  final hotKeyScope=false.obs; //false : HotKeyScope.inapp.obs true: HotKeyScope.system.obs
+  final hotKeyToggle=HotKey(key: PhysicalKeyboardKey.space,scope: HotKeyScope.inapp).obs;
+  final hotKeyNext=HotKey(key: PhysicalKeyboardKey.arrowRight,scope: HotKeyScope.inapp).obs;
+  final hotKeyPrevious=HotKey(key: PhysicalKeyboardKey.arrowLeft,scope: HotKeyScope.inapp).obs;
+
+  int hotKeyToggleHid=0x0007002c;
+  int hotKeyNextHid=0x0007004f;
+  int hotKeyPreviousHid=0x00070050;
+
   static const Map<int, String> apiMap = {0: "QQ音乐", 1: "网易云音乐"};
 
   static const Map<int, String> sortType = {
@@ -144,6 +156,8 @@ class SettingController extends GetxController {
   final _scalableSettingCacheBox = HiveManager.scalableSettingCacheBox;
 
   SharedPreferences? prefs;
+
+  AudioController get _audioController => Get.find<AudioController>();
 
   Future<void> _initHive() async {
     final cache = _settingCacheBox.get(key: _key);
@@ -270,6 +284,39 @@ class SettingController extends GetxController {
     prefs = await SharedPreferences.getInstance();
     showTranslate.value=prefs!.getBool('showTranslate')??true;
     showRoma.value=prefs!.getBool('showRoma')??false;
+    hotKeyToggleHid=prefs!.getInt('toggleHid')??0x0007002c;
+    hotKeyNextHid=prefs!.getInt('nextHid')??0x0007004f;
+    hotKeyPreviousHid=prefs!.getInt('previousHid')??0x00070050;
+    hotKeyScope.value=prefs!.getBool('hotKeyScope')??false;
+  }
+
+  void initHotKey()async{
+    final scope=HotKeyScope.inapp; //目前只在应用范围内生效
+    // final scope=hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp;
+    hotKeyToggle.value=HotKey(key: PhysicalKeyboardKey(hotKeyToggleHid),scope: scope);
+    hotKeyNext.value=HotKey(key: PhysicalKeyboardKey(hotKeyNextHid),scope: scope);
+    hotKeyPrevious.value=HotKey(key: PhysicalKeyboardKey(hotKeyPreviousHid),scope: scope);
+
+    await hotKeyManager.register(
+          hotKeyToggle.value,
+          keyDownHandler: (hotKey) {
+            _audioController.audioToggle();
+          },
+        );
+
+    await hotKeyManager.register(
+          hotKeyNext.value,
+          keyDownHandler: (hotKey) {
+            _audioController.audioToNext();
+          },
+        );
+
+    await hotKeyManager.register(
+          hotKeyPrevious.value,
+          keyDownHandler: (hotKey) {
+            _audioController.audioToPrevious();
+          },
+        );
   }
 
   @override
@@ -277,6 +324,7 @@ class SettingController extends GetxController {
     super.onInit();
     await _initHive();
     await _initPrefs();
+    initHotKey();
   }
 
   Future<void> putCache({bool isSaveFolders = false}) async {
@@ -335,6 +383,38 @@ class SettingController extends GetxController {
       return;
     }
     prefs!.setBool('showRoma', showRoma.value);
+  }
+
+  void setToggleHid({required hid}){
+    hotKeyToggleHid=hid;
+    if(prefs==null){
+      return;
+    }
+    prefs!.setInt('toggleHid', hotKeyToggleHid);
+  }
+
+  void setNextHid({required hid}){
+    hotKeyNextHid=hid;
+    if(prefs==null){
+      return;
+    }
+    prefs!.setInt('nextHid', hotKeyNextHid);
+  }
+
+  void setPreviousHid({required hid}){
+    hotKeyPreviousHid=hid;
+    if(prefs==null){
+      return;
+    }
+    prefs!.setInt('previousHid', hotKeyPreviousHid);
+  }
+
+  void setHotKeyScope({required bool scope}){
+    hotKeyScope.value=scope;
+    if(prefs==null){
+      return;
+    }
+    prefs!.setBool('hotKeyScope', hotKeyScope.value);
   }
 
 }
