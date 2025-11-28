@@ -30,10 +30,10 @@ jobs:
     - name: Package release  
       run: |  
         cd build/windows/x64/runner/Release  
-        7z a -tzip ../../../../zerobit_player.exe *  
+        7z a -tzip ../../../../zerobit_player.zip *  
           
     - name: Upload artifact  
       uses: actions/upload-artifact@v4  
       with:  
         name: ZeroBit-Player-Windows  
-        path: ZeroBit-Player-Windows.zip
+        path: zerobit_player.zip
