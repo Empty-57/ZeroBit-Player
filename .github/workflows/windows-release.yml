@@ -36,4 +36,4 @@ jobs:
       uses: actions/upload-artifact@v4  
       with:  
         name: ZeroBit-Player-Windows  
-        path: zerobit_player.zip
+        path: ../../../../zerobit_player.zip
