@@ -26,14 +26,14 @@ jobs:
         
     - name: Build Windows release  
       run: flutter build windows --release  
-        
+  
     - name: Package release  
       run: |  
         cd build/windows/x64/runner/Release  
-        7z a -tzip ../../../../zerobit_player.zip *  
-          
+        7z a -tzip $GITHUB_WORKSPACE/ZeroBit-Player-Windows.zip *  
+  
     - name: Upload artifact  
       uses: actions/upload-artifact@v4  
       with:  
         name: ZeroBit-Player-Windows  
-        path: ../../../../zerobit_player.zip
+        path: ZeroBit-Player-Windows.zip
