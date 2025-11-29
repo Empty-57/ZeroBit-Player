@@ -105,10 +105,10 @@ Future<_LyricModel?> _getLyrics({String? filePath}) async {
     String type = ext;
     if (lyrics != null && lyrics.trim().isNotEmpty) {
       String? lyricsTs;
-
+      final detectType = detectLrcType(lyrics);
       if (ext == LyricFormat.lrc &&
-          (detectLrcType(lyrics) == LrcType.enhanced ||
-              detectLrcType(lyrics) == LrcType.wordByWord)) {
+          (detectType == LrcType.enhanced ||
+              detectType == LrcType.wordByWord)) {
         type = LyricFormat.byWordLrc;
       }
 

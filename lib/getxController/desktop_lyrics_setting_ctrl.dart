@@ -22,6 +22,10 @@ class DesktopLyricsSettingController extends GetxController {
   final lrcAlignment=1.obs;
   final useVerticalDisplayMode=false.obs;
 
+  final useStroke =true.obs;
+
+  final strokeColor=0xff000000.obs;
+
   static const Map<int, String> lrcAlignmentMap = {0: '左对齐', 1: '居中', 2: '右对齐'};
 
   SharedPreferences? prefs;
@@ -47,6 +51,8 @@ class DesktopLyricsSettingController extends GetxController {
     isIgnoreMouseEvents.value=prefs!.getBool('isIgnoreMouseEvents')??false;
     lrcAlignment.value=prefs!.getInt('lrcAlignment')??1;
     useVerticalDisplayMode.value=prefs!.getBool('displayMode')??false;
+    useStroke.value=prefs!.getBool('useStroke')??true;
+    strokeColor.value=prefs!.getInt('strokeColor') ?? 0xff000000;
   }
 
   void setFontSize({required int size}) {
@@ -174,4 +180,23 @@ class DesktopLyricsSettingController extends GetxController {
     }
     prefs!.setBool('displayMode', use);
   }
+
+  void setStrokeEnable({required bool enable}){
+    useStroke.value=enable;
+    _desktopLyricsSever.sendCmd(cmdType: SeverCmdType.setStrokeEnable, cmdData: useStroke.value);
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setBool('useStroke', enable);
+  }
+
+  void setStrokeColor({required int color}){
+    strokeColor.value=color;
+    _desktopLyricsSever.sendCmd(cmdType: SeverCmdType.setStrokeColor, cmdData: strokeColor.value);
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setInt('strokeColor', color);
+  }
+
 }

@@ -17,6 +17,8 @@ abstract class SeverCmdType {
   static const setIgnoreMouseEvents = 'setIgnoreMouseEvents';
   static const setLrcAlignment = 'setLrcAlignment';
   static const setDisplayMode = 'setDisplayMode';
+  static const setStrokeEnable='setStrokeEnable';
+  static const setStrokeColor='setStrokeColor';
 }
 
 abstract class ClientCmdType {

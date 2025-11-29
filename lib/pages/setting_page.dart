@@ -339,8 +339,21 @@ Widget _getColorPicker(
   bool enableAlpha = false,
 ]) {
   final TextEditingController hexController = TextEditingController();
-  int themeColor_ = initColor;
-  return CustomBtn(
+  RxInt themeColor_ = initColor.obs;
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    crossAxisAlignment: CrossAxisAlignment.center,
+    spacing: 16,
+    children: [
+      Obx(()=>Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: Color(themeColor_.value),
+          borderRadius: BorderRadius.circular(4)
+        ),
+      )),
+      CustomBtn(
     fn: () {
       showDialog(
         barrierDismissible: true,
@@ -384,7 +397,7 @@ Widget _getColorPicker(
                     pickerAreaBorderRadius: BorderRadius.all(
                       Radius.circular(4),
                     ),
-                    pickerColor: Color(themeColor_),
+                    pickerColor: Color(themeColor_.value),
                     colorPickerWidth: 400,
                     pickerAreaHeightPercent: 0.7,
                     enableAlpha: enableAlpha,
@@ -394,7 +407,7 @@ Widget _getColorPicker(
                     hexInputBar: false,
                     hexInputController: hexController,
                     onColorChanged: (Color color) {
-                      themeColor_ = color.toARGB32();
+                      themeColor_.value = color.toARGB32();
                     },
                   ),
 
@@ -416,7 +429,7 @@ Widget _getColorPicker(
                       CustomBtn(
                         fn: () {
                           Navigator.pop(context, 'action');
-                          fn(themeColor_);
+                          fn(themeColor_.value);
                         },
                         backgroundColor: Theme.of(context).colorScheme.primary,
                         contentColor: Theme.of(context).colorScheme.onPrimary,
@@ -443,6 +456,8 @@ Widget _getColorPicker(
     backgroundColor: Theme.of(context).colorScheme.primary,
     overlayColor: Theme.of(context).colorScheme.surfaceContainer,
     contentColor: Theme.of(context).colorScheme.onPrimary,
+  ),
+    ],
   );
 }
 
@@ -1193,6 +1208,23 @@ class _SetHotKeyPreviousDialog extends StatelessWidget {
   }
 }
 
+class _DesktopLyricsStrokeColor extends StatelessWidget{
+  const _DesktopLyricsStrokeColor();
+  @override
+  Widget build(BuildContext context) {
+    return _getColorPicker(
+      context,
+      _desktopLyricsSettingController.strokeColor.value,
+      (color) {
+        _desktopLyricsSettingController.strokeColor.value = color;
+        _desktopLyricsSettingController.setStrokeColor(color: color);
+      },
+      true,
+    );
+  }
+
+}
+
 class Setting extends StatelessWidget {
   const Setting({super.key});
 
@@ -1466,6 +1498,25 @@ class Setting extends StatelessWidget {
                   _createSetItem(
                     text: '对齐方式',
                     child: const _DesktopLyricsAlignmentRadio(),
+                    context: context,
+                  ),
+
+                  _createSetItem(
+                    text: '边框',
+                    child: _createRadioBtn(
+                        value: _desktopLyricsSettingController.useStroke,
+                        trackColor: switchTrackColor,
+                        context: context,
+                        fn: (bool value) {
+                          _desktopLyricsSettingController.setStrokeEnable(enable: value);
+                        },
+                      ),
+                    context: context,
+                  ),
+
+                  _createSetItem(
+                    text: '边框颜色',
+                    child: const _DesktopLyricsStrokeColor(),
                     context: context,
                   ),
 

@@ -84,8 +84,8 @@ class CustomNavigationBtn extends StatelessWidget {
                   message:
                       context.width > _resViewThresholds
                           ? _audioController.navigationIsExtend.value
-                              ? label
-                              : ""
+                              ? ""
+                              : label
                           : label,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
