@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:zerobit_player/HIveCtrl/adapters/scalable_setting_adapters.dart';
 import 'package:zerobit_player/HIveCtrl/adapters/user_playlist_adapter.dart';
 import 'package:zerobit_player/HIveCtrl/models/scalable_setting_cache_model.dart';
@@ -58,6 +59,47 @@ import 'theme_manager.dart';
 int countMs100 = 0;
 int countSec = 0;
 
+const String configDirectory = 'zerobit_config';
+
+void hiveSafeRegisterAdapter<T>(TypeAdapter<T> adapter) {
+  if (!Hive.isAdapterRegistered(adapter.typeId)) {
+    Hive.registerAdapter<T>(adapter);
+  }
+}
+
+Future<Box> openSafeBox<T>(String boxName) async {
+  try {
+    return await Hive.openBox<T>(boxName);
+  } catch (e) {
+    // 捕获到 HiveError 或者其他异常
+    debugPrint('Box <$boxName> Damage，Reset... ErrMsg: $e');
+
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    // 从磁盘删除损坏的 Box 不使用Hive.deleteBoxFromDisk是因为可能被占用
+    final directory = p.join(
+      (await getApplicationDocumentsDirectory()).path,
+      configDirectory,
+    );
+    final file = File('$directory/$boxName.hive');
+    final lockFile = File('$directory/$boxName.lock');
+
+    if (await file.exists()) {
+      try {
+        await file.delete();
+      } catch (_) {}
+    }
+    if (await lockFile.exists()) {
+      try {
+        await lockFile.delete();
+      } catch (_) {}
+    }
+
+    // 重新尝试打开（此时会创建一个新的空 Box）
+    return await Hive.openBox<T>(boxName);
+  }
+}
+
 void main() async {
   // ProcessSignal.sigint.watch().listen((signal) async{
   //   debugPrint("Received SIGTERM: process is exiting.");
@@ -89,25 +131,28 @@ void main() async {
 
   await initSmtc();
 
-  await Hive.initFlutter('zerobit_config');
+  await Hive.initFlutter(configDirectory);
 
   // await Hive.deleteBoxFromDisk(HiveBoxes.musicCacheBox);
   // await Hive.deleteBoxFromDisk(HiveBoxes.settingCacheBox);
   // await Hive.deleteBoxFromDisk(HiveBoxes.userPlayListCacheBox);
   // await Hive.deleteBoxFromDisk(HiveBoxes.scalableSettingCacheBox);
 
-  Hive.registerAdapter(MusicCacheAdapter());
-  Hive.registerAdapter(SettingCacheAdapter());
-  Hive.registerAdapter(UserPlayListAdapter());
-  Hive.registerAdapter(ScalableSettingAdapter());
+  hiveSafeRegisterAdapter<MusicCache>(MusicCacheAdapter());
+  hiveSafeRegisterAdapter<SettingCache>(SettingCacheAdapter());
+  hiveSafeRegisterAdapter<UserPlayListCache>(UserPlayListAdapter());
+  hiveSafeRegisterAdapter<ScalableSettingCache>(ScalableSettingAdapter());
 
-  final musicBox = await Hive.openBox<MusicCache>(HiveBoxes.musicCacheBox);
-  final keysToDelete = musicBox.keys.where((k) => !supportedExts.contains(p.extension(k).toLowerCase())).toList();
-  await musicBox.deleteAll(keysToDelete);  //清除不是音频格式的路径，防止路径被污染
+  final musicBox = await openSafeBox<MusicCache>(HiveBoxes.musicCacheBox);
+  final keysToDelete =
+      musicBox.keys
+          .where((k) => !supportedExts.contains(p.extension(k).toLowerCase()))
+          .toList();
+  await musicBox.deleteAll(keysToDelete); //清除不是音频格式的路径，防止路径被污染
 
-  await Hive.openBox<SettingCache>(HiveBoxes.settingCacheBox);
-  await Hive.openBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
-  await Hive.openBox<ScalableSettingCache>(HiveBoxes.scalableSettingCacheBox);
+  await openSafeBox<SettingCache>(HiveBoxes.settingCacheBox);
+  await openSafeBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
+  await openSafeBox<ScalableSettingCache>(HiveBoxes.scalableSettingCacheBox);
 
   Get.put(AudioSource());
   Get.put(UserPlayListController());
