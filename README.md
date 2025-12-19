@@ -43,7 +43,7 @@ flutter run
  - `basswv.dll`
  - `bass_fx.dll`
 
-复制到软件目录的 `BASS` 文件夹下
+复制到软件目录的 `BASSDLL` 文件夹下
 
 要把[`Zerobit Player Desktop Lyrics`](https://github.com/Empty-57/zerobit_player_desktop_lyrics)编译后的内容复制到软件目录的 `desktop_lyrics` 文件夹下以支持桌面歌词
 
