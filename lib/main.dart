@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
@@ -145,8 +147,9 @@ void main() async {
 
   final musicBox = await openSafeBox<MusicCache>(HiveBoxes.musicCacheBox);
   final keysToDelete =
-      musicBox.keys
+      musicBox.values.map((v)=>v.path)
           .where((k) => !supportedExts.contains(p.extension(k).toLowerCase()))
+          .map((v)=>md5.convert(utf8.encode(v)).toString())
           .toList();
   await musicBox.deleteAll(keysToDelete); //清除不是音频格式的路径，防止路径被污染
 

@@ -1,4 +1,6 @@
 import 'dart:collection';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:pinyin/pinyin.dart';
 import 'package:zerobit_player/HIveCtrl/hive_manager.dart';
 import 'package:zerobit_player/HIveCtrl/models/music_cache_model.dart';
@@ -93,7 +95,7 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
 
   Future<void> remove({required MusicCache metadata}) async {
     items.removeWhere((v) => v.path == metadata.path);
-    await HiveManager.musicCacheBox.del(key: metadata.path);
+    await HiveManager.musicCacheBox.del(key: md5.convert(utf8.encode(metadata.path)).toString());
   }
 
   MusicCache putMetadata({
@@ -114,7 +116,7 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
       sampleRate: oldCache.sampleRate,
       path: oldCache.path,
     );
-    _musicCacheBox.put(data: newCache, key: path);
+    _musicCacheBox.put(data: newCache, key: md5.convert(utf8.encode(path)).toString());
     items[index] = newCache;
     return newCache;
   }

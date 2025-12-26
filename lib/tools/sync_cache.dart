@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart' as p;
@@ -57,8 +59,9 @@ Future<Map<String, MusicCache>> _fetchMetadataBatch(
     try {
       final meta = await getMetadata(path: path);
       ctrl.currentScanAudio.value = meta.title;
+      final hashPath = md5.convert(utf8.encode(path)).toString();
       return MapEntry(
-        path,
+        hashPath,
         MusicCache(
           artist: meta.artist,
           album: meta.album,
@@ -91,16 +94,21 @@ Future<void> syncCache() async {
 
   final existingKeys =
       musicBox
-          .getKeyAll()
+          .getAll()
+          .map((v) => v.path)
           .whereType<String>()
           .where((k) => supportedExts.contains(p.extension(k).toLowerCase()))
           .toSet(); //清除不是音频格式的路径，防止路径被污染
 
   final newPaths = scannedPaths.difference(existingKeys);
-  final removedPaths = existingKeys.difference(scannedPaths);
+  final removedPaths =
+      existingKeys
+          .difference(scannedPaths)
+          .map((v) => md5.convert(utf8.encode(v)).toString())
+          .toList();
 
   if (removedPaths.isNotEmpty) {
-    await musicBox.delAll(keyList: removedPaths.toList());
+    await musicBox.delAll(keyList: removedPaths);
   }
 
   if (newPaths.isNotEmpty) {
