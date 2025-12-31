@@ -21,6 +21,9 @@ class ArtistListController extends GetxController with AudioControllerGenClass {
   static final audioListItems = <MusicCache>[].obs;
 
   @override
+  final headCover = kTransparentImage.obs;
+
+  @override
   RxList<MusicCache> get items => audioListItems;
 
   @override

@@ -17,7 +17,9 @@
 [点击此处安装](https://github.com/Empty-57/ZeroBit-Player/releases/latest)
 ### 快速开始
 - 安装Rust环境
-- 安装Flutter SDK 版本>=3.7.2
+- 安装Flutter SDK 3.7.2
+- 安装Flutter 3.32.6
+- 安装Dart 3.8.1
 
 ### 安装依赖
 ```
