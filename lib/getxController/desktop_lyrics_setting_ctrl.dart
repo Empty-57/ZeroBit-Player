@@ -31,7 +31,7 @@ class DesktopLyricsSettingController extends GetxController {
   SharedPreferences? prefs;
 
   static const int fontSizeMin = 16;
-  static const int fontSizeMax = 36;
+  static const int fontSizeMax = 48;
 
   @override
   void onInit() async {
