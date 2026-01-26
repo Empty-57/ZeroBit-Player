@@ -56,7 +56,7 @@ class DesktopLyricsSever extends GetxController {
     }
     final lyrics = _audioController.currentLyrics.value?.parsedLrc;
     int lineIndex = _lyricController.currentLineIndex.value;
-    int nextLineIndex = lineIndex+1;
+    int nextLineIndex = lineIndex + 1;
     final type = _audioController.currentLyrics.value?.type;
     if (lyrics == null || lyrics.isEmpty || type == null) {
       try {
@@ -64,21 +64,33 @@ class DesktopLyricsSever extends GetxController {
           LyricsIOModel.sendData('暂无歌词', '', LyricFormat.lrc),
         );
         _add(jsonData);
+        final nextJsonData = jsonEncode(
+          LyricsIOModel.sendNextData('', '', LyricFormat.lrc),
+        );
+        _add(nextJsonData);
       } catch (_) {}
       return;
     }
     if (lineIndex < 0 || lineIndex >= lyrics.length) {
       lineIndex = 0;
-      nextLineIndex=1;
+      nextLineIndex = 1;
       _lyricController.currentWordIndex.value = 0;
       _lyricController.wordProgress.value = 0.0;
     }
 
     final currLyrics = lyrics[lineIndex].lyricText;
-    final nextLyrics = nextLineIndex>lyrics.length-1? [WordEntry(start: 0.0, duration: 0.0, lyricWord: '')]: lyrics[nextLineIndex].lyricText;
+    final nextLyrics =
+        nextLineIndex > lyrics.length - 1
+            ? type == LyricFormat.lrc
+                ? ''
+                : [WordEntry(start: 0.0, duration: 0.0, lyricWord: '')]
+            : lyrics[nextLineIndex].lyricText;
 
     final translate = lyrics[lineIndex].translate;
-    final nextTranslate = nextLineIndex>lyrics.length-1? '': lyrics[nextLineIndex].translate;
+    final nextTranslate =
+        nextLineIndex > lyrics.length - 1
+            ? ''
+            : lyrics[nextLineIndex].translate;
 
     if (type == LyricFormat.lrc) {
       try {
@@ -88,8 +100,9 @@ class DesktopLyricsSever extends GetxController {
         _add(jsonData);
 
         final nextJsonData = jsonEncode(
-           LyricsIOModel.sendNextData(nextLyrics, nextTranslate, type),
+          LyricsIOModel.sendNextData(nextLyrics, nextTranslate, type),
         );
+        debugPrint('nl:${nextLyrics.toString()} tt:$nextTranslate ty: $type');
         _add(nextJsonData);
       } catch (_) {}
     } else {
@@ -109,11 +122,10 @@ class DesktopLyricsSever extends GetxController {
         );
         _add(jsonData);
 
-        final  nextJsonData = jsonEncode(
+        final nextJsonData = jsonEncode(
           LyricsIOModel.sendNextData(nextLine, nextTranslate, type),
         );
-        _add( nextJsonData);
-
+        _add(nextJsonData);
       } catch (_) {}
     }
   }
@@ -153,7 +165,7 @@ class DesktopLyricsSever extends GetxController {
     );
   }
 
-  void connect() async{
+  void connect() async {
     try {
       _startLineWorker();
       _startMs20Worker();
@@ -185,14 +197,25 @@ class DesktopLyricsSever extends GetxController {
                     'isLock': _desktopLyricsSettingController.isLock.value,
                     'dx': _desktopLyricsSettingController.windowDx,
                     'dy': _desktopLyricsSettingController.windowDy,
-                    'windowWidth':_desktopLyricsSettingController.windowWidth,
-                    'windowHeight':_desktopLyricsSettingController.windowHeight,
-                    'isIgnoreMouseEvents':_desktopLyricsSettingController.isIgnoreMouseEvents.value,
-                    'lrcAlignment':_desktopLyricsSettingController.lrcAlignment.value,
-                    'displayMode':_desktopLyricsSettingController.useVerticalDisplayMode.value,
-                    'useStroke':_desktopLyricsSettingController.useStroke.value,
-                    'strokeColor':_desktopLyricsSettingController.strokeColor.value,
-                    'showDoubleLine':_desktopLyricsSettingController.showDoubleLine.value,
+                    'windowWidth': _desktopLyricsSettingController.windowWidth,
+                    'windowHeight':
+                        _desktopLyricsSettingController.windowHeight,
+                    'isIgnoreMouseEvents':
+                        _desktopLyricsSettingController
+                            .isIgnoreMouseEvents
+                            .value,
+                    'lrcAlignment':
+                        _desktopLyricsSettingController.lrcAlignment.value,
+                    'displayMode':
+                        _desktopLyricsSettingController
+                            .useVerticalDisplayMode
+                            .value,
+                    'useStroke':
+                        _desktopLyricsSettingController.useStroke.value,
+                    'strokeColor':
+                        _desktopLyricsSettingController.strokeColor.value,
+                    'showDoubleLine':
+                        _desktopLyricsSettingController.showDoubleLine.value,
                   },
                 );
               }
