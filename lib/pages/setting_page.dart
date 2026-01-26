@@ -993,7 +993,7 @@ class _DesktopLyricsAlignmentRadio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final alignment = [0, 1, 2];
+    final alignment = [0, 1, 2,3];
     return Material(
       child: Wrap(
         spacing: 8,
@@ -1249,7 +1249,7 @@ class Setting extends StatelessWidget {
     );
   }
 
-  Widget _createRadioBtn({
+  Widget _createSwitchBtn({
     required RxBool value,
     required WidgetStateProperty<Color?> trackColor,
     required BuildContext context,
@@ -1324,7 +1324,7 @@ class Setting extends StatelessWidget {
 
                   _createSetItem(
                     text: '自动下载选择的歌词',
-                    child: _createRadioBtn(
+                    child: _createSwitchBtn(
                       value: _settingController.autoDownloadLrc,
                       trackColor: switchTrackColor,
                       context: context,
@@ -1346,7 +1346,7 @@ class Setting extends StatelessWidget {
 
                   _createSetItem(
                     text: '动态主题色',
-                    child: _createRadioBtn(
+                    child: _createSwitchBtn(
                       value: _settingController.dynamicThemeColor,
                       trackColor: switchTrackColor,
                       context: context,
@@ -1444,7 +1444,7 @@ class Setting extends StatelessWidget {
                     message: '此效果比较占用性能',
                     child: _createSetItem(
                       text: '歌词行模糊',
-                      child: _createRadioBtn(
+                      child: _createSwitchBtn(
                         value: _settingController.useBlur,
                         trackColor: switchTrackColor,
                         context: context,
@@ -1502,8 +1502,21 @@ class Setting extends StatelessWidget {
                   ),
 
                   _createSetItem(
+                    text: '使用双行显示',
+                    child: _createSwitchBtn(
+                      value: _desktopLyricsSettingController.showDoubleLine,
+                      trackColor: switchTrackColor,
+                      context: context,
+                      fn: (bool value) {
+                        _desktopLyricsSettingController.setShowDoubleLine(show: value);
+                      },
+                    ),
+                    context: context,
+                  ),
+
+                  _createSetItem(
                     text: '边框',
-                    child: _createRadioBtn(
+                    child: _createSwitchBtn(
                         value: _desktopLyricsSettingController.useStroke,
                         trackColor: switchTrackColor,
                         context: context,
@@ -1524,7 +1537,7 @@ class Setting extends StatelessWidget {
                     message: '若开启，桌面歌词窗口将不接受任何鼠标事件',
                     child: _createSetItem(
                       text: '是否忽略鼠标事件',
-                      child: _createRadioBtn(
+                      child: _createSwitchBtn(
                         value:
                             _desktopLyricsSettingController.isIgnoreMouseEvents,
                         trackColor: switchTrackColor,
@@ -1541,7 +1554,7 @@ class Setting extends StatelessWidget {
 
                   _createSetItem(
                     text: '竖排显示',
-                    child: _createRadioBtn(
+                    child: _createSwitchBtn(
                       value:
                           _desktopLyricsSettingController
                               .useVerticalDisplayMode,

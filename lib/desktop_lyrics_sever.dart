@@ -56,6 +56,7 @@ class DesktopLyricsSever extends GetxController {
     }
     final lyrics = _audioController.currentLyrics.value?.parsedLrc;
     int lineIndex = _lyricController.currentLineIndex.value;
+    int nextLineIndex = lineIndex+1;
     final type = _audioController.currentLyrics.value?.type;
     if (lyrics == null || lyrics.isEmpty || type == null) {
       try {
@@ -68,12 +69,16 @@ class DesktopLyricsSever extends GetxController {
     }
     if (lineIndex < 0 || lineIndex >= lyrics.length) {
       lineIndex = 0;
+      nextLineIndex=1;
       _lyricController.currentWordIndex.value = 0;
       _lyricController.wordProgress.value = 0.0;
     }
 
     final currLyrics = lyrics[lineIndex].lyricText;
+    final nextLyrics = nextLineIndex>lyrics.length-1? [WordEntry(start: 0.0, duration: 0.0, lyricWord: '')]: lyrics[nextLineIndex].lyricText;
+
     final translate = lyrics[lineIndex].translate;
+    final nextTranslate = nextLineIndex>lyrics.length-1? '': lyrics[nextLineIndex].translate;
 
     if (type == LyricFormat.lrc) {
       try {
@@ -81,10 +86,20 @@ class DesktopLyricsSever extends GetxController {
           LyricsIOModel.sendData(currLyrics, translate, type),
         );
         _add(jsonData);
+
+        final nextJsonData = jsonEncode(
+           LyricsIOModel.sendNextData(nextLyrics, nextTranslate, type),
+        );
+        _add(nextJsonData);
       } catch (_) {}
     } else {
       final line =
           (currLyrics as List<WordEntry>).map((v) {
+            return WordEntry.toJson(v);
+          }).toList();
+
+      final nextLine =
+          (nextLyrics as List<WordEntry>).map((v) {
             return WordEntry.toJson(v);
           }).toList();
 
@@ -93,6 +108,12 @@ class DesktopLyricsSever extends GetxController {
           LyricsIOModel.sendData(line, translate, type),
         );
         _add(jsonData);
+
+        final  nextJsonData = jsonEncode(
+          LyricsIOModel.sendNextData(nextLine, nextTranslate, type),
+        );
+        _add( nextJsonData);
+
       } catch (_) {}
     }
   }
@@ -171,6 +192,7 @@ class DesktopLyricsSever extends GetxController {
                     'displayMode':_desktopLyricsSettingController.useVerticalDisplayMode.value,
                     'useStroke':_desktopLyricsSettingController.useStroke.value,
                     'strokeColor':_desktopLyricsSettingController.strokeColor.value,
+                    'showDoubleLine':_desktopLyricsSettingController.showDoubleLine.value,
                   },
                 );
               }

@@ -28,7 +28,9 @@ class DesktopLyricsSettingController extends GetxController {
 
   final strokeColor=0xff000000.obs;
 
-  static const Map<int, String> lrcAlignmentMap = {0: '左对齐', 1: '居中', 2: '右对齐'};
+  final showDoubleLine=false.obs;
+
+  static const Map<int, String> lrcAlignmentMap = {0: '左对齐', 1: '居中', 2: '右对齐', 3: '左右分离'};
 
   SharedPreferences? prefs;
 
@@ -57,6 +59,7 @@ class DesktopLyricsSettingController extends GetxController {
     useVerticalDisplayMode.value=prefs!.getBool('displayMode')??false;
     useStroke.value=prefs!.getBool('useStroke')??true;
     strokeColor.value=prefs!.getInt('strokeColor') ?? 0xff000000;
+    showDoubleLine.value=prefs!.getBool('showDoubleLine')??false;
   }
 
   void setFontSize({required int size}) {
@@ -217,6 +220,15 @@ class DesktopLyricsSettingController extends GetxController {
       return;
     }
     prefs!.setInt('strokeColor', color);
+  }
+
+  void setShowDoubleLine({required bool show}){
+    showDoubleLine.value=show;
+    _desktopLyricsSever.sendCmd(cmdType: SeverCmdType.showDoubleLine, cmdData: showDoubleLine.value);
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setBool('showDoubleLine', show);
   }
 
 }

@@ -1,5 +1,6 @@
 abstract class LyricsMessageType {
   static const data = 'data';
+  static const nextData = 'nextData';
   static const position = 'position';
   static const cmd = 'cmd';
 }
@@ -20,6 +21,7 @@ abstract class SeverCmdType {
   static const setStrokeEnable='setStrokeEnable';
   static const setStrokeColor='setStrokeColor';
   static const heartBeat = 'heartBeat';
+  static const showDoubleLine='showDoubleLine';
 }
 
 abstract class ClientCmdType {
@@ -45,6 +47,19 @@ class LyricsIOModel {
   ) {
     return {
       'type': LyricsMessageType.data,
+      'lyrics': lyrics,
+      'translate': translate,
+      'lyricsType': lyricsType,
+    };
+  }
+
+  static Map<String, dynamic> sendNextData(
+    dynamic lyrics,
+    String translate,
+    String lyricsType,
+  ) {
+    return {
+      'type': LyricsMessageType.nextData,
       'lyrics': lyrics,
       'translate': translate,
       'lyricsType': lyricsType,
