@@ -132,7 +132,7 @@ class DesktopLyricsSever extends GetxController {
     );
   }
 
-  void connect() async {
+  void connect() async{
     try {
       _startLineWorker();
       _startMs20Worker();
@@ -162,8 +162,10 @@ class DesktopLyricsSever extends GetxController {
                     'fontOpacity':
                         _desktopLyricsSettingController.fontOpacity.value,
                     'isLock': _desktopLyricsSettingController.isLock.value,
-                    'dx': _desktopLyricsSettingController.windowDx.value,
-                    'dy': _desktopLyricsSettingController.windowDy.value,
+                    'dx': _desktopLyricsSettingController.windowDx,
+                    'dy': _desktopLyricsSettingController.windowDy,
+                    'windowWidth':_desktopLyricsSettingController.windowWidth,
+                    'windowHeight':_desktopLyricsSettingController.windowHeight,
                     'isIgnoreMouseEvents':_desktopLyricsSettingController.isIgnoreMouseEvents.value,
                     'lrcAlignment':_desktopLyricsSettingController.lrcAlignment.value,
                     'displayMode':_desktopLyricsSettingController.useVerticalDisplayMode.value,
@@ -244,6 +246,15 @@ class DesktopLyricsSever extends GetxController {
             return;
           case ClientCmdType.setDy:
             _desktopLyricsSettingController.setDy(dy: cmdData);
+            return;
+          case ClientCmdType.setWindowWidth:
+            _desktopLyricsSettingController.setWindowWidth(width: cmdData);
+            return;
+          case ClientCmdType.setWindowHeight:
+            _desktopLyricsSettingController.setWindowHeight(height: cmdData);
+            return;
+          case ClientCmdType.heartBeat:
+            sendCmd(cmdType: SeverCmdType.heartBeat, cmdData: 'pong');
             return;
         }
       }

@@ -15,8 +15,10 @@ class DesktopLyricsSettingController extends GetxController {
   final fontOpacity = 1.0.obs;
 
   final isLock = false.obs;
-  final windowDx = 50.0.obs;
-  final windowDy = 50.0.obs;
+  double windowDx = 50.0;
+  double windowDy = 50.0;
+  double windowWidth=450.0;
+  double windowHeight=150.0;
   final isIgnoreMouseEvents = false.obs;
 
   final lrcAlignment=1.obs;
@@ -46,8 +48,10 @@ class DesktopLyricsSettingController extends GetxController {
     underColor.value = prefs!.getInt('underColor') ?? 0xff0000ff;
     fontOpacity.value = prefs!.getDouble('fontOpacity') ?? 1.0;
     isLock.value = prefs!.getBool('isLock') ?? false;
-    windowDx.value = prefs!.getDouble('dx') ?? 50.0;
-    windowDy.value = prefs!.getDouble('dy') ?? 50.0;
+    windowDx = prefs!.getDouble('dx') ?? 50.0;
+    windowDy = prefs!.getDouble('dy') ?? 50.0;
+    windowWidth=prefs!.getDouble('windowWidth') ?? 450.0;
+    windowHeight=prefs!.getDouble('windowHeight') ?? 150.0;
     isIgnoreMouseEvents.value=prefs!.getBool('isIgnoreMouseEvents')??false;
     lrcAlignment.value=prefs!.getInt('lrcAlignment')??1;
     useVerticalDisplayMode.value=prefs!.getBool('displayMode')??false;
@@ -136,7 +140,7 @@ class DesktopLyricsSettingController extends GetxController {
   }
 
   void setDx({required double dx}) {
-    windowDx.value = dx;
+    windowDx = dx;
     if (prefs == null) {
       return;
     }
@@ -144,11 +148,27 @@ class DesktopLyricsSettingController extends GetxController {
   }
 
   void setDy({required double dy}) {
-    windowDy.value = dy;
+    windowDy = dy;
     if (prefs == null) {
       return;
     }
     prefs!.setDouble('dy', dy);
+  }
+
+  void setWindowWidth({required double width}) {
+    windowWidth = width;
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setDouble('windowWidth', width);
+  }
+
+  void setWindowHeight({required double height}) {
+    windowHeight = height;
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setDouble('windowHeight', height);
   }
 
   void setIgnoreMouseEvents({required bool isIgnore}){

@@ -19,6 +19,7 @@ abstract class SeverCmdType {
   static const setDisplayMode = 'setDisplayMode';
   static const setStrokeEnable='setStrokeEnable';
   static const setStrokeColor='setStrokeColor';
+  static const heartBeat = 'heartBeat';
 }
 
 abstract class ClientCmdType {
@@ -31,6 +32,9 @@ abstract class ClientCmdType {
   static const switchLock = 'switchLock';
   static const setDx = 'setDx';
   static const setDy = 'setDy';
+  static const heartBeat = 'heartBeat';
+  static const setWindowWidth = 'setWindowWidth';
+  static const setWindowHeight = 'setWindowHeight';
 }
 
 class LyricsIOModel {
