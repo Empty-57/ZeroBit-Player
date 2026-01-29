@@ -124,6 +124,8 @@ class SettingController extends GetxController {
 
   final showDesktopLyrics=false.obs;
 
+  final useMesh=true.obs;
+
   final showTranslate=true.obs;
   final showRoma=false.obs;
 
@@ -288,6 +290,7 @@ class SettingController extends GetxController {
     hotKeyNextHid=prefs!.getInt('nextHid')??0x0007004f;
     hotKeyPreviousHid=prefs!.getInt('previousHid')??0x00070050;
     hotKeyScope.value=prefs!.getBool('hotKeyScope')??false;
+    useMesh.value=prefs!.getBool('useMesh')??false;
   }
 
   void initHotKey()async{
@@ -415,6 +418,14 @@ class SettingController extends GetxController {
       return;
     }
     prefs!.setBool('hotKeyScope', hotKeyScope.value);
+  }
+
+  void setUseMesh({required bool show}){
+    useMesh.value=show;
+    if(prefs==null){
+      return;
+    }
+    prefs!.setBool('useMesh', useMesh.value);
   }
 
 }

@@ -102,7 +102,7 @@ class DesktopLyricsSever extends GetxController {
         final nextJsonData = jsonEncode(
           LyricsIOModel.sendNextData(nextLyrics, nextTranslate, type),
         );
-        debugPrint('nl:${nextLyrics.toString()} tt:$nextTranslate ty: $type');
+
         _add(nextJsonData);
       } catch (_) {}
     } else {

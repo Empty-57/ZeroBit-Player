@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:zerobit_player/components/lyrics_mesh.dart';
 
 import '../getxController/setting_ctrl.dart';
 
@@ -15,22 +16,34 @@ class BlurWithCoverBackground extends StatelessWidget {
   final double coverScale;
   final bool useGradient;
   final bool useMask;
+  final double radius;
+  final bool meshEnable;
 
-  const BlurWithCoverBackground({super.key, required this.cover, required this.child,this.sigma=48,this.coverScale=1,this.useGradient=true,this.useMask=false});
+  const BlurWithCoverBackground({
+    super.key,
+    required this.cover,
+    required this.child,
+    this.sigma = 48,
+    this.coverScale = 1,
+    this.useGradient = true,
+    this.useMask = false,
+    this.radius = 8.0,
+    this.meshEnable = false,
+  });
 
-  Widget get _cover=>Transform.scale(
+  Widget get _cover => Transform.scale(
     scale: coverScale,
     child: Obx(
-                () => SizedBox.expand(
-                    child: Image.memory(
-                      cover.value,
-                      cacheWidth: _coverBigRenderSize,
-                      cacheHeight: _coverBigRenderSize,
-                      fit: BoxFit.cover,
-                      gaplessPlayback: true,
-                    ),
-                  ),
-              ),
+      () => SizedBox.expand(
+        child: Image.memory(
+          cover.value,
+          cacheWidth: _coverBigRenderSize,
+          cacheHeight: _coverBigRenderSize,
+          fit: BoxFit.cover,
+          gaplessPlayback: true,
+        ),
+      ),
+    ),
   );
 
   @override
@@ -38,37 +51,56 @@ class BlurWithCoverBackground extends StatelessWidget {
     return Stack(
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.only(topLeft: Radius.circular(8)),
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(radius)),
           child: Container(color: Theme.of(context).colorScheme.surface),
         ),
-        Opacity(
-          opacity: _settingController.themeMode.value=='dark'? 0.9:0.6,
-          child:
+
+        Obx(() =>_settingController.useMesh.value && meshEnable
+              ? LyricsMesh()
+              : Opacity(
+                opacity:
+                    _settingController.themeMode.value == 'dark' ? 0.9 : 0.6,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(radius),
+                  ),
+                  child: ImageFiltered(
+                    imageFilter: ImageFilter.blur(
+                      sigmaX: sigma,
+                      sigmaY: sigma,
+                      tileMode: TileMode.clamp,
+                    ),
+                    child:
+                        useGradient
+                            ? ShaderMask(
+                              blendMode: BlendMode.modulate,
+                              shaderCallback: (Rect bounds) {
+                                return LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: <Color>[
+                                    Colors.white.withValues(alpha: 0.4),
+                                    Colors.transparent,
+                                  ],
+                                  tileMode: TileMode.clamp,
+                                ).createShader(bounds);
+                              },
+                              child: _cover,
+                            )
+                            : _cover,
+                  ),
+                ),
+              )),
+
+        if (useMask)
           ClipRRect(
-          borderRadius: BorderRadius.only(topLeft: Radius.circular(8)),
-          child: ImageFiltered(
-            imageFilter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma,tileMode: TileMode.clamp),
-            child: useGradient? ShaderMask(
-              blendMode: BlendMode.modulate,
-              shaderCallback: (Rect bounds) {
-                return LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: <Color>[
-                    Colors.white.withValues(alpha: 0.4),
-                    Colors.transparent,
-                  ],
-                  tileMode: TileMode.clamp,
-                ).createShader(bounds);
-              },
-              child: _cover,
-            ):_cover,
+            borderRadius: BorderRadius.only(topLeft: Radius.circular(radius)),
+            child: Container(
+              color: Theme.of(context).colorScheme.surface.withValues(
+                alpha: _settingController.themeMode.value == 'dark' ? 0.4 : 0.2,
+              ),
+            ),
           ),
-        ),),
-        if(useMask) ClipRRect(
-          borderRadius: BorderRadius.only(topLeft: Radius.circular(8)),
-          child: Container(color: Theme.of(context).colorScheme.surface.withValues(alpha: _settingController.themeMode.value=='dark'? 0.4:0.2)),
-        ),
         child,
       ],
     );

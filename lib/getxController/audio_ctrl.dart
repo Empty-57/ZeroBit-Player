@@ -77,7 +77,7 @@ class AudioController extends GetxController {
 
   final currentLyrics = Rxn<ParsedLyricModel>();
 
-  final audioFFT=<double>[].obs;
+  final audioFFT=<double>[0.0].obs;
 
   final _defaultFFT=List<double>.generate(bassDataFFT512,(i)=>0.0);
 
@@ -86,6 +86,8 @@ class AudioController extends GetxController {
   final randomPlayedList=<int>[];
 
   final navigationIsExtend = true.obs;
+
+  final coverPalette=<Color>[Colors.red,Colors.yellow,Colors.black,Colors.green].obs;
 
   /// 同步 `playListCacheItems`
   void syncPlayListCacheItems() {
@@ -297,6 +299,14 @@ class AudioController extends GetxController {
     _isSyncing = false;
   }
 
+  void _setThemeColor({required int color}){
+    _settingController.themeColor.value =color;
+if(!coverPalette.contains(Color(color))){
+  coverPalette.insert(0, Color(_settingController.themeColor.value));
+}
+      _settingController.putCache();
+  }
+
   Future<void> _setThemeColor4Cover() async {
     if (currentMetadata.value.path.isEmpty) {
       return;
@@ -310,29 +320,28 @@ class AudioController extends GetxController {
       size: Size(150, 150),
     );
 
+    if(generator.paletteColors.length>=4){
+      coverPalette.value=generator.paletteColors.map((v)=>v.color).toList().sublist(0,4);
+    }else{
+      coverPalette.addAll([Colors.red,Colors.yellow,Colors.black,Colors.green]);
+    }
+
     if (generator.vibrantColor != null) {
-      _settingController.themeColor.value =
-          generator.vibrantColor!.color.toARGB32();
-      _settingController.putCache();
+      _setThemeColor(color: generator.vibrantColor!.color.toARGB32());
       return;
     }
 
     if (generator.mutedColor != null) {
-      _settingController.themeColor.value =
-          generator.mutedColor!.color.toARGB32();
-      _settingController.putCache();
+      _setThemeColor(color: generator.mutedColor!.color.toARGB32());
       return;
     }
 
     if (generator.dominantColor != null) {
-      _settingController.themeColor.value =
-          generator.dominantColor!.color.toARGB32();
-      _settingController.putCache();
+      _setThemeColor(color: generator.dominantColor!.color.toARGB32());
       return;
     }
 
-    _settingController.themeColor.value = 0xff27272a;
-    _settingController.putCache();
+    _setThemeColor(color: 0xff27272a);
   }
 
   /// 同步 `currentIndex`

@@ -1443,6 +1443,22 @@ class Setting extends StatelessWidget {
                   Tooltip(
                     message: '此效果比较占用性能',
                     child: _createSetItem(
+                      text: '使用动态背景',
+                      child: _createSwitchBtn(
+                        value: _settingController.useMesh,
+                        trackColor: switchTrackColor,
+                        context: context,
+                        fn: (bool value) {
+                          _settingController.setUseMesh(show: value);
+                        },
+                      ),
+                      context: context,
+                    ),
+                  ),
+
+                  Tooltip(
+                    message: '此效果比较占用性能',
+                    child: _createSetItem(
                       text: '歌词行模糊',
                       child: _createSwitchBtn(
                         value: _settingController.useBlur,

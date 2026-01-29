@@ -1020,6 +1020,8 @@ class LrcView extends StatelessWidget {
       useGradient: false,
       sigma: 256,
       useMask: true,
+      radius: 0,
+      meshEnable: true,
       child: Container(
         color: Theme.of(
           context,
