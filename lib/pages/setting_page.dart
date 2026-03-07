@@ -1144,7 +1144,7 @@ class _SetHotKeyToggleDialog extends StatelessWidget {
         await hotKeyManager.unregister(_settingController.hotKeyToggle.value);
         // final hotKey_=HotKey(key: h.key,modifiers: h.modifiers,scope: _settingController.hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp);// 因库原因无法使用
         _settingController.hotKeyToggle.value = h;
-        _settingController.setToggleHid(hid: h.physicalKey.usbHidUsage);
+        _settingController.setToggleHid(key: h);
         await hotKeyManager.register(
           _settingController.hotKeyToggle.value,
           keyDownHandler: (hotKey) {
@@ -1170,7 +1170,7 @@ class _SetHotKeyNextDialog extends StatelessWidget {
         await hotKeyManager.unregister(_settingController.hotKeyNext.value);
         // final hotKey_=HotKey(key: h.key,modifiers: h.modifiers,scope: _settingController.hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp);// 因库原因无法使用
         _settingController.hotKeyNext.value = h;
-        _settingController.setNextHid(hid: h.physicalKey.usbHidUsage);
+        _settingController.setNextHid(key: h);
         await hotKeyManager.register(
           _settingController.hotKeyNext.value,
           keyDownHandler: (hotKey) {
@@ -1196,7 +1196,7 @@ class _SetHotKeyPreviousDialog extends StatelessWidget {
         await hotKeyManager.unregister(_settingController.hotKeyPrevious.value);
         // final hotKey_=HotKey(key: h.key,modifiers: h.modifiers,scope: _settingController.hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp);// 因库原因无法使用
         _settingController.hotKeyPrevious.value = h;
-        _settingController.setPreviousHid(hid: h.physicalKey.usbHidUsage);
+        _settingController.setPreviousHid(key: h);
         await hotKeyManager.register(
           _settingController.hotKeyPrevious.value,
           keyDownHandler: (hotKey) {

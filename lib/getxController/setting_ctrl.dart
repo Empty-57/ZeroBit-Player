@@ -120,23 +120,31 @@ class SettingController extends GetxController {
     lastWindowIsMaximizedKey: false,
   };
 
-  final showSpectrogram=true.obs;
+  final showSpectrogram = true.obs;
 
-  final showDesktopLyrics=false.obs;
+  final showDesktopLyrics = false.obs;
 
-  final useMesh=true.obs;
+  final useMesh = true.obs;
 
-  final showTranslate=true.obs;
-  final showRoma=false.obs;
+  final showTranslate = true.obs;
+  final showRoma = false.obs;
 
-  final hotKeyScope=false.obs; //false : HotKeyScope.inapp.obs true: HotKeyScope.system.obs
-  final hotKeyToggle=HotKey(key: PhysicalKeyboardKey.space,scope: HotKeyScope.inapp).obs;
-  final hotKeyNext=HotKey(key: PhysicalKeyboardKey.arrowRight,scope: HotKeyScope.inapp).obs;
-  final hotKeyPrevious=HotKey(key: PhysicalKeyboardKey.arrowLeft,scope: HotKeyScope.inapp).obs;
+  final hotKeyScope =
+      false.obs; //false : HotKeyScope.inapp.obs true: HotKeyScope.system.obs
+  final hotKeyToggle =
+      HotKey(key: PhysicalKeyboardKey.space, scope: HotKeyScope.inapp).obs;
+  final hotKeyNext =
+      HotKey(key: PhysicalKeyboardKey.arrowRight, scope: HotKeyScope.inapp).obs;
+  final hotKeyPrevious =
+      HotKey(key: PhysicalKeyboardKey.arrowLeft, scope: HotKeyScope.inapp).obs;
 
-  int hotKeyToggleHid=0x0007002c;
-  int hotKeyNextHid=0x0007004f;
-  int hotKeyPreviousHid=0x00070050;
+  List<int> modifierToggleHidList = [];
+  List<int> modifierNextHidList = [];
+  List<int> modifierPreviousHidList = [];
+
+  int hotKeyToggleHid = 0x0007002c;
+  int hotKeyNextHid = 0x0007004f;
+  int hotKeyPreviousHid = 0x00070050;
 
   static const Map<int, String> apiMap = {0: "QQ音乐", 1: "网易云音乐"};
 
@@ -226,9 +234,10 @@ class SettingController extends GetxController {
     if (scalableCache != null) {
       final config = scalableCache.config;
       if (config.isNotEmpty) {
-
         if (config.containsKey(ScalableConfigKeys.equalizerGains)) {
-          equalizerGains.value = config[ScalableConfigKeys.equalizerGains]??equalizerGainPresets['Default'];
+          equalizerGains.value =
+              config[ScalableConfigKeys.equalizerGains] ??
+              equalizerGainPresets['Default'];
         }
 
         if (config.containsKey(ScalableConfigKeys.lastAudioInfo)) {
@@ -264,14 +273,15 @@ class SettingController extends GetxController {
               false;
         }
 
-        if(config.containsKey(ScalableConfigKeys.showSpectrogramKey)){
-          showSpectrogram.value=config[ScalableConfigKeys.showSpectrogramKey]??true;
+        if (config.containsKey(ScalableConfigKeys.showSpectrogramKey)) {
+          showSpectrogram.value =
+              config[ScalableConfigKeys.showSpectrogramKey] ?? true;
         }
 
-        if(config.containsKey(ScalableConfigKeys.showDesktopLyricsKey)){
-          showDesktopLyrics.value=config[ScalableConfigKeys.showDesktopLyricsKey]??false;
+        if (config.containsKey(ScalableConfigKeys.showDesktopLyricsKey)) {
+          showDesktopLyrics.value =
+              config[ScalableConfigKeys.showDesktopLyricsKey] ?? false;
         }
-
       }
     }
 
@@ -282,52 +292,117 @@ class SettingController extends GetxController {
     }
   }
 
-  Future<void> _initPrefs()async{
+  Future<void> _initPrefs() async {
     prefs = await SharedPreferences.getInstance();
-    showTranslate.value=prefs!.getBool('showTranslate')??true;
-    showRoma.value=prefs!.getBool('showRoma')??false;
-    hotKeyToggleHid=prefs!.getInt('toggleHid')??0x0007002c;
-    hotKeyNextHid=prefs!.getInt('nextHid')??0x0007004f;
-    hotKeyPreviousHid=prefs!.getInt('previousHid')??0x00070050;
-    hotKeyScope.value=prefs!.getBool('hotKeyScope')??false;
-    useMesh.value=prefs!.getBool('useMesh')??false;
+    showTranslate.value = prefs!.getBool('showTranslate') ?? true;
+    showRoma.value = prefs!.getBool('showRoma') ?? false;
+
+    List<int> toggleKey;
+    List<int> nextKey;
+    List<int> previousKey;
+
+    try {
+      toggleKey =
+          (prefs!.getString('toggleHidString') ?? '0x0007002c')
+              .split('_')
+              .map((v) => int.parse(v))
+              .toList();
+      nextKey =
+          (prefs!.getString('nextHidString') ?? '0x0007004f')
+              .split('_')
+              .map((v) => int.parse(v))
+              .toList();
+      previousKey =
+          (prefs!.getString('previousHidString') ?? '0x00070050')
+              .split('_')
+              .map((v) => int.parse(v))
+              .toList();
+    } catch (_) {
+      toggleKey = [0x0007002c];
+      nextKey = [0x0007004f];
+      previousKey = [0x00070050];
+    }
+
+    hotKeyToggleHid = toggleKey.last;
+    if (toggleKey.length > 1) {
+      modifierToggleHidList = toggleKey.sublist(0, toggleKey.length - 1);
+    }
+
+    hotKeyNextHid = nextKey.last;
+    if (nextKey.length > 1) {
+      modifierNextHidList = nextKey.sublist(0, nextKey.length - 1);
+    }
+
+    hotKeyPreviousHid = previousKey.last;
+    if (previousKey.length > 1) {
+      modifierPreviousHidList = previousKey.sublist(0, previousKey.length - 1);
+    }
+
+    hotKeyScope.value = prefs!.getBool('hotKeyScope') ?? false;
+    useMesh.value = prefs!.getBool('useMesh') ?? false;
   }
 
-  void initHotKey()async{
-    final scope=HotKeyScope.inapp; //目前只在应用范围内生效
+  List<HotKeyModifier>? _getModifier(List<int> hidList) {
+    return hidList.isEmpty
+        ? null
+        : hidList
+            .map(
+              (v) => HotKeyModifier.values.firstWhere(
+                (k) => k.physicalKeys.first.usbHidUsage == v,
+              ),
+            )
+            .toList();
+  }
+
+  void _initHotKey() async {
+    final scope = HotKeyScope.inapp; //目前只在应用范围内生效
     // final scope=hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp;
-    hotKeyToggle.value=HotKey(key: PhysicalKeyboardKey(hotKeyToggleHid),scope: scope);
-    hotKeyNext.value=HotKey(key: PhysicalKeyboardKey(hotKeyNextHid),scope: scope);
-    hotKeyPrevious.value=HotKey(key: PhysicalKeyboardKey(hotKeyPreviousHid),scope: scope);
+    hotKeyToggle.value = HotKey(
+      modifiers: _getModifier(modifierToggleHidList),
+      key: PhysicalKeyboardKey(hotKeyToggleHid),
+      scope: scope,
+    );
+    hotKeyNext.value = HotKey(
+      modifiers: _getModifier(modifierNextHidList),
+      key: PhysicalKeyboardKey(hotKeyNextHid),
+      scope: scope,
+    );
+    hotKeyPrevious.value = HotKey(
+      modifiers: _getModifier(modifierPreviousHidList),
+      key: PhysicalKeyboardKey(hotKeyPreviousHid),
+      scope: scope,
+    );
+
+    await hotKeyManager.unregisterAll();
 
     await hotKeyManager.register(
-          hotKeyToggle.value,
-          keyDownHandler: (hotKey) {
-            _audioController.audioToggle();
-          },
-        );
+      hotKeyToggle.value,
+      keyDownHandler: (hotKey) {
+        _audioController.audioToggle();
+      },
+    );
 
     await hotKeyManager.register(
-          hotKeyNext.value,
-          keyDownHandler: (hotKey) {
-            _audioController.audioToNext();
-          },
-        );
+      hotKeyNext.value,
+      keyDownHandler: (hotKey) {
+        _audioController.audioToNext();
+      },
+    );
 
     await hotKeyManager.register(
-          hotKeyPrevious.value,
-          keyDownHandler: (hotKey) {
-            _audioController.audioToPrevious();
-          },
-        );
+      hotKeyPrevious.value,
+      keyDownHandler: (hotKey) {
+        _audioController.audioToPrevious();
+      },
+    );
   }
 
   @override
-  void onInit()async{
+  void onInit() async {
     super.onInit();
     await _initHive();
     await _initPrefs();
-    initHotKey();
+    _initHotKey();
   }
 
   Future<void> putCache({bool isSaveFolders = false}) async {
@@ -364,68 +439,83 @@ class SettingController extends GetxController {
           ScalableConfigKeys.equalizerGains: equalizerGains,
           ScalableConfigKeys.lastAudioInfo: lastAudioInfo,
           ScalableConfigKeys.lastWindowInfo: lastWindowInfo,
-          ScalableConfigKeys.showSpectrogramKey:showSpectrogram.value,
-          ScalableConfigKeys.showDesktopLyricsKey:showDesktopLyrics.value,
+          ScalableConfigKeys.showSpectrogramKey: showSpectrogram.value,
+          ScalableConfigKeys.showDesktopLyricsKey: showDesktopLyrics.value,
         },
       ),
       key: _scalableKey,
     );
   }
 
-  void setShowTranslate({required bool show}){
-    showTranslate.value=show;
-    if(prefs==null){
+  void setShowTranslate({required bool show}) {
+    showTranslate.value = show;
+    if (prefs == null) {
       return;
     }
     prefs!.setBool('showTranslate', showTranslate.value);
   }
 
-  void setShowRoma({required bool show}){
-    showRoma.value=show;
-    if(prefs==null){
+  void setShowRoma({required bool show}) {
+    showRoma.value = show;
+    if (prefs == null) {
       return;
     }
     prefs!.setBool('showRoma', showRoma.value);
   }
 
-  void setToggleHid({required hid}){
-    hotKeyToggleHid=hid;
-    if(prefs==null){
-      return;
-    }
-    prefs!.setInt('toggleHid', hotKeyToggleHid);
+  List<int> _setHotKey(List<int> modifiers, {required HotKey key}) {
+    final keys = <int>[];
+    modifiers.clear();
+
+    key.modifiers?.forEach((v) {
+      modifiers.add(v.physicalKeys.first.usbHidUsage);
+      keys.add(v.physicalKeys.first.usbHidUsage);
+    });
+    keys.add(key.physicalKey.usbHidUsage);
+
+    return keys;
   }
 
-  void setNextHid({required hid}){
-    hotKeyNextHid=hid;
-    if(prefs==null){
+  void setToggleHid({required HotKey key}) {
+    final keys = _setHotKey(modifierToggleHidList, key: key);
+    hotKeyToggleHid = key.physicalKey.usbHidUsage;
+    if (prefs == null) {
       return;
     }
-    prefs!.setInt('nextHid', hotKeyNextHid);
+    prefs!.setString('toggleHidString', keys.join('_'));
   }
 
-  void setPreviousHid({required hid}){
-    hotKeyPreviousHid=hid;
-    if(prefs==null){
+  void setNextHid({required HotKey key}) {
+    final keys = _setHotKey(modifierNextHidList, key: key);
+    hotKeyNextHid = key.physicalKey.usbHidUsage;
+    if (prefs == null) {
       return;
     }
-    prefs!.setInt('previousHid', hotKeyPreviousHid);
+    prefs!.setString('nextHidString', keys.join('_'));
   }
 
-  void setHotKeyScope({required bool scope}){
-    hotKeyScope.value=scope;
-    if(prefs==null){
+  void setPreviousHid({required HotKey key}) {
+    final keys = _setHotKey(modifierPreviousHidList, key: key);
+    hotKeyPreviousHid = key.physicalKey.usbHidUsage;
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setString('previousHidString', keys.join('_'));
+  }
+
+  void setHotKeyScope({required bool scope}) {
+    hotKeyScope.value = scope;
+    if (prefs == null) {
       return;
     }
     prefs!.setBool('hotKeyScope', hotKeyScope.value);
   }
 
-  void setUseMesh({required bool show}){
-    useMesh.value=show;
-    if(prefs==null){
+  void setUseMesh({required bool show}) {
+    useMesh.value = show;
+    if (prefs == null) {
       return;
     }
     prefs!.setBool('useMesh', useMesh.value);
   }
-
 }

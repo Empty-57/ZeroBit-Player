@@ -77,7 +77,7 @@ class AudioController extends GetxController {
 
   final currentLyrics = Rxn<ParsedLyricModel>();
 
-  final audioFFT=<double>[0.0].obs;
+  final audioFFT=<double>[].obs;
 
   final _defaultFFT=List<double>.generate(bassDataFFT512,(i)=>0.0);
 
@@ -87,7 +87,7 @@ class AudioController extends GetxController {
 
   final navigationIsExtend = true.obs;
 
-  final coverPalette=<Color>[Colors.red,Colors.yellow,Colors.black,Colors.green].obs;
+  final coverPalette=<Color>[Colors.red,Colors.yellow,Colors.blue,Colors.green].obs;
 
   /// 同步 `playListCacheItems`
   void syncPlayListCacheItems() {
@@ -323,7 +323,7 @@ if(!coverPalette.contains(Color(color))){
     if(generator.paletteColors.length>=4){
       coverPalette.value=generator.paletteColors.map((v)=>v.color).toList().sublist(0,4);
     }else{
-      coverPalette.addAll([Colors.red,Colors.yellow,Colors.black,Colors.green]);
+      coverPalette.addAll([Colors.red,Colors.yellow,Colors.blue,Colors.green]);
     }
 
     if (generator.vibrantColor != null) {
