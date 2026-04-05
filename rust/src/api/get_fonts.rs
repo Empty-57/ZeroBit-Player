@@ -28,17 +28,16 @@ fn get_all_font_names() -> Result<Vec<String>, String> {
             let data = fs::read(&path).map_err(|e| e.to_string())?;
 
             if let Ok(face) = Face::parse(&data, 0) {
-                for name in face.names() {
-                    if name.name_id != name_id::FULL_NAME {
-                        continue;
-                    }
-                    match name.to_string() {
-                        Some(value) => {
-                            font_names.push(value);
-                            break;
-                        }
-                        None => continue,
-                    };
+                if let Some(name) = [name_id::TYPOGRAPHIC_FAMILY, name_id::FAMILY]
+                    .iter()
+                    .find_map(|&id| {
+                        face.names()
+                            .into_iter()
+                            .find(|name| name.name_id == id && name.is_unicode())
+                            .and_then(|name| name.to_string())
+                    })
+                {
+                    font_names.push(name);
                 }
             }
         }
