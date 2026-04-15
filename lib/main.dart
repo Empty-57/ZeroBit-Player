@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -62,6 +63,10 @@ int countMs100 = 0;
 int countSec = 0;
 
 const String configDirectory = 'zerobit_config';
+
+StreamSubscription? _audioEventSub;
+StreamSubscription? _progressSub;
+StreamSubscription? _smtcSub;
 
 void hiveSafeRegisterAdapter<T>(TypeAdapter<T> adapter) {
   if (!Hive.isAdapterRegistered(adapter.typeId)) {
@@ -147,9 +152,10 @@ void main() async {
 
   final musicBox = await openSafeBox<MusicCache>(HiveBoxes.musicCacheBox);
   final keysToDelete =
-      musicBox.values.map((v)=>v.path)
+      musicBox.values
+          .map((v) => v.path)
           .where((k) => !supportedExts.contains(p.extension(k).toLowerCase()))
-          .map((v)=>md5.convert(utf8.encode(v)).toString())
+          .map((v) => md5.convert(utf8.encode(v)).toString())
           .toList();
   await musicBox.deleteAll(keysToDelete); //清除不是音频格式的路径，防止路径被污染
 
@@ -227,8 +233,12 @@ void main() async {
 
   runApp(const MainFrame());
 
+  await _audioEventSub?.cancel();
+  await _progressSub?.cancel();
+  await _smtcSub?.cancel();
+
   try {
-    audioEventStream().listen((data) {
+    _audioEventSub = audioEventStream().listen((data) {
       if (data == AudioState.stop.index) {
         audioController.audioAutoPlay();
       }
@@ -239,7 +249,7 @@ void main() async {
   }
 
   try {
-    progressListen().listen((data) {
+    _progressSub = progressListen().listen((data) {
       lyricController.currentMs20.value = data;
       countMs100++;
       countSec++;
@@ -258,7 +268,7 @@ void main() async {
   }
 
   try {
-    smtcControlEvents().listen((event) {
+    _smtcSub = smtcControlEvents().listen((event) {
       switch (event) {
         case SMTCControlEvent.play:
           audioController.audioResume.throttle(ms: 300)();

@@ -6,14 +6,14 @@ use crate::api::bass::basswasapi_func::*;
 use crate::frb_generated::StreamSink;
 use core::ffi::{c_uint, c_void};
 use libloading::{Library, Symbol};
-use once_cell::sync::Lazy;
+use once_cell::sync::{Lazy, OnceCell};
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
 use std::ptr::null_mut;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::time::Duration;
 use std::{env, iter, thread};
-use std::cmp::{min, Ordering};
 
 pub mod bass_errs;
 pub mod bass_flags;
@@ -22,8 +22,6 @@ pub mod bassfx_func;
 pub mod basswasapi_func;
 
 struct BassApi {
-    _lib: &'static Library,
-    _wasapi_lib: &'static Library,
     init: Symbol<'static, BASS_Init>,
     get_attr: Symbol<'static, BASS_ChannelGetAttribute>,
     set_attr: Symbol<'static, BASS_ChannelSetAttribute>,
@@ -33,7 +31,7 @@ struct BassApi {
     play: Symbol<'static, BASS_ChannelPlay>,
     pause: Symbol<'static, BASS_ChannelPause>,
     stop: Symbol<'static, BASS_ChannelStop>,
-    chan_get_data:Symbol<'static,BASS_ChannelGetData>,
+    chan_get_data: Symbol<'static, BASS_ChannelGetData>,
     chan_free: Symbol<'static, BASS_ChannelFree>,
     get_len: Symbol<'static, BASS_ChannelGetLength>,
     get_pos: Symbol<'static, BASS_ChannelGetPosition>,
@@ -101,6 +99,12 @@ static TARGET_FGAINS: Mutex<[f32; 10]> = Mutex::new([0.0; 10]); // range: -12.0d
 
 static EQ_HANDLES: Mutex<[u32; 10]> = Mutex::new([0; 10]);
 
+static PROGRESS_THREAD_RUNNING: AtomicBool = AtomicBool::new(false);
+
+static BASS_LIB: OnceCell<Library> = OnceCell::new();
+static WASAPI_LIB: OnceCell<Library> = OnceCell::new();
+static FX_LIB: OnceCell<Library> = OnceCell::new();
+
 unsafe extern "C" fn on_end_sync(handle: c_uint, channel: c_uint, data: c_uint, user: *mut c_void) {
     if let Some(sink) = AUDIO_EVENT.lock().unwrap().as_ref() {
         let _ = sink.add(USER_STOPPED);
@@ -148,16 +152,14 @@ impl BassApi {
             .join("bass_fx.dll");
 
         unsafe {
-            let lib: &'static Library = Box::leak(Box::new(
-                Library::new(&bass_dll_dir).map_err(|e| e.to_string())?,
-            ));
-            let wasapi_lib: &'static Library = Box::leak(Box::new(
-                Library::new(&basswasapi_dll_dir).map_err(|e| e.to_string())?,
-            ));
+            let lib: &Library = BASS_LIB
+                .get_or_try_init(|| Library::new(&bass_dll_dir).map_err(|e| e.to_string()))?;
 
-            let fx_lib: &'static Library = Box::leak(Box::new(
-                Library::new(&bassfx_dll_dir).map_err(|e| e.to_string())?,
-            ));
+            let wasapi_lib: &Library = WASAPI_LIB
+                .get_or_try_init(|| Library::new(&basswasapi_dll_dir).map_err(|e| e.to_string()))?;
+
+            let fx_lib: &Library = FX_LIB
+                .get_or_try_init(|| Library::new(&bassfx_dll_dir).map_err(|e| e.to_string()))?;
 
             let init = lib.get(b"BASS_Init\0").map_err(|e| e.to_string())?;
 
@@ -186,8 +188,10 @@ impl BassApi {
             let pause = lib.get(b"BASS_ChannelPause\0").map_err(|e| e.to_string())?;
 
             let stop = lib.get(b"BASS_ChannelStop\0").map_err(|e| e.to_string())?;
-            
-            let chan_get_data=lib.get(b"BASS_ChannelGetData\0").map_err(|e| e.to_string())?;
+
+            let chan_get_data = lib
+                .get(b"BASS_ChannelGetData\0")
+                .map_err(|e| e.to_string())?;
 
             let chan_free = lib.get(b"BASS_ChannelFree\0").map_err(|e| e.to_string())?;
 
@@ -252,8 +256,6 @@ impl BassApi {
                 .map_err(|e| e.to_string())?;
 
             Ok(Self {
-                _lib: lib,
-                _wasapi_lib: wasapi_lib,
                 init,
                 get_attr,
                 set_attr,
@@ -359,9 +361,14 @@ impl BassApi {
     }
 
     fn listen_progress(&self) {
+        // 停止旧线程
+        PROGRESS_THREAD_RUNNING.store(false, Ordering::SeqCst);
+
+        PROGRESS_THREAD_RUNNING.store(true, Ordering::SeqCst);
+
         thread::spawn(|| {
             if let Some(sink) = PROGRESS_LISTEN.lock().unwrap().clone().as_ref() {
-                loop {
+                while PROGRESS_THREAD_RUNNING.load(Ordering::SeqCst) {
                     thread::sleep(Duration::from_millis(
                         (BASE_TICK / *TARGET_SPEED.lock().unwrap()) as u64,
                     ));
@@ -509,10 +516,10 @@ impl BassApi {
         let gain = gain.clamp(-12.0, 12.0);
         let fre_center_index = fre_center_index as usize;
         if let Ok(mut gains) = TARGET_FGAINS.lock() {
-                gains[fre_center_index] = gain;
-            } else {
-                eprintln!("Failed to acquire lock on TARGET_FGAINS.");
-            }
+            gains[fre_center_index] = gain;
+        } else {
+            eprintln!("Failed to acquire lock on TARGET_FGAINS.");
+        }
         unsafe {
             if self.stream_handle == 0 || !(0..F_CENTER.len()).contains(&fre_center_index) {
                 return;
@@ -572,55 +579,54 @@ impl BassApi {
         let result = unsafe { (self.stop)(self.stream_handle) };
         self.or_err_(result)
     }
-    
-    fn chan_get_data(&mut self)->Option<Vec<f32>>{
-        if self.stream_handle == 0 { 
-            return None; 
+
+    fn chan_get_data(&mut self) -> Option<Vec<f32>> {
+        if self.stream_handle == 0 {
+            return None;
         }
         let data_size = 256; // 512点FFT返回 256个值
         let mut buffer = vec![0.0f32; data_size];
         let buffer_ptr = buffer.as_mut_ptr() as *mut c_void;
         unsafe {
-            let ok= (self.chan_get_data)(self.stream_handle,buffer_ptr,BASS_DATA_FFT512);
-            if ok==0 { 
+            let ok = (self.chan_get_data)(self.stream_handle, buffer_ptr, BASS_DATA_FFT512);
+            if ok == 0 {
                 let err_code = (self.error_get_code)();
-                    println!(
-                        "{}",
-                        get_err_info(err_code).unwrap_or_else(|| format!(
-                            "Unknown BASS error | ERR_CODE<{}>",
-                            err_code
-                        ))
-                    );
-                return None; 
+                println!(
+                    "{}",
+                    get_err_info(err_code)
+                        .unwrap_or_else(|| format!("Unknown BASS error | ERR_CODE<{}>", err_code))
+                );
+                return None;
             }
         };
-        
-        if buffer.len()!=data_size { 
-            buffer.resize(data_size,0.0f32);
+
+        if buffer.len() != data_size {
+            buffer.resize(data_size, 0.0f32);
         }
-        
+
         // 对数缩放
         let log_gain_multiplier = 1000.0; // 调高这个值可以更早地看到低幅度变化
-        let log_offset = 1.0;            // 避免 log(0)，并提供一个基础值
+        let log_offset = 1.0; // 避免 log(0)，并提供一个基础值
 
         for v in &mut buffer {
             let transformed_val = (v.abs() * log_gain_multiplier + log_offset).log10();
-            *v=transformed_val;
+            *v = transformed_val;
         }
-        
+
         let min_val = buffer.clone().into_iter().reduce(f32::min).unwrap_or(0.0);
         let max_val = buffer.clone().into_iter().reduce(f32::max).unwrap_or(1.0);
-        let range=max_val-min_val;
-        
+        let range = max_val - min_val;
+
         for v in &mut buffer {
-            let percentage = if range > 0.0f32 { // 避免除以零
-            ((*v - min_val) / range).clamp(0.0, 1.0)
-        } else {
-            0.0
-        };
-            *v=percentage;
+            let percentage = if range > 0.0f32 {
+                // 避免除以零
+                ((*v - min_val) / range).clamp(0.0, 1.0)
+            } else {
+                0.0
+            };
+            *v = percentage;
         }
-        
+
         Some(buffer)
     }
 
@@ -786,6 +792,7 @@ impl Drop for BassApi {
         unsafe {
             (self.free)();
             (self.wasapi_free)();
+            PROGRESS_THREAD_RUNNING.store(false, Ordering::SeqCst);
         }
     }
 }
@@ -888,4 +895,6 @@ pub fn set_eq_params(fre_center_index: i32, gain: f32) {
 }
 
 #[flutter_rust_bridge::frb]
-pub fn get_chan_data()->Option<Vec<f32>>{ BASS_API.lock().unwrap().as_mut().unwrap().chan_get_data() }
+pub fn get_chan_data() -> Option<Vec<f32>> {
+    BASS_API.lock().unwrap().as_mut().unwrap().chan_get_data()
+}

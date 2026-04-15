@@ -14,7 +14,7 @@ Future<List<MusicCache>> _sortFilesByModificationTime(
   // 创建 MusicCache 和修改时间的配对列表
   List<Map<String, dynamic>> fileInfoList = [];
 
-  for (MusicCache m in musicCaches) {
+  for (MusicCache m in musicCaches.toList()) {
     try {
       final filePath = m.path;
       File file = File(filePath);

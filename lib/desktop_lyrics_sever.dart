@@ -166,6 +166,7 @@ class DesktopLyricsSever extends GetxController {
   }
 
   void connect() async {
+    await close();
     try {
       _startLineWorker();
       _startMs20Worker();

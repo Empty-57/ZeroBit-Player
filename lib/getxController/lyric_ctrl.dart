@@ -41,6 +41,13 @@ class LyricController extends GetxController {
   Timer? _delayTimer;
 
   @override
+  void onClose() {
+    _debounceTimer?.cancel();
+    _delayTimer?.cancel();
+    super.onClose();
+  }
+
+  @override
   void onInit() {
     super.onInit();
 
