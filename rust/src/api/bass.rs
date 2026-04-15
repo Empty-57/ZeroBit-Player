@@ -285,6 +285,7 @@ impl BassApi {
                 wasapi_free,
                 bass_start,
                 wasapi_start,
+                wasapi_stop,
                 plugin_load,
                 bass_set_sync,
                 fx_tempo_create,
