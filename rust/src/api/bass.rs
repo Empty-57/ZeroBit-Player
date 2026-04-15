@@ -46,6 +46,7 @@ struct BassApi {
     wasapi_free: Symbol<'static, BASS_WASAPI_Free>,
     bass_start: Symbol<'static, BASS_Start>,
     wasapi_start: Symbol<'static, BASS_WASAPI_Start>,
+    wasapi_stop: Symbol<'static, BASS_WASAPI_Stop>,
     plugin_load: Symbol<'static, BASS_PluginLoad>,
     bass_set_sync: Symbol<'static, BASS_ChannelSetSync>,
     fx_tempo_create: Symbol<'static, BASS_FX_TempoCreate>,
