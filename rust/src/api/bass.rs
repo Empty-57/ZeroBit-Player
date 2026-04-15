@@ -240,6 +240,10 @@ impl BassApi {
                 .get(b"BASS_WASAPI_Start\0")
                 .map_err(|e| e.to_string())?;
 
+            let wasapi_stop = wasapi_lib
+                .get(b"BASS_WASAPI_Stop\0")
+                .map_err(|e| e.to_string())?;
+
             let plugin_load = lib.get(b"BASS_PluginLoad\0").map_err(|e| e.to_string())?;
 
             let bass_set_sync = lib
