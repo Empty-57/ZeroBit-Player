@@ -41,3 +41,5 @@ pub(crate) type BASS_WASAPI_Init = unsafe extern "C" fn(
 pub(crate) type BASS_WASAPI_Start = unsafe extern "C" fn() -> c_int;
 
 pub(crate) type BASS_WASAPI_Free = unsafe extern "C" fn() -> c_int;
+
+pub(crate) type BASS_WASAPI_Stop= unsafe extern "C" fn(reset:c_int) -> c_int;
