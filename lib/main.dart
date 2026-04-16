@@ -176,8 +176,6 @@ void main() async {
 
   await syncCache();
 
-  // await setExclusiveMode(exclusive: false);
-
   final AudioController audioController = Get.find<AudioController>();
   final LyricController lyricController = Get.find<LyricController>();
   final SettingController settingController = Get.find<SettingController>();
@@ -231,6 +229,11 @@ void main() async {
     await windowManager.focus();
   });
 
+  if(settingController.useExclusiveMode.value){
+    settingController.setExclusiveMode(use: settingController.useExclusiveMode.value);
+  }
+
+
   runApp(const MainFrame());
 
   await _audioEventSub?.cancel();
@@ -239,7 +242,9 @@ void main() async {
 
   try {
     _audioEventSub = audioEventStream().listen((data) {
-      if (data == AudioState.stop.index) {
+      final state = AudioState.values[data];
+      audioController.currentState.value=state;
+      if (state==AudioState.ended){
         audioController.audioAutoPlay();
       }
     });

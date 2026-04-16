@@ -1,4 +1,6 @@
-use crate::api::bass::bass_errs::{get_err_info, BASS_ERROR_HANDLE};
+use crate::api::bass::bass_errs::{
+    get_err_info, BASS_ERROR_ALREADY, BASS_ERROR_HANDLE, BASS_ERROR_INIT,
+};
 use crate::api::bass::bass_flags::*;
 use crate::api::bass::bass_func::*;
 use crate::api::bass::bassfx_func::*;
@@ -9,6 +11,7 @@ use libloading::{Library, Symbol};
 use once_cell::sync::{Lazy, OnceCell};
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
+use std::path::PathBuf;
 use std::ptr::null_mut;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
@@ -47,12 +50,14 @@ struct BassApi {
     bass_start: Symbol<'static, BASS_Start>,
     wasapi_start: Symbol<'static, BASS_WASAPI_Start>,
     wasapi_stop: Symbol<'static, BASS_WASAPI_Stop>,
+    wasapi_is_started: Symbol<'static, BASS_WASAPI_IsStarted>,
     plugin_load: Symbol<'static, BASS_PluginLoad>,
     bass_set_sync: Symbol<'static, BASS_ChannelSetSync>,
     fx_tempo_create: Symbol<'static, BASS_FX_TempoCreate>,
     chan_set_fx: Symbol<'static, BASS_ChannelSetFX>,
     fx_set_params: Symbol<'static, BASS_FXSetParameters>,
     stream_handle: u32,
+    path: Option<String>,
 }
 
 static BASS_API: Lazy<Mutex<Option<BassApi>>> = Lazy::new(|| Mutex::new(None));
@@ -85,9 +90,10 @@ const PLUGIN_NAME: [&str; 8] = [
 const BASE_TICK: f32 = 20.0;
 
 const USER_STOPPED: u32 = 0;
-// const USER_PLAYING: u32 = 1;
-// const USER_STALLED: u32 = 2;
-// const USER_PAUSED: u32 = 3;
+const USER_PLAYING: u32 = 1;
+const USER_PAUSED: u32 = 2;
+const USER_ENDED: u32 = 3;
+// const USER_STALLED: u32 = 3;
 // const USER_PAUSED_DEVICE: u32 = 4;
 
 const F_BANDWIDTH: f32 = 12.0; // range: 1 ~ 36
@@ -106,10 +112,18 @@ static BASS_LIB: OnceCell<Library> = OnceCell::new();
 static WASAPI_LIB: OnceCell<Library> = OnceCell::new();
 static FX_LIB: OnceCell<Library> = OnceCell::new();
 
-unsafe extern "C" fn on_end_sync(handle: c_uint, channel: c_uint, data: c_uint, user: *mut c_void) {
-    if let Some(sink) = AUDIO_EVENT.lock().unwrap().as_ref() {
-        let _ = sink.add(USER_STOPPED);
+static WASEXCLUSIVE: AtomicBool = AtomicBool::new(false);
+
+fn notify_state(state: u32) {
+    if let Ok(lock) = AUDIO_EVENT.lock() {
+        if let Some(sink) = lock.as_ref() {
+            let _ = sink.add(state);
+        }
     }
+}
+
+unsafe extern "C" fn on_end_sync(handle: c_uint, channel: c_uint, data: c_uint, user: *mut c_void) {
+    notify_state(USER_ENDED);
 }
 
 fn calculate_dynamic_bandwidth_linear(f_center: f32) -> f32 {
@@ -244,6 +258,10 @@ impl BassApi {
                 .get(b"BASS_WASAPI_Stop\0")
                 .map_err(|e| e.to_string())?;
 
+            let wasapi_is_started = wasapi_lib
+                .get(b"BASS_WASAPI_IsStarted\0")
+                .map_err(|e| e.to_string())?;
+
             let plugin_load = lib.get(b"BASS_PluginLoad\0").map_err(|e| e.to_string())?;
 
             let bass_set_sync = lib
@@ -286,12 +304,14 @@ impl BassApi {
                 bass_start,
                 wasapi_start,
                 wasapi_stop,
+                wasapi_is_started,
                 plugin_load,
                 bass_set_sync,
                 fx_tempo_create,
                 chan_set_fx,
                 fx_set_params,
                 stream_handle: 0,
+                path: None,
             })
         }
     }
@@ -302,7 +322,7 @@ impl BassApi {
             (self.wasapi_free)();
         };
         let result =
-            unsafe { (self.wasapi_init)(-1, 0, 0, 0, WASAPI_BUFFER, 0.0, None, null_mut()) };
+            unsafe { (self.wasapi_init)(-1, 0, 0, 0, WASAPI_BUFFER, 0.0, null_mut(), null_mut()) };
         self.or_err_(result)?;
         let ok = unsafe { (self.wasapi_get_info)(&mut info) };
         self.or_err_(ok)?;
@@ -324,15 +344,12 @@ impl BassApi {
         };
         let result = unsafe {
             (self.init)(
-                -1,
+                1,
                 FREQ.lock().unwrap().unwrap_or(44100),
-                0,
+                BASS_DEVICE_REINIT,
                 null_mut(),
                 null_mut(),
             )
-        };
-        unsafe {
-            (self.bass_start)();
         };
 
         let current_exe = env::current_exe().unwrap();
@@ -373,16 +390,18 @@ impl BassApi {
         PROGRESS_THREAD_RUNNING.store(true, Ordering::SeqCst);
 
         thread::spawn(|| {
-            if let Some(sink) = PROGRESS_LISTEN.lock().unwrap().clone().as_ref() {
+            if let Some(sink) = PROGRESS_LISTEN.lock().unwrap().as_ref() {
                 while PROGRESS_THREAD_RUNNING.load(Ordering::SeqCst) {
                     thread::sleep(Duration::from_millis(
                         (BASE_TICK / *TARGET_SPEED.lock().unwrap()) as u64,
                     ));
-                    if BASS_API.lock().unwrap().as_ref().unwrap().stream_handle == 0 {
-                        continue;
+                    if let Ok(mut api_lock) = BASS_API.lock() {
+                        if let Some(api) = api_lock.as_mut() {
+                            if api.stream_handle != 0 {
+                                let _ = sink.add(api.get_pos());
+                            }
+                        }
                     }
-                    let pos = BASS_API.lock().unwrap().as_mut().unwrap().get_pos();
-                    let _ = sink.add(pos);
                 }
             }
         });
@@ -446,7 +465,7 @@ impl BassApi {
         }
     }
 
-    fn play_file(&mut self, path: String) -> Result<(), String> {
+    fn create_stream(&mut self, path: String) -> Result<(), String> {
         self.stop()?;
         self.chan_free();
         let wide: Vec<u16> = OsStr::new(&path)
@@ -465,13 +484,24 @@ impl BassApi {
         };
 
         self.or_err_(handle as i32)?;
-        let fx_handle = unsafe { (self.fx_tempo_create)(handle, BASS_FX_FREESOURCE) };
+
+        let fx_flag = if WASEXCLUSIVE.load(Ordering::SeqCst) {
+            BASS_FX_FREESOURCE | BASS_STREAM_DECODE
+        } else {
+            BASS_FX_FREESOURCE
+        };
+        let fx_handle = unsafe { (self.fx_tempo_create)(handle, fx_flag) };
         self.or_err_(fx_handle as i32)?;
         self.stream_handle = fx_handle;
         self.set_sync(BASS_SYNC_END, Some(on_end_sync))?;
         self.set_all_eq_params();
-        self.resume()?;
         Ok(())
+    }
+
+    fn play_file(&mut self, path: String) -> Result<(), String> {
+        self.create_stream(path.clone())?;
+        self.path = Some(path);
+        self.resume()
     }
 
     fn set_all_eq_params(&mut self) {
@@ -549,31 +579,40 @@ impl BassApi {
     }
 
     fn resume(&mut self) -> Result<(), String> {
-        if let Some(state) = self.get_state() {
-            if state == BASS_ACTIVE_PLAYING {
+        if WASEXCLUSIVE.load(Ordering::SeqCst) {
+            self.apply_wasapi_init()?;
+            let active = unsafe { (self.wasapi_is_started)() };
+            if active == TRUE {
                 return Ok(());
             }
+            let result = unsafe { (self.wasapi_start)() };
+            self.or_err_(result)?;
         } else {
-            return Ok(());
+            let result = unsafe { (self.bass_start)() };
+            self.or_err_(result)?;
+            let result = unsafe { (self.play)(self.stream_handle, FALSE) };
+            self.fade_in()?;
+            self.or_err_(result)?;
         }
-
-        let result = unsafe { (self.play)(self.stream_handle, 0) };
-        self.fade_in()?;
-        self.or_err_(result)
+        notify_state(USER_PLAYING);
+        Ok(())
     }
 
     fn pause(&mut self) -> Result<(), String> {
-        if let Some(state) = self.get_state() {
-            if state == BASS_ACTIVE_PAUSED {
+        if WASEXCLUSIVE.load(Ordering::SeqCst) {
+            let active = unsafe { (self.wasapi_is_started)() };
+            if active == FALSE {
                 return Ok(());
             }
+            let result = unsafe { (self.wasapi_stop)(FALSE) };
+            self.or_err_(result)?;
         } else {
-            return Ok(());
+            self.fade_out()?;
+            let result = unsafe { (self.pause)(self.stream_handle) };
+            self.or_err_(result)?;
         }
-
-        self.fade_out()?;
-        let result = unsafe { (self.pause)(self.stream_handle) };
-        self.or_err_(result)
+        notify_state(USER_PAUSED);
+        Ok(())
     }
 
     fn stop(&mut self) -> Result<(), String> {
@@ -581,9 +620,20 @@ impl BassApi {
             return Ok(());
         }
 
-        self.fade_out()?;
-        let result = unsafe { (self.stop)(self.stream_handle) };
-        self.or_err_(result)
+        if WASEXCLUSIVE.load(Ordering::SeqCst) {
+            let active = unsafe { (self.wasapi_is_started)() };
+            if active == FALSE {
+                return Ok(());
+            }
+            let result = unsafe { (self.wasapi_stop)(TRUE) };
+            self.or_err_(result)?;
+        } else {
+            self.fade_out()?;
+            let result = unsafe { (self.stop)(self.stream_handle) };
+            self.or_err_(result)?;
+        }
+        notify_state(USER_STOPPED);
+        Ok(())
     }
 
     fn chan_get_data(&mut self) -> Option<Vec<f32>> {
@@ -724,6 +774,13 @@ impl BassApi {
     fn get_state(&self) -> Option<u32> {
         if self.stream_handle == 0 {
             None
+        } else if WASEXCLUSIVE.load(Ordering::SeqCst) {
+            let active = unsafe { (self.wasapi_is_started)() };
+            if active == TRUE {
+                Some(BASS_ACTIVE_PLAYING)
+            } else {
+                Some(BASS_ACTIVE_PAUSED)
+            }
         } else {
             Some(unsafe { (self.is_active)(self.stream_handle) })
         }
@@ -738,9 +795,13 @@ impl BassApi {
 
     fn chan_free(&mut self) {
         if self.stream_handle != 0 {
-            unsafe { (self.chan_free)(self.stream_handle) };
+            unsafe {
+                (self.chan_free)(self.stream_handle);
+                (self.wasapi_free)();
+            };
             self.stream_handle = 0;
         }
+        notify_state(USER_STOPPED);
     }
 
     fn or_err_(&mut self, result: i32) -> Result<(), String> {
@@ -753,7 +814,7 @@ impl BassApi {
                     self.chan_free();
                 }
 
-                let err_str=get_err_info(err_code)
+                let err_str = get_err_info(err_code)
                     .unwrap_or_else(|| format!("Unknown BASS error | ERR_CODE<{}>", err_code));
                 println!("{}", err_str);
                 Err(err_str)
@@ -763,34 +824,44 @@ impl BassApi {
         }
     }
 
-    ///未完成的方法
-    fn set_exclusive_mode(&mut self, exclusive: bool) -> Result<(), String> {
+    fn switch_exclusive_mode(&mut self, exclusive: bool) -> Result<(), String> {
         unsafe {
             (self.wasapi_free)();
-        };
-
-        let mut flags = 0;
-        if exclusive {
-            flags |= BASS_WASAPI_EXCLUSIVE;
         }
+        let last_pos = self.get_pos();
+        WASEXCLUSIVE.store(exclusive, Ordering::SeqCst);
+        let path = self.path.clone();
+
+        if self.stream_handle != 0 && path.is_some() {
+            self.create_stream(path.unwrap_or("".to_string()))?;
+            self.set_pos(last_pos)?;
+            self.resume()?
+        }
+        Ok(())
+    }
+
+    fn apply_wasapi_init(&mut self) -> Result<(), String> {
+        unsafe {
+            (self.wasapi_free)();
+        }
+        let flags = if WASEXCLUSIVE.load(Ordering::SeqCst) {
+            BASS_WASAPI_EXCLUSIVE | BASS_WASAPI_AUTOFORMAT | BASS_WASAPI_EVENT
+        } else {
+            0
+        };
 
         let result = unsafe {
             (self.wasapi_init)(
                 -1,
-                FREQ.lock().unwrap().unwrap_or(44100),
-                CHANS.lock().unwrap().unwrap_or(2),
+                0,
+                0,
                 flags,
                 WASAPI_BUFFER,
                 0.0,
-                None,
+                WASAPIPROC_BASS,
                 self.stream_handle as *mut c_void,
             )
         };
-
-        // let was_result = unsafe { (self.wasapi_start)() };
-        // let err_code = unsafe { (self.error_get_code)() };
-        // println!("was_result:{}", err_code);
-
         self.or_err_(result)
     }
 }
@@ -801,6 +872,7 @@ impl Drop for BassApi {
             (self.free)();
             (self.wasapi_free)();
             PROGRESS_THREAD_RUNNING.store(false, Ordering::SeqCst);
+            notify_state(USER_STOPPED);
         }
     }
 }
@@ -828,13 +900,13 @@ pub fn progress_listen(sink: StreamSink<f64>) {
 }
 
 #[flutter_rust_bridge::frb]
-pub fn set_exclusive_mode(exclusive: bool) -> Result<(), String> {
+pub fn switch_exclusive_mode(exclusive: bool) -> Result<(), String> {
     BASS_API
         .lock()
         .unwrap()
         .as_mut()
         .unwrap()
-        .set_exclusive_mode(exclusive)
+        .switch_exclusive_mode(exclusive)
 }
 
 #[flutter_rust_bridge::frb]

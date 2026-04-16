@@ -18,6 +18,8 @@ pub(crate) type BASS_WASAPI_GetInfo = unsafe extern "C" fn(info: *mut BASS_WASAP
 pub(crate) type WASAPIPROC =
     Option<unsafe extern "C" fn(buffer: *mut c_void, length: c_uint, user: *mut c_void) -> c_uint>;
 
+pub(crate) const WASAPIPROC_BASS: *mut WASAPIPROC = -1isize as *mut WASAPIPROC;
+
 pub(crate) extern "C" fn dummy_wasapi_proc(
     _buffer: *mut c_void,
     _length: c_uint,
@@ -34,7 +36,7 @@ pub(crate) type BASS_WASAPI_Init = unsafe extern "C" fn(
     flags: c_uint,     //初始化选项标志 独占: BASS_WASAPI_EXCLUSIVE | BASS_WASAPI_AUTOFORMAT
     buffer: c_float,   // 缓冲区秒数
     period: c_float,   // 设备周期（0 = 默认）
-    proc: WASAPIPROC,  // 回调指针，或 NULL
+    proc: *mut WASAPIPROC,  // 回调指针，或 NULL
     user: *mut c_void, // 回调用户参数
 ) -> c_int;
 
@@ -43,3 +45,5 @@ pub(crate) type BASS_WASAPI_Start = unsafe extern "C" fn() -> c_int;
 pub(crate) type BASS_WASAPI_Free = unsafe extern "C" fn() -> c_int;
 
 pub(crate) type BASS_WASAPI_Stop= unsafe extern "C" fn(reset:c_int) -> c_int;
+
+pub(crate) type BASS_WASAPI_IsStarted = unsafe extern "C" fn() -> c_int;

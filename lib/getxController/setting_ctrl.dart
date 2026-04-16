@@ -129,6 +129,8 @@ class SettingController extends GetxController {
   final showTranslate = true.obs;
   final showRoma = false.obs;
 
+  final useExclusiveMode=false.obs;
+
   final hotKeyScope =
       false.obs; //false : HotKeyScope.inapp.obs true: HotKeyScope.system.obs
   final hotKeyToggle =
@@ -340,6 +342,7 @@ class SettingController extends GetxController {
 
     hotKeyScope.value = prefs!.getBool('hotKeyScope') ?? false;
     useMesh.value = prefs!.getBool('useMesh') ?? false;
+    useExclusiveMode.value=prefs!.getBool('useExclusiveMode')??false;
   }
 
   List<HotKeyModifier>? _getModifier(List<int> hidList) {
@@ -517,5 +520,14 @@ class SettingController extends GetxController {
       return;
     }
     prefs!.setBool('useMesh', useMesh.value);
+  }
+
+  void setExclusiveMode({required bool use})async{
+    useExclusiveMode.value=use;
+    await switchExclusiveMode(exclusive: useExclusiveMode.value);
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setBool('useExclusiveMode', useExclusiveMode.value);
   }
 }

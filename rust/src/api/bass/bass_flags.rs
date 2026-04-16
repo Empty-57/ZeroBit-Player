@@ -1,3 +1,6 @@
+pub const TRUE: i32 = 1;
+pub const FALSE: i32 = 0;
+
 pub const BASS_SAMPLE_FLOAT: u32 = 256;
 
 pub const BASS_STREAM_AUTOFREE: u32 = 0x40000;

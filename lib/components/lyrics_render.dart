@@ -403,7 +403,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                   minCacheExtent: 48.0,
                   addAutomaticKeepAlives: false,
                   addSemanticIndexes: false,
-                  addRepaintBoundaries: false,
+                  addRepaintBoundaries: true,
                   padding: EdgeInsets.symmetric(
                     vertical:
                         (context.height -

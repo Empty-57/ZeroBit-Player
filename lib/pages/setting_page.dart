@@ -15,6 +15,7 @@ import 'package:zerobit_player/src/rust/api/get_fonts.dart';
 import '../components/get_snack_bar.dart';
 import '../getxController/desktop_lyrics_setting_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
+import '../src/rust/api/bass.dart';
 import '../tools/general_style.dart';
 import '../getxController/setting_ctrl.dart';
 
@@ -345,118 +346,122 @@ Widget _getColorPicker(
     crossAxisAlignment: CrossAxisAlignment.center,
     spacing: 16,
     children: [
-      Obx(()=>Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: Color(themeColor_.value),
-          borderRadius: BorderRadius.circular(4)
+      Obx(
+        () => Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: Color(themeColor_.value),
+            borderRadius: BorderRadius.circular(4),
+          ),
         ),
-      )),
+      ),
       CustomBtn(
-    fn: () {
-      showDialog(
-        barrierDismissible: true,
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('取色器'),
-            titleTextStyle: generalTextStyle(
-              ctx: context,
-              size: 'xl',
-              weight: FontWeight.w600,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(4)),
-            ),
-            backgroundColor: Theme.of(context).colorScheme.surface,
+        fn: () {
+          showDialog(
+            barrierDismissible: true,
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('取色器'),
+                titleTextStyle: generalTextStyle(
+                  ctx: context,
+                  size: 'xl',
+                  weight: FontWeight.w600,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(4)),
+                ),
+                backgroundColor: Theme.of(context).colorScheme.surface,
 
-            actionsAlignment: MainAxisAlignment.end,
-            actions: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 16,
-                children: [
-                  TextField(
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Hex RGB',
-                    ),
-                    controller: hexController,
-                    autofocus: true,
-                    inputFormatters: [
-                      UpperCaseTextFormatter(),
-                      FilteringTextInputFormatter.allow(
-                        RegExp(kValidHexPattern),
-                      ),
-                    ],
-                  ),
-
-                  ColorPicker(
-                    pickerAreaBorderRadius: BorderRadius.all(
-                      Radius.circular(4),
-                    ),
-                    pickerColor: Color(themeColor_.value),
-                    colorPickerWidth: 400,
-                    pickerAreaHeightPercent: 0.7,
-                    enableAlpha: enableAlpha,
-                    displayThumbColor: true,
-                    labelTypes: [],
-                    portraitOnly: true,
-                    hexInputBar: false,
-                    hexInputController: hexController,
-                    onColorChanged: (Color color) {
-                      themeColor_.value = color.toARGB32();
-                    },
-                  ),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    spacing: 8,
+                actionsAlignment: MainAxisAlignment.end,
+                actions: [
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 16,
                     children: [
-                      CustomBtn(
-                        fn: () {
-                          Navigator.pop(context, 'cancel');
-                        },
-                        backgroundColor: Colors.transparent,
-                        contentColor: Theme.of(context).colorScheme.primary,
-                        btnWidth: 72,
-                        btnHeight: 36,
-                        label: "取消",
+                      TextField(
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Hex RGB',
+                        ),
+                        controller: hexController,
+                        autofocus: true,
+                        inputFormatters: [
+                          UpperCaseTextFormatter(),
+                          FilteringTextInputFormatter.allow(
+                            RegExp(kValidHexPattern),
+                          ),
+                        ],
                       ),
-                      CustomBtn(
-                        fn: () {
-                          Navigator.pop(context, 'action');
-                          fn(themeColor_.value);
+
+                      ColorPicker(
+                        pickerAreaBorderRadius: BorderRadius.all(
+                          Radius.circular(4),
+                        ),
+                        pickerColor: Color(themeColor_.value),
+                        colorPickerWidth: 400,
+                        pickerAreaHeightPercent: 0.7,
+                        enableAlpha: enableAlpha,
+                        displayThumbColor: true,
+                        labelTypes: [],
+                        portraitOnly: true,
+                        hexInputBar: false,
+                        hexInputController: hexController,
+                        onColorChanged: (Color color) {
+                          themeColor_.value = color.toARGB32();
                         },
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        contentColor: Theme.of(context).colorScheme.onPrimary,
-                        overlayColor:
-                            Theme.of(context).colorScheme.surfaceContainer,
-                        btnWidth: 72,
-                        btnHeight: 36,
-                        label: "确定",
+                      ),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        spacing: 8,
+                        children: [
+                          CustomBtn(
+                            fn: () {
+                              Navigator.pop(context, 'cancel');
+                            },
+                            backgroundColor: Colors.transparent,
+                            contentColor: Theme.of(context).colorScheme.primary,
+                            btnWidth: 72,
+                            btnHeight: 36,
+                            label: "取消",
+                          ),
+                          CustomBtn(
+                            fn: () {
+                              Navigator.pop(context, 'action');
+                              fn(themeColor_.value);
+                            },
+                            backgroundColor:
+                                Theme.of(context).colorScheme.primary,
+                            contentColor:
+                                Theme.of(context).colorScheme.onPrimary,
+                            overlayColor:
+                                Theme.of(context).colorScheme.surfaceContainer,
+                            btnWidth: 72,
+                            btnHeight: 36,
+                            label: "确定",
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ],
-              ),
-            ],
+              );
+            },
           );
         },
-      );
-    },
-    icon: PhosphorIconsLight.palette,
-    label: '取色器',
-    btnHeight: _setBtnHeight,
-    btnWidth: 108,
-    mainAxisAlignment: MainAxisAlignment.center,
-    backgroundColor: Theme.of(context).colorScheme.primary,
-    overlayColor: Theme.of(context).colorScheme.surfaceContainer,
-    contentColor: Theme.of(context).colorScheme.onPrimary,
-  ),
+        icon: PhosphorIconsLight.palette,
+        label: '取色器',
+        btnHeight: _setBtnHeight,
+        btnWidth: 108,
+        mainAxisAlignment: MainAxisAlignment.center,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        overlayColor: Theme.of(context).colorScheme.surfaceContainer,
+        contentColor: Theme.of(context).colorScheme.onPrimary,
+      ),
     ],
   );
 }
@@ -993,7 +998,7 @@ class _DesktopLyricsAlignmentRadio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final alignment = [0, 1, 2,3];
+    final alignment = [0, 1, 2, 3];
     return Material(
       child: Wrap(
         spacing: 8,
@@ -1208,7 +1213,7 @@ class _SetHotKeyPreviousDialog extends StatelessWidget {
   }
 }
 
-class _DesktopLyricsStrokeColor extends StatelessWidget{
+class _DesktopLyricsStrokeColor extends StatelessWidget {
   const _DesktopLyricsStrokeColor();
   @override
   Widget build(BuildContext context) {
@@ -1222,7 +1227,6 @@ class _DesktopLyricsStrokeColor extends StatelessWidget{
       true,
     );
   }
-
 }
 
 class Setting extends StatelessWidget {
@@ -1331,6 +1335,19 @@ class Setting extends StatelessWidget {
                       fn: (bool value) {
                         _settingController.autoDownloadLrc.value = value;
                         _settingController.putCache();
+                      },
+                    ),
+                    context: context,
+                  ),
+
+                  _createSetItem(
+                    text: "启用独占模式",
+                    child: _createSwitchBtn(
+                      value: _settingController.useExclusiveMode,
+                      trackColor: switchTrackColor,
+                      context: context,
+                      fn: (bool value) async {
+                        _settingController.setExclusiveMode(use: value);
                       },
                     ),
                     context: context,
@@ -1524,7 +1541,9 @@ class Setting extends StatelessWidget {
                       trackColor: switchTrackColor,
                       context: context,
                       fn: (bool value) {
-                        _desktopLyricsSettingController.setShowDoubleLine(show: value);
+                        _desktopLyricsSettingController.setShowDoubleLine(
+                          show: value,
+                        );
                       },
                     ),
                     context: context,
@@ -1533,13 +1552,15 @@ class Setting extends StatelessWidget {
                   _createSetItem(
                     text: '边框',
                     child: _createSwitchBtn(
-                        value: _desktopLyricsSettingController.useStroke,
-                        trackColor: switchTrackColor,
-                        context: context,
-                        fn: (bool value) {
-                          _desktopLyricsSettingController.setStrokeEnable(enable: value);
-                        },
-                      ),
+                      value: _desktopLyricsSettingController.useStroke,
+                      trackColor: switchTrackColor,
+                      context: context,
+                      fn: (bool value) {
+                        _desktopLyricsSettingController.setStrokeEnable(
+                          enable: value,
+                        );
+                      },
+                    ),
                     context: context,
                   ),
 

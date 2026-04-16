@@ -26,7 +26,7 @@ import 'album_list_crl.dart';
 import 'artist_list_ctrl.dart';
 import 'music_cache_ctrl.dart';
 
-enum AudioState { stop, playing, pause }
+enum AudioState { stop, playing, pause,ended }
 
 class AudioController extends GetxController {
   final currentPath = ''.obs;
@@ -356,7 +356,6 @@ if(!coverPalette.contains(Color(color))){
     currentMs100.value = 0.0;
     currentSec.value = 0.0;
     try {
-      currentState.value = AudioState.playing;
       await smtcUpdateState(state: SMTCState.playing);
       await playFile(path: metadata.path);
 
@@ -391,11 +390,11 @@ if(!coverPalette.contains(Color(color))){
         currentState.value == AudioState.playing) {
       return;
     }
-    currentState.value = AudioState.playing;
     try {
       await smtcUpdateState(state: SMTCState.playing);
       await resume();
     } catch (e) {
+      currentState.value = AudioState.stop;
       showSnackBar(title: "ERR", msg: e.toString());
     }
   }
@@ -407,11 +406,11 @@ if(!coverPalette.contains(Color(color))){
         currentState.value == AudioState.pause) {
       return;
     }
-    currentState.value = AudioState.pause;
     try {
       await smtcUpdateState(state: SMTCState.paused);
       await pause();
     } catch (e) {
+      currentState.value = AudioState.stop;
       showSnackBar(title: "ERR", msg: e.toString());
     }
   }
@@ -433,16 +432,11 @@ if(!coverPalette.contains(Color(color))){
     if (currentMetadata.value.path.isEmpty || playListCacheItems.isEmpty) {
       return;
     }
-    if (currentState.value == AudioState.stop ||
-        currentState.value == AudioState.pause) {
-      currentState.value = AudioState.playing;
-    } else {
-      currentState.value = AudioState.pause;
-    }
     try {
-      await smtcUpdateState(state: currentState.value == AudioState.playing? SMTCState.playing: SMTCState.paused);
       await toggle();
+      await smtcUpdateState(state: currentState.value == AudioState.playing? SMTCState.playing: SMTCState.paused);
     } catch (e) {
+      currentState.value = AudioState.stop;
       showSnackBar(title: "ERR", msg: e.toString());
     }
   }
