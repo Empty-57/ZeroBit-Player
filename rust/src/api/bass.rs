@@ -753,8 +753,10 @@ impl BassApi {
                     self.chan_free();
                 }
 
-                Err(get_err_info(err_code)
-                    .unwrap_or_else(|| format!("Unknown BASS error | ERR_CODE<{}>", err_code)))
+                let err_str=get_err_info(err_code)
+                    .unwrap_or_else(|| format!("Unknown BASS error | ERR_CODE<{}>", err_code));
+                println!("{}", err_str);
+                Err(err_str)
             }
         } else {
             Ok(())
