@@ -11,7 +11,6 @@ use libloading::{Library, Symbol};
 use once_cell::sync::{Lazy, OnceCell};
 use std::ffi::{c_double, OsStr};
 use std::os::windows::ffi::OsStrExt;
-use std::path::PathBuf;
 use std::ptr::null_mut;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
