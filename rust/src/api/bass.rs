@@ -9,7 +9,7 @@ use crate::frb_generated::StreamSink;
 use core::ffi::{c_uint, c_void};
 use libloading::{Library, Symbol};
 use once_cell::sync::{Lazy, OnceCell};
-use std::ffi::OsStr;
+use std::ffi::{c_double, OsStr};
 use std::os::windows::ffi::OsStrExt;
 use std::path::PathBuf;
 use std::ptr::null_mut;
@@ -51,6 +51,7 @@ struct BassApi {
     wasapi_start: Symbol<'static, BASS_WASAPI_Start>,
     wasapi_stop: Symbol<'static, BASS_WASAPI_Stop>,
     wasapi_is_started: Symbol<'static, BASS_WASAPI_IsStarted>,
+    wasapi_get_data: Symbol<'static, BASS_WASAPI_GetData>,
     plugin_load: Symbol<'static, BASS_PluginLoad>,
     bass_set_sync: Symbol<'static, BASS_ChannelSetSync>,
     fx_tempo_create: Symbol<'static, BASS_FX_TempoCreate>,
@@ -262,6 +263,10 @@ impl BassApi {
                 .get(b"BASS_WASAPI_IsStarted\0")
                 .map_err(|e| e.to_string())?;
 
+            let wasapi_get_data = wasapi_lib
+                .get(b"BASS_WASAPI_GetData\0")
+                .map_err(|e| e.to_string())?;
+
             let plugin_load = lib.get(b"BASS_PluginLoad\0").map_err(|e| e.to_string())?;
 
             let bass_set_sync = lib
@@ -305,6 +310,7 @@ impl BassApi {
                 wasapi_start,
                 wasapi_stop,
                 wasapi_is_started,
+                wasapi_get_data,
                 plugin_load,
                 bass_set_sync,
                 fx_tempo_create,
@@ -386,9 +392,7 @@ impl BassApi {
     fn listen_progress(&self) {
         // 停止旧线程
         PROGRESS_THREAD_RUNNING.store(false, Ordering::SeqCst);
-
         PROGRESS_THREAD_RUNNING.store(true, Ordering::SeqCst);
-
         thread::spawn(|| {
             if let Some(sink) = PROGRESS_LISTEN.lock().unwrap().as_ref() {
                 while PROGRESS_THREAD_RUNNING.load(Ordering::SeqCst) {
@@ -424,6 +428,7 @@ impl BassApi {
             if self.stream_handle == 0 {
                 return Ok(());
             }
+            (self.slide_attr)(self.stream_handle, BASS_ATTRIB_VOL, -1.0, 0);
             (self.set_attr)(self.stream_handle, BASS_ATTRIB_VOL, 0.0) //BASS_ATTRIB_VOL:2
         };
         self.or_err_(ok)?;
@@ -439,17 +444,7 @@ impl BassApi {
     }
 
     fn fade_out(&mut self) -> Result<(), String> {
-        let ok = unsafe {
-            if self.stream_handle == 0 {
-                return Ok(());
-            }
-            (self.set_attr)(
-                self.stream_handle,
-                BASS_ATTRIB_VOL,
-                *TARGET_VOLUME.lock().unwrap(),
-            ) //BASS_ATTRIB_VOL:2
-        };
-        self.or_err_(ok)?;
+        if self.stream_handle == 0 { return Ok(()); }
         unsafe {
             let result = (self.slide_attr)(self.stream_handle, BASS_ATTRIB_VOL, 0.0, FADE_DURATION);
             thread::sleep(Duration::from_millis(FADE_DURATION as u64));
@@ -599,6 +594,7 @@ impl BassApi {
     }
 
     fn pause(&mut self) -> Result<(), String> {
+        notify_state(USER_PAUSED);
         if WASEXCLUSIVE.load(Ordering::SeqCst) {
             let active = unsafe { (self.wasapi_is_started)() };
             if active == FALSE {
@@ -611,7 +607,6 @@ impl BassApi {
             let result = unsafe { (self.pause)(self.stream_handle) };
             self.or_err_(result)?;
         }
-        notify_state(USER_PAUSED);
         Ok(())
     }
 
@@ -725,16 +720,24 @@ impl BassApi {
             return 0.0;
         }
 
-        let pos = unsafe { (self.get_pos)(self.stream_handle, BASS_POS_BYTE) };
-        let err_code = unsafe { (self.error_get_code)() };
-        if err_code != 0 {
+        let pos_bytes = unsafe { (self.get_pos)(self.stream_handle, BASS_POS_BYTE) };
+        if pos_bytes == !0 {
+            let err_code = unsafe { (self.error_get_code)() };
             if err_code == BASS_ERROR_HANDLE {
                 self.chan_free();
             }
             println!("BASS failed, error code: {}", err_code);
             0.0
         } else {
-            unsafe { (self.bytes2sec)(self.stream_handle, pos) }
+            let mut final_bytes = pos_bytes;
+            if WASEXCLUSIVE.load(Ordering::Relaxed) {
+                let decode_bytes =
+                    unsafe { (self.wasapi_get_data)(null_mut(), BASS_DATA_AVAILABLE) }; // 获取解码进度
+                if decode_bytes > 0 && decode_bytes != !0 {
+                    final_bytes = final_bytes.saturating_sub(decode_bytes as u64);// 真实进度 = 解码进度 - 缓冲区残留
+                }
+            }
+            unsafe { (self.bytes2sec)(self.stream_handle, final_bytes) }.max(0.0)
         }
     }
 

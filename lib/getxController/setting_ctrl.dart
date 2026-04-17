@@ -8,6 +8,7 @@ import 'package:zerobit_player/HIveCtrl/hive_manager.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 
 import '../HIveCtrl/models/music_cache_model.dart';
+import '../components/get_snack_bar.dart';
 import '../field/scalable_config_keys.dart';
 import '../src/rust/api/bass.dart';
 import '../tools/sync_cache.dart';
@@ -523,8 +524,14 @@ class SettingController extends GetxController {
   }
 
   void setExclusiveMode({required bool use})async{
+    final prev=useExclusiveMode.value;
     useExclusiveMode.value=use;
-    await switchExclusiveMode(exclusive: useExclusiveMode.value);
+    try{
+      await switchExclusiveMode(exclusive: useExclusiveMode.value);
+    }catch(e){
+      useExclusiveMode.value=prev;
+      showSnackBar(title: 'Err', msg: e.toString());
+    }
     if (prefs == null) {
       return;
     }

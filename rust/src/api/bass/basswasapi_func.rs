@@ -40,6 +40,11 @@ pub(crate) type BASS_WASAPI_Init = unsafe extern "C" fn(
     user: *mut c_void, // 回调用户参数
 ) -> c_int;
 
+pub(crate) type BASS_WASAPI_GetData = unsafe extern "C" fn(
+    buffer: *mut c_void,
+    length: c_uint,
+) -> c_uint;
+
 pub(crate) type BASS_WASAPI_Start = unsafe extern "C" fn() -> c_int;
 
 pub(crate) type BASS_WASAPI_Free = unsafe extern "C" fn() -> c_int;

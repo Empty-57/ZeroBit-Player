@@ -18,6 +18,7 @@ pub const BASS_ACTIVE_PAUSED: u32 = 3;
 pub const BASS_ACTIVE_PAUSED_DEVICE: u32 = 4;
 
 pub const BASS_POS_BYTE: u32 = 0;
+pub const BASS_POS_DECODE: u32 = 0x10000000;
 
 pub const BASS_WASAPI_EXCLUSIVE: u32 = 1;
 pub const BASS_WASAPI_AUTOFORMAT: u32 = 2;
@@ -52,3 +53,4 @@ pub const BASS_FX_DX8_PARAMEQ			:u32=7;
 pub const  BASS_DATA_FFT512	 :u32= 0x80000001;	// 512 FFT
 pub const  BASS_DATA_FFT1024 :u32=	0x80000002;	// 1024 FFT
 pub const  BASS_DATA_FFT2048 :u32=	0x80000003;	// 2048 FFT
+pub const  BASS_DATA_AVAILABLE :u32=	0;
