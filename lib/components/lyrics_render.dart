@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:zerobit_player/components/spring_list_view.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
 import '../tools/general_style.dart';
 
@@ -41,6 +42,7 @@ const _lrcWrapAlignment = [
   WrapAlignment.center,
   WrapAlignment.end,
 ];
+const List<double> _gradientStops = [0.0, 0.333, 0.666];
 const _lrcScale = 1.1;
 
 class _HighlightedWord extends StatelessWidget {
@@ -49,13 +51,14 @@ class _HighlightedWord extends StatelessWidget {
   final TextStyle style;
   final StrutStyle strutStyle;
   final double scale;
-
+  final List<Color> gradientColors;
   const _HighlightedWord({
     required this.text,
     required this.progress,
     required this.style,
     required this.strutStyle,
     required this.scale,
+    required this.gradientColors,
   });
 
   @override
@@ -70,12 +73,8 @@ class _HighlightedWord extends StatelessWidget {
         return LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [
-            style.color!.withValues(alpha: _highLightAlpha),
-            style.color!.withValues(alpha: _highLightAlpha),
-            style.color!,
-          ],
-          stops: const [0.0, 0.333, 0.666],
+          colors: gradientColors,
+          stops: _gradientStops,
           transform: _ScaledTranslateGradientTransform(dx: dx, scale: scale),
         ).createShader(bounds);
       },
@@ -112,7 +111,6 @@ class _LrcLyricWidget extends StatelessWidget {
   final bool isCurrent;
   final int lrcAlignmentIndex;
   final TextAlign textAlign;
-
   const _LrcLyricWidget({
     required this.text,
     required this.style,
@@ -120,24 +118,17 @@ class _LrcLyricWidget extends StatelessWidget {
     required this.lrcAlignmentIndex,
     required this.textAlign,
   });
-
   @override
   Widget build(BuildContext context) {
-    return AnimatedScale(
-      scale: isCurrent ? _lrcScale : 1.0,
+    return AnimatedDefaultTextStyle(
       duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOutQuad,
-      alignment: _lrcScaleAlignment[lrcAlignmentIndex],
-      child: AnimatedDefaultTextStyle(
-        duration: const Duration(milliseconds: 300),
-        style: style.copyWith(
-          color:
-              isCurrent
-                  ? style.color?.withValues(alpha: _highLightAlpha)
-                  : style.color,
-        ),
-        child: Text(text, textAlign: textAlign, softWrap: true),
+      style: style.copyWith(
+        color:
+            isCurrent
+                ? style.color?.withValues(alpha: _highLightAlpha)
+                : style.color,
       ),
+      child: Text(text, textAlign: textAlign, softWrap: true),
     );
   }
 }
@@ -195,6 +186,12 @@ class _KaraOkLyricWidget extends StatelessWidget {
                 final double scale = entry.value.duration >= 1.0 ? 3 : 2;
 
                 if (wordIndex == currWordIndex) {
+                  final List<Color> gradientColors = [
+                    style.color!.withValues(alpha: _highLightAlpha),
+                    style.color!.withValues(alpha: _highLightAlpha),
+                    style.color!,
+                  ];
+
                   return Obx(
                     () => _HighlightedWord(
                       text: word,
@@ -202,6 +199,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
                       style: style,
                       strutStyle: strutStyle,
                       scale: scale,
+                      gradientColors: gradientColors,
                     ),
                   );
                 } else if (wordIndex < currWordIndex) {
@@ -229,7 +227,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
               begin: style.color?.withValues(alpha: _highLightAlpha),
               end: style.color,
             ),
-            duration: const Duration(milliseconds: 300),
+            duration: const Duration(milliseconds: 600),
             builder: (_, color, __) {
               return _createTextWarp(color: color);
             },
@@ -241,13 +239,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
       });
     }
 
-    return AnimatedScale(
-      scale: isCurrent && cancelScale ? _lrcScale : 1.0,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOutQuad,
-      alignment: _lrcScaleAlignment[lrcAlignmentIndex],
-      child: content,
-    );
+    return content;
   }
 }
 
@@ -262,6 +254,7 @@ class _LyricsRenderState extends State<LyricsRender> {
   final AudioController _audioController = Get.find<AudioController>();
   final SettingController _settingController = Get.find<SettingController>();
   final LyricController _lyricController = Get.find<LyricController>();
+  final SpringController _springConntroller = Get.find<SpringController>();
   final _isHover = false.obs;
 
   @override
@@ -333,37 +326,14 @@ class _LyricsRenderState extends State<LyricsRender> {
         child: Stack(
           children: [
             ScrollConfiguration(
-              // stack
               behavior: ScrollConfiguration.of(
                 context,
               ).copyWith(scrollbars: false),
               child: Obx(() {
+                final useSpringscroll =
+                    _settingController.useSpringScroll.value;
                 final currentLyrics = _audioController.currentLyrics.value;
                 final parsedLrc = currentLyrics?.parsedLrc;
-                final lrcAlignment = _settingController.lrcAlignment.value;
-                final lrcPadding = EdgeInsets.only(
-                  top: 16,
-                  bottom: 16,
-                  left:
-                      lrcAlignment == 2
-                          ? dynamicPadding
-                          : lrcAlignment == 1
-                          ? dynamicPadding / 2
-                          : 16,
-                  right:
-                      lrcAlignment == 0
-                          ? dynamicPadding
-                          : lrcAlignment == 1
-                          ? dynamicPadding / 2
-                          : 16,
-                );
-
-                final textAlign =
-                    lrcAlignment == 0
-                        ? TextAlign.left
-                        : lrcAlignment == 1
-                        ? TextAlign.center
-                        : TextAlign.right;
 
                 if (currentLyrics == null ||
                     parsedLrc is! List<LyricEntry> ||
@@ -381,9 +351,6 @@ class _LyricsRenderState extends State<LyricsRender> {
                 }
 
                 final String lrcType = currentLyrics.type;
-
-                // 重要: 需要先缓存字段，否则可能造成内存泄漏
-                // 可能 _KaraOkLyricWidget 仍有性能问题
                 final List lineList =
                     parsedLrc.map((v) => v.lyricText).toList();
                 final List<String> translateList =
@@ -393,207 +360,65 @@ class _LyricsRenderState extends State<LyricsRender> {
                 final List<String> romaList =
                     parsedLrc.map((v) => v.roma).toList();
 
-                return ScrollablePositionedList.builder(
-                  key: ValueKey(currentLyrics.hashCode),
-                  itemCount: parsedLrc.length,
-                  initialScrollIndex: 0,
-                  initialAlignment: 0.4,
-                  itemScrollController:
-                      _lyricController.lrcViewScrollController,
-                  minCacheExtent: 48.0,
-                  addAutomaticKeepAlives: false,
-                  addSemanticIndexes: false,
-                  addRepaintBoundaries: true,
-                  padding: EdgeInsets.symmetric(
-                    vertical:
-                        (context.height -
-                            _audioCtrlBarHeight -
-                            _controllerBarHeight) /
-                        2,
-                  ),
-                  itemBuilder: (BuildContext context, int index) {
-                    if ((lrcType == LyricFormat.lrc &&
-                            lineList[index].isEmpty &&
-                            translateList[index].isEmpty) ||
-                        index == -1) {
-                      return const SizedBox.shrink();
-                    }
+                Widget creatLyricItem(index) {
+                  if ((lrcType == LyricFormat.lrc &&
+                          lineList[index].isEmpty &&
+                          translateList[index].isEmpty) ||
+                      index == -1) {
+                    return const SizedBox.shrink();
+                  }
+                  return _StaggeredLyricItem(
+                    index: index,
+                    lyricController: _lyricController,
+                    audioController: _audioController,
+                    settingController: _settingController,
+                    lrcType: lrcType,
+                    lineText: lineList[index],
+                    translateText: translateList[index],
+                    romaText: romaList[index],
+                    startTime: startTime[index],
+                    lyricStyle: lyricStyle,
+                    tsLyricStyle: tsLyricStyle,
+                    romaLyricStyle: romaLyricStyle,
+                    interludeLyricStyle: interludeLyricStyle,
+                    strutStyle: strutStyle,
+                    hoverColor: hoverColor,
+                    dynamicPadding: dynamicPadding,
+                  );
+                }
 
-                    return Obx(() {
-                      final isCurrent =
-                          index == _lyricController.currentLineIndex.value;
-                      final isPointerScrolling =
-                          _lyricController.isPointerScroll.value;
-
-                      final Widget content = Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: _lrcCrossAlignment[lrcAlignment],
-                        children: [
-                          if (lrcType == LyricFormat.lrc)
-                            _LrcLyricWidget(
-                              text: lineList[index] as String,
-                              style: lyricStyle,
-                              isCurrent: isCurrent,
-                              lrcAlignmentIndex: lrcAlignment,
-                              textAlign: textAlign,
-                            )
-                          else
-                            _KaraOkLyricWidget(
-                              text: lineList[index] as List<WordEntry>,
-                              style: lyricStyle,
-                              isCurrent: isCurrent,
-                              index: index,
-                              lrcAlignmentIndex: lrcAlignment,
-                              lyricController: _lyricController,
-                              strutStyle: strutStyle,
-                              cancelScale: _lyricController.cancelScale.value,
-                            ),
-                          if (romaList[index].isNotEmpty &&
-                              _settingController.showRoma.value)
-                            Text(
-                              romaList[index],
-                              style: romaLyricStyle,
-                              softWrap: true,
-                              textAlign: textAlign,
-                            ),
-                          if (translateList[index].isNotEmpty &&
-                              _settingController.showTranslate.value)
-                            Text(
-                              translateList[index],
-                              style: tsLyricStyle,
-                              softWrap: true,
-                              textAlign: textAlign,
-                            ),
-
-                          Obx(() {
-                            final show = _lyricController.showInterlude.value;
-                            return AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 500),
-                              transitionBuilder: (
-                                Widget child,
-                                Animation<double> animation,
-                              ) {
-                                final curvedAnimation = CurvedAnimation(
-                                  parent: animation,
-                                  curve: Curves.easeOutBack,
-                                  reverseCurve: Curves.easeOutBack,
-                                );
-                                return SizeTransition(
-                                  axis: Axis.vertical,
-                                  axisAlignment: 0.0,
-                                  sizeFactor: curvedAnimation, // 平滑地改变布局空间
-                                  child: ScaleTransition(
-                                    scale: curvedAnimation, // 同时进行缩放
-                                    alignment: _lrcScaleAlignment[lrcAlignment],
-                                    child: child,
-                                  ),
-                                );
-                              },
-
-                              child:
-                                  (isCurrent && show)
-                                      ? Obx(
-                                        () => Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          mainAxisAlignment:
-                                              _lrcMainAlignment[lrcAlignment],
-                                          children: [
-                                            _HighlightedWord(
-                                                  text: "  ● ● ●  ",
-                                                  progress:
-                                                      _lyricController
-                                                          .interludeProcess
-                                                          .value /
-                                                      100,
-                                                  style: interludeLyricStyle,
-                                                  strutStyle: strutStyle,
-                                                  scale: 2,
-                                                )
-                                                .animate(
-                                                  onPlay:
-                                                      (controller) =>
-                                                          controller.repeat(
-                                                            reverse: true,
-                                                          ),
-                                                )
-                                                .scaleXY(
-                                                  end: _lrcScale,
-                                                  duration: 1500.ms,
-                                                  curve: Curves.easeInOut,
-                                                  alignment:
-                                                      _lrcScaleAlignment[lrcAlignment],
-                                                ),
-                                          ],
-                                        ),
-                                      )
-                                      : const SizedBox.shrink(),
-                            );
-                          }),
-                        ],
-                      );
-
-                      final Widget lyricLine = FractionallySizedBox(
-                        widthFactor: 1,
-                        child: content,
-                      );
-
-                      double sigma = 0;
-
-                      if (!isPointerScrolling && !isCurrent) {
-                        sigma =
-                            (_lyricController.currentLineIndex.value - index)
-                                .abs()
-                                .clamp(0.0, 4.0)
-                                .toDouble();
-                      }
-
-                      // double scrollDelay =
-                      //     (_lyricController.currentLineIndex.value - index)
-                      //         .abs()
-                      //         .clamp(0.0, 10.0)
-                      //         .toDouble();
-
-                      return TextButton(
-                        onPressed: () {
-                          _audioController.audioSetPositon(
-                            pos: startTime[index],
-                          );
-                        }.throttle(ms: 500),
-                        style: TextButton.styleFrom(
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: _borderRadius,
-                          ),
-                          padding: lrcPadding,
-                          overlayColor: hoverColor,
-                        ),
-
-                        //此处 使用animate().blurXY() 可能会导致内存泄漏
-                        child:
-                            _settingController.useBlur.value
-                                ? lyricLine.animate().blurXY(
-                                  duration: 500.ms,
-                                  begin: sigma - 1,
-                                  end: sigma,
-                                )
-                                : lyricLine,
-
-                        // .animate(
-                        // key: ValueKey(_lyricController.currentLineIndex.value.hashCode),onComplete: (c)=>c.reverse())
-                        // .moveY(
-                        // duration: (300+50*((scrollDelay/10))).ms,
-                        // curve: Curves.easeOut,
-                        // delay: (20*scrollDelay).ms,
-                        // begin: 0,
-                        // end: -12+-8*((scrollDelay/10))),
-
-                        // 以上动态改变宽度模拟弹簧效果
-                      );
-                    });
-                  },
-                );
+                return useSpringscroll
+                    ? SpringListView(
+                      length: parsedLrc.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return creatLyricItem(index);
+                      },
+                    )
+                    : ScrollablePositionedList.builder(
+                      key: ValueKey(currentLyrics.hashCode),
+                      itemCount: parsedLrc.length,
+                      initialScrollIndex: 0,
+                      initialAlignment: 0.4,
+                      itemScrollController:
+                          _lyricController.lrcViewScrollController,
+                      minCacheExtent: 48.0,
+                      addAutomaticKeepAlives: false,
+                      addSemanticIndexes: false,
+                      addRepaintBoundaries: true,
+                      padding: EdgeInsets.symmetric(
+                        vertical:
+                            (context.height -
+                                _audioCtrlBarHeight -
+                                _controllerBarHeight) /
+                            2,
+                      ),
+                      itemBuilder: (BuildContext context, int index) {
+                        return creatLyricItem(index);
+                      },
+                    );
               }),
             ),
+
             Positioned(
               bottom: 100,
               right: 0,
@@ -616,7 +441,6 @@ class _LyricsRenderState extends State<LyricsRender> {
                           _settingController.setShowTranslate(
                             show: !_settingController.showTranslate.value,
                           );
-                          _lyricController.scrollToCenter();
                         },
                       ),
                       GenIconBtn(
@@ -631,7 +455,6 @@ class _LyricsRenderState extends State<LyricsRender> {
                           _settingController.setShowRoma(
                             show: !_settingController.showRoma.value,
                           );
-                          _lyricController.scrollToCenter();
                         },
                       ),
                     ],
@@ -643,5 +466,257 @@ class _LyricsRenderState extends State<LyricsRender> {
         ),
       ),
     );
+  }
+}
+
+/// 独立的歌词行组件
+class _StaggeredLyricItem extends StatelessWidget {
+  final int index;
+
+  final LyricController lyricController;
+  final AudioController audioController;
+  final SettingController settingController;
+
+  final String lrcType;
+  final dynamic lineText;
+  final String translateText;
+  final String romaText;
+  final double startTime;
+
+  final TextStyle lyricStyle;
+  final TextStyle tsLyricStyle;
+  final TextStyle romaLyricStyle;
+  final TextStyle interludeLyricStyle;
+  final StrutStyle strutStyle;
+  final Color? hoverColor;
+  final double dynamicPadding;
+
+  const _StaggeredLyricItem({
+    required this.index,
+    required this.lyricController,
+    required this.audioController,
+    required this.settingController,
+    required this.lrcType,
+    required this.lineText,
+    required this.translateText,
+    required this.romaText,
+    required this.startTime,
+    required this.lyricStyle,
+    required this.tsLyricStyle,
+    required this.romaLyricStyle,
+    required this.interludeLyricStyle,
+    required this.strutStyle,
+    required this.hoverColor,
+    required this.dynamicPadding,
+  });
+
+  Widget _creatScaleWidget({
+    required Widget child,
+    required bool isCurrent,
+    required int lrcAlignmentIndex,
+  }) {
+    return AnimatedScale(
+      scale: isCurrent ? _lrcScale : 1.0,
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeOutCubic,
+      alignment: _lrcScaleAlignment[lrcAlignmentIndex],
+      child: child,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final lrcAlignment = settingController.lrcAlignment.value;
+      final isCurrent = index == lyricController.currentLineIndex.value;
+      final isPointerScrolling = lyricController.isPointerScroll.value;
+
+      final lrcPadding = EdgeInsets.only(
+        top: 16,
+        bottom: 16,
+        left:
+            lrcAlignment == 2
+                ? dynamicPadding
+                : lrcAlignment == 1
+                ? dynamicPadding / 2
+                : 16,
+        right:
+            lrcAlignment == 0
+                ? dynamicPadding
+                : lrcAlignment == 1
+                ? dynamicPadding / 2
+                : 16,
+      );
+      final textAlign =
+          lrcAlignment == 0
+              ? TextAlign.left
+              : lrcAlignment == 1
+              ? TextAlign.center
+              : TextAlign.right;
+
+      final content = Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: _lrcCrossAlignment[lrcAlignment],
+        children: [
+          if (lrcType == LyricFormat.lrc)
+            _creatScaleWidget(
+              child: _LrcLyricWidget(
+                text: lineText as String,
+                style: lyricStyle,
+                isCurrent: isCurrent,
+                lrcAlignmentIndex: lrcAlignment,
+                textAlign: textAlign,
+              ),
+              isCurrent: isCurrent,
+              lrcAlignmentIndex: lrcAlignment,
+            )
+          else
+            _creatScaleWidget(
+              child: _KaraOkLyricWidget(
+                text: lineText as List<WordEntry>,
+                style: lyricStyle,
+                isCurrent: isCurrent,
+                index: index,
+                lrcAlignmentIndex: lrcAlignment,
+                lyricController: lyricController,
+                strutStyle: strutStyle,
+                cancelScale: lyricController.cancelScale.value,
+              ),
+              isCurrent: isCurrent,
+              lrcAlignmentIndex: lrcAlignment,
+            ),
+
+          if (romaText.isNotEmpty && settingController.showRoma.value)
+            Text(
+              romaText,
+              style: romaLyricStyle,
+              softWrap: true,
+              textAlign: textAlign,
+            ),
+
+          if (translateText.isNotEmpty && settingController.showTranslate.value)
+            Text(
+              translateText,
+              style: tsLyricStyle,
+              softWrap: true,
+              textAlign: textAlign,
+            ),
+
+          Obx(() {
+            final show = lyricController.showInterlude.value;
+            return AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                final sizeAnimation = CurvedAnimation( //尺寸曲线
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                  reverseCurve: Curves.easeInCubic,
+                );
+
+                final scaleAnimation = CurvedAnimation( //回弹曲线
+                  parent: animation,
+                  curve: Curves.easeOutBack,
+                  reverseCurve: Curves.easeInBack,
+                );
+
+                final fadeAnimation = CurvedAnimation( // 透明度曲线
+                  parent: animation,
+                  curve: Curves.easeOut,
+                  reverseCurve: Curves.easeIn,
+                );
+
+                return SizeTransition(
+                  axis: Axis.vertical,
+                  axisAlignment: 0.0, // 从顶部开始撑开
+                  sizeFactor: sizeAnimation,
+                  child: FadeTransition(
+                    opacity: fadeAnimation,
+                    child: ScaleTransition(
+                      scale: scaleAnimation,
+                      alignment: _lrcScaleAlignment[lrcAlignment],
+                      child: child,
+                    ),
+                  ),
+                );
+              },
+              child: (isCurrent && show)
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: _lrcMainAlignment[lrcAlignment],
+                      children: [
+                        _HighlightedWord(
+                          text: "  ● ● ●  ",
+                          progress: lyricController.interludeProcess.value / 100,
+                          style: interludeLyricStyle,
+                          strutStyle: strutStyle,
+                          scale: 2,
+                          gradientColors: [
+                            interludeLyricStyle.color!.withValues(alpha: _highLightAlpha),
+                            interludeLyricStyle.color!.withValues(alpha: _highLightAlpha),
+                            interludeLyricStyle.color!,
+                          ],
+                        )
+                        .animate(
+                          onPlay: (controller) => controller.repeat(reverse: true),
+                        )
+                        .scaleXY(
+                          end: _lrcScale,
+                          duration: 1500.ms,
+                          curve: Curves.easeInOut,
+                          alignment: _lrcScaleAlignment[lrcAlignment],
+                        ),
+                      ],
+                    )
+                  : const SizedBox.shrink(),
+            );
+          }),
+        ],
+      );
+
+      double targetSigma = 0.0;
+      if (!isPointerScrolling &&
+          !isCurrent &&
+          settingController.useBlur.value) {
+        targetSigma =
+            (lyricController.currentLineIndex.value - index)
+                .abs()
+                .clamp(0.0, 4.0)
+                .toDouble();
+      }
+
+      final Widget lyricLine = FractionallySizedBox(
+        widthFactor: 1,
+        child: content,
+      );
+
+      return TextButton(
+        onPressed: () {
+          audioController.audioSetPositon(pos: startTime);
+        }.throttle(ms: 500),
+        style: TextButton.styleFrom(
+          shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
+          padding: lrcPadding,
+          overlayColor: hoverColor,
+        ),
+        child:
+            settingController.useBlur.value
+                ? TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0.0, end: targetSigma),
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, sigma, child) {
+                    return ImageFiltered(
+                      imageFilter: ui.ImageFilter.blur(
+                        sigmaX: sigma,
+                        sigmaY: sigma,
+                      ),
+                      child: child,
+                    );
+                  },
+                  child: lyricLine,
+                )
+                : lyricLine,
+      );
+    });
   }
 }

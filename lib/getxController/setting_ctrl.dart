@@ -132,6 +132,8 @@ class SettingController extends GetxController {
 
   final useExclusiveMode=false.obs;
 
+  final useSpringScroll=false.obs;
+
   final hotKeyScope =
       false.obs; //false : HotKeyScope.inapp.obs true: HotKeyScope.system.obs
   final hotKeyToggle =
@@ -344,6 +346,7 @@ class SettingController extends GetxController {
     hotKeyScope.value = prefs!.getBool('hotKeyScope') ?? false;
     useMesh.value = prefs!.getBool('useMesh') ?? false;
     useExclusiveMode.value=prefs!.getBool('useExclusiveMode')??false;
+    useSpringScroll.value=prefs!.getBool("useSpringScroll")??false;
   }
 
   List<HotKeyModifier>? _getModifier(List<int> hidList) {
@@ -535,6 +538,15 @@ class SettingController extends GetxController {
     if (prefs == null) {
       return;
     }
-    prefs!.setBool('useExclusiveMode', useExclusiveMode.value);
+    // 不保存独占模式的配置
+    // prefs!.setBool('useExclusiveMode', useExclusiveMode.value);
+  }
+
+  void setSpringScroll({required bool use}){
+    useSpringScroll.value = use;
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setBool('useSpringScroll', useSpringScroll.value);
   }
 }

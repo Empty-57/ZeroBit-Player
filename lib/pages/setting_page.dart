@@ -1490,6 +1490,22 @@ class Setting extends StatelessWidget {
                     ),
                   ),
 
+                  Tooltip(
+                    message: '此效果比较占用性能',
+                    child: _createSetItem(
+                      text: '使用弹性滚动',
+                      child: _createSwitchBtn(
+                        value: _settingController.useSpringScroll,
+                        trackColor: switchTrackColor,
+                        context: context,
+                        fn: (bool value) {
+                          _settingController.setSpringScroll(use: value);
+                        },
+                      ),
+                      context: context,
+                    ),
+                  ),
+
                   const _SetDivider(title: '桌面歌词样式'),
 
                   _createSetItem(

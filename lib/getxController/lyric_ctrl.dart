@@ -3,15 +3,18 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:zerobit_player/components/spring_list_view.dart';
+import 'package:zerobit_player/getxController/setting_ctrl.dart';
 import '../tools/lrcTool/lyric_model.dart';
 import 'audio_ctrl.dart';
-
-final AudioController _audioController = Get.find<AudioController>();
 
 class LyricController extends GetxController {
   final currentMs20 = 0.0.obs;
   final lrcViewScrollController = ItemScrollController();
   final isPointerScroll = false.obs;
+  final AudioController _audioController = Get.find<AudioController>();
+  final SpringController _springConntroller = Get.find<SpringController>();
+  final SettingController _settingController = Get.find<SettingController>();
 
   final currentLineIndex = (-1).obs;
   final currentWordIndex = (0).obs;
@@ -133,7 +136,11 @@ class LyricController extends GetxController {
         wordProgress.value = 0;
         currentLineIndex.value = newLineIndex;
         if (!isPointerScroll.value) {
-          scrollToCenter();
+          if (_settingController.useSpringScroll.value) {
+            springScrollToCenter();
+          } else {
+            scrollToCenter();
+          }
         }
       }
 
@@ -181,23 +188,40 @@ class LyricController extends GetxController {
     });
   }
 
-  void scrollToCenter() {
-    if (!lrcViewScrollController.isAttached) {
-      return;
-    }
+  void springScrollToCenter() {
+    _springConntroller.nextLyric();
+    _springConntroller.currentIndex.value = currentLineIndex.value;
+  }
 
-    try {
-      lrcViewScrollController.scrollTo(
-        index: currentLineIndex.value.clamp(
-          0,
-          (_audioController.currentLyrics.value?.parsedLrc?.length ?? 1) - 1,
-        ),
-        duration: Duration(milliseconds: 500),
-        alignment: 0.4,
-        curve: Curves.easeInOut,
-      );
-    } catch (e) {
-      debugPrint(e.toString());
+  void scrollToCenter() {
+    if (_settingController.useSpringScroll.value) {
+      _springConntroller.currentIndex.value = currentLineIndex.value;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_springConntroller.scrollController.hasClients) {
+          _springConntroller.scrollController.animateTo(
+            0.0,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    } else {
+      if (!lrcViewScrollController.isAttached) {
+        return;
+      }
+      try {
+        lrcViewScrollController.scrollTo(
+          index: currentLineIndex.value.clamp(
+            0,
+            (_audioController.currentLyrics.value?.parsedLrc?.length ?? 1) - 1,
+          ),
+          duration: Duration(milliseconds: 500),
+          alignment: 0.4,
+          curve: Curves.easeInOut,
+        );
+      } catch (e) {
+        debugPrint(e.toString());
+      }
     }
   }
 
