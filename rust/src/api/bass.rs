@@ -1,6 +1,4 @@
-use crate::api::bass::bass_errs::{
-    get_err_info, BASS_ERROR_ALREADY, BASS_ERROR_HANDLE, BASS_ERROR_INIT,
-};
+use crate::api::bass::bass_errs::{get_err_info, BASS_ERROR_ALREADY, BASS_ERROR_BUSY, BASS_ERROR_HANDLE, BASS_ERROR_INIT};
 use crate::api::bass::bass_flags::*;
 use crate::api::bass::bass_func::*;
 use crate::api::bass::bassfx_func::*;
@@ -638,17 +636,24 @@ impl BassApi {
         let mut buffer = vec![0.0f32; data_size];
         let buffer_ptr = buffer.as_mut_ptr() as *mut c_void;
         unsafe {
-            let ok = (self.chan_get_data)(self.stream_handle, buffer_ptr, BASS_DATA_FFT512);
-            if ok == 0 {
-                let err_code = (self.error_get_code)();
-                println!(
+        let ok = if WASEXCLUSIVE.load(Ordering::SeqCst) {
+            // 独占模式下，从 WASAPI 获取数据
+            (self.wasapi_get_data)(buffer_ptr, BASS_DATA_FFT512)
+        } else {
+            // 普通模式下，从频道获取数据
+            (self.chan_get_data)(self.stream_handle, buffer_ptr, BASS_DATA_FFT512)
+        };
+
+        if ok == !0 { // 失败返回 -1 (!0)
+            let err_code = (self.error_get_code)();
+            println!(
                     "{}",
                     get_err_info(err_code)
                         .unwrap_or_else(|| format!("Unknown BASS error | ERR_CODE<{}>", err_code))
                 );
-                return None;
-            }
-        };
+            return None;
+        }
+    };
 
         if buffer.len() != data_size {
             buffer.resize(data_size, 0.0f32);
@@ -807,7 +812,7 @@ impl BassApi {
     }
 
     fn or_err_(&mut self, result: i32) -> Result<(), String> {
-        if result == 0 {
+        if result == FALSE||result==-1 {
             let err_code = unsafe { (self.error_get_code)() };
             if err_code == 0 {
                 Ok(())
@@ -837,6 +842,7 @@ impl BassApi {
         if self.stream_handle != 0 && path.is_some() {
             self.create_stream(path.unwrap_or("".to_string()))?;
             self.set_pos(last_pos)?;
+            thread::sleep(Duration::from_millis(50)); // 等待流被完全释放
             self.resume()?
         }
         Ok(())
@@ -847,12 +853,14 @@ impl BassApi {
             (self.wasapi_free)();
         }
         let flags = if WASEXCLUSIVE.load(Ordering::SeqCst) {
-            BASS_WASAPI_EXCLUSIVE | BASS_WASAPI_AUTOFORMAT | BASS_WASAPI_EVENT
+            BASS_WASAPI_EXCLUSIVE | BASS_WASAPI_AUTOFORMAT | BASS_WASAPI_EVENT| BASS_WASAPI_BUFFER
         } else {
             0
         };
 
-        let result = unsafe {
+        let mut result=0;
+        for _ in 0..3 { // 重试三次
+          result = unsafe {
             (self.wasapi_init)(
                 -1,
                 0,
@@ -864,6 +872,13 @@ impl BassApi {
                 self.stream_handle as *mut c_void,
             )
         };
+            if result>0 { return Ok(()); }
+
+            let err_code = unsafe { (self.error_get_code)() };
+            if err_code!=BASS_ERROR_BUSY { break; }
+
+            thread::sleep(Duration::from_millis(50)); // 等待流被完全释放
+        }
         self.or_err_(result)
     }
 }
