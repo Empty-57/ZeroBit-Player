@@ -252,17 +252,14 @@ class _PlayBarState extends State<PlayBar> {
       child: Row(
         spacing: 8,
         children: [
-          Obx(() {
-            final src =
-                _audioController.currentMetadata.value.src ?? kTransparentImage;
-            return Hero(
+          Obx(() =>Hero(
               tag: 'playingCover',
               child: ClipRRect(
                 borderRadius: _coverBorderRadius,
                 child: FadeInImage(
                   placeholder: MemoryImage(kTransparentImage),
                   image: ResizeImage(
-                    MemoryImage(src),
+                    MemoryImage( _audioController.currentSmallCover.value),
                     width: _coverRenderSize,
                     height: _coverRenderSize,
                   ),
@@ -272,8 +269,7 @@ class _PlayBarState extends State<PlayBar> {
                   fadeInDuration: const Duration(milliseconds: 200),
                 ),
               ),
-            );
-          }),
+            )),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

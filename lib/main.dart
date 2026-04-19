@@ -40,6 +40,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'HIveCtrl/adapters/setting_cache_adapter.dart';
 import 'HIveCtrl/models/music_cache_model.dart';
 import 'components/get_snack_bar.dart';
+import 'components/spring_list_view.dart';
 import 'desktop_lyrics_sever.dart';
 import 'field/app_routes.dart';
 
@@ -169,6 +170,7 @@ void main() async {
   Get.put(SettingController());
   Get.put(MusicCacheController());
   Get.put(AudioController());
+  Get.put(SpringController());
   Get.put(LyricController());
   Get.put(ThemeService());
   Get.put(DesktopLyricsSever());

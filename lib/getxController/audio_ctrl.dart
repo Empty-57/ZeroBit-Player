@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
@@ -20,6 +19,7 @@ import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import '../API/apis.dart';
 import '../HIveCtrl/hive_manager.dart';
 import '../HIveCtrl/models/music_cache_model.dart';
+import '../components/spring_list_view.dart';
 import '../field/audio_source.dart';
 import '../field/tag_suffix.dart';
 import 'album_list_crl.dart';
@@ -70,6 +70,7 @@ class AudioController extends GetxController {
   List get allUserKey => _userPlayListCacheBox.getKeyAll();
 
   final currentCover = kTransparentImage.obs;
+  final currentSmallCover = kTransparentImage.obs;
 
   final currentSpeed = (1.0).obs;
 
@@ -88,6 +89,8 @@ class AudioController extends GetxController {
   final navigationIsExtend = true.obs;
 
   final coverPalette=<Color>[Colors.red,Colors.yellow,Colors.blue,Colors.green].obs;
+
+  SpringController get _springConntroller =>Get.find<SpringController>();
 
   /// 同步 `playListCacheItems`
   void syncPlayListCacheItems() {
@@ -192,6 +195,8 @@ class AudioController extends GetxController {
       currentLyrics.value = await getParsedLyric(
         filePath: currentMetadata.value.path,
       );
+
+       _springConntroller.clearState();
     });
 
     try {
@@ -273,14 +278,11 @@ class AudioController extends GetxController {
       }
     }
 
+    currentSmallCover.value=currentMetadata.value.src??kTransparentImage;
     if (currentMetadata.value.src == null ||
         currentMetadata.value.src!.isEmpty) {
-      currentMetadata.value.src =
-          await getCover(path: currentPath.value, sizeFlag: 0) ??
-          playListCacheItems
-              .firstWhere((v) => v.path == currentPath.value,orElse: ()=>currentMetadata.value)
-              .src ??
-          kTransparentImage;
+      currentSmallCover.value =
+          await getCover(path: currentPath.value, sizeFlag: 0) ?? kTransparentImage;
     }
 
     await windowManager.setTitle(title + artist);
@@ -295,7 +297,6 @@ class AudioController extends GetxController {
       await smtcClear();
       await initSmtc();
     }
-    debugPrint("currentIndex:set");
     _isSyncing = false;
   }
 

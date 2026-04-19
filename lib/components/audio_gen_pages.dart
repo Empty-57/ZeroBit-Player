@@ -74,33 +74,6 @@ List<Widget> _genMenuItems({
   required List<Widget> playList,
   bool renderMaybeDel = false,
 }) {
-  final List<Widget> maybeDel = renderMaybeDel
-      ? [
-          Divider(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-            height: 0.5,
-            thickness: 0.5,
-          ),
-          CustomBtn(
-            fn: () async {
-              menuController.close();
-              await _audioController.audioRemove(
-                userKey: userKey,
-                metadata: metadata,
-              );
-            },
-            btnHeight: _menuHeight,
-            btnWidth: _menuWidth,
-            radius: _menuRadius,
-            icon: PhosphorIconsLight.trash,
-            label: "删除",
-            mainAxisAlignment: MainAxisAlignment.start,
-            backgroundColor: Colors.transparent,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-          ),
-        ]
-      : [];
-
   return <Widget>[
     CustomBtn(
       fn: () {
@@ -143,7 +116,9 @@ List<Widget> _genMenuItems({
     ),
     SubmenuButton(
       style: ButtonStyle(
-        padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 16)),
+        padding: WidgetStateProperty.all(
+          const EdgeInsets.symmetric(horizontal: 16),
+        ),
       ),
       menuStyle: const MenuStyle(alignment: Alignment.topRight),
       menuChildren: playList,
@@ -164,7 +139,31 @@ List<Widget> _genMenuItems({
       backgroundColor: Colors.transparent,
       padding: const EdgeInsets.symmetric(horizontal: 16),
     ),
-  ] + maybeDel;
+    if (renderMaybeDel) ...[
+      Divider(
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+        height: 0.5,
+        thickness: 0.5,
+      ),
+      CustomBtn(
+        fn: () async {
+          menuController.close();
+          await _audioController.audioRemove(
+            userKey: userKey,
+            metadata: metadata,
+          );
+        },
+        btnHeight: _menuHeight,
+        btnWidth: _menuWidth,
+        radius: _menuRadius,
+        icon: PhosphorIconsLight.trash,
+        label: "删除",
+        mainAxisAlignment: MainAxisAlignment.start,
+        backgroundColor: Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+      ),
+    ],
+  ];
 }
 
 List<Widget> Function(MusicCache metadata) _playListBuilder = (metadata) {
@@ -232,9 +231,12 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       );
       return;
     }
-    final metadataToPlay = _settingController.playMode.value == 2
-        ? widget.controller.items[Random().nextInt(widget.controller.items.length)]
-        : widget.controller.items[0];
+    final metadataToPlay =
+        _settingController.playMode.value == 2
+            ? widget.controller.items[Random().nextInt(
+              widget.controller.items.length,
+            )]
+            : widget.controller.items[0];
     _audioController.audioPlay(metadata: metadataToPlay);
   }
 
@@ -251,10 +253,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 16,
-        children: [
-          _buildHeader(),
-          Expanded(child: _buildMusicList()),
-        ],
+        children: [_buildHeader(), Expanded(child: _buildMusicList())],
       ),
     );
   }
@@ -265,7 +264,9 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       crossAxisAlignment: CrossAxisAlignment.end,
       spacing: 16,
       children: <Widget>[
-        if (widget.operateArea != OperateArea.allMusic&&widget.operateArea != OperateArea.foldersList) _buildHeaderCover(),
+        if (widget.operateArea != OperateArea.allMusic &&
+            widget.operateArea != OperateArea.foldersList)
+          _buildHeaderCover(),
         Expanded(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -274,15 +275,21 @@ class _AudioGenPagesState extends State<AudioGenPages> {
             children: [
               Text(
                 widget.title,
-                style: generalTextStyle(ctx: context, size: 'title', weight: FontWeight.w600),
+                style: generalTextStyle(
+                  ctx: context,
+                  size: 'title',
+                  weight: FontWeight.w600,
+                ),
                 softWrap: false,
                 overflow: TextOverflow.fade,
                 maxLines: 1,
               ),
-              Obx(() => Text(
-                '共${widget.controller.items.length}首音乐',
-                style: generalTextStyle(ctx: context, size: 'md'),
-              )),
+              Obx(
+                () => Text(
+                  '共${widget.controller.items.length}首音乐',
+                  style: generalTextStyle(ctx: context, size: 'md'),
+                ),
+              ),
               _buildActionButtons(),
             ],
           ),
@@ -298,8 +305,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         return AnimatedSwitcher(
           duration: Duration(milliseconds: 300),
           transitionBuilder:
-              (child, anim) =>
-                  FadeTransition(opacity: anim, child: child),
+              (child, anim) => FadeTransition(opacity: anim, child: child),
           child: Image.memory(
             widget.controller.headCover.value,
             key: ValueKey(widget.controller.headCover.value.hashCode),
@@ -330,11 +336,18 @@ class _AudioGenPagesState extends State<AudioGenPages> {
           contentColor: Theme.of(context).colorScheme.onPrimary,
           overlayColor: Theme.of(context).colorScheme.surfaceContainer,
         ),
-        Obx(() => AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
-          child: _isMulSelect.value ? _buildMultiSelectActions() : _buildNormalActions(),
-        )),
+        Obx(
+          () => AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            transitionBuilder:
+                (child, animation) =>
+                    FadeTransition(opacity: animation, child: child),
+            child:
+                _isMulSelect.value
+                    ? _buildMultiSelectActions()
+                    : _buildNormalActions(),
+          ),
+        ),
       ],
     );
   }
@@ -345,28 +358,43 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       spacing: 8,
       children: [
         _buildSortButton(),
-        Obx(() => CustomBtn(
-          fn: () {
-            _settingController.isReverse.value = !_settingController.isReverse.value;
-            _settingController.putCache();
-            widget.controller.itemReverse();
-            _audioController.syncCurrentIndex();
-          },
-          icon: _settingController.isReverse.value ? PhosphorIconsLight.arrowDown : PhosphorIconsLight.arrowUp,
-          btnHeight: btnHeight,
-          btnWidth: btnWidth,
-          tooltip: _settingController.isReverse.value ? '降序' : '升序',
-        )),
-        Obx(() => CustomBtn(
-          fn: () {
-            _settingController.viewModeMap[widget.operateArea] = !_settingController.viewModeMap[widget.operateArea]!;
-            _settingController.putCache();
-          },
-          icon: _settingController.viewModeMap[widget.operateArea]! ? PhosphorIconsLight.listDashes : PhosphorIconsLight.gridFour,
-          btnHeight: btnHeight,
-          btnWidth: btnWidth,
-          tooltip: _settingController.viewModeMap[widget.operateArea]! ? "列表视图" : "表格视图",
-        )),
+        Obx(
+          () => CustomBtn(
+            fn: () {
+              _settingController.isReverse.value =
+                  !_settingController.isReverse.value;
+              _settingController.putCache();
+              widget.controller.itemReverse();
+              _audioController.syncCurrentIndex();
+            },
+            icon:
+                _settingController.isReverse.value
+                    ? PhosphorIconsLight.arrowDown
+                    : PhosphorIconsLight.arrowUp,
+            btnHeight: btnHeight,
+            btnWidth: btnWidth,
+            tooltip: _settingController.isReverse.value ? '降序' : '升序',
+          ),
+        ),
+        Obx(
+          () => CustomBtn(
+            fn: () {
+              _settingController.viewModeMap[widget.operateArea] =
+                  !_settingController.viewModeMap[widget.operateArea]!;
+              _settingController.putCache();
+            },
+            icon:
+                _settingController.viewModeMap[widget.operateArea]!
+                    ? PhosphorIconsLight.listDashes
+                    : PhosphorIconsLight.gridFour,
+            btnHeight: btnHeight,
+            btnWidth: btnWidth,
+            tooltip:
+                _settingController.viewModeMap[widget.operateArea]!
+                    ? "列表视图"
+                    : "表格视图",
+          ),
+        ),
         _buildMultiSelectToggleButton(),
       ],
     );
@@ -380,7 +408,10 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         if (widget.operateArea == OperateArea.playList)
           CustomBtn(
             fn: () {
-              _audioController.audioRemoveAll(userKey: widget.audioSource, removeList: [..._selectedList]);
+              _audioController.audioRemoveAll(
+                userKey: widget.audioSource,
+                removeList: [..._selectedList],
+              );
               _selectedList.clear();
             },
             icon: PhosphorIconsLight.trash,
@@ -390,19 +421,24 @@ class _AudioGenPagesState extends State<AudioGenPages> {
             tooltip: "删除所选项",
           ),
         _buildAddToPlaylistMenuButton(),
-        Obx(() => CustomBtn(
-          fn: () {
-            if (_selectedList.isNotEmpty) {
-              _selectedList.clear();
-            } else {
-              _selectedList.value = [...widget.controller.items];
-            }
-          },
-          icon: _selectedList.isNotEmpty ? PhosphorIconsLight.selectionSlash : PhosphorIconsLight.selectionAll,
-          btnHeight: btnHeight,
-          btnWidth: btnWidth,
-          tooltip: _selectedList.isNotEmpty ? '清空选择' : '全选',
-        )),
+        Obx(
+          () => CustomBtn(
+            fn: () {
+              if (_selectedList.isNotEmpty) {
+                _selectedList.clear();
+              } else {
+                _selectedList.assignAll(widget.controller.items);
+              }
+            },
+            icon:
+                _selectedList.isNotEmpty
+                    ? PhosphorIconsLight.selectionSlash
+                    : PhosphorIconsLight.selectionAll,
+            btnHeight: btnHeight,
+            btnWidth: btnWidth,
+            tooltip: _selectedList.isNotEmpty ? '清空选择' : '全选',
+          ),
+        ),
         _buildMultiSelectToggleButton(),
       ],
     );
@@ -414,7 +450,10 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         _selectedList.clear();
         _isMulSelect.value = !_isMulSelect.value;
       },
-      icon: _isMulSelect.value ? PhosphorIconsLight.xSquare : PhosphorIconsLight.selection,
+      icon:
+          _isMulSelect.value
+              ? PhosphorIconsLight.xSquare
+              : PhosphorIconsLight.selection,
       btnHeight: btnHeight,
       btnWidth: btnWidth,
       tooltip: _isMulSelect.value ? '退出多选' : '多选模式',
@@ -440,7 +479,11 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         widget.controller.itemReSort(type: entry.key);
         _audioController.syncCurrentIndex();
       },
-      label: SettingController.sortType[_settingController.sortMap[widget.operateArea] as int] ?? "未指定",
+      label:
+          SettingController.sortType[_settingController.sortMap[widget
+                  .operateArea]
+              as int] ??
+          "未指定",
       btnWidth: 148,
       btnHeight: btnHeight,
       itemWidth: 128,
@@ -454,19 +497,23 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   Widget _buildAddToPlaylistMenuButton() {
     return MenuAnchor(
       controller: _playListMenuController,
-      menuChildren: _audioController.allUserKey.map((v) {
-        return CustomBtn(
-          fn: () {
-            _playListMenuController.close();
-            _audioController.addAllToAudioList(selectedList: [..._selectedList], userKey: v);
-          },
-          btnWidth: 160,
-          btnHeight: btnHeight,
-          label: v.split(TagSuffix.playList)[0],
-          mainAxisAlignment: MainAxisAlignment.center,
-          backgroundColor: Colors.transparent,
-        );
-      }).toList(),
+      menuChildren:
+          _audioController.allUserKey.map((v) {
+            return CustomBtn(
+              fn: () {
+                _playListMenuController.close();
+                _audioController.addAllToAudioList(
+                  selectedList: [..._selectedList],
+                  userKey: v,
+                );
+              },
+              btnWidth: 160,
+              btnHeight: btnHeight,
+              label: v.split(TagSuffix.playList)[0],
+              mainAxisAlignment: MainAxisAlignment.center,
+              backgroundColor: Colors.transparent,
+            );
+          }).toList(),
       child: CustomBtn(
         fn: () {
           if (_audioController.allUserKey.isEmpty) {
@@ -490,9 +537,17 @@ class _AudioGenPagesState extends State<AudioGenPages> {
 
   Widget _buildMusicList() {
     final titleStyle = generalTextStyle(ctx: context, size: 'md');
-    final highLightTitleStyle = generalTextStyle(ctx: context, size: 'md', color: Theme.of(context).colorScheme.primary);
+    final highLightTitleStyle = generalTextStyle(
+      ctx: context,
+      size: 'md',
+      color: Theme.of(context).colorScheme.primary,
+    );
     final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-    final highLightSubStyle = generalTextStyle(ctx: context, size: 'sm', color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8));
+    final highLightSubStyle = generalTextStyle(
+      ctx: context,
+      size: 'sm',
+      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+    );
 
     return RawMenuAnchor(
       controller: _musicMenuCtrl.menuController,
@@ -500,7 +555,8 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       overlayBuilder: (context, info) {
         final currentMetadata = _musicMenuCtrl.currentMetadata.value;
         final position = _musicMenuCtrl.menuPosition.value;
-        if (currentMetadata == null || position == null) return const SizedBox.shrink();
+        if (currentMetadata == null || position == null)
+          return const SizedBox.shrink();
 
         double left = position.dx + 16;
         double top = position.dy;
@@ -516,12 +572,22 @@ class _AudioGenPagesState extends State<AudioGenPages> {
           top: top,
           left: left,
           child: TapRegion(
-            onTapOutside: (_) => Future.delayed(const Duration(milliseconds: 100), _musicMenuCtrl.closeMenu),
+            onTapOutside:
+                (_) => Future.delayed(
+                  const Duration(milliseconds: 100),
+                  _musicMenuCtrl.closeMenu,
+                ),
             child: Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainer,
                 borderRadius: _borderRadius,
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), offset: const Offset(0, 2), blurRadius: 4)],
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    offset: const Offset(0, 2),
+                    blurRadius: 4,
+                  ),
+                ],
               ),
               width: _menuWidth,
               child: Column(
@@ -542,34 +608,54 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       },
       child: Stack(
         children: [
-          Obx(() => Offstage(
-            offstage: !_settingController.viewModeMap[widget.operateArea]!,
-            child: ListView.builder(
-              controller: _scrollControllerList,
-              itemCount: widget.controller.items.length,
-              itemExtent: _itemHeight,
-              cacheExtent: _itemHeight * 1,
-              padding: const EdgeInsets.only(bottom: _itemHeight * 2),
-              itemBuilder: (context, index) => _buildMusicTile(context, index, titleStyle, highLightTitleStyle, subStyle, highLightSubStyle),
-            ),
-          )),
-          Obx(() => Offstage(
-            offstage: _settingController.viewModeMap[widget.operateArea]!,
-            child: GridView.builder(
-              controller: _scrollControllerGrid,
-              itemCount: widget.controller.items.length,
-              cacheExtent: _itemHeight * 1,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: context.width < resViewThresholds ? 3 : 4,
-                mainAxisSpacing: 4.0,
-                crossAxisSpacing: 8.0,
-                childAspectRatio: 1.0,
-                mainAxisExtent: _itemHeight,
+          Obx(
+            () => Offstage(
+              offstage: !_settingController.viewModeMap[widget.operateArea]!,
+              child: ListView.builder(
+                controller: _scrollControllerList,
+                itemCount: widget.controller.items.length,
+                itemExtent: _itemHeight,
+                cacheExtent: _itemHeight * 2,
+                padding: const EdgeInsets.only(bottom: _itemHeight * 2),
+                itemBuilder:
+                    (context, index) => _buildMusicTile(
+                      context,
+                      index,
+                      titleStyle,
+                      highLightTitleStyle,
+                      subStyle,
+                      highLightSubStyle,
+                    ),
               ),
-              padding: const EdgeInsets.only(bottom: _itemHeight * 2),
-              itemBuilder: (context, index) => _buildMusicTile(context, index, titleStyle, highLightTitleStyle, subStyle, highLightSubStyle),
             ),
-          )),
+          ),
+          Obx(
+            () => Offstage(
+              offstage: _settingController.viewModeMap[widget.operateArea]!,
+              child: GridView.builder(
+                controller: _scrollControllerGrid,
+                itemCount: widget.controller.items.length,
+                cacheExtent: _itemHeight * 2,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: context.width < resViewThresholds ? 3 : 4,
+                  mainAxisSpacing: 4.0,
+                  crossAxisSpacing: 8.0,
+                  childAspectRatio: 1.0,
+                  mainAxisExtent: _itemHeight,
+                ),
+                padding: const EdgeInsets.only(bottom: _itemHeight * 2),
+                itemBuilder:
+                    (context, index) => _buildMusicTile(
+                      context,
+                      index,
+                      titleStyle,
+                      highLightTitleStyle,
+                      subStyle,
+                      highLightSubStyle,
+                    ),
+              ),
+            ),
+          ),
           FloatingButton(
             scrollControllerList: _scrollControllerList,
             scrollControllerGrid: _scrollControllerGrid,
@@ -591,7 +677,8 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     final metadata = widget.controller.items[index];
     return GestureDetector(
       onSecondaryTapDown: (e) {
-        RenderBox overlayBox = Overlay.of(context).context.findRenderObject() as RenderBox;
+        RenderBox overlayBox =
+            Overlay.of(context).context.findRenderObject() as RenderBox;
         Offset overlayOffset = overlayBox.globalToLocal(e.globalPosition);
         _musicMenuCtrl.openMenu(
           overlayOffset: overlayOffset,
