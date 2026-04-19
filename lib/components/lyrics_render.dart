@@ -607,19 +607,22 @@ class _StaggeredLyricItem extends StatelessWidget {
             return AnimatedSwitcher(
               duration: const Duration(milliseconds: 500),
               transitionBuilder: (Widget child, Animation<double> animation) {
-                final sizeAnimation = CurvedAnimation( //尺寸曲线
+                final sizeAnimation = CurvedAnimation(
+                  //尺寸曲线
                   parent: animation,
                   curve: Curves.easeOutCubic,
                   reverseCurve: Curves.easeInCubic,
                 );
 
-                final scaleAnimation = CurvedAnimation( //回弹曲线
+                final scaleAnimation = CurvedAnimation(
+                  //回弹曲线
                   parent: animation,
                   curve: Curves.easeOutBack,
                   reverseCurve: Curves.easeInBack,
                 );
 
-                final fadeAnimation = CurvedAnimation( // 透明度曲线
+                final fadeAnimation = CurvedAnimation(
+                  // 透明度曲线
                   parent: animation,
                   curve: Curves.easeOut,
                   reverseCurve: Curves.easeIn,
@@ -639,35 +642,44 @@ class _StaggeredLyricItem extends StatelessWidget {
                   ),
                 );
               },
-              child: (isCurrent && show)
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: _lrcMainAlignment[lrcAlignment],
-                      children: [
-                        _HighlightedWord(
-                          text: "  ● ● ●  ",
-                          progress: lyricController.interludeProcess.value / 100,
-                          style: interludeLyricStyle,
-                          strutStyle: strutStyle,
-                          scale: 2,
-                          gradientColors: [
-                            interludeLyricStyle.color!.withValues(alpha: _highLightAlpha),
-                            interludeLyricStyle.color!.withValues(alpha: _highLightAlpha),
-                            interludeLyricStyle.color!,
-                          ],
-                        )
-                        .animate(
-                          onPlay: (controller) => controller.repeat(reverse: true),
-                        )
-                        .scaleXY(
-                          end: _lrcScale,
-                          duration: 1500.ms,
-                          curve: Curves.easeInOut,
-                          alignment: _lrcScaleAlignment[lrcAlignment],
-                        ),
-                      ],
-                    )
-                  : const SizedBox.shrink(),
+              child:
+                  (isCurrent && show)
+                      ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: _lrcMainAlignment[lrcAlignment],
+                        children: [
+                          _HighlightedWord(
+                                text: "  ● ● ●  ",
+                                progress:
+                                    lyricController.interludeProcess.value /
+                                    100,
+                                style: interludeLyricStyle,
+                                strutStyle: strutStyle,
+                                scale: 2,
+                                gradientColors: [
+                                  interludeLyricStyle.color!.withValues(
+                                    alpha: _highLightAlpha,
+                                  ),
+                                  interludeLyricStyle.color!.withValues(
+                                    alpha: _highLightAlpha,
+                                  ),
+                                  interludeLyricStyle.color!,
+                                ],
+                              )
+                              .animate(
+                                onPlay:
+                                    (controller) =>
+                                        controller.repeat(reverse: true),
+                              )
+                              .scaleXY(
+                                end: _lrcScale,
+                                duration: 1500.ms,
+                                curve: Curves.easeInOut,
+                                alignment: _lrcScaleAlignment[lrcAlignment],
+                              ),
+                        ],
+                      )
+                      : const SizedBox.shrink(),
             );
           }),
         ],
