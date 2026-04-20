@@ -690,11 +690,21 @@ class _StaggeredLyricItem extends StatelessWidget {
                                     (controller) =>
                                         controller.repeat(reverse: true),
                               )
-                              .scaleXY(
-                                end: _lrcScale,
+                              .custom(
+                                // 使用customEffect,并向Transform.scale添加filterQuality参数防止字体缩放抖动(像素对齐冲突)
                                 duration: 1500.ms,
                                 curve: Curves.easeInOut,
-                                alignment: _lrcScaleAlignment[lrcAlignment],
+                                builder:
+                                    (context, value, child) => Transform.scale(
+                                      alignment:
+                                          _lrcScaleAlignment[lrcAlignment],
+                                      scale:
+                                          ui.lerpDouble(1.0, _lrcScale, value)!,
+                                      filterQuality:
+                                          FilterQuality
+                                              .low, // 使用 FilterQuality.low 质量就已足够
+                                      child: child,
+                                    ),
                               ),
                         ],
                       )
