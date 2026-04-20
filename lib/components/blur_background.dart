@@ -55,7 +55,7 @@ class BlurWithCoverBackground extends StatelessWidget {
           child: Container(color: Theme.of(context).colorScheme.surface),
         ),
 
-        Obx(() =>_settingController.useMesh.value && meshEnable
+        RepaintBoundary(child: Obx(() =>_settingController.useMesh.value && meshEnable
               ? LyricsMesh()
               : Opacity(
                 opacity:
@@ -90,7 +90,7 @@ class BlurWithCoverBackground extends StatelessWidget {
                             : _cover,
                   ),
                 ),
-              )),
+              )),),
 
         if (useMask)
           ClipRRect(
@@ -101,7 +101,9 @@ class BlurWithCoverBackground extends StatelessWidget {
               ),
             ),
           ),
-        child,
+        RepaintBoundary(
+          child: child,
+        ) ,
       ],
     );
   }

@@ -194,14 +194,16 @@ class _KaraOkLyricWidget extends StatelessWidget {
                   ];
 
                   // 正在唱的单词
-                  return Obx(
-                    () => _HighlightedWord(
-                      text: word,
-                      progress: lyricController.wordProgress.value / 100.0,
-                      style: style,
-                      strutStyle: strutStyle,
-                      scale: scale,
-                      gradientColors: gradientColors,
+                  return RepaintBoundary(
+                    child: Obx(
+                      () => _HighlightedWord(
+                        text: word,
+                        progress: lyricController.wordProgress.value / 100.0,
+                        style: style,
+                        strutStyle: strutStyle,
+                        scale: scale,
+                        gradientColors: gradientColors,
+                      ),
                     ),
                   );
                 } else if (wordIndex < currWordIndex) {
@@ -667,45 +669,57 @@ class _StaggeredLyricItem extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         mainAxisAlignment: _lrcMainAlignment[lrcAlignment],
                         children: [
-                          Obx(()=>_HighlightedWord(
-                                text: "  ● ● ●  ",
-                                progress:
-                                    lyricController.interludeProcess.value /
-                                    100,
-                                style: interludeLyricStyle,
-                                strutStyle: strutStyle,
-                                scale: 2,
-                                gradientColors: [
-                                  interludeLyricStyle.color!.withValues(
-                                    alpha: _highLightAlpha,
+                          RepaintBoundary(
+                            child: Obx(
+                                  () => _HighlightedWord(
+                                    text: "  ● ● ●  ",
+                                    progress:
+                                        lyricController.interludeProcess.value /
+                                        100,
+                                    style: interludeLyricStyle,
+                                    strutStyle: strutStyle,
+                                    scale: 2,
+                                    gradientColors: [
+                                      interludeLyricStyle.color!.withValues(
+                                        alpha: _highLightAlpha,
+                                      ),
+                                      interludeLyricStyle.color!.withValues(
+                                        alpha: _highLightAlpha,
+                                      ),
+                                      interludeLyricStyle.color!,
+                                    ],
                                   ),
-                                  interludeLyricStyle.color!.withValues(
-                                    alpha: _highLightAlpha,
-                                  ),
-                                  interludeLyricStyle.color!,
-                                ],
-                              ))
-                              .animate(
-                                onPlay:
-                                    (controller) =>
-                                        controller.repeat(reverse: true),
-                              )
-                              .custom(
-                                // 使用customEffect,并向Transform.scale添加filterQuality参数防止字体缩放抖动(像素对齐冲突)
-                                duration: 1500.ms,
-                                curve: Curves.easeInOut,
-                                builder:
-                                    (context, value, child) => Transform.scale(
-                                      alignment:
-                                          _lrcScaleAlignment[lrcAlignment],
-                                      scale:
-                                          ui.lerpDouble(1.0, _lrcScale, value)!,
-                                      filterQuality:
-                                          FilterQuality
-                                              .low, // 使用 FilterQuality.low 质量就已足够
-                                      child: child,
-                                    ),
-                              ),
+                                )
+                                .animate(
+                                  onPlay:
+                                      (controller) =>
+                                          controller.repeat(reverse: true),
+                                )
+                                .custom(
+                                  // 使用customEffect,并向Transform.scale添加filterQuality参数防止字体缩放抖动(像素对齐冲突)
+                                  duration: 1500.ms,
+                                  curve: Curves.easeInOut,
+                                  builder:
+                                      (
+                                        context,
+                                        value,
+                                        child,
+                                      ) => Transform.scale(
+                                        alignment:
+                                            _lrcScaleAlignment[lrcAlignment],
+                                        scale:
+                                            ui.lerpDouble(
+                                              1.0,
+                                              _lrcScale,
+                                              value,
+                                            )!,
+                                        filterQuality:
+                                            FilterQuality
+                                                .low, // 使用 FilterQuality.low 质量就已足够
+                                        child: child,
+                                      ),
+                                ),
+                          ),
                         ],
                       )
                       : const SizedBox.shrink(),
@@ -725,9 +739,8 @@ class _StaggeredLyricItem extends StatelessWidget {
                 .toDouble();
       }
 
-      final Widget lyricLine = FractionallySizedBox(
-        widthFactor: 1,
-        child: content,
+      final Widget lyricLine = RepaintBoundary(
+        child: FractionallySizedBox(widthFactor: 1, child: content),
       );
 
       return TextButton(

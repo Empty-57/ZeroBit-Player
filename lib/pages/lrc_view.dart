@@ -118,10 +118,12 @@ class _LrcSearchController extends GetxController {
         limit: 5,
       );
 
-      currentNetLrc.removeWhere((v)=>(v == null ||
-        v.lyric == null ||
-        (v.lyric!.lrc == null && v.lyric!.verbatimLrc == null)));
-
+      currentNetLrc.removeWhere(
+        (v) =>
+            (v == null ||
+                v.lyric == null ||
+                (v.lyric!.lrc == null && v.lyric!.verbatimLrc == null)),
+      );
     } finally {
       isLoading.value = false;
     }
@@ -585,26 +587,28 @@ class LrcView extends StatelessWidget {
   }
 
   Widget _buildLyricsSide(BuildContext ctx) {
-    return ShaderMask(
-      shaderCallback: (rect) {
-        return const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.transparent,
-            Colors.black,
-            Colors.black,
-            Colors.transparent,
-          ],
-          stops: [0.0, 0.2, 0.8, 1.0],
-        ).createShader(rect);
-      },
-      blendMode: BlendMode.dstIn,
-      child: SizedBox(
-        width: ctx.width / 2,
-        child: const Padding(
-          padding: EdgeInsets.only(right: 16),
-          child: LyricsRender(),
+    return RepaintBoundary(
+      child: ShaderMask(
+        shaderCallback: (rect) {
+          return const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              Colors.black,
+              Colors.black,
+              Colors.transparent,
+            ],
+            stops: [0.0, 0.2, 0.8, 1.0],
+          ).createShader(rect);
+        },
+        blendMode: BlendMode.dstIn,
+        child: SizedBox(
+          width: ctx.width / 2,
+          child: const Padding(
+            padding: EdgeInsets.only(right: 16),
+            child: LyricsRender(),
+          ),
         ),
       ),
     );
@@ -645,38 +649,42 @@ class LrcView extends StatelessWidget {
       height: _audioCtrlBarHeight,
       child: Column(
         children: [
-          Material(
-            color: Colors.transparent,
-            child: SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                trackShape: _GradientSliderTrackShape(
-                  activeTrackHeight: 2,
-                  inactiveTrackHeight: 1,
-                  activeColor: activeTrackCover,
+          RepaintBoundary(
+            child: Material(
+              color: Colors.transparent,
+              child: SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  trackShape: _GradientSliderTrackShape(
+                    activeTrackHeight: 2,
+                    inactiveTrackHeight: 1,
+                    activeColor: activeTrackCover,
+                  ),
+                  inactiveTrackColor: inactiveTrackCover,
+                  showValueIndicator: ShowValueIndicator.always,
+                  thumbShape: const RoundSliderThumbShape(
+                    enabledThumbRadius: _thumbRadius,
+                    elevation: 0,
+                    pressedElevation: 0,
+                  ),
+                  padding: EdgeInsets.zero,
+                  thumbColor: Colors.transparent,
+                  overlayColor: Colors.transparent,
+                  valueIndicatorShape: const RectangularValueIndicatorShape(
+                    width: 48,
+                    height: 28,
+                    radius: 4,
+                  ),
+                  valueIndicatorTextStyle: generalTextStyle(
+                    ctx: context,
+                    size: 'sm',
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                  mouseCursor: WidgetStateProperty.all(
+                    SystemMouseCursors.click,
+                  ),
                 ),
-                inactiveTrackColor: inactiveTrackCover,
-                showValueIndicator: ShowValueIndicator.always,
-                thumbShape: const RoundSliderThumbShape(
-                  enabledThumbRadius: _thumbRadius,
-                  elevation: 0,
-                  pressedElevation: 0,
-                ),
-                padding: EdgeInsets.zero,
-                thumbColor: Colors.transparent,
-                overlayColor: Colors.transparent,
-                valueIndicatorShape: const RectangularValueIndicatorShape(
-                  width: 48,
-                  height: 28,
-                  radius: 4,
-                ),
-                valueIndicatorTextStyle: generalTextStyle(
-                  ctx: context,
-                  size: 'sm',
-                  color: Theme.of(context).colorScheme.onPrimary,
-                ),
-                mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click),
+                child: audioCtrlWidget.seekSlide,
               ),
-              child: audioCtrlWidget.seekSlide,
             ),
           ),
           Expanded(
@@ -1093,15 +1101,20 @@ class LrcView extends StatelessWidget {
                               ),
                               duration: const Duration(milliseconds: 100),
                               builder: (_, value, _) {
-                                return CustomPaint(
-                                  willChange: true,
-                                  size: Size(context.width, _spectrogramHeight),
-                                  painter: SpectrogramPainter(
-                                    fft: value,
-                                    gradient: spectrogramBarGradient,
-                                    length: spectrogramBarLength,
-                                    barWidth: spectrogramBarWidth,
-                                    paddingWidth: spectrogramPaddingWidth,
+                                return RepaintBoundary(
+                                  child: CustomPaint(
+                                    willChange: true,
+                                    size: Size(
+                                      context.width,
+                                      _spectrogramHeight,
+                                    ),
+                                    painter: SpectrogramPainter(
+                                      fft: value,
+                                      gradient: spectrogramBarGradient,
+                                      length: spectrogramBarLength,
+                                      barWidth: spectrogramBarWidth,
+                                      paddingWidth: spectrogramPaddingWidth,
+                                    ),
                                   ),
                                 );
                               },

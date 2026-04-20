@@ -253,7 +253,10 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 16,
-        children: [_buildHeader(), Expanded(child: _buildMusicList())],
+        children: [
+          RepaintBoundary(child: _buildHeader()),
+          Expanded(child: _buildMusicList()),
+        ],
       ),
     );
   }
@@ -555,8 +558,9 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       overlayBuilder: (context, info) {
         final currentMetadata = _musicMenuCtrl.currentMetadata.value;
         final position = _musicMenuCtrl.menuPosition.value;
-        if (currentMetadata == null || position == null)
+        if (currentMetadata == null || position == null) {
           return const SizedBox.shrink();
+        }
 
         double left = position.dx + 16;
         double top = position.dy;
@@ -617,6 +621,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
                 itemExtent: _itemHeight,
                 cacheExtent: _itemHeight * 2,
                 padding: const EdgeInsets.only(bottom: _itemHeight * 2),
+                addRepaintBoundaries: false,
                 itemBuilder:
                     (context, index) => _buildMusicTile(
                       context,
@@ -644,6 +649,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
                   mainAxisExtent: _itemHeight,
                 ),
                 padding: const EdgeInsets.only(bottom: _itemHeight * 2),
+                addRepaintBoundaries: false,
                 itemBuilder:
                     (context, index) => _buildMusicTile(
                       context,
@@ -675,28 +681,30 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     TextStyle highLightSubStyle,
   ) {
     final metadata = widget.controller.items[index];
-    return GestureDetector(
-      onSecondaryTapDown: (e) {
-        RenderBox overlayBox =
-            Overlay.of(context).context.findRenderObject() as RenderBox;
-        Offset overlayOffset = overlayBox.globalToLocal(e.globalPosition);
-        _musicMenuCtrl.openMenu(
-          overlayOffset: overlayOffset,
+    return RepaintBoundary(
+      child: GestureDetector(
+        onSecondaryTapDown: (e) {
+          RenderBox overlayBox =
+              Overlay.of(context).context.findRenderObject() as RenderBox;
+          Offset overlayOffset = overlayBox.globalToLocal(e.globalPosition);
+          _musicMenuCtrl.openMenu(
+            overlayOffset: overlayOffset,
+            metadata: metadata,
+            index: index,
+          );
+        },
+        child: MusicTile(
+          key: ValueKey(metadata.path),
           metadata: metadata,
-          index: index,
-        );
-      },
-      child: MusicTile(
-        key: ValueKey(metadata.path),
-        metadata: metadata,
-        titleStyle: titleStyle,
-        highLightTitleStyle: highLightTitleStyle,
-        subStyle: subStyle,
-        highLightSubStyle: highLightSubStyle,
-        audioSource: widget.audioSource,
-        operateArea: widget.operateArea,
-        isMulSelect: _isMulSelect,
-        selectedList: _selectedList,
+          titleStyle: titleStyle,
+          highLightTitleStyle: highLightTitleStyle,
+          subStyle: subStyle,
+          highLightSubStyle: highLightSubStyle,
+          audioSource: widget.audioSource,
+          operateArea: widget.operateArea,
+          isMulSelect: _isMulSelect,
+          selectedList: _selectedList,
+        ),
       ),
     );
   }

@@ -152,29 +152,29 @@ void main() async {
   hiveSafeRegisterAdapter<ScalableSettingCache>(ScalableSettingAdapter());
 
   final musicBox = await openSafeBox<MusicCache>(HiveBoxes.musicCacheBox);
-  final keysToDelete =
-      musicBox.values
-          .map((v) => v.path)
-          .where((k) => !supportedExts.contains(p.extension(k).toLowerCase()))
-          .map((v) => md5.convert(utf8.encode(v)).toString())
-          .toList();
-  await musicBox.deleteAll(keysToDelete); //清除不是音频格式的路径，防止路径被污染
+  // final keysToDelete =
+  //     musicBox.values
+  //         .map((v) => v.path)
+  //         .where((k) => !supportedExts.contains(p.extension(k).toLowerCase()))
+  //         .map((v) => md5.convert(utf8.encode(v)).toString())
+  //         .toList();
+  // await musicBox.deleteAll(keysToDelete); //清除不是音频格式的路径，防止路径被污染
 
   await openSafeBox<SettingCache>(HiveBoxes.settingCacheBox);
   await openSafeBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
   await openSafeBox<ScalableSettingCache>(HiveBoxes.scalableSettingCacheBox);
 
-  Get.put(AudioSource());
-  Get.put(UserPlayListController());
-  Get.put(OperateArea());
-  Get.put(SettingController());
-  Get.put(MusicCacheController());
-  Get.put(AudioController());
-  Get.put(SpringController());
-  Get.put(LyricController());
-  Get.put(ThemeService());
-  Get.put(DesktopLyricsSever());
-  Get.put(DesktopLyricsSettingController());
+  Get.lazyPut(()=>AudioSource());
+  Get.lazyPut(()=>UserPlayListController());
+  Get.lazyPut(()=>OperateArea());
+  Get.lazyPut(()=>SettingController());
+  Get.lazyPut(()=>MusicCacheController());
+  Get.lazyPut(()=>AudioController());
+  Get.lazyPut(()=>SpringController());
+  Get.lazyPut(()=>LyricController());
+  Get.lazyPut(()=>ThemeService());
+  Get.lazyPut(()=>DesktopLyricsSever());
+  Get.lazyPut(()=>DesktopLyricsSettingController());
 
   await syncCache();
 
@@ -237,6 +237,19 @@ void main() async {
 
 
   runApp(const MainFrame());
+
+WidgetsBinding.instance.addPostFrameCallback((_) async {
+  // 异步进行缓存清理，不阻塞启动
+  Future.delayed(const Duration(milliseconds: 300), () async {
+  final keysToDelete =
+      musicBox.values
+          .map((v) => v.path)
+          .where((k) => !supportedExts.contains(p.extension(k).toLowerCase()))
+          .map((v) => md5.convert(utf8.encode(v)).toString())
+          .toList();
+  await musicBox.deleteAll(keysToDelete); //清除不是音频格式的路径，防止路径被污染
+  });
+});
 
   await _audioEventSub?.cancel();
   await _progressSub?.cancel();

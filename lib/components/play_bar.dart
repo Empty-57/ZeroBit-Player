@@ -115,12 +115,12 @@ class _PlayBarState extends State<PlayBar> {
       right: rightOffset,
       child: ClipRRect(
         borderRadius: _coverBorderRadius,
-        child: Column(
+        child: RepaintBoundary(child: Column(
           children: [
             _buildSlider(context, audioCtrlWidget),
             _buildPlayBarBody(context, audioCtrlWidget),
           ],
-        ),
+        ),),
       ),
     );
     });

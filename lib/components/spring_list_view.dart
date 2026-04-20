@@ -164,7 +164,7 @@ class _SpringItemState extends State<_SpringItem>
     int relativeIndex =
         (widget.index - controller.currentIndex.value).abs(); //计算相对索引
 
-    // 再屏幕外的元素不执行动画
+    // 在屏幕外的元素不执行动画
     if (relativeIndex > 10) {
       setState(() {
         _currentDeltaY = 0.0;
@@ -201,7 +201,7 @@ class _SpringItemState extends State<_SpringItem>
 
   @override
   Widget build(BuildContext context) {
-    return Container(key: widget.boxKey, child: widget.child)
+    return Container(key: widget.boxKey, child: RepaintBoundary(child: widget.child,))
         .animate(controller: _animController, autoPlay: false)
         .moveY(
           begin: _currentDeltaY,
