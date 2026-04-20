@@ -667,7 +667,7 @@ class _StaggeredLyricItem extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         mainAxisAlignment: _lrcMainAlignment[lrcAlignment],
                         children: [
-                          _HighlightedWord(
+                          Obx(()=>_HighlightedWord(
                                 text: "  ● ● ●  ",
                                 progress:
                                     lyricController.interludeProcess.value /
@@ -684,7 +684,7 @@ class _StaggeredLyricItem extends StatelessWidget {
                                   ),
                                   interludeLyricStyle.color!,
                                 ],
-                              )
+                              ))
                               .animate(
                                 onPlay:
                                     (controller) =>
