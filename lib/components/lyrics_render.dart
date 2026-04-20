@@ -18,7 +18,10 @@ import 'audio_ctrl_btn.dart';
 
 const double _audioCtrlBarHeight = 96;
 const double _controllerBarHeight = 48;
-const double _highLightAlpha = 0.85;
+const double _highLightAlpha = 0.9;
+const double _currentAlpha = 0.4;
+const double _notPlayedLightAlpha = 0.25;
+const double _notPlayedDarkAlpha = 0.15;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 const double _ctrlBtnMinSize = 40.0;
 
@@ -109,23 +112,23 @@ class _LrcLyricWidget extends StatelessWidget {
   final String text;
   final TextStyle style;
   final bool isCurrent;
-  final int lrcAlignmentIndex;
   final TextAlign textAlign;
+  final double highLightAlpha;
   const _LrcLyricWidget({
     required this.text,
     required this.style,
     required this.isCurrent,
-    required this.lrcAlignmentIndex,
     required this.textAlign,
+    this.highLightAlpha = _highLightAlpha,
   });
   @override
   Widget build(BuildContext context) {
     return AnimatedDefaultTextStyle(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 600),
       style: style.copyWith(
         color:
             isCurrent
-                ? style.color?.withValues(alpha: _highLightAlpha)
+                ? style.color?.withValues(alpha: highLightAlpha)
                 : style.color,
       ),
       child: Text(text, textAlign: textAlign, softWrap: true),
@@ -141,7 +144,6 @@ class _KaraOkLyricWidget extends StatelessWidget {
   final int lrcAlignmentIndex;
   final LyricController lyricController;
   final StrutStyle strutStyle;
-  final bool cancelScale;
 
   const _KaraOkLyricWidget({
     required this.text,
@@ -151,7 +153,6 @@ class _KaraOkLyricWidget extends StatelessWidget {
     required this.lrcAlignmentIndex,
     required this.lyricController,
     required this.strutStyle,
-    required this.cancelScale,
   });
 
   Widget _createTextWarp({Color? color}) {
@@ -189,9 +190,10 @@ class _KaraOkLyricWidget extends StatelessWidget {
                   final List<Color> gradientColors = [
                     style.color!.withValues(alpha: _highLightAlpha),
                     style.color!.withValues(alpha: _highLightAlpha),
-                    style.color!,
+                    style.color!.withValues(alpha: _currentAlpha),
                   ];
 
+                  // 正在唱的单词
                   return Obx(
                     () => _HighlightedWord(
                       text: word,
@@ -203,6 +205,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
                     ),
                   );
                 } else if (wordIndex < currWordIndex) {
+                  // 已经唱完的单词
                   return Text(
                     word,
                     style: style.copyWith(
@@ -211,7 +214,21 @@ class _KaraOkLyricWidget extends StatelessWidget {
                     strutStyle: strutStyle,
                   );
                 } else {
-                  return Text(word, style: style, strutStyle: strutStyle);
+                  // 还没唱到的单词
+                  return TweenAnimationBuilder<Color?>(
+                    tween: ColorTween(
+                      begin: style.color,
+                      end: style.color?.withValues(alpha: _currentAlpha),
+                    ),
+                    duration: const Duration(milliseconds: 600),
+                    builder: (_, color, __) {
+                      return Text(
+                        word,
+                        style: style.copyWith(color: color),
+                        strutStyle: strutStyle,
+                      );
+                    },
+                  );
                 }
               }).toList(),
         );
@@ -254,7 +271,6 @@ class _LyricsRenderState extends State<LyricsRender> {
   final AudioController _audioController = Get.find<AudioController>();
   final SettingController _settingController = Get.find<SettingController>();
   final LyricController _lyricController = Get.find<LyricController>();
-  final SpringController _springConntroller = Get.find<SpringController>();
   final _isHover = false.obs;
 
   @override
@@ -279,7 +295,10 @@ class _LyricsRenderState extends State<LyricsRender> {
       ctx: context,
       size: _settingController.lrcFontSize.value,
       color: Theme.of(context).colorScheme.onSecondaryContainer.withValues(
-        alpha: _settingController.themeMode.value == 'dark' ? 0.2 : 0.3,
+        alpha:
+            _settingController.themeMode.value == 'dark'
+                ? _notPlayedDarkAlpha
+                : _notPlayedLightAlpha,
       ),
       weight: FontWeight.values[_settingController.lrcFontWeight.value],
     );
@@ -303,7 +322,7 @@ class _LyricsRenderState extends State<LyricsRender> {
 
     final hoverColor = Theme.of(
       context,
-    ).colorScheme.onSurface.withValues(alpha: 0.2);
+    ).colorScheme.onSurface.withValues(alpha: _notPlayedDarkAlpha);
     final dynamicPadding = context.width / 2 * (1 - 1 / _lrcScale);
 
     final mixColor = Color.lerp(
@@ -311,7 +330,7 @@ class _LyricsRenderState extends State<LyricsRender> {
       _settingController.themeMode.value == 'dark'
           ? Colors.white
           : Colors.black,
-      0.3,
+      _notPlayedLightAlpha,
     );
 
     return MouseRegion(
@@ -564,7 +583,6 @@ class _StaggeredLyricItem extends StatelessWidget {
                 text: lineText as String,
                 style: lyricStyle,
                 isCurrent: isCurrent,
-                lrcAlignmentIndex: lrcAlignment,
                 textAlign: textAlign,
               ),
               isCurrent: isCurrent,
@@ -580,26 +598,27 @@ class _StaggeredLyricItem extends StatelessWidget {
                 lrcAlignmentIndex: lrcAlignment,
                 lyricController: lyricController,
                 strutStyle: strutStyle,
-                cancelScale: lyricController.cancelScale.value,
               ),
               isCurrent: isCurrent,
               lrcAlignmentIndex: lrcAlignment,
             ),
 
           if (romaText.isNotEmpty && settingController.showRoma.value)
-            Text(
-              romaText,
+            _LrcLyricWidget(
+              text: romaText,
               style: romaLyricStyle,
-              softWrap: true,
+              isCurrent: isCurrent,
               textAlign: textAlign,
+              highLightAlpha: _currentAlpha,
             ),
 
           if (translateText.isNotEmpty && settingController.showTranslate.value)
-            Text(
-              translateText,
+            _LrcLyricWidget(
+              text: translateText,
               style: tsLyricStyle,
-              softWrap: true,
+              isCurrent: isCurrent,
               textAlign: textAlign,
+              highLightAlpha: _currentAlpha,
             ),
 
           Obx(() {
