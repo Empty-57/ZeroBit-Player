@@ -26,6 +26,7 @@ class DesktopLyricsSever extends GetxController {
 
   Worker? _lineWorker;
   Worker? _ms20Worker;
+  Worker? _stateWorker;
 
   DesktopLyricsSettingController get _desktopLyricsSettingController =>
       Get.find<DesktopLyricsSettingController>();
@@ -38,9 +39,20 @@ class DesktopLyricsSever extends GetxController {
       connect();
     }
 
-    ever(_audioController.currentState, (_) {
+    _stateWorker = ever(_audioController.currentState, (_) {
       _refreshStatus();
     });
+  }
+
+  @override
+  void onClose() async {
+    if (_stateWorker != null) {
+      _stateWorker!.dispose();
+      _stateWorker = null;
+    }
+
+    await close();
+    super.onClose();
   }
 
   void _refreshStatus() {

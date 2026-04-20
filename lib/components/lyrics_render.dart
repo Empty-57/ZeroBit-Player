@@ -194,16 +194,14 @@ class _KaraOkLyricWidget extends StatelessWidget {
                   ];
 
                   // 正在唱的单词
-                  return RepaintBoundary(
-                    child: Obx(
-                      () => _HighlightedWord(
-                        text: word,
-                        progress: lyricController.wordProgress.value / 100.0,
-                        style: style,
-                        strutStyle: strutStyle,
-                        scale: scale,
-                        gradientColors: gradientColors,
-                      ),
+                  return Obx(
+                    () => _HighlightedWord(
+                      text: word,
+                      progress: lyricController.wordProgress.value / 100.0,
+                      style: style,
+                      strutStyle: strutStyle,
+                      scale: scale,
+                      gradientColors: gradientColors,
                     ),
                   );
                 } else if (wordIndex < currWordIndex) {
@@ -416,7 +414,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                       },
                     )
                     : ScrollablePositionedList.builder(
-                      key: ValueKey(currentLyrics.hashCode),
+                      // key: ValueKey(currentLyrics.hashCode),
                       itemCount: parsedLrc.length,
                       initialScrollIndex: 0,
                       initialAlignment: 0.4,
@@ -592,14 +590,16 @@ class _StaggeredLyricItem extends StatelessWidget {
             )
           else
             _creatScaleWidget(
-              child: _KaraOkLyricWidget(
-                text: lineText as List<WordEntry>,
-                style: lyricStyle,
-                isCurrent: isCurrent,
-                index: index,
-                lrcAlignmentIndex: lrcAlignment,
-                lyricController: lyricController,
-                strutStyle: strutStyle,
+              child: RepaintBoundary(
+                child: _KaraOkLyricWidget(
+                  text: lineText as List<WordEntry>,
+                  style: lyricStyle,
+                  isCurrent: isCurrent,
+                  index: index,
+                  lrcAlignmentIndex: lrcAlignment,
+                  lyricController: lyricController,
+                  strutStyle: strutStyle,
+                ),
               ),
               isCurrent: isCurrent,
               lrcAlignmentIndex: lrcAlignment,
@@ -732,15 +732,17 @@ class _StaggeredLyricItem extends StatelessWidget {
       if (!isPointerScrolling &&
           !isCurrent &&
           settingController.useBlur.value) {
-        targetSigma =
-            (lyricController.currentLineIndex.value - index)
-                .abs()
-                .clamp(0.0, 4.0)
-                .toDouble();
+        int diff = (lyricController.currentLineIndex.value - index).abs();
+        if (diff > 10) {
+          targetSigma = 0.0;
+        } else {
+          targetSigma = diff.clamp(0.0, 4.0).toDouble();
+        }
       }
 
-      final Widget lyricLine = RepaintBoundary(
-        child: FractionallySizedBox(widthFactor: 1, child: content),
+      final Widget lyricLine = FractionallySizedBox(
+        widthFactor: 1,
+        child: content,
       );
 
       return TextButton(

@@ -164,17 +164,17 @@ void main() async {
   await openSafeBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
   await openSafeBox<ScalableSettingCache>(HiveBoxes.scalableSettingCacheBox);
 
-  Get.lazyPut(()=>AudioSource());
-  Get.lazyPut(()=>UserPlayListController());
-  Get.lazyPut(()=>OperateArea());
-  Get.lazyPut(()=>SettingController());
-  Get.lazyPut(()=>MusicCacheController());
-  Get.lazyPut(()=>AudioController());
-  Get.lazyPut(()=>SpringController());
-  Get.lazyPut(()=>LyricController());
-  Get.lazyPut(()=>ThemeService());
-  Get.lazyPut(()=>DesktopLyricsSever());
-  Get.lazyPut(()=>DesktopLyricsSettingController());
+  Get.put(AudioSource());
+  Get.put(UserPlayListController());
+  Get.put(OperateArea());
+  Get.put(SettingController());
+  Get.put(MusicCacheController());
+  Get.put(AudioController());
+  Get.put(SpringController());
+  Get.put(LyricController());
+  Get.put(ThemeService());
+  Get.put(DesktopLyricsSever());
+  Get.put(DesktopLyricsSettingController());
 
   await syncCache();
 
