@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:zerobit_player/components/spring_list_view.dart';
+import 'package:zerobit_player/theme_manager.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
 import '../tools/general_style.dart';
 
@@ -47,6 +48,42 @@ const _lrcWrapAlignment = [
 ];
 const List<double> _gradientStops = [0.0, 0.333, 0.666];
 const _lrcScale = 1.1;
+
+class _LyricsStyle {
+  final SettingController _settingController = Get.find<SettingController>();
+  ThemeService get _themeService => Get.find<ThemeService>();
+
+  TextStyle get lyricStyle => generalTextStyle(
+    size: _settingController.lrcFontSize.value,
+    color: _themeService.darkTheme.colorScheme.onSecondaryContainer.withValues(
+      alpha: _notPlayedDarkAlpha,
+    ),
+    weight: FontWeight.values[_settingController.lrcFontWeight.value],
+  );
+
+  TextStyle get tsLyricStyle =>
+      lyricStyle.copyWith(fontSize: lyricStyle.fontSize! - 4);
+
+  TextStyle get romaLyricStyle =>
+      tsLyricStyle.copyWith(fontSize: lyricStyle.fontSize! - 4);
+
+  TextStyle get interludeLyricStyle =>
+      lyricStyle.copyWith(fontFamily: 'Microsoft YaHei Light');
+
+  StrutStyle get strutStyle => StrutStyle(
+    fontSize: _settingController.lrcFontSize.value.toDouble(),
+    forceStrutHeight: true,
+  );
+
+  Color get hoverColor => _themeService.darkTheme.colorScheme.onSurface
+      .withValues(alpha: _notPlayedDarkAlpha);
+
+  Color? get mixColor => Color.lerp(
+    _themeService.darkTheme.colorScheme.primary,
+    Colors.white,
+    _notPlayedLightAlpha,
+  );
+}
 
 class _HighlightedWord extends StatelessWidget {
   final String text;
@@ -272,6 +309,7 @@ class _LyricsRenderState extends State<LyricsRender> {
   final SettingController _settingController = Get.find<SettingController>();
   final LyricController _lyricController = Get.find<LyricController>();
   final _isHover = false.obs;
+  final _lyricsStyle = _LyricsStyle();
 
   @override
   void initState() {
@@ -291,48 +329,17 @@ class _LyricsRenderState extends State<LyricsRender> {
 
   @override
   Widget build(BuildContext context) {
-    final lyricStyle = generalTextStyle(
-      ctx: context,
-      size: _settingController.lrcFontSize.value,
-      color: Theme.of(context).colorScheme.onSecondaryContainer.withValues(
-        alpha:
-            _settingController.themeMode.value == 'dark'
-                ? _notPlayedDarkAlpha
-                : _notPlayedLightAlpha,
-      ),
-      weight: FontWeight.values[_settingController.lrcFontWeight.value],
-    );
+    Theme.of(context).colorScheme.onSecondaryContainer; // 用来更新颜色的触发器
 
-    final tsLyricStyle = lyricStyle.copyWith(
-      fontSize: lyricStyle.fontSize! - 4,
-    );
+    final lyricsStyle = _lyricsStyle.lyricStyle;
+    final tsLyricStyle = _lyricsStyle.tsLyricStyle;
+    final romaLyricStyle = _lyricsStyle.romaLyricStyle;
+    final interludeLyricStyle = _lyricsStyle.interludeLyricStyle;
+    final strutStyle = _lyricsStyle.strutStyle;
+    final hoverColor = _lyricsStyle.hoverColor;
+    final mixColor = _lyricsStyle.mixColor;
 
-    final romaLyricStyle = tsLyricStyle.copyWith(
-      fontSize: lyricStyle.fontSize! - 4,
-    );
-
-    final interludeLyricStyle = lyricStyle.copyWith(
-      fontFamily: 'Microsoft YaHei Light',
-    );
-
-    final strutStyle = StrutStyle(
-      fontSize: _settingController.lrcFontSize.value.toDouble(),
-      forceStrutHeight: true,
-    );
-
-    final hoverColor = Theme.of(
-      context,
-    ).colorScheme.onSurface.withValues(alpha: _notPlayedDarkAlpha);
     final dynamicPadding = context.width / 2 * (1 - 1 / _lrcScale);
-
-    final mixColor = Color.lerp(
-      Theme.of(context).colorScheme.primary,
-      _settingController.themeMode.value == 'dark'
-          ? Colors.white
-          : Colors.black,
-      _notPlayedLightAlpha,
-    );
-
     return MouseRegion(
       onEnter: (_) => _isHover.value = true,
       onExit: (_) => _isHover.value = false,
@@ -360,8 +367,8 @@ class _LyricsRenderState extends State<LyricsRender> {
                   return Center(
                     child: Text(
                       "无歌词",
-                      style: lyricStyle.copyWith(
-                        color: lyricStyle.color?.withValues(
+                      style: lyricsStyle.copyWith(
+                        color: lyricsStyle.color?.withValues(
                           alpha: _highLightAlpha,
                         ),
                       ),
@@ -396,7 +403,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                     translateText: translateList[index],
                     romaText: romaList[index],
                     startTime: startTime[index],
-                    lyricStyle: lyricStyle,
+                    lyricStyle: lyricsStyle,
                     tsLyricStyle: tsLyricStyle,
                     romaLyricStyle: romaLyricStyle,
                     interludeLyricStyle: interludeLyricStyle,

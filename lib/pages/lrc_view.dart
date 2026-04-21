@@ -17,6 +17,7 @@ import '../components/window_ctrl_bar.dart';
 import '../desktop_lyrics_sever.dart';
 import '../getxController/audio_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
+import '../theme_manager.dart';
 import '../tools/format_time.dart';
 import '../tools/lrcTool/parse_lyrics.dart';
 import '../tools/rect_value_indicator.dart';
@@ -470,6 +471,8 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
 // --- 主视图 ---
 class LrcView extends StatelessWidget {
   const LrcView({super.key});
+
+  ThemeService get _themeService => Get.find<ThemeService>();
 
   Widget _buildScrollText(String text, TextStyle textStyle) {
     return TextScroll(
@@ -966,23 +969,18 @@ class LrcView extends StatelessWidget {
   Widget build(BuildContext context) {
     double coverSize = (context.width * 0.3).clamp(300, 500);
     final halfWidth = context.width / 2;
-    final themeModeValue = _settingController.themeMode.value;
+    final primaryColor = _themeService.darkTheme.colorScheme.primary;
 
-    final mixColor = Color.lerp(
-      Theme.of(context).colorScheme.primary,
-      themeModeValue == 'dark' ? Colors.white : Colors.black,
-      0.3,
-    );
+    final mixColor = Color.lerp(primaryColor, Colors.white, 0.3);
     final mixSubColor = Color.lerp(
-      Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-      themeModeValue == 'dark' ? Colors.white : Colors.black,
+      primaryColor.withValues(alpha: 0.8),
+      Colors.white,
       0.3,
     );
 
-    final activeTrackCover = mixColor ?? Theme.of(context).colorScheme.primary;
+    final activeTrackCover = mixColor ?? primaryColor;
     final inactiveTrackCover =
-        mixColor?.withValues(alpha: 0.2) ??
-        Theme.of(context).colorScheme.primary.withValues(alpha: 0.2);
+        mixColor?.withValues(alpha: 0.2) ?? primaryColor.withValues(alpha: 0.2);
 
     final timeCurrentStyle = generalTextStyle(
       ctx: context,
@@ -1030,6 +1028,7 @@ class LrcView extends StatelessWidget {
       useMask: true,
       radius: 0,
       meshEnable: true,
+      onlyDarkMode: true,
       child: Container(
         color: Theme.of(
           context,
@@ -1041,6 +1040,7 @@ class LrcView extends StatelessWidget {
               showLogo: false,
               useCaretDown: true,
               useSearch: false,
+              onlyDarkMode: true,
             ),
             Expanded(
               child: Column(

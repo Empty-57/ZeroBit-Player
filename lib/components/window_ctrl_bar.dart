@@ -323,6 +323,7 @@ class _ControllerButton extends StatelessWidget {
   final Color? hoverColor;
   final VoidCallback fn;
   final String? tooltip;
+  final bool onlyDarkMode;
 
   const _ControllerButton({
     super.key,
@@ -330,13 +331,17 @@ class _ControllerButton extends StatelessWidget {
     this.hoverColor,
     required this.fn,
     this.tooltip,
+    this.onlyDarkMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
       icon: Icon(icon),
-      color: Theme.of(context).colorScheme.onSurface,
+      color:
+          onlyDarkMode
+              ? _themeService.darkTheme.colorScheme.onSurface
+              : Theme.of(context).colorScheme.onSurface,
       tooltip: tooltip,
       iconSize: getIconSize(size: 'lg'),
       hoverColor: hoverColor,
@@ -357,6 +362,7 @@ class WindowControllerBar extends StatelessWidget {
   final bool? showLogo;
   final bool? useCaretDown;
   final bool? useSearch;
+  final bool onlyDarkMode;
 
   const WindowControllerBar({
     super.key,
@@ -364,6 +370,7 @@ class WindowControllerBar extends StatelessWidget {
     this.showLogo = true,
     this.useCaretDown = false,
     this.useSearch = true,
+    this.onlyDarkMode = false,
   });
 
   @override
@@ -379,16 +386,20 @@ class WindowControllerBar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         spacing: 0,
         children: <Widget>[
-          Padding(padding: EdgeInsets.only(right: 8),child: _ControllerButton(
-            icon:
-                useCaretDown!
-                    ? PhosphorIconsLight.caretDown
-                    : PhosphorIconsLight.caretLeft,
-            fn: () {
-              Get.back(id: isNestedRoute! ? 1 : null);
-            },
-            tooltip: "返回",
-          ),),
+          Padding(
+            padding: EdgeInsets.only(right: 8),
+            child: _ControllerButton(
+              onlyDarkMode: onlyDarkMode,
+              icon:
+                  useCaretDown!
+                      ? PhosphorIconsLight.caretDown
+                      : PhosphorIconsLight.caretLeft,
+              fn: () {
+                Get.back(id: isNestedRoute! ? 1 : null);
+              },
+              tooltip: "返回",
+            ),
+          ),
           if (showLogo!)
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -426,30 +437,38 @@ class WindowControllerBar extends StatelessWidget {
 
           if (useSearch!) const _SearchDialog(),
 
-          Padding(padding: EdgeInsets.only(right: 8,left: 8),child: Obx(
-            () => _ControllerButton(
-              icon:
-                  _settingController.themeMode.value == 'dark'
-                      ? PhosphorIconsLight.moon
-                      : PhosphorIconsLight.sun,
-              fn: _themeService.setThemeMode,
-              tooltip:
-                  _settingController.themeMode.value == 'dark'
-                      ? "暗色主题"
-                      : "亮色主题",
+          Padding(
+            padding: EdgeInsets.only(right: 8, left: 8),
+            child: Obx(
+              () => _ControllerButton(
+                onlyDarkMode: onlyDarkMode,
+                icon:
+                    _settingController.themeMode.value == 'dark'
+                        ? PhosphorIconsLight.moon
+                        : PhosphorIconsLight.sun,
+                fn: _themeService.setThemeMode,
+                tooltip:
+                    _settingController.themeMode.value == 'dark'
+                        ? "暗色主题"
+                        : "亮色主题",
+              ),
             ),
-          ),),
+          ),
 
           Obx(
             () => Visibility(
               visible: !windowListener._isFullScreen.value,
-              child: Padding(padding: EdgeInsets.only(right: 8),child: _ControllerButton(
-                icon: PhosphorIconsLight.minus,
-                fn: () async {
-                  await windowManager.minimize();
-                },
-                tooltip: "最小化",
-              ),),
+              child: Padding(
+                padding: EdgeInsets.only(right: 8),
+                child: _ControllerButton(
+                  onlyDarkMode: onlyDarkMode,
+                  icon: PhosphorIconsLight.minus,
+                  fn: () async {
+                    await windowManager.minimize();
+                  },
+                  tooltip: "最小化",
+                ),
+              ),
             ),
           ),
 
@@ -457,6 +476,7 @@ class WindowControllerBar extends StatelessWidget {
             () => Visibility(
               visible: !windowListener._isFullScreen.value,
               child: _ControllerButton(
+                onlyDarkMode: onlyDarkMode,
                 icon:
                     windowListener._isMaximized.value
                         ? PhosphorIconsLight.cornersIn
@@ -468,17 +488,25 @@ class WindowControllerBar extends StatelessWidget {
           ),
 
           Obx(
-            () => Padding(padding: EdgeInsets.only(right: 8,left:windowListener._isFullScreen.value? 0: 8),child: _ControllerButton(
-              icon:
-                  windowListener._isFullScreen.value
-                      ? PhosphorIconsLight.arrowsInSimple
-                      : PhosphorIconsLight.arrowsOutSimple,
-              fn: windowListener.toggleFullScreen,
-              tooltip: windowListener._isFullScreen.value ? "还原" : "全屏",
-            ),),
+            () => Padding(
+              padding: EdgeInsets.only(
+                right: 8,
+                left: windowListener._isFullScreen.value ? 0 : 8,
+              ),
+              child: _ControllerButton(
+                onlyDarkMode: onlyDarkMode,
+                icon:
+                    windowListener._isFullScreen.value
+                        ? PhosphorIconsLight.arrowsInSimple
+                        : PhosphorIconsLight.arrowsOutSimple,
+                fn: windowListener.toggleFullScreen,
+                tooltip: windowListener._isFullScreen.value ? "还原" : "全屏",
+              ),
+            ),
           ),
 
           _ControllerButton(
+            onlyDarkMode: onlyDarkMode,
             icon: PhosphorIconsLight.x,
             hoverColor: Colors.red,
             fn: () async {
