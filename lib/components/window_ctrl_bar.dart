@@ -358,10 +358,11 @@ class _ControllerButton extends StatelessWidget {
 }
 
 class WindowControllerBar extends StatelessWidget {
-  final bool? isNestedRoute;
-  final bool? showLogo;
-  final bool? useCaretDown;
-  final bool? useSearch;
+  final bool isNestedRoute;
+  final bool showLogo;
+  final bool useCaretDown;
+  final bool useSearch;
+  final bool useThemeSwitch;
   final bool onlyDarkMode;
 
   const WindowControllerBar({
@@ -370,6 +371,7 @@ class WindowControllerBar extends StatelessWidget {
     this.showLogo = true,
     this.useCaretDown = false,
     this.useSearch = true,
+    this.useThemeSwitch=true,
     this.onlyDarkMode = false,
   });
 
@@ -391,16 +393,16 @@ class WindowControllerBar extends StatelessWidget {
             child: _ControllerButton(
               onlyDarkMode: onlyDarkMode,
               icon:
-                  useCaretDown!
+                  useCaretDown
                       ? PhosphorIconsLight.caretDown
                       : PhosphorIconsLight.caretLeft,
               fn: () {
-                Get.back(id: isNestedRoute! ? 1 : null);
+                Get.back(id: isNestedRoute ? 1 : null);
               },
               tooltip: "返回",
             ),
           ),
-          if (showLogo!)
+          if (showLogo)
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -435,9 +437,10 @@ class WindowControllerBar extends StatelessWidget {
             ),
           ),
 
-          if (useSearch!) const _SearchDialog(),
+          if (useSearch) const _SearchDialog(),
 
-          Padding(
+          if(useThemeSwitch)
+            Padding(
             padding: EdgeInsets.only(right: 8, left: 8),
             child: Obx(
               () => _ControllerButton(

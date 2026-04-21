@@ -1040,6 +1040,7 @@ class LrcView extends StatelessWidget {
               showLogo: false,
               useCaretDown: true,
               useSearch: false,
+              useThemeSwitch: false,
               onlyDarkMode: true,
             ),
             Expanded(
