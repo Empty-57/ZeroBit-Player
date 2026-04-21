@@ -58,10 +58,12 @@ double _parseTime(String m, String s) {
 /// 将整首 LRC 文本解析成时间 + 文本的列表
 List<LyricEntry> _parseLyrics(String text) {
   final List<LyricEntry> entries = [];
+  final reg1 = RegExp(r'<\d{2}:\d{2}\.\d{2,3}>');
+  final reg2 = RegExp(r'\[\d{2}:\d{2}\.\d{2,3}\]');
   for (final match in _lrcLineRegex.allMatches(text)) {
     try {
       final start = _parseTime(match[1]!, match[2]!);
-      final lyric = match[3]!.trim();
+      final lyric = match[3]!.replaceAll(reg1, '').replaceAll(reg2, '').trim();
       entries.add(LyricEntry(start: start, lyricText: lyric));
     } catch (e) {
       // 跳过格式错行
@@ -275,6 +277,13 @@ LrcType detectLrcType(String lrcContent) {
     if (RegExp(
       r'\[\d{2}:\d{2}\.\d{2,3}\]<(\d{2}:\d{2}\.\d{2,3}>)',
     ).hasMatch(trimmedLine)) {
+      final angleMatches = RegExp(
+        r'<\d{2}:\d{2}\.\d{2,3}>',
+      ).allMatches(trimmedLine);
+      // 检查是否是不合规范的Lrc格式.(增强型Lrc)
+      if (angleMatches.length < 3) {
+        return LrcType.lineByLine;
+      }
       return LrcType.enhanced;
     }
 
@@ -283,6 +292,13 @@ LrcType detectLrcType(String lrcContent) {
     if (RegExp(
       r'\[\d{2}:\d{2}\.\d{2,3}\][^\[]*\[\d{2}:\d{2}\.\d{2,3}\]',
     ).hasMatch(trimmedLine)) {
+      // 检查是否是不合规范的Lrc格式.(逐字Lrc)
+      final bracketMatches = RegExp(
+        r'\[\d{2}:\d{2}\.\d{2,3}\]',
+      ).allMatches(trimmedLine);
+      if (bracketMatches.length < 3) {
+        return LrcType.lineByLine;
+      }
       return LrcType.wordByWord;
     }
 
