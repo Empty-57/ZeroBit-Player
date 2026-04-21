@@ -309,7 +309,14 @@ class _LyricsRenderState extends State<LyricsRender> {
   final SettingController _settingController = Get.find<SettingController>();
   final LyricController _lyricController = Get.find<LyricController>();
   final _isHover = false.obs;
-  final _lyricsStyle = _LyricsStyle();
+  _LyricsStyle get _lyricsStyle => _LyricsStyle();
+  TextStyle get lyricsStyle => _lyricsStyle.lyricStyle;
+  TextStyle get tsLyricStyle => _lyricsStyle.tsLyricStyle;
+  TextStyle get romaLyricStyle => _lyricsStyle.romaLyricStyle;
+  TextStyle get interludeLyricStyle => _lyricsStyle.interludeLyricStyle;
+  StrutStyle get strutStyle => _lyricsStyle.strutStyle;
+  Color get hoverColor => _lyricsStyle.hoverColor;
+  Color? get mixColor => _lyricsStyle.mixColor;
 
   @override
   void initState() {
@@ -329,16 +336,6 @@ class _LyricsRenderState extends State<LyricsRender> {
 
   @override
   Widget build(BuildContext context) {
-    Theme.of(context).colorScheme.onSecondaryContainer; // 用来更新颜色的触发器
-
-    final lyricsStyle = _lyricsStyle.lyricStyle;
-    final tsLyricStyle = _lyricsStyle.tsLyricStyle;
-    final romaLyricStyle = _lyricsStyle.romaLyricStyle;
-    final interludeLyricStyle = _lyricsStyle.interludeLyricStyle;
-    final strutStyle = _lyricsStyle.strutStyle;
-    final hoverColor = _lyricsStyle.hoverColor;
-    final mixColor = _lyricsStyle.mixColor;
-
     final dynamicPadding = context.width / 2 * (1 - 1 / _lrcScale);
     return MouseRegion(
       onEnter: (_) => _isHover.value = true,
