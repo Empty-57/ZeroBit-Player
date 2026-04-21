@@ -22,8 +22,6 @@ class LyricController extends GetxController {
   final wordProgress = 0.0.obs;
   double _wordProgressIncrement = 0;
 
-  final cancelScale = false.obs;
-
   final showInterlude = false.obs;
 
   final interludeProcess = 0.0.obs;
@@ -43,17 +41,11 @@ class LyricController extends GetxController {
   Timer? _debounceTimer; // 防抖计时器
   Timer? _delayTimer;
 
-  late final Worker _lineWordWorker;
-  late final Worker _progressWorker;
-  late final Worker _wordIndexWorker;
   late final Worker _msWorker;
   late final Worker _lyricsWorker;
 
   @override
   void onClose() {
-    _lineWordWorker.dispose();
-    _progressWorker.dispose();
-    _wordIndexWorker.dispose();
     _msWorker.dispose();
     _lyricsWorker.dispose();
 
@@ -64,76 +56,44 @@ class LyricController extends GetxController {
     super.onClose();
   }
 
-  @override
-  void onInit() {
-    super.onInit();
+  // 更新 _currentWord, _currentLine, _interval, _threshold
+  void _updateLyricsInfo({required bool updateLineOnly}) {
+    if ((_audioController.currentLyrics.value?.type ?? LyricFormat.lrc) ==
+        LyricFormat.lrc) {
+      return;
+    }
 
-    // 重置状态
-    _lyricsWorker = ever(_audioController.currentLyrics, (_) {
-      _resetLyricState();
-    });
-
-    // 更新 _currentWord, _currentLine, _interval, _threshold
-    _lineWordWorker = everAll(
-      [currentLineIndex, currentWordIndex],
-      (_) {
-        final lyrics = _audioController.currentLyrics.value?.parsedLrc;
-        final lineIndex = currentLineIndex.value;
-        int wordIndex = currentWordIndex.value;
-        if (lyrics == null || lineIndex < 0 || lineIndex >= lyrics.length) {
-          return;
-        }
-        _currentLine = lyrics[lineIndex].lyricText;
-        if (wordIndex >= _currentLine!.length) return;
-        if (wordIndex < 0) {
-          wordIndex = 0;
-        }
-        _currentWord = _currentLine![wordIndex];
-
-        final rowCurrentLine = lyrics[lineIndex];
-        final lastWord = _currentLine![_currentLine!.length - 1];
-        if (_audioController.currentLyrics.value?.type ==
-            LyricFormat.byWordLrc) {
-          _interval = rowCurrentLine.nextTime - (lastWord.start);
-          _threshold = _interval >= 4 ? 2 : 150;
-        } else {
-          _interval =
-              rowCurrentLine.nextTime - (lastWord.start + lastWord.duration);
-          _threshold = _interval >= 4 ? _lowIntervalThreshold : 150;
-        }
-
-        _wordsLen = _currentLine!.length;
-      },
-      condition:
-          () =>
-              (_audioController.currentLyrics.value?.type ?? LyricFormat.lrc) !=
-              LyricFormat.lrc,
-    );
-
-    // 判断是否显示间奏
-    _progressWorker = ever(wordProgress, (_) {
-      final isNotLast = currentWordIndex.value != _wordsLen - 1;
-      final isThresholdValid = wordProgress.value < _threshold;
-      cancelScale.value = isNotLast || isThresholdValid;
-      final int len =
-          (_audioController.currentLyrics.value?.parsedLrc?.length ?? 0) - 1;
-      int threshold = _lowIntervalThreshold;
-      if (_audioController.currentLyrics.value?.type == LyricFormat.byWordLrc) {
-        threshold = -8; // 我也忘了这里为什么是 -8 了
+    if (updateLineOnly) {
+      final lyrics = _audioController.currentLyrics.value?.parsedLrc;
+      final lineIndex = currentLineIndex.value;
+      if (lyrics == null || lineIndex < 0 || lineIndex >= lyrics.length) {
+        return;
       }
-      showInterlude.value =
-          !isNotLast &&
-          _interval >= 4 &&
-          wordProgress.value >=
-              (threshold + 10) && // >= (threshold + 10) 这个词过渡完才允许显示间奏
-          interludeProcess.value <= 95 && // <= 95 是为了给动画退场一点时间
-          currentLineIndex.value < len;
-    });
+      _currentLine = lyrics[lineIndex].lyricText;
 
-    // 增量计算:  total/(duration/loopTime)
-    // 百分比: total=100 字持续时间: duration(Ms) 轮询间隔: loopTime=20(Ms)
-    _wordIndexWorker = ever(currentWordIndex, (_) {
-      if (_currentWord == null || _currentWord!.duration <= 0) {
+      final rowCurrentLine = lyrics[lineIndex];
+      final lastWord = _currentLine![_currentLine!.length - 1];
+      if (_audioController.currentLyrics.value?.type == LyricFormat.byWordLrc) {
+        _interval = rowCurrentLine.nextTime - (lastWord.start);
+        _threshold = _interval >= 4 ? 2 : 150;
+      } else {
+        _interval =
+            rowCurrentLine.nextTime - (lastWord.start + lastWord.duration);
+        _threshold = _interval >= 4 ? _lowIntervalThreshold : 150;
+      }
+
+      _wordsLen = _currentLine!.length;
+    } else {
+      int wordIndex = currentWordIndex.value;
+      if (wordIndex >= _currentLine!.length) return;
+      if (wordIndex < 0) {
+        wordIndex = 0;
+      }
+      _currentWord = _currentLine![wordIndex]; // 不可能为空
+
+      // 增量计算:  total/(duration/loopTime)
+      // 百分比: total=100 字持续时间: duration(Ms) 轮询周期: loopTime=20(Ms)
+      if (_currentWord!.duration <= 0) {
         _wordProgressIncrement = 0;
         return;
       }
@@ -141,11 +101,45 @@ class LyricController extends GetxController {
       if (currentMs20.value - _currentWord!.start >= 0.02) {
         _wordProgressIncrement =
             2 /
-            (_currentWord!.duration - currentMs20.value + _currentWord!.start);
+            (_currentWord!.duration -
+                currentMs20.value +
+                _currentWord!.start); // 误差大于一个周期就校准
       } else {
         _wordProgressIncrement = 2 / _currentWord!.duration;
       }
-    });
+    }
+  }
+
+  // 判断是否显示间奏
+  void _updateInterludeState() {
+    final isLast = currentWordIndex.value == _wordsLen - 1;
+    if (!isLast) {
+      showInterlude.value = false;
+      return;
+    }
+    final int len =
+        (_audioController.currentLyrics.value?.parsedLrc?.length ?? 0) - 1;
+    int threshold = _lowIntervalThreshold;
+    if (_audioController.currentLyrics.value?.type == LyricFormat.byWordLrc) {
+      threshold = -8; // 我也忘了这里为什么是 -8 了
+    }
+    showInterlude.value =
+        isLast &&
+        _interval >= 4 &&
+        wordProgress.value >=
+            (threshold + 10) && // >= (threshold + 10) 这个词过渡完才允许显示间奏
+        interludeProcess.value <= 95 && // <= 95 是为了给动画退场一点时间
+        currentLineIndex.value < len;
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+
+    // 重置状态（暂时保留）
+    // _lyricsWorker = ever(_audioController.currentLyrics, (_) {
+    //   _resetLyricState();
+    // });
 
     // 更新词进度
     _msWorker = ever(currentMs20, (_) {
@@ -158,6 +152,7 @@ class LyricController extends GetxController {
         _interval = 0;
         wordProgress.value = 0;
         currentLineIndex.value = newLineIndex;
+        _updateLyricsInfo(updateLineOnly: true);
         if (!isPointerScroll.value) {
           if (_settingController.useSpringScroll.value) {
             springScrollToCenter();
@@ -183,6 +178,7 @@ class LyricController extends GetxController {
         interludeProcess.value = 0;
         wordProgress.value = 0;
         currentWordIndex.value = newWordIndex;
+        _updateLyricsInfo(updateLineOnly: false);
       }
 
       int threshold = _lowIntervalThreshold;
@@ -195,24 +191,24 @@ class LyricController extends GetxController {
       }
 
       wordProgress.value += _wordProgressIncrement;
+      _updateInterludeState();
     });
   }
 
   void _resetLyricState() {
-    currentLineIndex.value = -1;
-    currentWordIndex.value = 0;
-    wordProgress.value = 0;
-    interludeProcess.value = 0;
-    showInterlude.value = false;
-    cancelScale.value = false;
-
-    _interval = 0;
-    _threshold = _lowIntervalThreshold;
-    _wordsLen = 0;
-
-    _currentLine = null;
-    _currentWord = null;
-    _wordProgressIncrement = 0;
+    // currentLineIndex.value = -1;
+    // currentWordIndex.value = 0;
+    // wordProgress.value = 0;
+    // interludeProcess.value = 0;
+    // showInterlude.value = false;
+    //
+    // _interval = 0;
+    // _threshold = _lowIntervalThreshold;
+    // _wordsLen = 0;
+    //
+    // _currentLine = null;
+    // _currentWord = null;
+    // _wordProgressIncrement = 0;
   }
 
   void pointerScroll() {
