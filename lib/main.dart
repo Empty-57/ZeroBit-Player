@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
@@ -58,6 +59,7 @@ import 'getxController/lyric_ctrl.dart';
 import 'getxController/music_cache_ctrl.dart';
 import 'getxController/setting_ctrl.dart';
 
+import 'logger.dart';
 import 'theme_manager.dart';
 
 int countMs100 = 0;
@@ -120,6 +122,33 @@ void main() async {
   }
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 初始化本地日志系统
+  await FileLogger.init();
+
+  // 拦截 Flutter 框架级别的错误
+  FlutterError.onError = (FlutterErrorDetails details) {
+    // 控制台打印
+    FlutterError.presentError(details);
+
+    // 写入日志文件
+    FileLogger.logError(
+      'Flutter UI/Framework Error',
+      error: details.exception,
+      stackTrace: details.stack,
+    );
+  };
+
+  // 拦截 Dart 异步/底层级别的错误
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    FileLogger.logError(
+      'Dart Async/Unhandled Error',
+      error: error,
+      stackTrace: stack,
+    );
+    // 返回 true 表示错误已经被我们处理了，防止向系统抛出导致崩溃
+    return true;
+  };
 
   await windowManager.ensureInitialized();
   await RustLib.init();

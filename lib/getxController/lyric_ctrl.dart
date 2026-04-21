@@ -28,11 +28,9 @@ class LyricController extends GetxController {
 
   double _interval = 0; // 歌词行间隔值
 
-  int _threshold = _lowIntervalThreshold; // 间奏进度下限
-
   int _wordsLen = 0; // 当前行长度
 
-  static const _lowIntervalThreshold = 90;
+  static const _lowIntervalThreshold = 90; // 间奏进度下限
 
   WordEntry? _currentWord; // 当前词信息
 
@@ -42,12 +40,10 @@ class LyricController extends GetxController {
   Timer? _delayTimer;
 
   late final Worker _msWorker;
-  late final Worker _lyricsWorker;
 
   @override
   void onClose() {
     _msWorker.dispose();
-    _lyricsWorker.dispose();
 
     _debounceTimer?.cancel();
     _delayTimer?.cancel();
@@ -75,11 +71,9 @@ class LyricController extends GetxController {
       final lastWord = _currentLine![_currentLine!.length - 1];
       if (_audioController.currentLyrics.value?.type == LyricFormat.byWordLrc) {
         _interval = rowCurrentLine.nextTime - (lastWord.start);
-        _threshold = _interval >= 4 ? 2 : 150;
       } else {
         _interval =
             rowCurrentLine.nextTime - (lastWord.start + lastWord.duration);
-        _threshold = _interval >= 4 ? _lowIntervalThreshold : 150;
       }
 
       _wordsLen = _currentLine!.length;
@@ -135,12 +129,6 @@ class LyricController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-
-    // 重置状态（暂时保留）
-    // _lyricsWorker = ever(_audioController.currentLyrics, (_) {
-    //   _resetLyricState();
-    // });
-
     // 更新词进度
     _msWorker = ever(currentMs20, (_) {
       final newLineIndex = _findLrcPos(
@@ -193,22 +181,6 @@ class LyricController extends GetxController {
       wordProgress.value += _wordProgressIncrement;
       _updateInterludeState();
     });
-  }
-
-  void _resetLyricState() {
-    // currentLineIndex.value = -1;
-    // currentWordIndex.value = 0;
-    // wordProgress.value = 0;
-    // interludeProcess.value = 0;
-    // showInterlude.value = false;
-    //
-    // _interval = 0;
-    // _threshold = _lowIntervalThreshold;
-    // _wordsLen = 0;
-    //
-    // _currentLine = null;
-    // _currentWord = null;
-    // _wordProgressIncrement = 0;
   }
 
   void pointerScroll() {
