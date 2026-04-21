@@ -121,7 +121,9 @@ class _HighlightedWord extends StatelessWidget {
       blendMode: BlendMode.dstIn,
       child: Text(
         text,
-        style: style.copyWith(color: style.color?.withValues(alpha: 1)),
+        style: style.copyWith(
+          color: style.color?.withValues(alpha: 1),
+        ), // alpha=1 为了透明度不变，否则将会和 style 上的透明度进行乘算
         strutStyle: strutStyle,
       ),
     );
@@ -227,7 +229,10 @@ class _KaraOkLyricWidget extends StatelessWidget {
                   final List<Color> gradientColors = [
                     style.color!.withValues(alpha: _highLightAlpha),
                     style.color!.withValues(alpha: _highLightAlpha),
-                    style.color!.withValues(alpha: _currentAlpha),
+                    style.color!.withValues(
+                      alpha:
+                          wordIndex == 0 ? _currentAlpha - 0.15 : _currentAlpha, // 欺骗视觉，防止第一个词出现亮度突变
+                    ),
                   ];
 
                   // 正在唱的单词
@@ -770,14 +775,16 @@ class _StaggeredLyricItem extends StatelessWidget {
                   curve: Curves.easeOutCubic,
                   builder: (context, sigma, child) {
                     return ImageFiltered(
+                      enabled: targetSigma > 0,
                       imageFilter: ui.ImageFilter.blur(
                         sigmaX: sigma,
                         sigmaY: sigma,
+                        tileMode: TileMode.decal,
                       ),
                       child: child,
                     );
                   },
-                  child: lyricLine,
+                  child: RepaintBoundary(child: lyricLine),
                 )
                 : lyricLine,
       );
