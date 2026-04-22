@@ -231,7 +231,9 @@ class _KaraOkLyricWidget extends StatelessWidget {
                     style.color!.withValues(alpha: _highLightAlpha),
                     style.color!.withValues(
                       alpha:
-                          wordIndex == 0 ? _currentAlpha - 0.15 : _currentAlpha, // 欺骗视觉，防止第一个词出现亮度突变
+                          wordIndex == 0
+                              ? _currentAlpha - 0.15
+                              : _currentAlpha, // 欺骗视觉，防止第一个词出现亮度突变
                     ),
                   ];
 
@@ -391,6 +393,8 @@ class _LyricsRenderState extends State<LyricsRender> {
                     parsedLrc.map((v) => v.start).toList();
                 final List<String> romaList =
                     parsedLrc.map((v) => v.roma).toList();
+                final List<double> lineDuration =
+                    parsedLrc.map((v) => v.nextTime - v.start).toList();
 
                 Widget creatLyricItem(index) {
                   if ((lrcType == LyricFormat.lrc &&
@@ -400,6 +404,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                     return const SizedBox.shrink();
                   }
                   return _StaggeredLyricItem(
+                    key: ValueKey(index),
                     index: index,
                     lyricController: _lyricController,
                     audioController: _audioController,
@@ -421,13 +426,13 @@ class _LyricsRenderState extends State<LyricsRender> {
 
                 return useSpringscroll
                     ? SpringListView(
+                      lineDuration: lineDuration,
                       length: parsedLrc.length,
                       itemBuilder: (BuildContext context, int index) {
                         return creatLyricItem(index);
                       },
                     )
                     : ScrollablePositionedList.builder(
-                      // key: ValueKey(currentLyrics.hashCode),
                       itemCount: parsedLrc.length,
                       initialScrollIndex: 0,
                       initialAlignment: 0.4,
@@ -524,6 +529,7 @@ class _StaggeredLyricItem extends StatelessWidget {
   final double dynamicPadding;
 
   const _StaggeredLyricItem({
+    Key? key,
     required this.index,
     required this.lyricController,
     required this.audioController,
@@ -769,22 +775,14 @@ class _StaggeredLyricItem extends StatelessWidget {
         ),
         child:
             settingController.useBlur.value
-                ? TweenAnimationBuilder<double>(
-                  tween: Tween<double>(begin: 0.0, end: targetSigma),
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, sigma, child) {
-                    return ImageFiltered(
-                      enabled: targetSigma > 0,
-                      imageFilter: ui.ImageFilter.blur(
-                        sigmaX: sigma,
-                        sigmaY: sigma,
-                        tileMode: TileMode.decal,
-                      ),
-                      child: child,
-                    );
-                  },
-                  child: RepaintBoundary(child: lyricLine),
+                ? ImageFiltered(
+                  enabled: targetSigma > 0,
+                  imageFilter: ui.ImageFilter.blur(
+                    sigmaX: targetSigma,
+                    sigmaY: targetSigma,
+                    tileMode: TileMode.decal,
+                  ),
+                  child: RepaintBoundary(child: content),
                 )
                 : lyricLine,
       );
