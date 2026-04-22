@@ -23,7 +23,8 @@ class SpringController extends GetxController {
   int totalLength = 0;
 
   final int delay = 60;
-  final Duration duration = 1200.ms;
+  static const double durationMax = 1200;
+  double duration = durationMax;
 
   GlobalKey getSliverKey(int index) =>
       sliverKeys.putIfAbsent(index, () => GlobalKey());
@@ -78,11 +79,13 @@ class SpringController extends GetxController {
 
 class SpringListView extends StatelessWidget {
   final int length;
+  final List<double> lineDuration;
   final Widget Function(BuildContext context, int index) itemBuilder;
   const SpringListView({
     super.key,
     required this.length,
     required this.itemBuilder,
+    required this.lineDuration,
   });
 
   @override
@@ -91,6 +94,19 @@ class SpringListView extends StatelessWidget {
     controller.totalLength = length;
 
     return Obx(() {
+      if (controller.currentIndex.value < lineDuration.length &&
+          controller.currentIndex.value >= 0) {
+        controller.duration = (lineDuration[controller.currentIndex.value] *
+                    1000 -
+                controller.delay)
+            .clamp(
+              SpringController.durationMax * 0.2,
+              SpringController.durationMax,
+            );
+      } else {
+        controller.duration = SpringController.durationMax;
+      }
+
       Key? centerKey;
       if (controller.totalLength > 0 &&
           controller.currentIndex.value >= 0 &&
@@ -179,7 +195,6 @@ class _SpringItemState extends State<_SpringItem>
       _currentDeltaY = deltaY;
     });
 
-
     _animController.value = 0.0; //从偏移位置回到原位
     final currentTriggerId = ++_animTriggerId;
 
@@ -201,12 +216,15 @@ class _SpringItemState extends State<_SpringItem>
 
   @override
   Widget build(BuildContext context) {
-    return Container(key: widget.boxKey, child: RepaintBoundary(child: widget.child,))
+    return Container(
+          key: widget.boxKey,
+          child: RepaintBoundary(child: widget.child),
+        )
         .animate(controller: _animController, autoPlay: false)
         .moveY(
           begin: _currentDeltaY,
           end: 0,
-          duration: controller.duration,
+          duration: controller.duration.ms,
           curve: Curves.easeOutCubic,
         );
   }
