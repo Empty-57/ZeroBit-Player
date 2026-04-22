@@ -27,6 +27,7 @@ class EditEmbeddedLyricsDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final lyricsCtrl = TextEditingController();
     final lyricsTsCtrl = TextEditingController();
+    final originCtrl = TextEditingController();
     final border = OutlineInputBorder();
     final hintStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
     final textStyle = generalTextStyle(ctx: context, size: 'md');
@@ -52,6 +53,7 @@ class EditEmbeddedLyricsDialog extends StatelessWidget {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.done) {
                   try {
+                    originCtrl.text=snapshot.data??'';
                     final data = jsonDecode(snapshot.data ?? '');
                     lyricsCtrl.text = data?['lyrics'] ?? '';
                     lyricsTsCtrl.text = data?['lyricsTs'] ?? '';
@@ -116,7 +118,7 @@ class EditEmbeddedLyricsDialog extends StatelessWidget {
                               maxLines: null,
                               decoration: InputDecoration(
                                 border: border,
-                                hintText: "请提供完整的且符合格式要求的歌词数据，若使用逐字Lrc或增强型Lrc，将翻译和注音（若有）直接写入此项即可",
+                                hintText: "请提供完整的且符合格式要求的歌词数据，若使用逐字Lrc或增强型Lrc，将翻译和注音（若有）直接写入此项即可，或者直接填入内嵌源数据即可",
                                 hintStyle: hintStyle,
                               ),
                             ),
@@ -129,6 +131,17 @@ class EditEmbeddedLyricsDialog extends StatelessWidget {
                               decoration: InputDecoration(
                                 border: border,
                                 hintText: "请提供完整的lrc格式的歌词数据，若使用逐字Lrc或增强型Lrc，则不需要填写此项",
+                                hintStyle: hintStyle,
+                              ),
+                            ),
+                            Text("内嵌源数据", style: textStyle),
+                            TextField(
+                              controller: originCtrl,
+                              minLines: 5,
+                              maxLines: null,
+                              decoration: InputDecoration(
+                                border: border,
+                                hintText: "若保存在这里，则不需要填写以上两项，下次读取时将会以Lrc格式读取（逐字Lrc，逐行Lrc，增强型Lrc）",
                                 hintStyle: hintStyle,
                               ),
                             ),
@@ -153,7 +166,13 @@ class EditEmbeddedLyricsDialog extends StatelessWidget {
                           ),
                           CustomBtn(
                             fn: () async {
-                              lyricsMap['lyrics'] = lyricsCtrl.text;
+                              if(originCtrl.text.isNotEmpty){
+                                await editEmbeddedLyric(
+                                path: metadata.path,
+                                lyric: originCtrl.text,
+                              );
+                              }else{
+                                lyricsMap['lyrics'] = lyricsCtrl.text;
                               lyricsMap['lyricsTs'] = lyricsTsCtrl.text;
                               lyricsMap['type'] = selectedValue.value;
 
@@ -173,6 +192,7 @@ class EditEmbeddedLyricsDialog extends StatelessWidget {
                                 path: metadata.path,
                                 lyric: jsonData,
                               );
+                              }
 
                               if (context.mounted) {
                                 Navigator.pop(context);
