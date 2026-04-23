@@ -162,11 +162,11 @@ void main() async {
   try {
     await loadLib();
     await initBass();
-  } catch (e) {
-    debugPrint(e.toString());
-  }
+  } catch (_) {}
 
-  await initSmtc();
+  try {
+    await initSmtc();
+  } catch (_) {}
 
   await Hive.initFlutter(configDirectory);
 
@@ -181,13 +181,6 @@ void main() async {
   hiveSafeRegisterAdapter<ScalableSettingCache>(ScalableSettingAdapter());
 
   final musicBox = await openSafeBox<MusicCache>(HiveBoxes.musicCacheBox);
-  // final keysToDelete =
-  //     musicBox.values
-  //         .map((v) => v.path)
-  //         .where((k) => !supportedExts.contains(p.extension(k).toLowerCase()))
-  //         .map((v) => md5.convert(utf8.encode(v)).toString())
-  //         .toList();
-  // await musicBox.deleteAll(keysToDelete); //清除不是音频格式的路径，防止路径被污染
 
   await openSafeBox<SettingCache>(HiveBoxes.settingCacheBox);
   await openSafeBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
@@ -205,10 +198,6 @@ void main() async {
   Get.put(DesktopLyricsSever());
   Get.put(DesktopLyricsSettingController());
 
-  await syncCache();
-
-  final AudioController audioController = Get.find<AudioController>();
-  final LyricController lyricController = Get.find<LyricController>();
   final SettingController settingController = Get.find<SettingController>();
 
   double w = 1200;
@@ -260,25 +249,33 @@ void main() async {
     await windowManager.focus();
   });
 
-  if(settingController.useExclusiveMode.value){
-    settingController.setExclusiveMode(use: settingController.useExclusiveMode.value);
+  if (settingController.useExclusiveMode.value) {
+    settingController.setExclusiveMode(
+      use: settingController.useExclusiveMode.value,
+    );
   }
-
 
   runApp(const MainFrame());
 
-WidgetsBinding.instance.addPostFrameCallback((_) async {
-  // 异步进行缓存清理，不阻塞启动
-  Future.delayed(const Duration(milliseconds: 300), () async {
-  final keysToDelete =
-      musicBox.values
-          .map((v) => v.path)
-          .where((k) => !supportedExts.contains(p.extension(k).toLowerCase()))
-          .map((v) => md5.convert(utf8.encode(v)).toString())
-          .toList();
-  await musicBox.deleteAll(keysToDelete); //清除不是音频格式的路径，防止路径被污染
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    // 异步进行缓存清理，不阻塞启动
+    Future.delayed(const Duration(milliseconds: 300), () async {
+      final keysToDelete =
+          musicBox.values
+              .map((v) => v.path)
+              .where(
+                (k) => !supportedExts.contains(p.extension(k).toLowerCase()),
+              )
+              .map((v) => md5.convert(utf8.encode(v)).toString())
+              .toList();
+      await musicBox.deleteAll(keysToDelete); //清除不是音频格式的路径，防止路径被污染
+    });
   });
-});
+
+  await syncCache();
+
+  final AudioController audioController = Get.find<AudioController>();
+  final LyricController lyricController = Get.find<LyricController>();
 
   await _audioEventSub?.cancel();
   await _progressSub?.cancel();
@@ -287,8 +284,8 @@ WidgetsBinding.instance.addPostFrameCallback((_) async {
   try {
     _audioEventSub = audioEventStream().listen((data) {
       final state = AudioState.values[data];
-      audioController.currentState.value=state;
-      if (state==AudioState.ended){
+      audioController.currentState.value = state;
+      if (state == AudioState.ended) {
         audioController.audioAutoPlay();
       }
     });
