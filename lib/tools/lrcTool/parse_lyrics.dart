@@ -250,63 +250,35 @@ List<LyricEntry> _mergeTranslations(
   return mainEntries;
 }
 
+bool isWordByWordLyrics(String lyricsText) {
+  // 正则解析：
+  // \[\d{2}:\d{2}\.\d{2,3}\]  匹配单个时间戳 (例如 [02:46.44])
+  // [^\n\r]*                 匹配任意不包含换行的字符 (确保我们在同一行内搜索)
+  // (...){3}                 让上述组合在同一行内连续匹配到 3 次
+  final RegExp regex = RegExp(r'(\[\d{2}:\d{2}\.\d{2,3}\][^\n\r]*){3}');
+
+  return regex.hasMatch(lyricsText);
+}
+
 LrcType detectLrcType(String lrcContent) {
-  final lines = lrcContent.trim().split('\n');
+  final lines = lrcContent.trim();
 
-  for (final line in lines) {
-    final trimmedLine = line.trim();
+  // 检查是否是增强型Lrc (Enhanced)
+  // 增强型 Lrc 特征是除了行首的时间戳，歌词内容中还有 <hh:mm.sss> 格式的时间戳 一行匹配3次
+  if (RegExp(r'(<\d{2}:\d{2}\.\d{2,3}>[^\n\r]*){3}').hasMatch(lines)) {
+    return LrcType.enhanced;
+  }
 
-    // 跳过空的行或元数据行（如 [ar:歌手名]）
-    if (trimmedLine.isEmpty ||
-        trimmedLine.startsWith('[ar:') ||
-        trimmedLine.startsWith('[ti:') ||
-        trimmedLine.startsWith('[al:') ||
-        trimmedLine.startsWith('[by:') ||
-        trimmedLine.startsWith('[tool:') ||
-        trimmedLine.startsWith('[re:') ||
-        trimmedLine.startsWith('[ve:') ||
-        trimmedLine.startsWith('[le:') ||
-        trimmedLine.startsWith('[length:') ||
-        trimmedLine.startsWith('[version:') ||
-        trimmedLine.startsWith('[offset:')) {
-      continue;
-    }
+  // 检查是否是逐字Lrc (WordByWord)
+  // 逐字 Lrc 特征是歌词内容中包含 [hh:mm.sss] 格式的时间戳 一行匹配3次
+  if (RegExp(r'(\[\d{2}:\d{2}\.\d{2,3}\][^\n\r]*){3}').hasMatch(lines)) {
+    return LrcType.wordByWord;
+  }
 
-    // 检查是否是增强型Lrc (Enhanced)
-    // 增强型 Lrc 特征是除了行首的时间戳，歌词内容中还有 <hh:mm.sss> 格式的时间戳
-    if (RegExp(
-      r'\[\d{2}:\d{2}\.\d{2,3}\]<(\d{2}:\d{2}\.\d{2,3}>)',
-    ).hasMatch(trimmedLine)) {
-      final angleMatches = RegExp(
-        r'<\d{2}:\d{2}\.\d{2,3}>',
-      ).allMatches(trimmedLine);
-      // 检查是否是不合规范的Lrc格式.(增强型Lrc)
-      if (angleMatches.length < 3) {
-        return LrcType.lineByLine;
-      }
-      return LrcType.enhanced;
-    }
-
-    // 检查是否是逐字Lrc (WordByWord)
-    // 逐字 Lrc 特征是歌词内容中包含 [hh:mm.sss] 格式的时间戳
-    if (RegExp(
-      r'\[\d{2}:\d{2}\.\d{2,3}\][^\[]*\[\d{2}:\d{2}\.\d{2,3}\]',
-    ).hasMatch(trimmedLine)) {
-      // 检查是否是不合规范的Lrc格式.(逐字Lrc)
-      final bracketMatches = RegExp(
-        r'\[\d{2}:\d{2}\.\d{2,3}\]',
-      ).allMatches(trimmedLine);
-      if (bracketMatches.length < 3) {
-        return LrcType.lineByLine;
-      }
-      return LrcType.wordByWord;
-    }
-
-    // 检查是否是逐行Lrc (LineByLine)
-    // 逐行 Lrc 特征是只有行首有一个时间戳，歌词内容没有时间戳
-    if (RegExp(r'\[\d{2}:\d{2}\.\d{2,3}\][^\[]*$').hasMatch(trimmedLine)) {
-      return LrcType.lineByLine;
-    }
+  // 检查是否是逐行Lrc (LineByLine)
+  // 逐行 Lrc 特征是只有行首有一个时间戳，歌词内容没有时间戳
+  if (RegExp(r'^\[\d{2}:\d{2}\.\d+\](?!.*\[\d{2}:\d{2}\.\d+\]).*$',multiLine: true).hasMatch(lines)) {
+    return LrcType.lineByLine;
   }
 
   return LrcType.unknown;
