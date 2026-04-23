@@ -43,9 +43,14 @@ class SettingController extends GetxController {
 
   final lrcAlignment = 0.obs;
 
-  final lrcFontSize = 24.obs; // 16-36
+  final lrcFontSize = 24.obs; // 16-48
 
   final lrcFontWeight = 5.obs; // 0-8  w100-w900
+
+  static const int lrcFontSizeMax=48;
+  static const int lrcFontSizeMin=16;
+  static const int lrcFontWeightMax=8;
+  static const int lrcFontWeightMin=0;
 
   final autoDownloadLrc = true.obs;
 

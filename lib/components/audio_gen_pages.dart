@@ -29,9 +29,9 @@ const int _coverBigRenderSize = 800;
 const double btnHeight = 42;
 const double btnWidth = 42;
 const double resViewThresholds = 1100;
-const double _menuWidth = 180;
-const double _menuHeight = 48;
-const double _menuRadius = 0;
+const double _menuBtnWidth = 180;
+const double _menuBtnHeight = 48;
+const double _menuBtnRadius = 0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 
 final SettingController _settingController = Get.find<SettingController>();
@@ -81,9 +81,9 @@ List<Widget> _genMenuItems({
         menuController.close();
         _audioController.audioPlay(metadata: metadata);
       },
-      btnHeight: _menuHeight,
-      btnWidth: _menuWidth,
-      radius: _menuRadius,
+      btnHeight: _menuBtnHeight,
+      btnWidth: _menuBtnWidth,
+      radius: _menuBtnRadius,
       icon: PhosphorIconsLight.play,
       label: "播放",
       mainAxisAlignment: MainAxisAlignment.start,
@@ -95,9 +95,9 @@ List<Widget> _genMenuItems({
         menuController.close();
         _audioController.insertNext(metadata: metadata);
       },
-      btnHeight: _menuHeight,
-      btnWidth: _menuWidth,
-      radius: _menuRadius,
+      btnHeight: _menuBtnHeight,
+      btnWidth: _menuBtnWidth,
+      radius: _menuBtnRadius,
       icon: PhosphorIconsLight.arrowBendDownRight,
       label: "添加到下一首",
       mainAxisAlignment: MainAxisAlignment.start,
@@ -130,9 +130,9 @@ List<Widget> _genMenuItems({
         menuController.close();
         Process.run('explorer.exe', ['/select,', metadata.path]);
       },
-      btnHeight: _menuHeight,
-      btnWidth: _menuWidth,
-      radius: _menuRadius,
+      btnHeight: _menuBtnHeight,
+      btnWidth: _menuBtnWidth,
+      radius: _menuBtnRadius,
       icon: PhosphorIconsLight.folderOpen,
       label: "打开本地资源",
       mainAxisAlignment: MainAxisAlignment.start,
@@ -153,9 +153,9 @@ List<Widget> _genMenuItems({
             metadata: metadata,
           );
         },
-        btnHeight: _menuHeight,
-        btnWidth: _menuWidth,
-        radius: _menuRadius,
+        btnHeight: _menuBtnHeight,
+        btnWidth: _menuBtnWidth,
+        radius: _menuBtnRadius,
         icon: PhosphorIconsLight.trash,
         label: "删除",
         mainAxisAlignment: MainAxisAlignment.start,
@@ -565,11 +565,11 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         double left = position.dx + 16;
         double top = position.dy;
         final itemCount = widget.operateArea == OperateArea.playList ? 7 : 6;
-        if (top + _menuHeight * (itemCount + 1.5) > Get.height) {
-          top = top - _menuHeight * itemCount;
+        if (top + _menuBtnHeight * (itemCount + 1.5) > Get.height) {
+          top = top - _menuBtnHeight * itemCount;
         }
-        if (left + _menuWidth * 2 > Get.width) {
-          left = left - _menuWidth - 16;
+        if (left + _menuBtnWidth * 2 > Get.width) {
+          left = left - _menuBtnWidth - 16;
         }
 
         return Positioned(
@@ -593,7 +593,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
                   ),
                 ],
               ),
-              width: _menuWidth,
+              width: _menuBtnWidth,
               child: Column(
                 children: _genMenuItems(
                   context: context,

@@ -587,7 +587,7 @@ class _FontFamilyDialog extends StatelessWidget {
 }
 
 List<CustomBtn<dynamic>> _getFontSizeList(void Function(int) fn) {
-  return List.generate(33, (index) => index + 16).map((i) {
+  return List.generate(SettingController.lrcFontSizeMax+1-SettingController.lrcFontSizeMin, (index) => index + SettingController.lrcFontSizeMin).map((i) {
     return CustomBtn(
       fn: () => fn(i),
       btnWidth: btnW,
@@ -600,7 +600,7 @@ List<CustomBtn<dynamic>> _getFontSizeList(void Function(int) fn) {
 }
 
 List<CustomBtn<dynamic>> _getFontWeightList(void Function(int) fn) {
-  return List.generate(9, (index) => index).map((i) {
+  return List.generate(SettingController.lrcFontWeightMax+1, (index) => index).map((i) {
     return CustomBtn(
       fn: () => fn(i),
       btnWidth: btnW,

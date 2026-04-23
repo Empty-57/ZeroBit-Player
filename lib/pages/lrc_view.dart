@@ -12,9 +12,12 @@ import 'package:zerobit_player/tools/func_extension.dart';
 import 'package:zerobit_player/tools/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import 'package:zerobit_player/tools/lrcTool/save_lyric.dart';
+import '../HIveCtrl/models/music_cache_model.dart';
 import '../components/audio_ctrl_btn.dart';
 import '../components/window_ctrl_bar.dart';
+import '../custom_widgets/custom_button.dart';
 import '../desktop_lyrics_sever.dart';
+import '../field/tag_suffix.dart';
 import '../getxController/audio_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 import '../theme_manager.dart';
@@ -43,6 +46,9 @@ const _lrcAlignmentIcons = [
 final _isBarHover = false.obs;
 final _isHeadHover = false.obs;
 final _onlyCover = false.obs;
+const double _menuBtnWidth = 180;
+const double _menuBtnHeight = 48;
+const double _menuBtnRadius = 0;
 
 // --- 频谱图控制器 ---
 class _SpectrogramController extends GetxController {
@@ -965,11 +971,31 @@ class LrcView extends StatelessWidget {
     );
   }
 
+  Widget _createMenuBtn({
+    required String text,
+    IconData? icon,
+    required void Function() fn,
+  }) {
+    return CustomBtn(
+      fn: fn,
+      btnHeight: _menuBtnHeight,
+      btnWidth: _menuBtnWidth,
+      radius: _menuBtnRadius,
+      icon: icon,
+      label: text,
+      contentColor: _themeService.darkTheme.colorScheme.onSecondaryContainer,
+      mainAxisAlignment: MainAxisAlignment.start,
+      backgroundColor: Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     double coverSize = (context.width * 0.3).clamp(300, 500);
     final halfWidth = context.width / 2;
-    final primaryColor = _themeService.darkTheme.colorScheme.primary;
+    final darkColorScheme = _themeService.darkTheme.colorScheme;
+    final primaryColor = darkColorScheme.primary;
 
     final mixColor = Color.lerp(primaryColor, Colors.white, 0.3);
     final mixSubColor = Color.lerp(
@@ -1022,6 +1048,106 @@ class LrcView extends StatelessWidget {
         (context.width * _spectrogramWidthFactor) / spectrogramBarLength;
     final spectrogramPaddingWidth = context.width * _spectrogramWidthFactorDiff;
 
+    final menuController = MenuController();
+
+    Widget createInfoBar({required String text}) {
+      return Container(
+        height: 36,
+        color: darkColorScheme.surface.withValues(alpha: 0.3),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: EdgeInsetsGeometry.symmetric(horizontal: 16),
+            child: Text(text, style: subTitleStyle),
+          ),
+        ),
+      );
+    }
+
+    List<Widget> playListBuilder(MusicCache metadata) {
+      return _audioController.allUserKey.map((v) {
+        return MenuItemButton(
+          onPressed: () {
+            _audioController.addToAudioList(metadata: metadata, userKey: v);
+          },
+          child: Center(child: Text(v.split(TagSuffix.playList)[0])),
+        );
+      }).toList();
+    }
+
+    final menuItem = [
+      Obx(
+        () => createInfoBar(text: "字号 ${_settingController.lrcFontSize.value}"),
+      ),
+      _createMenuBtn(
+        text: "字号+",
+        fn: () {
+          if (_settingController.lrcFontSize.value <
+              SettingController.lrcFontSizeMax) {
+            _settingController.lrcFontSize.value++;
+            _settingController.putCache(isSaveFolders: false);
+          }
+        },
+      ),
+      _createMenuBtn(
+        text: "字号-",
+        fn: () {
+          if (_settingController.lrcFontSize.value >
+              SettingController.lrcFontSizeMin) {
+            _settingController.lrcFontSize.value--;
+            _settingController.putCache(isSaveFolders: false);
+          }
+        },
+      ),
+      Obx(
+        () => createInfoBar(
+          text: "字重 ${_settingController.lrcFontWeight.value * 100 + 100}",
+        ),
+      ),
+      _createMenuBtn(
+        text: "字重+",
+        fn: () {
+          if (_settingController.lrcFontWeight.value <
+              SettingController.lrcFontWeightMax) {
+            _settingController.lrcFontWeight.value++;
+            _settingController.putCache(isSaveFolders: false);
+          }
+        },
+      ),
+      _createMenuBtn(
+        text: "字重-",
+        fn: () {
+          if (_settingController.lrcFontWeight.value >
+              SettingController.lrcFontWeightMin) {
+            _settingController.lrcFontWeight.value--;
+            _settingController.putCache(isSaveFolders: false);
+          }
+        },
+      ),
+      SubmenuButton(
+        submenuIcon: WidgetStatePropertyAll(const SizedBox.shrink()),
+        style: ButtonStyle(
+          padding: WidgetStateProperty.all(
+            const EdgeInsets.symmetric(horizontal: 16),
+          ),
+        ),
+        menuStyle: MenuStyle(
+          alignment: Alignment.topRight,
+          backgroundColor: WidgetStatePropertyAll(
+            darkColorScheme.surfaceContainer.withValues(alpha: 0.6),
+          ),
+        ),
+        menuChildren: playListBuilder(_audioController.currentMetadata.value),
+        child: Text(
+          '添加到歌单',
+          style: generalTextStyle(
+            size: 'md',
+            color: _themeService.darkTheme.colorScheme.onSecondaryContainer,
+          ),
+        ),
+      ),
+    ];
+
     return BlurWithCoverBackground(
       cover: _audioController.currentCover,
       useGradient: false,
@@ -1048,143 +1174,166 @@ class LrcView extends StatelessWidget {
               child: Column(
                 children: [
                   Expanded(
-                    child: Stack(
-                      children: [
-                        // --- 歌词侧 ---
-                        Obx(
-                          () => AnimatedPositioned(
-                            duration: 300.ms,
-                            curve: Curves.fastOutSlowIn,
-                            right: _onlyCover.value ? (-halfWidth) : 0,
-                            width: halfWidth, // 水平约束
-                            top: 0, // 垂直约束
-                            bottom: 0, // 垂直约束
-                            child: AnimatedOpacity(
-                              opacity: _onlyCover.value ? 0.0 : 1.0,
-                              duration: 100.ms,
-                              child: _buildLyricsSide(context),
+                    child: GestureDetector(
+                      onTapDown:
+                          (_) =>
+                              menuController.isOpen
+                                  ? menuController.close()
+                                  : null,
+                      onSecondaryTapDown:
+                          (details) => menuController.open(
+                            position: details.localPosition,
+                          ),
+                      child: MenuAnchor(
+                        consumeOutsideTap: true,
+                        controller: menuController,
+                        style: MenuStyle(
+                          backgroundColor: WidgetStatePropertyAll(
+                            darkColorScheme.surfaceContainer.withValues(
+                              alpha: 0.8,
                             ),
                           ),
                         ),
-                        // --- 封面侧 ---
-                        Obx(
-                          () => AnimatedPositioned(
-                            duration: 300.ms,
-                            curve: Curves.fastOutSlowIn,
-                            left:
-                                _onlyCover.value
-                                    ? halfWidth + (halfWidth - coverSize) / 2
-                                    : (halfWidth - coverSize) / 2,
-                            width: coverSize, // 水平约束 (使用封面自身的尺寸)
-                            top: 0, // 垂直约束
-                            bottom: 0, // 垂直约束
-                            child: _buildCoverSide(
-                              context,
-                              coverSize,
-                              titleStyle,
-                              subTitleStyle,
-                            ),
-                          ),
-                        ),
-
-                        // --- 详情侧 ---
-                        Obx(() {
-                          final titleStyle_ = titleStyle.copyWith(
-                            fontWeight: FontWeight.w100,
-                          );
-                          final metadata =
-                              _audioController.currentMetadata.value;
-                          return AnimatedPositioned(
-                            duration: 300.ms,
-                            curve: Curves.fastOutSlowIn,
-                            left:
-                                _onlyCover.value
-                                    ? (halfWidth - 100) / 4
-                                    : (-halfWidth),
-                            width: halfWidth - 100, // 水平约束
-                            top: 0, // 垂直约束
-                            bottom: 0, // 垂直约束
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              spacing: 14,
-                              children: [
-                                Text(
-                                  "标题：${metadata.title}",
-                                  style: titleStyle_,
+                        menuChildren: menuItem,
+                        child: Stack(
+                          children: [
+                            // --- 歌词侧 ---
+                            Obx(
+                              () => AnimatedPositioned(
+                                duration: 300.ms,
+                                curve: Curves.fastOutSlowIn,
+                                right: _onlyCover.value ? (-halfWidth) : 0,
+                                width: halfWidth, // 水平约束
+                                top: 0, // 垂直约束
+                                bottom: 0, // 垂直约束
+                                child: AnimatedOpacity(
+                                  opacity: _onlyCover.value ? 0.0 : 1.0,
+                                  duration: 100.ms,
+                                  child: _buildLyricsSide(context),
                                 ),
-                                Text(
-                                  "艺术家：${metadata.artist}",
-                                  style: titleStyle_,
-                                ),
-                                Text(
-                                  "专辑：${metadata.album}",
-                                  style: titleStyle_,
-                                ),
-                                Text(
-                                  "流派：${metadata.genre}",
-                                  style: titleStyle_,
-                                ),
-                                Text(
-                                  "时长：${formatTime(totalSeconds: metadata.duration)}",
-                                  style: titleStyle_,
-                                ),
-                                Text(
-                                  "比特率：${metadata.bitrate ?? "UNKNOWN"}kbps",
-                                  style: titleStyle_,
-                                ),
-                                Text(
-                                  "采样率：${metadata.sampleRate ?? "UNKNOWN"}hz",
-                                  style: titleStyle_,
-                                ),
-                                Text(
-                                  "路径：${metadata.path}",
-                                  style: titleStyle_,
-                                  maxLines: 5,
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-
-                        // --- 频谱图 ---
-                        Positioned(
-                          left: 0,
-                          bottom: 0,
-                          child: Obx(() {
-                            final fftList = [..._audioController.audioFFT];
-                            if (fftList.isEmpty ||
-                                !_settingController.showSpectrogram.value) {
-                              return const SizedBox.shrink();
-                            }
-                            return TweenAnimationBuilder<List<double>>(
-                              tween: _FFTListTween(
-                                begin: fftList,
-                                end: fftList,
                               ),
-                              duration: const Duration(milliseconds: 100),
-                              builder: (_, value, _) {
-                                return RepaintBoundary(
-                                  child: CustomPaint(
-                                    willChange: true,
-                                    size: Size(
-                                      context.width,
-                                      _spectrogramHeight,
+                            ),
+                            // --- 封面侧 ---
+                            Obx(
+                              () => AnimatedPositioned(
+                                duration: 300.ms,
+                                curve: Curves.fastOutSlowIn,
+                                left:
+                                    _onlyCover.value
+                                        ? halfWidth +
+                                            (halfWidth - coverSize) / 2
+                                        : (halfWidth - coverSize) / 2,
+                                width: coverSize, // 水平约束 (使用封面自身的尺寸)
+                                top: 0, // 垂直约束
+                                bottom: 0, // 垂直约束
+                                child: _buildCoverSide(
+                                  context,
+                                  coverSize,
+                                  titleStyle,
+                                  subTitleStyle,
+                                ),
+                              ),
+                            ),
+                            // --- 详情侧 ---
+                            Obx(() {
+                              final titleStyle_ = titleStyle.copyWith(
+                                fontWeight: FontWeight.w100,
+                              );
+                              final metadata =
+                                  _audioController.currentMetadata.value;
+                              return AnimatedPositioned(
+                                duration: 300.ms,
+                                curve: Curves.fastOutSlowIn,
+                                left:
+                                    _onlyCover.value
+                                        ? (halfWidth - 100) / 4
+                                        : (-halfWidth),
+                                width: halfWidth - 100, // 水平约束
+                                top: 0, // 垂直约束
+                                bottom: 0, // 垂直约束
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  spacing: 14,
+                                  children: [
+                                    Text(
+                                      "标题：${metadata.title}",
+                                      style: titleStyle_,
                                     ),
-                                    painter: SpectrogramPainter(
-                                      fft: value,
-                                      gradient: spectrogramBarGradient,
-                                      length: spectrogramBarLength,
-                                      barWidth: spectrogramBarWidth,
-                                      paddingWidth: spectrogramPaddingWidth,
+                                    Text(
+                                      "艺术家：${metadata.artist}",
+                                      style: titleStyle_,
                                     ),
+                                    Text(
+                                      "专辑：${metadata.album}",
+                                      style: titleStyle_,
+                                    ),
+                                    Text(
+                                      "流派：${metadata.genre}",
+                                      style: titleStyle_,
+                                    ),
+                                    Text(
+                                      "时长：${formatTime(totalSeconds: metadata.duration)}",
+                                      style: titleStyle_,
+                                    ),
+                                    Text(
+                                      "比特率：${metadata.bitrate ?? "UNKNOWN"}kbps",
+                                      style: titleStyle_,
+                                    ),
+                                    Text(
+                                      "采样率：${metadata.sampleRate ?? "UNKNOWN"}hz",
+                                      style: titleStyle_,
+                                    ),
+                                    Text(
+                                      "路径：${metadata.path}",
+                                      style: titleStyle_,
+                                      maxLines: 5,
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+
+                            // --- 频谱图 ---
+                            Positioned(
+                              left: 0,
+                              bottom: 0,
+                              child: Obx(() {
+                                final fftList = [..._audioController.audioFFT];
+                                if (fftList.isEmpty ||
+                                    !_settingController.showSpectrogram.value) {
+                                  return const SizedBox.shrink();
+                                }
+                                return TweenAnimationBuilder<List<double>>(
+                                  tween: _FFTListTween(
+                                    begin: fftList,
+                                    end: fftList,
                                   ),
+                                  duration: const Duration(milliseconds: 100),
+                                  builder: (_, value, _) {
+                                    return RepaintBoundary(
+                                      child: CustomPaint(
+                                        willChange: true,
+                                        size: Size(
+                                          context.width,
+                                          _spectrogramHeight,
+                                        ),
+                                        painter: SpectrogramPainter(
+                                          fft: value,
+                                          gradient: spectrogramBarGradient,
+                                          length: spectrogramBarLength,
+                                          barWidth: spectrogramBarWidth,
+                                          paddingWidth: spectrogramPaddingWidth,
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 );
-                              },
-                            );
-                          }),
+                              }),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                   MouseRegion(

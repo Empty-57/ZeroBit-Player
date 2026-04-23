@@ -269,10 +269,10 @@ void main() async {
               .map((v) => md5.convert(utf8.encode(v)).toString())
               .toList();
       await musicBox.deleteAll(keysToDelete); //清除不是音频格式的路径，防止路径被污染
+      await syncCache();
     });
   });
 
-  await syncCache();
 
   final AudioController audioController = Get.find<AudioController>();
   final LyricController lyricController = Get.find<LyricController>();
