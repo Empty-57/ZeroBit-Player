@@ -1004,6 +1004,7 @@ class LrcView extends StatelessWidget {
       ctx: context,
       size: 'md',
       color: mixSubColor,
+      weight: FontWeight.w100,
     );
 
     final spectrogramBarGradient = LinearGradient(
@@ -1072,7 +1073,7 @@ class LrcView extends StatelessWidget {
                             curve: Curves.fastOutSlowIn,
                             left:
                                 _onlyCover.value
-                                    ? (halfWidth - coverSize / 2)
+                                    ? halfWidth + (halfWidth - coverSize) / 2
                                     : (halfWidth - coverSize) / 2,
                             width: coverSize, // 水平约束 (使用封面自身的尺寸)
                             top: 0, // 垂直约束
@@ -1085,6 +1086,67 @@ class LrcView extends StatelessWidget {
                             ),
                           ),
                         ),
+
+                        // --- 详情侧 ---
+                        Obx(() {
+                          final titleStyle_ = titleStyle.copyWith(
+                            fontWeight: FontWeight.w100,
+                          );
+                          final metadata =
+                              _audioController.currentMetadata.value;
+                          return AnimatedPositioned(
+                            duration: 300.ms,
+                            curve: Curves.fastOutSlowIn,
+                            left:
+                                _onlyCover.value
+                                    ? (halfWidth - 100) / 4
+                                    : (-halfWidth),
+                            width: halfWidth - 100, // 水平约束
+                            top: 0, // 垂直约束
+                            bottom: 0, // 垂直约束
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              spacing: 14,
+                              children: [
+                                Text(
+                                  "标题：${metadata.title}",
+                                  style: titleStyle_,
+                                ),
+                                Text(
+                                  "艺术家：${metadata.artist}",
+                                  style: titleStyle_,
+                                ),
+                                Text(
+                                  "专辑：${metadata.album}",
+                                  style: titleStyle_,
+                                ),
+                                Text(
+                                  "流派：${metadata.genre}",
+                                  style: titleStyle_,
+                                ),
+                                Text(
+                                  "时长：${formatTime(totalSeconds: metadata.duration)}",
+                                  style: titleStyle_,
+                                ),
+                                Text(
+                                  "比特率：${metadata.bitrate ?? "UNKNOWN"}kbps",
+                                  style: titleStyle_,
+                                ),
+                                Text(
+                                  "采样率：${metadata.sampleRate ?? "UNKNOWN"}hz",
+                                  style: titleStyle_,
+                                ),
+                                Text(
+                                  "路径：${metadata.path}",
+                                  style: titleStyle_,
+                                  maxLines: 5,
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+
                         // --- 频谱图 ---
                         Positioned(
                           left: 0,
