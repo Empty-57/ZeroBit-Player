@@ -250,16 +250,6 @@ List<LyricEntry> _mergeTranslations(
   return mainEntries;
 }
 
-bool isWordByWordLyrics(String lyricsText) {
-  // 正则解析：
-  // \[\d{2}:\d{2}\.\d{2,3}\]  匹配单个时间戳 (例如 [02:46.44])
-  // [^\n\r]*                 匹配任意不包含换行的字符 (确保我们在同一行内搜索)
-  // (...){3}                 让上述组合在同一行内连续匹配到 3 次
-  final RegExp regex = RegExp(r'(\[\d{2}:\d{2}\.\d{2,3}\][^\n\r]*){3}');
-
-  return regex.hasMatch(lyricsText);
-}
-
 LrcType detectLrcType(String lrcContent) {
   final lines = lrcContent.trim();
 
