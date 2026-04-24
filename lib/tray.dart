@@ -22,6 +22,7 @@ class Tray extends GetxController with TrayListener {
 
   @override
   void onTrayIconRightMouseDown() async {
+    await _updateTrayMenu();
     await trayManager.popUpContextMenu();
   }
 
@@ -44,10 +45,7 @@ class Tray extends GetxController with TrayListener {
               _audioController.currentState.value == AudioState.playing
                   ? '暂停'
                   : '播放',
-          onClick: (_) async {
-            await _audioController.audioToggle();
-            await _updateTrayMenu();
-          },
+          onClick: (_) async => await _audioController.audioToggle(),
         ),
         MenuItem(
           key: 'last',

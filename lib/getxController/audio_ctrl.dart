@@ -241,6 +241,10 @@ class AudioController extends GetxController {
 
     if (currentMetadata.value.path.isEmpty) {
       await windowManager.setTitle('ZeroBit Player');
+      try{
+        await trayManager.setToolTip('ZeroBit Player');
+      }catch(_){}
+
       return;
     }
     _isSyncing = true;
@@ -287,7 +291,9 @@ class AudioController extends GetxController {
     }
 
     await windowManager.setTitle(title + artist);
-    await trayManager.setToolTip(title + artist);
+    try{
+       await trayManager.setToolTip(title + artist);
+      }catch(_){}
     try{
       await smtcUpdateMetadata(
       title: currentMetadata.value.title,
