@@ -47,10 +47,10 @@ class SettingController extends GetxController {
 
   final lrcFontWeight = 5.obs; // 0-8  w100-w900
 
-  static const int lrcFontSizeMax=48;
-  static const int lrcFontSizeMin=16;
-  static const int lrcFontWeightMax=8;
-  static const int lrcFontWeightMin=0;
+  static const int lrcFontSizeMax = 48;
+  static const int lrcFontSizeMin = 16;
+  static const int lrcFontWeightMax = 8;
+  static const int lrcFontWeightMin = 0;
 
   final autoDownloadLrc = true.obs;
 
@@ -135,14 +135,16 @@ class SettingController extends GetxController {
   final showTranslate = true.obs;
   final showRoma = false.obs;
 
-  final useExclusiveMode=false.obs;
+  final useExclusiveMode = false.obs;
 
-  final useSpringScroll=false.obs;
+  final useSpringScroll = false.obs;
+
+  final close2Tray = false.obs;
 
   final hotKeyScope =
       false.obs; //false : HotKeyScope.inapp.obs true: HotKeyScope.system.obs
   final hotKeyToggle =
-      HotKey(key: PhysicalKeyboardKey.space, scope: HotKeyScope.inapp).obs;
+      HotKey(key: PhysicalKeyboardKey.arrowUp, scope: HotKeyScope.inapp).obs;
   final hotKeyNext =
       HotKey(key: PhysicalKeyboardKey.arrowRight, scope: HotKeyScope.inapp).obs;
   final hotKeyPrevious =
@@ -152,7 +154,7 @@ class SettingController extends GetxController {
   List<int> modifierNextHidList = [];
   List<int> modifierPreviousHidList = [];
 
-  int hotKeyToggleHid = 0x0007002c;
+  int hotKeyToggleHid = 0x00070052;
   int hotKeyNextHid = 0x0007004f;
   int hotKeyPreviousHid = 0x00070050;
 
@@ -313,7 +315,7 @@ class SettingController extends GetxController {
 
     try {
       toggleKey =
-          (prefs!.getString('toggleHidString') ?? '0x0007002c')
+          (prefs!.getString('toggleHidString') ?? '0x00070052')
               .split('_')
               .map((v) => int.parse(v))
               .toList();
@@ -350,8 +352,9 @@ class SettingController extends GetxController {
 
     hotKeyScope.value = prefs!.getBool('hotKeyScope') ?? false;
     useMesh.value = prefs!.getBool('useMesh') ?? false;
-    useExclusiveMode.value=prefs!.getBool('useExclusiveMode')??false;
-    useSpringScroll.value=prefs!.getBool("useSpringScroll")??false;
+    useExclusiveMode.value = prefs!.getBool('useExclusiveMode') ?? false;
+    useSpringScroll.value = prefs!.getBool("useSpringScroll") ?? false;
+    close2Tray.value = prefs!.getBool("close2Tray") ?? false;
   }
 
   List<HotKeyModifier>? _getModifier(List<int> hidList) {
@@ -531,13 +534,13 @@ class SettingController extends GetxController {
     prefs!.setBool('useMesh', useMesh.value);
   }
 
-  void setExclusiveMode({required bool use})async{
-    final prev=useExclusiveMode.value;
-    useExclusiveMode.value=use;
-    try{
+  void setExclusiveMode({required bool use}) async {
+    final prev = useExclusiveMode.value;
+    useExclusiveMode.value = use;
+    try {
       await switchExclusiveMode(exclusive: useExclusiveMode.value);
-    }catch(e){
-      useExclusiveMode.value=prev;
+    } catch (e) {
+      useExclusiveMode.value = prev;
       showSnackBar(title: 'Err', msg: e.toString());
     }
     if (prefs == null) {
@@ -547,11 +550,19 @@ class SettingController extends GetxController {
     // prefs!.setBool('useExclusiveMode', useExclusiveMode.value);
   }
 
-  void setSpringScroll({required bool use}){
+  void setSpringScroll({required bool use}) {
     useSpringScroll.value = use;
     if (prefs == null) {
       return;
     }
     prefs!.setBool('useSpringScroll', useSpringScroll.value);
+  }
+
+  void setClose2Tray({required bool use}) {
+    close2Tray.value = use;
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setBool('close2Tray', close2Tray.value);
   }
 }

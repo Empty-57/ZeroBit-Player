@@ -5,6 +5,7 @@ import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:get/get.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:transparent_image/transparent_image.dart';
+import 'package:tray_manager/tray_manager.dart';
 import 'package:zerobit_player/HIveCtrl/models/user_playlist_model.dart';
 import 'package:zerobit_player/components/get_snack_bar.dart';
 import 'package:zerobit_player/getxController/folders_list_ctrl.dart';
@@ -286,6 +287,7 @@ class AudioController extends GetxController {
     }
 
     await windowManager.setTitle(title + artist);
+    await trayManager.setToolTip(title + artist);
     try{
       await smtcUpdateMetadata(
       title: currentMetadata.value.title,

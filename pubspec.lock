@@ -447,6 +447,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "0.11.1"
+  menu_base:
+    dependency: transitive
+    description:
+      name: menu_base
+      sha256: "820368014a171bd1241030278e6c2617354f492f5c703d7b7d4570a6b8b84405"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.1.1"
   mesh_gradient:
     dependency: "direct main"
     description:
@@ -718,6 +726,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.4.1"
+  shortid:
+    dependency: transitive
+    description:
+      name: shortid
+      sha256: d0b40e3dbb50497dad107e19c54ca7de0d1a274eb9b4404991e443dadb9ebedb
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.1.2"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -795,6 +811,15 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.0.1"
+  tray_manager:
+    dependency: "direct main"
+    description:
+      path: "packages/tray_manager"
+      ref: main
+      resolved-ref: ac9b6ed498c2df2589254dd496480f4394e8eecf
+      url: "https://github.com/PythiaLaurus/tray_manager.git"
+    source: git
+    version: "0.5.2"
   typed_data:
     dependency: transitive
     description:

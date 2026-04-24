@@ -1353,6 +1353,20 @@ class Setting extends StatelessWidget {
                     context: context,
                   ),
 
+                  _createSetItem(
+                    text: '关闭窗口后在后台运行',
+                    child: _createSwitchBtn(
+                      value:
+                          _settingController.close2Tray,
+                      trackColor: switchTrackColor,
+                      context: context,
+                      fn: (bool value) {
+                        _settingController.setClose2Tray(use: value);
+                      },
+                    ),
+                    context: context,
+                  ),
+
                   const _SetDivider(title: '个性化'),
 
                   _createSetItem(

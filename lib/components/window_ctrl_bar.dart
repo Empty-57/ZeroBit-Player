@@ -66,6 +66,8 @@ class _WindowListener extends GetxController with WindowListener {
 
   @override
   void onWindowClose() async {
+    await smtcClear();
+    await _desktopLyricsSever.close();
     windowManager.removeListener(this);
     super.onClose();
   }
@@ -513,8 +515,10 @@ class WindowControllerBar extends StatelessWidget {
             icon: PhosphorIconsLight.x,
             hoverColor: Colors.red,
             fn: () async {
-              await smtcClear();
-              await _desktopLyricsSever.close();
+              if(_settingController.close2Tray.value){
+                await windowManager.hide();
+                return;
+              }
               await windowManager.close();
             },
             tooltip: "退出",

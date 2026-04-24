@@ -38,6 +38,7 @@ import 'package:zerobit_player/components/window_ctrl_bar.dart';
 import 'package:get/get.dart';
 
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:zerobit_player/tray.dart';
 import 'HIveCtrl/adapters/setting_cache_adapter.dart';
 import 'HIveCtrl/models/music_cache_model.dart';
 import 'components/get_snack_bar.dart';
@@ -197,6 +198,7 @@ void main() async {
   Get.put(ThemeService());
   Get.put(DesktopLyricsSever());
   Get.put(DesktopLyricsSettingController());
+  Get.put(Tray());
 
   final SettingController settingController = Get.find<SettingController>();
 
