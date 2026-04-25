@@ -27,7 +27,7 @@ import 'album_list_crl.dart';
 import 'artist_list_ctrl.dart';
 import 'music_cache_ctrl.dart';
 
-enum AudioState { stop, playing, pause,ended }
+enum AudioState { stop, playing, pause, ended }
 
 class AudioController extends GetxController {
   final currentPath = ''.obs;
@@ -79,19 +79,20 @@ class AudioController extends GetxController {
 
   final currentLyrics = Rxn<ParsedLyricModel>();
 
-  final audioFFT=<double>[].obs;
+  final audioFFT = <double>[].obs;
 
-  final _defaultFFT=List<double>.generate(bassDataFFT512,(i)=>0.0);
+  final _defaultFFT = List<double>.generate(bassDataFFT512, (i) => 0.0);
 
-  static const bassDataFFT512=256;
+  static const bassDataFFT512 = 256;
 
-  final randomPlayedList=<int>[];
+  final randomPlayedList = <int>[];
 
   final navigationIsExtend = true.obs;
 
-  final coverPalette=<Color>[Colors.red,Colors.yellow,Colors.blue,Colors.green].obs;
+  final coverPalette =
+      <Color>[Colors.red, Colors.yellow, Colors.blue, Colors.green].obs;
 
-  SpringController get _springConntroller =>Get.find<SpringController>();
+  SpringController get _springConntroller => Get.find<SpringController>();
 
   /// 同步 `playListCacheItems`
   void syncPlayListCacheItems() {
@@ -141,19 +142,20 @@ class AudioController extends GetxController {
   }
 
   /// 获取音频FFT数据
-  void getAudioFFt()async{
-    if(currentState.value==AudioState.pause||currentState.value==AudioState.stop){
-      if(listEquals(audioFFT, _defaultFFT)){
+  void getAudioFFt() async {
+    if (currentState.value == AudioState.pause ||
+        currentState.value == AudioState.stop) {
+      if (listEquals(audioFFT, _defaultFFT)) {
         return;
       }
-      audioFFT.value=_defaultFFT;
+      audioFFT.value = _defaultFFT;
       return;
     }
 
     final fft = await getChanData();
-      if(fft!=null){
-        audioFFT.value=[...fft];
-      }
+    if (fft != null) {
+      audioFFT.value = [...fft];
+    }
   }
 
   @override
@@ -197,16 +199,17 @@ class AudioController extends GetxController {
         filePath: currentMetadata.value.path,
       );
 
-       _springConntroller.clearState();
+      _springConntroller.clearState();
     });
 
     try {
-      final lastMetadata=_settingController.lastAudioInfo[SettingController
+      final lastMetadata =
+          _settingController.lastAudioInfo[SettingController
                   .lastAudioMetadataKey]
               as MusicCache;
 
-      if(playListCacheItems.isEmpty||lastMetadata.path.isEmpty){
-        return ;
+      if (playListCacheItems.isEmpty || lastMetadata.path.isEmpty) {
+        return;
       }
 
       currentMetadata.value = lastMetadata;
@@ -231,7 +234,6 @@ class AudioController extends GetxController {
     } catch (e) {
       debugPrint(e.toString());
     }
-
   }
 
   Future<void> _syncInfo() async {
@@ -241,9 +243,9 @@ class AudioController extends GetxController {
 
     if (currentMetadata.value.path.isEmpty) {
       await windowManager.setTitle('ZeroBit Player');
-      try{
+      try {
         await trayManager.setToolTip('ZeroBit Player');
-      }catch(_){}
+      } catch (_) {}
 
       return;
     }
@@ -252,11 +254,11 @@ class AudioController extends GetxController {
       await _setThemeColor4Cover();
     }
 
-    if (currentMetadata.value.duration <= 0) {
+    try {
       currentDuration.value = await getLen();
-    } else {
-      currentDuration.value = currentMetadata.value.duration;
-    }
+    } catch (_) {
+      currentDuration.value = 999;
+    } // 防止读取的时间不准
 
     final title = currentMetadata.value.title;
     final artist =
@@ -283,37 +285,38 @@ class AudioController extends GetxController {
       }
     }
 
-    currentSmallCover.value=currentMetadata.value.src??kTransparentImage;
+    currentSmallCover.value = currentMetadata.value.src ?? kTransparentImage;
     if (currentMetadata.value.src == null ||
         currentMetadata.value.src!.isEmpty) {
       currentSmallCover.value =
-          await getCover(path: currentPath.value, sizeFlag: 0) ?? kTransparentImage;
+          await getCover(path: currentPath.value, sizeFlag: 0) ??
+          kTransparentImage;
     }
 
     await windowManager.setTitle(title + artist);
-    try{
-       await trayManager.setToolTip(title + artist);
-      }catch(_){}
-    try{
+    try {
+      await trayManager.setToolTip(title + artist);
+    } catch (_) {}
+    try {
       await smtcUpdateMetadata(
-      title: currentMetadata.value.title,
-      artist: currentMetadata.value.artist,
-      album: currentMetadata.value.album,
-      coverSrc: currentCover.value,
-    );
-    }catch(_){
+        title: currentMetadata.value.title,
+        artist: currentMetadata.value.artist,
+        album: currentMetadata.value.album,
+        coverSrc: currentCover.value,
+      );
+    } catch (_) {
       await smtcClear();
       await initSmtc();
     }
     _isSyncing = false;
   }
 
-  void _setThemeColor({required int color}){
-    _settingController.themeColor.value =color;
-if(!coverPalette.contains(Color(color))){
-  coverPalette.insert(0, Color(_settingController.themeColor.value));
-}
-      _settingController.putCache();
+  void _setThemeColor({required int color}) {
+    _settingController.themeColor.value = color;
+    if (!coverPalette.contains(Color(color))) {
+      coverPalette.insert(0, Color(_settingController.themeColor.value));
+    }
+    _settingController.putCache();
   }
 
   Future<void> _setThemeColor4Cover() async {
@@ -329,10 +332,18 @@ if(!coverPalette.contains(Color(color))){
       size: Size(150, 150),
     );
 
-    if(generator.paletteColors.length>=4){
-      coverPalette.value=generator.paletteColors.map((v)=>v.color).toList().sublist(0,4);
-    }else{
-      coverPalette.addAll([Colors.red,Colors.yellow,Colors.blue,Colors.green]);
+    if (generator.paletteColors.length >= 4) {
+      coverPalette.value = generator.paletteColors
+          .map((v) => v.color)
+          .toList()
+          .sublist(0, 4);
+    } else {
+      coverPalette.addAll([
+        Colors.red,
+        Colors.yellow,
+        Colors.blue,
+        Colors.green,
+      ]);
     }
 
     if (generator.vibrantColor != null) {
@@ -443,7 +454,12 @@ if(!coverPalette.contains(Color(color))){
     }
     try {
       await toggle();
-      await smtcUpdateState(state: currentState.value == AudioState.playing? SMTCState.playing: SMTCState.paused);
+      await smtcUpdateState(
+        state:
+            currentState.value == AudioState.playing
+                ? SMTCState.playing
+                : SMTCState.paused,
+      );
     } catch (e) {
       currentState.value = AudioState.stop;
       showSnackBar(title: "ERR", msg: e.toString());
@@ -510,10 +526,10 @@ if(!coverPalette.contains(Color(color))){
       syncCurrentIndex();
       for (int i = 0; i < 20; i++) {
         final index = Random().nextInt(playListCacheItems.length);
-        if(randomPlayedList.length>=playListCacheItems.length){
+        if (randomPlayedList.length >= playListCacheItems.length) {
           randomPlayedList.clear();
         }
-        if(randomPlayedList.contains(index)){
+        if (randomPlayedList.contains(index)) {
           continue;
         }
         currentIndex.value = index;
