@@ -7,9 +7,10 @@ import 'package:get/get.dart';
 import '../getxController/setting_ctrl.dart';
 import 'get_sort_type.dart';
 
-Future<List<MusicCache>> _sortFilesByModificationTime(
+Future<List<MusicCache>> _sortFilesByTime(
   List<MusicCache> musicCaches, {
   bool descending = true,
+  required Future<DateTime> Function(File) getTime,
 }) async {
   // 创建 MusicCache 和修改时间的配对列表
   List<Map<String, dynamic>> fileInfoList = [];
@@ -19,7 +20,7 @@ Future<List<MusicCache>> _sortFilesByModificationTime(
       final filePath = m.path;
       File file = File(filePath);
       if (await file.exists()) {
-        DateTime modifiedTime = await file.lastModified();
+        DateTime modifiedTime = await getTime(file);
         fileInfoList.add({'cache': m, 'modifiedTime': modifiedTime});
       } else {
         fileInfoList.add({'cache': m, 'modifiedTime': DateTime.now()});
@@ -49,10 +50,21 @@ mixin AudioControllerGenClass {
   Rx<Uint8List> get headCover => kTransparentImage.obs;
 
   void itemReSort({required int type}) async {
-    if (type == 4) {
-      items.value = await _sortFilesByModificationTime(
+    if (type == 4 || type == 5) {
+      items.value = await _sortFilesByTime(
         items,
         descending: _settingController.isReverse.value,
+        getTime: (File file) async {
+          try {
+            if (type == 4) {
+              return file.lastModified();
+            } else {
+              return (await file.stat()).changed;
+            }
+          } catch (_) {
+            return DateTime.now();
+          }
+        },
       );
       return;
     }

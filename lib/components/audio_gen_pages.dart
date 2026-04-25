@@ -470,6 +470,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       2: [SettingController.sortType[2], PhosphorIconsRegular.vinylRecord],
       3: [SettingController.sortType[3], PhosphorIconsRegular.clockCountdown],
       4: [SettingController.sortType[4], PhosphorIconsRegular.clockUser],
+      5: [SettingController.sortType[5], PhosphorIconsRegular.filePlus],
     };
     if (widget.operateArea == OperateArea.artistList) itemMap.remove(1);
     if (widget.operateArea == OperateArea.albumList) itemMap.remove(2);

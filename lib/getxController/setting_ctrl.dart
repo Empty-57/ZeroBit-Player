@@ -166,6 +166,7 @@ class SettingController extends GetxController {
     2: '专辑',
     3: '时长',
     4: '修改时间',
+    5: '创建时间',
   };
 
   static const Map<int, String> playModeMap = {0: '单曲循环', 1: '列表循环', 2: '随机播放'};
