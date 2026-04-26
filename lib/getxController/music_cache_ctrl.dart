@@ -110,10 +110,13 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
       title: data.title??path,
       artist: data.artist??"UNKNOWN",
       album: data.album??"UNKNOWN",
+      trackNumber: oldCache.trackNumber,
       genre: data.genre??"UNKNOWN",
       duration: oldCache.duration,
       bitrate: oldCache.bitrate,
       sampleRate: oldCache.sampleRate,
+      bitDepth: oldCache.bitDepth,
+      channels: oldCache.channels,
       path: oldCache.path,
     );
     _musicCacheBox.put(data: newCache, key: md5.convert(utf8.encode(path)).toString());

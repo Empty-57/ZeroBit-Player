@@ -41,10 +41,13 @@ class AudioController extends GetxController {
         title: '',
         artist: '',
         album: '',
+        trackNumber: 0,
         genre: '',
         duration: 9999,
         bitrate: null,
         sampleRate: null,
+        bitDepth: 16,
+        channels: 1,
         path: '',
         src: null,
       ).obs;

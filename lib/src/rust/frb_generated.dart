@@ -1146,17 +1146,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AudioMetadata dco_decode_audio_metadata(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 8)
-      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    if (arr.length != 11)
+      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
     return AudioMetadata(
       title: dco_decode_String(arr[0]),
       artist: dco_decode_String(arr[1]),
       album: dco_decode_String(arr[2]),
-      genre: dco_decode_String(arr[3]),
-      duration: dco_decode_f_32(arr[4]),
-      bitrate: dco_decode_opt_box_autoadd_u_32(arr[5]),
-      sampleRate: dco_decode_opt_box_autoadd_u_32(arr[6]),
-      path: dco_decode_String(arr[7]),
+      trackNumber: dco_decode_u_32(arr[3]),
+      genre: dco_decode_String(arr[4]),
+      duration: dco_decode_f_32(arr[5]),
+      bitrate: dco_decode_opt_box_autoadd_u_32(arr[6]),
+      sampleRate: dco_decode_opt_box_autoadd_u_32(arr[7]),
+      bitDepth: dco_decode_u_8(arr[8]),
+      channels: dco_decode_u_8(arr[9]),
+      path: dco_decode_String(arr[10]),
     );
   }
 
@@ -1363,19 +1366,25 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_title = sse_decode_String(deserializer);
     var var_artist = sse_decode_String(deserializer);
     var var_album = sse_decode_String(deserializer);
+    var var_trackNumber = sse_decode_u_32(deserializer);
     var var_genre = sse_decode_String(deserializer);
     var var_duration = sse_decode_f_32(deserializer);
     var var_bitrate = sse_decode_opt_box_autoadd_u_32(deserializer);
     var var_sampleRate = sse_decode_opt_box_autoadd_u_32(deserializer);
+    var var_bitDepth = sse_decode_u_8(deserializer);
+    var var_channels = sse_decode_u_8(deserializer);
     var var_path = sse_decode_String(deserializer);
     return AudioMetadata(
       title: var_title,
       artist: var_artist,
       album: var_album,
+      trackNumber: var_trackNumber,
       genre: var_genre,
       duration: var_duration,
       bitrate: var_bitrate,
       sampleRate: var_sampleRate,
+      bitDepth: var_bitDepth,
+      channels: var_channels,
       path: var_path,
     );
   }
@@ -1651,10 +1660,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.title, serializer);
     sse_encode_String(self.artist, serializer);
     sse_encode_String(self.album, serializer);
+    sse_encode_u_32(self.trackNumber, serializer);
     sse_encode_String(self.genre, serializer);
     sse_encode_f_32(self.duration, serializer);
     sse_encode_opt_box_autoadd_u_32(self.bitrate, serializer);
     sse_encode_opt_box_autoadd_u_32(self.sampleRate, serializer);
+    sse_encode_u_8(self.bitDepth, serializer);
+    sse_encode_u_8(self.channels, serializer);
     sse_encode_String(self.path, serializer);
   }
 

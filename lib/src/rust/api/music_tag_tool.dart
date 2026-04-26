@@ -36,20 +36,26 @@ class AudioMetadata {
   final String title;
   final String artist;
   final String album;
+  final int trackNumber;
   final String genre;
   final double duration;
   final int? bitrate;
   final int? sampleRate;
+  final int bitDepth;
+  final int channels;
   final String path;
 
   const AudioMetadata({
     required this.title,
     required this.artist,
     required this.album,
+    required this.trackNumber,
     required this.genre,
     required this.duration,
     this.bitrate,
     this.sampleRate,
+    required this.bitDepth,
+    required this.channels,
     required this.path,
   });
 
@@ -58,10 +64,13 @@ class AudioMetadata {
       title.hashCode ^
       artist.hashCode ^
       album.hashCode ^
+      trackNumber.hashCode ^
       genre.hashCode ^
       duration.hashCode ^
       bitrate.hashCode ^
       sampleRate.hashCode ^
+      bitDepth.hashCode ^
+      channels.hashCode ^
       path.hashCode;
 
   @override
@@ -72,10 +81,13 @@ class AudioMetadata {
           title == other.title &&
           artist == other.artist &&
           album == other.album &&
+          trackNumber == other.trackNumber &&
           genre == other.genre &&
           duration == other.duration &&
           bitrate == other.bitrate &&
           sampleRate == other.sampleRate &&
+          bitDepth == other.bitDepth &&
+          channels == other.channels &&
           path == other.path;
 }
 

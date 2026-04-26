@@ -44,10 +44,13 @@ pub struct AudioMetadata {
     pub title: String,
     pub artist: String,
     pub album: String,
+    pub track_number: u32,
     pub genre: String,
     pub duration: f32,
     pub bitrate: Option<u32>,
     pub sample_rate: Option<u32>,
+    pub bit_depth:u8,
+    pub channels:u8,
     pub path: String,
 }
 
@@ -78,10 +81,13 @@ impl AudioMetadata {
                 .to_string(),
             artist: "UNKNOWN".to_string(),
             album: "UNKNOWN".to_string(),
+            track_number: 0,
             genre: "UNKNOWN".to_string(),
             duration: 0.0,
             bitrate: Some(0),
             sample_rate: Some(0),
+            bit_depth:16,
+            channels:1,
             path: path_.to_string_lossy().to_string(),
         }
     }
@@ -187,6 +193,8 @@ impl AudioMetadata {
                 artist_strs.join("/")
             };
 
+            let track_number=tag.track().unwrap_or(0);
+
             return AudioMetadata {
                 title: tag
                     .title()
@@ -199,10 +207,13 @@ impl AudioMetadata {
                     .to_string(),
                 artist,
                 album: tag.album().unwrap_or(Cow::Borrowed("UNKNOWN")).to_string(),
+                track_number,
                 genre: tag.genre().unwrap_or(Cow::Borrowed("UNKNOWN")).to_string(),
                 duration,
                 bitrate: properties.audio_bitrate(),
                 sample_rate: properties.sample_rate(),
+                bit_depth: properties.bit_depth().unwrap_or(16),
+                channels: properties.channels().unwrap_or(1),
                 path: path_.to_string_lossy().to_string(),
             };
         }
@@ -215,10 +226,13 @@ impl AudioMetadata {
                 .to_string(),
             artist: "UNKNOWN".to_string(),
             album: "UNKNOWN".to_string(),
+            track_number:0,
             genre: "UNKNOWN".to_string(),
             duration,
             bitrate: properties.audio_bitrate(),
             sample_rate: properties.sample_rate(),
+            bit_depth: properties.bit_depth().unwrap_or(16),
+            channels: properties.channels().unwrap_or(1),
             path: path_.to_string_lossy().to_string(),
         }
     }

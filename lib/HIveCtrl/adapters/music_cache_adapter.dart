@@ -12,10 +12,13 @@ class MusicCacheAdapter extends TypeAdapter<MusicCache> {
       title: reader.readString(),
       artist: reader.readString(),
       album: reader.readString(),
+      trackNumber: reader.readUint32(),
       genre: reader.readString(),
       duration: reader.readDouble(),
       bitrate: reader.read(),
       sampleRate: reader.read(),
+      bitDepth: reader.readUint32(),
+      channels: reader.readUint32(),
       path: reader.readString(),
     );
   }
@@ -25,10 +28,13 @@ class MusicCacheAdapter extends TypeAdapter<MusicCache> {
     writer.writeString(obj.title);
     writer.writeString(obj.artist);
     writer.writeString(obj.album);
+    writer.writeUint32(obj.trackNumber);
     writer.writeString(obj.genre);
     writer.writeDouble(obj.duration);
     writer.write(obj.bitrate);
     writer.write(obj.sampleRate);
+    writer.writeUint32(obj.bitDepth);
+    writer.writeUint32(obj.channels);
     writer.writeString(obj.path);
   }
 }

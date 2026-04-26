@@ -1190,19 +1190,25 @@ impl SseDecode for crate::api::music_tag_tool::AudioMetadata {
         let mut var_title = <String>::sse_decode(deserializer);
         let mut var_artist = <String>::sse_decode(deserializer);
         let mut var_album = <String>::sse_decode(deserializer);
+        let mut var_trackNumber = <u32>::sse_decode(deserializer);
         let mut var_genre = <String>::sse_decode(deserializer);
         let mut var_duration = <f32>::sse_decode(deserializer);
         let mut var_bitrate = <Option<u32>>::sse_decode(deserializer);
         let mut var_sampleRate = <Option<u32>>::sse_decode(deserializer);
+        let mut var_bitDepth = <u8>::sse_decode(deserializer);
+        let mut var_channels = <u8>::sse_decode(deserializer);
         let mut var_path = <String>::sse_decode(deserializer);
         return crate::api::music_tag_tool::AudioMetadata {
             title: var_title,
             artist: var_artist,
             album: var_album,
+            track_number: var_trackNumber,
             genre: var_genre,
             duration: var_duration,
             bitrate: var_bitrate,
             sample_rate: var_sampleRate,
+            bit_depth: var_bitDepth,
+            channels: var_channels,
             path: var_path,
         };
     }
@@ -1504,10 +1510,13 @@ impl flutter_rust_bridge::IntoDart for crate::api::music_tag_tool::AudioMetadata
             self.title.into_into_dart().into_dart(),
             self.artist.into_into_dart().into_dart(),
             self.album.into_into_dart().into_dart(),
+            self.track_number.into_into_dart().into_dart(),
             self.genre.into_into_dart().into_dart(),
             self.duration.into_into_dart().into_dart(),
             self.bitrate.into_into_dart().into_dart(),
             self.sample_rate.into_into_dart().into_dart(),
+            self.bit_depth.into_into_dart().into_dart(),
+            self.channels.into_into_dart().into_dart(),
             self.path.into_into_dart().into_dart(),
         ]
         .into_dart()
@@ -1682,10 +1691,13 @@ impl SseEncode for crate::api::music_tag_tool::AudioMetadata {
         <String>::sse_encode(self.title, serializer);
         <String>::sse_encode(self.artist, serializer);
         <String>::sse_encode(self.album, serializer);
+        <u32>::sse_encode(self.track_number, serializer);
         <String>::sse_encode(self.genre, serializer);
         <f32>::sse_encode(self.duration, serializer);
         <Option<u32>>::sse_encode(self.bitrate, serializer);
         <Option<u32>>::sse_encode(self.sample_rate, serializer);
+        <u8>::sse_encode(self.bit_depth, serializer);
+        <u8>::sse_encode(self.channels, serializer);
         <String>::sse_encode(self.path, serializer);
     }
 }
