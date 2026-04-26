@@ -527,15 +527,17 @@ class LrcView extends StatelessWidget {
                   child: GestureDetector(
                     onTap: () => _onlyCover.value = !_onlyCover.value,
                     child: Obx(
-                      () => AnimatedSwitcher(
+                      (){
+                        final cover=_audioController.currentCover.value;
+                        return AnimatedSwitcher(
                         duration: 300.ms,
                         transitionBuilder:
                             (child, anim) =>
                                 FadeTransition(opacity: anim, child: child),
                         child: Image.memory(
-                          _audioController.currentCover.value,
+                          cover,
                           key: ValueKey(
-                            _audioController.currentCover.value.hashCode,
+                            cover,
                           ),
                           cacheWidth: _coverRenderSize,
                           cacheHeight: _coverRenderSize,
@@ -544,7 +546,8 @@ class LrcView extends StatelessWidget {
                           fit: BoxFit.cover,
                           gaplessPlayback: true,
                         ),
-                      ),
+                      );
+                      },
                     ),
                   ),
                 ),

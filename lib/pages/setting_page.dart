@@ -1153,6 +1153,9 @@ class _SetHotKeyToggleDialog extends StatelessWidget {
         await hotKeyManager.register(
           _settingController.hotKeyToggle.value,
           keyDownHandler: (hotKey) {
+            if(SettingController.isTextFieldFocused){
+          return;
+        }
             _audioController.audioToggle();
           },
         );
@@ -1179,6 +1182,9 @@ class _SetHotKeyNextDialog extends StatelessWidget {
         await hotKeyManager.register(
           _settingController.hotKeyNext.value,
           keyDownHandler: (hotKey) {
+            if(SettingController.isTextFieldFocused){
+          return;
+        }
             _audioController.audioToNext();
           },
         );
@@ -1205,6 +1211,9 @@ class _SetHotKeyPreviousDialog extends StatelessWidget {
         await hotKeyManager.register(
           _settingController.hotKeyPrevious.value,
           keyDownHandler: (hotKey) {
+            if(SettingController.isTextFieldFocused){
+          return;
+        }
             _audioController.audioToPrevious();
           },
         );

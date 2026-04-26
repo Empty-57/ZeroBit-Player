@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -185,6 +186,27 @@ class SettingController extends GetxController {
   SharedPreferences? prefs;
 
   AudioController get _audioController => Get.find<AudioController>();
+
+  static bool get isTextFieldFocused {
+    // 获取当前全局正在获取焦点的 FocusNode
+    final FocusNode? primaryFocus = FocusManager.instance.primaryFocus;
+
+    if (primaryFocus == null || !primaryFocus.hasFocus) {
+      return false;
+    }
+
+    // 获取该焦点对应的 Widget 上下文
+    final BuildContext? context = primaryFocus.context;
+    if (context == null) return false;
+
+    // 向上查找是否有 EditableText（TextField 的groupId）
+    final editableText = context.findAncestorWidgetOfExactType<EditableText>();
+    if (editableText != null) {
+      return true;
+    }
+
+    return false;
+  }
 
   Future<void> _initHive() async {
     final cache = _settingCacheBox.get(key: _key);
@@ -401,6 +423,9 @@ class SettingController extends GetxController {
     await hotKeyManager.register(
       hotKeyToggle.value,
       keyDownHandler: (hotKey) {
+        if (isTextFieldFocused) {
+          return;
+        }
         _audioController.audioToggle();
       },
     );
@@ -408,6 +433,9 @@ class SettingController extends GetxController {
     await hotKeyManager.register(
       hotKeyNext.value,
       keyDownHandler: (hotKey) {
+        if (isTextFieldFocused) {
+          return;
+        }
         _audioController.audioToNext();
       },
     );
@@ -415,6 +443,9 @@ class SettingController extends GetxController {
     await hotKeyManager.register(
       hotKeyPrevious.value,
       keyDownHandler: (hotKey) {
+        if (isTextFieldFocused) {
+          return;
+        }
         _audioController.audioToPrevious();
       },
     );
