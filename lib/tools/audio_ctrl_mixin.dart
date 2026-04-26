@@ -108,7 +108,7 @@ mixin AudioControllerGenClass {
       return;
     }
 
-    if (items.length > _audioLimit) {
+    if (items.length < _audioLimit) { // 少于 400 条直接排序，超过才走 Isolate
       items.value = _sortPairs2((
         [...items],
         type,
