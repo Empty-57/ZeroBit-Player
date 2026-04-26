@@ -106,10 +106,13 @@ class SettingController extends GetxController {
       title: '',
       artist: '',
       album: '',
+      trackNumber: 0,
       genre: '',
       duration: 9999,
       bitrate: null,
       sampleRate: null,
+      bitDepth: 16,
+      channels: 1,
       path: '',
       src: null,
     ),
@@ -167,6 +170,7 @@ class SettingController extends GetxController {
     3: '时长',
     4: '修改时间',
     5: '创建时间',
+    6: '音轨号',
   };
 
   static const Map<int, String> playModeMap = {0: '单曲循环', 1: '列表循环', 2: '随机播放'};
@@ -264,10 +268,13 @@ class SettingController extends GetxController {
                 title: '',
                 artist: '',
                 album: '',
+                trackNumber: 0,
                 genre: '',
                 duration: 9999,
                 bitrate: null,
                 sampleRate: null,
+                bitDepth: 16,
+                channels: 1,
                 path: '',
                 src: null,
               );

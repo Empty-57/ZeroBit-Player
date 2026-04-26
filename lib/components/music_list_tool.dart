@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zerobit_player/API/apis.dart';
+import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/getxController/audio_ctrl.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
@@ -82,6 +83,11 @@ class MusicTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           spacing: _itemSpacing,
           children: [
+            if (operateArea == OperateArea.albumList)
+              Text(
+                metadata.trackNumber.toString().padLeft(2, '0'),
+                style: subTextStyle,
+              ),
             cover,
             Expanded(
               flex: 1,
@@ -164,7 +170,8 @@ class _AsyncCoverState extends State<AsyncCover> {
   void didUpdateWidget(AsyncCover oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.music.src != _lastSrc) {
-      setState(() { // 判断数据是否发生更改
+      setState(() {
+        // 判断数据是否发生更改
         _lastSrc = widget.music.src;
         if (_lastSrc == null) {
           _coverFuture = _loadCoverAndSave();

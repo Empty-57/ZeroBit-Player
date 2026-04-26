@@ -1238,6 +1238,7 @@ class LrcView extends StatelessWidget {
                             Obx(() {
                               final titleStyle_ = titleStyle.copyWith(
                                 fontWeight: FontWeight.w100,
+                                fontSize: titleStyle.fontSize!-2
                               );
                               final metadata =
                                   _audioController.currentMetadata.value;
@@ -1254,7 +1255,7 @@ class LrcView extends StatelessWidget {
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  spacing: 14,
+                                  spacing: 10,
                                   children: [
                                     Text(
                                       "标题：${metadata.title}",
@@ -1282,6 +1283,18 @@ class LrcView extends StatelessWidget {
                                     ),
                                     Text(
                                       "采样率：${metadata.sampleRate ?? "UNKNOWN"}hz",
+                                      style: titleStyle_,
+                                    ),
+                                    Text(
+                                      "音轨号：${metadata.trackNumber}",
+                                      style: titleStyle_,
+                                    ),
+                                    Text(
+                                      "位深度：${metadata.bitDepth}",
+                                      style: titleStyle_,
+                                    ),
+                                    Text(
+                                      "通道数：${metadata.channels}",
                                       style: titleStyle_,
                                     ),
                                     Text(

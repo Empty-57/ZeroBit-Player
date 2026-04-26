@@ -468,12 +468,14 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       0: [SettingController.sortType[0], PhosphorIconsRegular.textT],
       1: [SettingController.sortType[1], PhosphorIconsRegular.userFocus],
       2: [SettingController.sortType[2], PhosphorIconsRegular.vinylRecord],
+      6: [SettingController.sortType[6], PhosphorIconsRegular.hash],
       3: [SettingController.sortType[3], PhosphorIconsRegular.clockCountdown],
-      4: [SettingController.sortType[4], PhosphorIconsRegular.clockUser],
+      4: [SettingController.sortType[4], PhosphorIconsRegular.fileMagnifyingGlass],
       5: [SettingController.sortType[5], PhosphorIconsRegular.filePlus],
     };
     if (widget.operateArea == OperateArea.artistList) itemMap.remove(1);
     if (widget.operateArea == OperateArea.albumList) itemMap.remove(2);
+    if (widget.operateArea != OperateArea.albumList) itemMap.remove(6);
 
     return CustomDropdownMenu(
       itemMap: itemMap,

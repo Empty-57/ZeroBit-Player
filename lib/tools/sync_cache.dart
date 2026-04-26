@@ -65,11 +65,14 @@ Future<Map<String, MusicCache>> _fetchMetadataBatch(
         MusicCache(
           artist: meta.artist,
           album: meta.album,
+          trackNumber: meta.trackNumber,
           title: meta.title,
           genre: meta.genre,
           duration: meta.duration,
           bitrate: meta.bitrate,
           sampleRate: meta.sampleRate,
+          bitDepth: meta.bitDepth,
+          channels: meta.channels,
           path: meta.path,
         ),
       );
