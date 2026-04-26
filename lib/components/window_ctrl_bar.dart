@@ -7,6 +7,7 @@ import 'package:zerobit_player/theme_manager.dart';
 import '../desktop_lyrics_sever.dart';
 import '../field/tag_suffix.dart';
 import '../getxController/audio_ctrl.dart';
+import '../getxController/focus_manager_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
 import '../tools/general_style.dart';
 import '../getxController/setting_ctrl.dart';
@@ -17,6 +18,7 @@ final ThemeService _themeService = Get.find<ThemeService>();
 final MusicCacheController _musicCacheController =
     Get.find<MusicCacheController>();
 final AudioController _audioController = Get.find<AudioController>();
+final FocusManagerController _focusManager = Get.put(FocusManagerController());
 
 final DesktopLyricsSever _desktopLyricsSever = Get.find<DesktopLyricsSever>();
 
@@ -143,6 +145,13 @@ class _SearchDialog extends StatelessWidget {
         _musicCacheController.searchResult.clear();
         _musicCacheController.searchText.value = '';
         final searchCtrl = TextEditingController();
+        final searchFocusNode = FocusNode();
+
+        searchFocusNode.addListener(() {
+          _focusManager.setTextFieldFocus(searchFocusNode.hasFocus);
+        });
+        _focusManager.setTextFieldFocus(true);
+
         showDialog(
           barrierDismissible: true,
           context: context,
@@ -172,6 +181,7 @@ class _SearchDialog extends StatelessWidget {
                       TextField(
                         autofocus: true,
                         controller: searchCtrl,
+                        focusNode: searchFocusNode,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(),
                           labelText: '搜索',

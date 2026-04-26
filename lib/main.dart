@@ -317,6 +317,9 @@ void main() async {
 
   try {
     _smtcSub = smtcControlEvents().listen((event) {
+      if (focusManager.isTextFieldFocused.value) {
+        return;
+      }
       switch (event) {
         case SMTCControlEvent.play:
           audioController.audioResume.throttle(ms: 300)();
