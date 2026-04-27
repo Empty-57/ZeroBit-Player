@@ -7,6 +7,8 @@ import 'package:zerobit_player/HIveCtrl/models/music_cache_model.dart';
 import '../tools/general_style.dart';
 import 'package:get/get.dart';
 
+import 'music_list_tool.dart';
+
 const double _itemHeight = 64.0;
 const double _headerHeight = _itemHeight;
 const double _coverSize = 48.0;
@@ -245,18 +247,13 @@ class _SortedListViewState extends State<SortedListView> {
               crossAxisAlignment: CrossAxisAlignment.center,
               spacing: _itemSpacing,
               children: [
-                ClipRRect(
-                  borderRadius: _coverBorderRadius,
-                  child: Image.memory(
-                    item.coverMusic?.src ?? kTransparentImage,
-                    cacheWidth: _coverSmallRenderSize,
-                    cacheHeight: _coverSmallRenderSize,
-                    height: _coverSize,
-                    width: _coverSize,
-                    fit: BoxFit.cover,
-                    gaplessPlayback: true,
-                  ),
-                ),
+                if (item.coverMusic != null)
+                  ClipRRect(
+                    borderRadius: _coverBorderRadius,
+                    child: AsyncCover(music: item.coverMusic!),
+                  )
+                else
+                  SizedBox(height: _coverSize, width: _coverSize),
                 Expanded(
                   child: Text(
                     item.title,
