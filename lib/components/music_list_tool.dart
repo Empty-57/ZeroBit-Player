@@ -218,9 +218,7 @@ class _AsyncCoverState extends State<AsyncCover> {
 
     return ClipRRect(
       borderRadius: _coverBorderRadius,
-      child: SizedBox.square(
-        dimension: widget.size,
-        child: Image.memory(
+      child: Image.memory(
           imageBytes,
           key: ValueKey(imageBytes.hashCode), // 只要图片数据变了，就重建
           width: widget.size,
@@ -230,7 +228,6 @@ class _AsyncCoverState extends State<AsyncCover> {
           cacheHeight: cacheResolution,
           gaplessPlayback: true,
         ),
-      ),
     );
   }
 
