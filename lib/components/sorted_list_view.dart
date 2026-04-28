@@ -16,7 +16,7 @@ const double _itemWidth_2 = _itemWidth + 100;
 
 const double _coverSize = _itemWidth;
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
-const double _itemSpacing = 16.0;
+const double _itemSpacing = 12.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 
 /// 代表一个内容项
