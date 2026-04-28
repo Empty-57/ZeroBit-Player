@@ -8,11 +8,11 @@ import '../tools/general_style.dart';
 import 'package:get/get.dart';
 
 // 内容项宽高
-const double _itemHeight = 200.0;
-const double _itemWidth = 150.0;
+const double _itemHeight = 230.0;
+const double _itemWidth = 180.0;
 
-const double _itemHeight_2 = 64;
-const double _itemWidth_2 = _itemWidth + 100;
+const double _itemHeight_2 = 72;
+const double _itemWidth_2 = 240;
 
 const double _coverSize = _itemWidth;
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
@@ -240,7 +240,7 @@ class _SortedListViewState extends State<SortedListView> {
           SliverToBoxAdapter(
             key: section.key,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: _itemSpacing),
+              padding: const EdgeInsets.only(top: _itemSpacing*2,bottom: _itemSpacing),
               child: Text(section.letter, style: letterTitleStyle),
             ),
           ),
@@ -293,7 +293,7 @@ class _SortedListViewState extends State<SortedListView> {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 1,
+          spacing: 2,
           children: [
             // 封面区域 始终占据正方形空间，保证布局稳定
             AspectRatio(
@@ -303,7 +303,7 @@ class _SortedListViewState extends State<SortedListView> {
                       ? AsyncCover(music: item.coverMusic!, size: _coverSize)
                       : const SizedBox.shrink(),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 3),
             Padding(
               padding: const EdgeInsets.only(left: 4),
               child: Column(
