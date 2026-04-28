@@ -185,7 +185,7 @@ class CustomNavigation extends StatelessWidget {
 
       return AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOutCubic,
+        curve: Curves.easeOutCubic,
         width: targetWidth,
         clipBehavior: Clip.hardEdge, // 增加边缘裁剪
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),

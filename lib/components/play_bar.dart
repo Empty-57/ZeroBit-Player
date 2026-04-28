@@ -99,30 +99,34 @@ class _PlayBarState extends State<PlayBar> {
       size: _ctrlBtnMinSize,
     );
 
-    return Obx((){
+    return Obx(() {
       final screenWidth = context.width;
-    final rightOffset =
-        (screenWidth -
-                (screenWidth > _resViewThresholds
-                    ? _audioController.navigationIsExtend.value
-                        ? _navigationWidth
-                        : _navigationWidthSmall
-                    : _navigationWidthSmall)) /
-            2 -
-        _barWidthHalf;
-      return Positioned(
-      bottom: _bottom,
-      right: rightOffset,
-      child: ClipRRect(
-        borderRadius: _coverBorderRadius,
-        child: RepaintBoundary(child: Column(
-          children: [
-            _buildSlider(context, audioCtrlWidget),
-            _buildPlayBarBody(context, audioCtrlWidget),
-          ],
-        ),),
-      ),
-    );
+      final rightOffset =
+          (screenWidth -
+                  (screenWidth > _resViewThresholds
+                      ? _audioController.navigationIsExtend.value
+                          ? _navigationWidth
+                          : _navigationWidthSmall
+                      : _navigationWidthSmall)) /
+              2 -
+          _barWidthHalf;
+      return AnimatedPositioned(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        bottom: _bottom,
+        right: rightOffset,
+        child: ClipRRect(
+          borderRadius: _coverBorderRadius,
+          child: RepaintBoundary(
+            child: Column(
+              children: [
+                _buildSlider(context, audioCtrlWidget),
+                _buildPlayBarBody(context, audioCtrlWidget),
+              ],
+            ),
+          ),
+        ),
+      );
     });
   }
 
@@ -252,14 +256,15 @@ class _PlayBarState extends State<PlayBar> {
       child: Row(
         spacing: 8,
         children: [
-          Obx(() =>Hero(
+          Obx(
+            () => Hero(
               tag: 'playingCover',
               child: ClipRRect(
                 borderRadius: _coverBorderRadius,
                 child: FadeInImage(
                   placeholder: MemoryImage(kTransparentImage),
                   image: ResizeImage(
-                    MemoryImage( _audioController.currentSmallCover.value),
+                    MemoryImage(_audioController.currentSmallCover.value),
                     width: _coverRenderSize,
                     height: _coverRenderSize,
                   ),
@@ -269,7 +274,8 @@ class _PlayBarState extends State<PlayBar> {
                   fadeInDuration: const Duration(milliseconds: 200),
                 ),
               ),
-            )),
+            ),
+          ),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
