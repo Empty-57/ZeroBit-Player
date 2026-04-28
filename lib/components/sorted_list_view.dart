@@ -269,6 +269,9 @@ class _SortedListViewState extends State<SortedListView> {
             }, childCount: section.items.length),
           ),
         ],
+        SliverToBoxAdapter(
+          child: const SizedBox(height: 128,),
+        )
       ],
     );
   }
@@ -386,7 +389,7 @@ class _SortedListViewState extends State<SortedListView> {
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
         child: ListView(
-          padding: EdgeInsets.zero,
+          padding: EdgeInsets.only(bottom: 64),
           children:
               widget.letterList.map((letter) {
                 return TextButton(
