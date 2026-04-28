@@ -15,7 +15,6 @@ import 'package:zerobit_player/src/rust/api/get_fonts.dart';
 import '../components/get_snack_bar.dart';
 import '../getxController/desktop_lyrics_setting_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
-import '../src/rust/api/bass.dart';
 import '../tools/general_style.dart';
 import '../getxController/setting_ctrl.dart';
 
