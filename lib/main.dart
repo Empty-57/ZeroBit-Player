@@ -112,10 +112,6 @@ Future<Box> openSafeBox<T>(String boxName) async {
 }
 
 void main() async {
-  // ProcessSignal.sigint.watch().listen((signal) async{
-  //   debugPrint("Received SIGTERM: process is exiting.");
-  //   await setExclusiveMode(exclusive: false);
-  // });
 
   if (!await FlutterSingleInstance().isFirstInstance()) {
     await FlutterSingleInstance().focus();
