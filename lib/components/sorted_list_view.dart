@@ -151,7 +151,7 @@ class _SortedListViewState extends State<SortedListView> {
             : _ViewType.artist;
 
     return Container(
-      padding: const EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
+      padding: const EdgeInsets.only(left: 16, top: 32, right: 4, bottom: 16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.only(topLeft: Radius.circular(8)),
@@ -180,6 +180,7 @@ class _SortedListViewState extends State<SortedListView> {
                       itemBackgroundColor,
                     ),
                   ),
+                  const SizedBox(width: 4),
                   _buildLetterIndexer(foregroundColorHover),
                 ],
               );
@@ -269,9 +270,7 @@ class _SortedListViewState extends State<SortedListView> {
             }, childCount: section.items.length),
           ),
         ],
-        SliverToBoxAdapter(
-          child: const SizedBox(height: 128,),
-        )
+        SliverToBoxAdapter(child: const SizedBox(height: 128)),
       ],
     );
   }

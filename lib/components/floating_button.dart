@@ -17,7 +17,8 @@ const double _ctrlBtnMinSize = 40.0;
 const double _itemHeight = 64.0;
 const double _resViewThresholds = 1100;
 
-final MusicCacheController _musicCacheController = Get.find<MusicCacheController>();
+final MusicCacheController _musicCacheController =
+    Get.find<MusicCacheController>();
 final AudioController _audioController = Get.find<AudioController>();
 
 class _FloatingBtn extends StatelessWidget {
@@ -72,18 +73,36 @@ class FloatingButton extends StatelessWidget {
 
     switch (operateArea) {
       case OperateArea.allMusic:
-        return _musicCacheController.items.indexWhere((m) => m.path == currentPath);
+        return _musicCacheController.items.indexWhere(
+          (m) => m.path == currentPath,
+        );
       case OperateArea.playList:
-        return PlayListController.audioListItems.indexWhere((m) => m.path == currentPath);
+        return PlayListController.audioListItems.indexWhere(
+          (m) => m.path == currentPath,
+        );
       case OperateArea.artistList:
-        return ArtistListController.audioListItems.indexWhere((m) => m.path == currentPath);
+        return ArtistListController.audioListItems.indexWhere(
+          (m) => m.path == currentPath,
+        );
       case OperateArea.albumList:
-        return AlbumListController.audioListItems.indexWhere((m) => m.path == currentPath);
+        return AlbumListController.audioListItems.indexWhere(
+          (m) => m.path == currentPath,
+        );
       case OperateArea.foldersList:
-        return FoldersListController.audioListItems.indexWhere((m) => m.path == currentPath);
+        return FoldersListController.audioListItems.indexWhere(
+          (m) => m.path == currentPath,
+        );
       default:
         return -1;
     }
+  }
+
+  void _scrollTo(ScrollController ctrl, double to) {
+    ctrl.animateTo(
+      duration: Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      to,
+    );
   }
 
   void _jumpToCurrent(BuildContext context) {
@@ -93,16 +112,18 @@ class FloatingButton extends StatelessWidget {
 
     // 头部区域的大致高度，用于计算屏幕中间位置
     // 这个值应该与 AudioGenPages 中的头部高度保持一致
-    final double headerOffset = (operateArea == OperateArea.allMusic || operateArea == OperateArea.foldersList) ? 280 : 384;
+    final double headerOffset =
+        (operateArea == OperateArea.allMusic ||
+                operateArea == OperateArea.foldersList)
+            ? 280
+            : 384;
     final double middleOffset = (screenSize.height - headerOffset) / 2;
 
     // --- ListView 定位逻辑 ---
     if (scrollControllerList.hasClients) {
       final double targetOffsetList = (index * _itemHeight - middleOffset)
           .clamp(0.0, scrollControllerList.position.maxScrollExtent);
-      scrollControllerList.jumpTo(
-        targetOffsetList,
-      );
+      _scrollTo(scrollControllerList, targetOffsetList);
     }
 
     // --- 计算 GridView 的定位逻辑 ---
@@ -114,15 +135,13 @@ class FloatingButton extends StatelessWidget {
       final int targetRow = index ~/ crossAxisCount;
 
       // 计算 GridView 中每行的高度（包括间距）
-      const double rowHeight = _itemHeight+8;
+      const double rowHeight = _itemHeight + 8;
 
       // 计算最终的滚动偏移量
       final double targetOffsetGrid = (targetRow * rowHeight - middleOffset)
           .clamp(0.0, scrollControllerGrid.position.maxScrollExtent);
 
-      scrollControllerGrid.jumpTo(
-        targetOffsetGrid,
-      );
+      _scrollTo(scrollControllerGrid, targetOffsetGrid);
     }
   }
 
@@ -141,10 +160,10 @@ class FloatingButton extends StatelessWidget {
             icon: PhosphorIconsFill.arrowLineUp,
             onPressed: () {
               if (scrollControllerList.hasClients) {
-                scrollControllerList.jumpTo(0.0);
+                _scrollTo(scrollControllerList, 0.0);
               }
               if (scrollControllerGrid.hasClients) {
-                scrollControllerGrid.jumpTo(0.0);
+                _scrollTo(scrollControllerGrid, 0.0);
               }
             },
           ),
