@@ -98,11 +98,19 @@ class CustomNavigationBtn extends StatelessWidget {
                         color: Theme.of(context).colorScheme.onSurface,
                         size: getIconSize(size: 'md'),
                       ),
-                      if (context.width > _resViewThresholds && _audioController.navigationIsExtend.value)
-                        Text(
-                          label,
-                          style: generalTextStyle(ctx: context, size: 'md'),
-                        ),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        transitionBuilder: (Widget child, Animation<double> animation) {
+                          return FadeTransition(opacity: animation, child: child);
+                        },
+                        child: (context.width > _resViewThresholds && _audioController.navigationIsExtend.value)
+                            ? Text(
+                                label,
+                                key: const ValueKey('nav_text'),
+                                style: generalTextStyle(ctx: context, size: 'md'),
+                              )
+                            : const SizedBox.shrink(key: ValueKey('nav_hidden')),
+                      ),
                     ],
                   ),
                 ),
@@ -163,15 +171,18 @@ class CustomNavigation extends StatelessWidget {
       color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
     );
     return Obx(
-      (){
-        final isExtend=_audioController.navigationIsExtend.value;
-        return Container(
-        width:
-            context.width > _resViewThresholds
-                ? isExtend
-                    ? _navigationWidth
-                    : _navigationWidthSmall
-                : _navigationWidthSmall,
+      () {
+        final isExtend = _audioController.navigationIsExtend.value;
+        final targetWidth = context.width > _resViewThresholds
+            ? isExtend
+                ? _navigationWidth
+                : _navigationWidthSmall
+            : _navigationWidthSmall;
+
+        return AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOutCubic,
+        width: targetWidth,
         padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainer,
@@ -343,15 +354,22 @@ class CustomNavigation extends StatelessWidget {
                                 size: getIconSize(size: 'md'),
                               ),
 
-                              if (context.width > _resViewThresholds &&
-                                  isExtend)
-                                Text(
-                                  "播放队列",
-                                  style: generalTextStyle(
-                                    ctx: context,
-                                    size: 'md',
-                                  ),
-                                ),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 300),
+                                transitionBuilder: (Widget child, Animation<double> animation) {
+                                  return FadeTransition(opacity: animation, child: child);
+                                },
+                                child: (context.width > _resViewThresholds && isExtend)
+                                    ? Text(
+                                        "播放队列",
+                                        key: const ValueKey('queue_text'),
+                                        style: generalTextStyle(
+                                          ctx: context,
+                                          size: 'md',
+                                        ),
+                                      )
+                                    : const SizedBox.shrink(key: ValueKey('queue_hidden')),
+                              ),
                             ],
                           ),
                         ),
