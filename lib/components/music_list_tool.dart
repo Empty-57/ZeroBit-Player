@@ -145,7 +145,8 @@ const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 
 class AsyncCover extends StatefulWidget {
   final MusicCache music;
-  const AsyncCover({super.key, required this.music});
+  final double size;
+  const AsyncCover({super.key, required this.music, this.size = _coverSize});
 
   @override
   State<AsyncCover> createState() => _AsyncCoverState();
@@ -213,19 +214,22 @@ class _AsyncCoverState extends State<AsyncCover> {
 
   Widget _renderCover(Uint8List imageBytes) {
     final dpr = MediaQuery.devicePixelRatioOf(context);
-    final cacheResolution = (_coverSize * dpr).round();
+    final cacheResolution = (widget.size * dpr).round();
 
     return ClipRRect(
       borderRadius: _coverBorderRadius,
-      child: Image.memory(
-        imageBytes,
-        key: ValueKey(imageBytes.hashCode), // 只要图片数据变了，就重建
-        width: _coverSize,
-        height: _coverSize,
-        fit: BoxFit.cover,
-        cacheWidth: cacheResolution,
-        cacheHeight: cacheResolution,
-        gaplessPlayback: true,
+      child: SizedBox.square(
+        dimension: widget.size,
+        child: Image.memory(
+          imageBytes,
+          key: ValueKey(imageBytes.hashCode), // 只要图片数据变了，就重建
+          width: widget.size,
+          height: widget.size,
+          fit: BoxFit.cover,
+          cacheWidth: cacheResolution,
+          cacheHeight: cacheResolution,
+          gaplessPlayback: true,
+        ),
       ),
     );
   }
@@ -244,8 +248,8 @@ class _AsyncCoverState extends State<AsyncCover> {
           return _renderCover(snapshot.data!);
         }
         return Container(
-          height: _coverSize,
-          width: _coverSize,
+          height: widget.size,
+          width: widget.size,
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: _coverBorderRadius,

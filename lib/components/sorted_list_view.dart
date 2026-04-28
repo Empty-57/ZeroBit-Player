@@ -1,52 +1,54 @@
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
-import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/HIveCtrl/models/music_cache_model.dart';
-
+import '../components/music_list_tool.dart';
+import '../field/app_routes.dart';
 import '../tools/general_style.dart';
 import 'package:get/get.dart';
 
-import 'music_list_tool.dart';
+// 内容项宽高
+const double _itemHeight = 200.0;
+const double _itemWidth = 150.0;
 
-const double _itemHeight = 64.0;
-const double _headerHeight = _itemHeight;
-const double _coverSize = 48.0;
+const double _itemHeight_2 = 64;
+const double _itemWidth_2 = _itemWidth + 100;
+
+const double _coverSize = _itemWidth;
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
-const int _coverSmallRenderSize = 150;
 const double _itemSpacing = 16.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 
-// 使用一个抽象类来代表列表中的所有可能项
-abstract class _RenderItem {
-  double get height;
-}
-
-// 代表一个字母标题，如 'A'
-class _HeaderItem extends _RenderItem {
-  final String letter;
-  _HeaderItem(this.letter);
-
-  @override
-  double get height => _headerHeight;
-}
-
-// 代表一个内容条目，如一个艺术家或专辑
-class _ContentItem extends _RenderItem {
+/// 代表一个内容项
+class _ContentItem {
   final String title;
   final List<String> paths;
-  final MusicCache? coverMusic; // 预先查找好的封面数据源
+  final MusicCache? coverMusic;
 
-  _ContentItem({
+  const _ContentItem({
     required this.title,
     required this.paths,
     this.coverMusic,
   });
-
-  @override
-  double get height => _itemHeight;
 }
 
+/// 代表一个包含 GlobalKey 且按首字母分组的内容项列表
+class _SectionItem {
+  final String letter;
+  final GlobalKey key;
+  final List<_ContentItem> items;
+
+  const _SectionItem({
+    required this.letter,
+    required this.key,
+    required this.items,
+  });
+}
+
+/// 视图类型：专辑 or 艺术家
+enum _ViewType { album, artist }
+
+/// 按照字母排序的可定位列表
 class SortedListView extends StatefulWidget {
   final String title;
   final String subTitle;
@@ -70,77 +72,85 @@ class SortedListView extends StatefulWidget {
 }
 
 class _SortedListViewState extends State<SortedListView> {
-  late final ScrollController _scrollController;
+  // 以首字母为键、以 GlobalKey 为值的映射，用于定位滚动
+  final Map<String, GlobalKey> _sectionKeys = {};
 
-  @override
-  void initState() {
-    super.initState();
-    _scrollController = ScrollController();
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  // 这个方法将原始数据转换为高效的渲染模型
-  ({List<_RenderItem> flattenedList, Map<String, double> letterOffsets}) _processData(
+  /// 处理已排序的音频数据，返回 _SectionItem 列表；
+  List<_SectionItem> _processData(
     SplayTreeMap<String, List<String>> dict,
     List<MusicCache> allItems,
   ) {
-    final List<_RenderItem> list = [];
-    final Map<String, double> offsets = {};
-    double currentOffset = 0.0;
+    // 创建以 path 为键、以 MusicCache 为值的 map
+    final Map<String, MusicCache> itemMap = {
+      for (final item in allItems) item.path: item,
+    };
 
-    // 创建一个从 path到MusicCache的映射，用于O(1)时间复杂度的快速查找
-    final Map<String, MusicCache> itemMap = {for (var item in allItems) item.path: item};
+    // 以首字母为键、以内容项列表为值的分组 map
+    final Map<String, List<_ContentItem>> grouped = {};
 
-    for (var entry in dict.entries) {
+    for (final entry in dict.entries) {
       final key = entry.key;
-      final paths = entry.value;
-      final letter = key[0];
+      if (key.isEmpty) continue;
 
-      // 如果是新的字母，添加一个 Header
-      if (offsets[letter] == null) {
-        offsets[letter] = currentOffset;
-        final header = _HeaderItem(letter);
-        list.add(header);
-        currentOffset += header.height;
-      }
+      final letter = key[0]; // 首字母
+      final title = key.substring(1); // 标题
+      final paths = entry.value; // 音频路径列表
 
-      // 预先查找封面，避免在 build 中执行高成本操作
-      MusicCache? coverMusic;
-      if (paths.isNotEmpty) {
-        // 使用Map进行O(1)查找，而不是List.firstWhere()的O(N)查找
-        coverMusic = itemMap[paths[0]];
-      }
+      // 取第一首作为封面
+      final coverMusic = paths.isNotEmpty ? itemMap[paths[0]] : null;
 
-      final content = _ContentItem(
-        title: key.substring(1),
-        paths: paths,
-        coverMusic: coverMusic,
-      );
-      list.add(content);
-      currentOffset += content.height;
+      grouped
+          .putIfAbsent(letter, () => [])
+          .add(
+            _ContentItem(title: title, paths: paths, coverMusic: coverMusic),
+          );
     }
-    return (flattenedList: list, letterOffsets: offsets);
+
+    // 清理已失效的 section key，避免 Map 无限膨胀
+    _sectionKeys.removeWhere((k, _) => !grouped.containsKey(k));
+
+    return grouped.entries.map((e) {
+      final sectionKey = _sectionKeys.putIfAbsent(e.key, () => GlobalKey());
+      return _SectionItem(letter: e.key, key: sectionKey, items: e.value);
+    }).toList();
+  }
+
+  // 根据首字母找到对应 GlobalKey 并滚动到该位置
+  Future<void> _scrollToLetter(String letter) async {
+    final ctx = _sectionKeys[letter]?.currentContext;
+    if (ctx == null) return;
+
+    await Scrollable.ensureVisible(
+      ctx,
+      alignment: 0.0,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // --- 样式定义 ---
     final letterTitleStyle = generalTextStyle(ctx: context, size: 'xl');
     final titleStyle = generalTextStyle(ctx: context, size: 'md');
     final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-    final foregroundColorHover = WidgetStateProperty.resolveWith<Color>((states) {
+
+    final foregroundColorHover = WidgetStateProperty.resolveWith<Color>((
+      states,
+    ) {
       return states.contains(WidgetState.hovered)
           ? Theme.of(context).colorScheme.primary
           : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8);
     });
 
+    final itemBackgroundColor = Theme.of(context).colorScheme.surfaceContainer;
+
+    // 根据路由判断视图类型
+    final viewType =
+        widget.toRoute == AppRoutes.albumList
+            ? _ViewType.album
+            : _ViewType.artist;
+
     return Container(
-      alignment: Alignment.centerLeft,
       padding: const EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -148,161 +158,260 @@ class _SortedListViewState extends State<SortedListView> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 16,
         children: [
-          // --- 头部信息 ---
           _buildHeader(),
-          // --- 列表和索引条 ---
+          const SizedBox(height: 16),
           Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Obx(() {
-                    // --- 调用数据预处理 ---
-                    final processed = _processData(widget.sortedDict.value, widget.items);
-                    final flattenedList = processed.flattenedList;
-                    final letterOffsets = processed.letterOffsets;
+            child: Obx(() {
+              final sections = _processData(
+                widget.sortedDict.value,
+                widget.items,
+              );
 
-                    return Row(
-                      children: [
-                        // --- 主列表 ---
-                        Expanded(
-                          child: _buildMainList(flattenedList, letterTitleStyle, titleStyle, subStyle),
-                        ),
-                        // --- 字母索引条 ---
-                        _buildLetterIndexer(letterOffsets, foregroundColorHover),
-                      ],
-                    );
-                  }),
-                ),
-              ],
-            ),
+              return Row(
+                children: [
+                  Expanded(
+                    child: _buildMainList(
+                      sections,
+                      viewType,
+                      letterTitleStyle,
+                      titleStyle,
+                      subStyle,
+                      itemBackgroundColor,
+                    ),
+                  ),
+                  _buildLetterIndexer(foregroundColorHover),
+                ],
+              );
+            }),
           ),
         ],
       ),
     );
   }
 
+  /// 头部信息
   Widget _buildHeader() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      spacing: 8,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 8,
-          children: [
-            Text(
-              widget.title,
-              style: generalTextStyle(ctx: context, size: 'title', weight: FontWeight.w600),
-            ),
-            Obx(() => Text(
-              widget.subTitle,
-              style: generalTextStyle(ctx: context, size: 'md'),
-            )),
-          ],
+        Text(
+          widget.title,
+          style: generalTextStyle(
+            ctx: context,
+            size: 'title',
+            weight: FontWeight.w600,
+          ),
+        ),
+        Obx(
+          () => Text(
+            widget.subTitle,
+            style: generalTextStyle(ctx: context, size: 'md'),
+          ),
         ),
       ],
     );
   }
 
+  /// 主列表：按首字母分组的 SliverGrid
   Widget _buildMainList(
-    List<_RenderItem> flattenedList,
+    List<_SectionItem> sections,
+    _ViewType viewType,
     TextStyle letterTitleStyle,
     TextStyle titleStyle,
     TextStyle subStyle,
+    Color itemBackgroundColor,
   ) {
-    if (flattenedList.isEmpty) {
-      return Center(child: Text("无内容",style: generalTextStyle(ctx: context, size: '2xl')));
+    if (sections.isEmpty) {
+      return Center(
+        child: Text('无内容', style: generalTextStyle(ctx: context, size: '2xl')),
+      );
     }
 
-    return ListView.builder(
-      controller: _scrollController,
-      itemCount: flattenedList.length,
-      itemExtentBuilder: (index, dimensions) => flattenedList[index].height,
-      padding: const EdgeInsets.only(bottom: _itemHeight * 2),
-      itemBuilder: (context, index) {
-        final item = flattenedList[index];
-        if (item is _HeaderItem) {
-          return Container(
-            alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.only(left: _itemSpacing),
-            child: Text(item.letter, style: letterTitleStyle),
-          );
-        } else if (item is _ContentItem) {
-          return TextButton(
-            onPressed: () {
-              Get.toNamed(
-                widget.toRoute,
-                arguments: {'pathList': item.paths, 'title': item.title},
-                id: 1,
-              );
-            },
-            style: TextButton.styleFrom(
-              shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
-              fixedSize: const Size.fromHeight(_itemHeight),
-              padding: const EdgeInsets.symmetric(horizontal: _itemSpacing),
+    final isAlbum = viewType == _ViewType.album;
+    final maxCrossAxisExtent = isAlbum ? _itemWidth : _itemWidth_2;
+    final mainAxisExtent = isAlbum ? _itemHeight : _itemHeight_2;
+
+    return CustomScrollView(
+      slivers: [
+        for (final section in sections) ...[
+          // 首字母标题
+          SliverToBoxAdapter(
+            key: section.key,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: _itemSpacing),
+              child: Text(section.letter, style: letterTitleStyle),
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              spacing: _itemSpacing,
-              children: [
-                if (item.coverMusic != null)
-                  ClipRRect(
-                    borderRadius: _coverBorderRadius,
-                    child: AsyncCover(music: item.coverMusic!),
+          ),
+          // 内容网格
+          SliverGrid(
+            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: maxCrossAxisExtent,
+              mainAxisExtent: mainAxisExtent,
+              crossAxisSpacing: _itemSpacing,
+              mainAxisSpacing: _itemSpacing,
+            ),
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final item = section.items[index];
+              return isAlbum
+                  ? _buildAlbumTile(
+                    item,
+                    titleStyle,
+                    subStyle,
+                    itemBackgroundColor,
                   )
-                else
-                  SizedBox(height: _coverSize, width: _coverSize),
-                Expanded(
-                  child: Text(
-                    item.title,
-                    style: titleStyle,
-                    softWrap: false,
-                    overflow: TextOverflow.fade,
-                    maxLines: 1,
-                  ),
-                ),
-                Text("共${item.paths.length}首作品", style: subStyle),
-              ],
-            ),
-          );
-        }
-        return const SizedBox.shrink();
-      },
+                  : _buildArtistTile(
+                    item,
+                    titleStyle,
+                    subStyle,
+                    itemBackgroundColor,
+                  );
+            }, childCount: section.items.length),
+          ),
+        ],
+      ],
     );
   }
 
-  Widget _buildLetterIndexer(
-    Map<String, double> letterOffsets,
-    WidgetStateProperty<Color?> foregroundColorHover,
+  /// album_view 样式
+  Widget _buildAlbumTile(
+    _ContentItem item,
+    TextStyle titleStyle,
+    TextStyle subStyle,
+    Color itemBackgroundColor,
   ) {
+    return Tooltip(
+      message: item.title,
+      child: TextButton(
+        onPressed: () => _navigateTo(item),
+        style: TextButton.styleFrom(
+          shape: const RoundedRectangleBorder(borderRadius: _coverBorderRadius),
+          padding: EdgeInsets.zero,
+          backgroundColor: itemBackgroundColor,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 1,
+          children: [
+            // 封面区域 始终占据正方形空间，保证布局稳定
+            AspectRatio(
+              aspectRatio: 1,
+              child:
+                  item.coverMusic != null
+                      ? AsyncCover(music: item.coverMusic!, size: _coverSize)
+                      : const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 2),
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: titleStyle,
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.fade,
+                  ),
+                  Text('共${item.paths.length}首', style: subStyle),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// artist_view 样式
+  Widget _buildArtistTile(
+    _ContentItem item,
+    TextStyle titleStyle,
+    TextStyle subStyle,
+    Color itemBackgroundColor,
+  ) {
+    const double coverSize = _itemHeight_2;
+    return Tooltip(
+      message: item.title,
+      child: TextButton(
+        onPressed: () => _navigateTo(item),
+        style: TextButton.styleFrom(
+          shape: const RoundedRectangleBorder(borderRadius: _coverBorderRadius),
+          padding: EdgeInsets.zero,
+          backgroundColor: itemBackgroundColor,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          spacing: 1,
+          children: [
+            // 封面区域 固定正方形
+            SizedBox.square(
+              dimension: coverSize,
+              child:
+                  item.coverMusic != null
+                      ? AsyncCover(music: item.coverMusic!, size: coverSize)
+                      : const SizedBox.shrink(),
+            ),
+            const SizedBox(width: 2),
+            // 文字区域 占满剩余宽度，防止文字溢出
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      style: titleStyle,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.fade,
+                    ),
+                    Text('共${item.paths.length}首', style: subStyle),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 首字母索引条
+  Widget _buildLetterIndexer(WidgetStateProperty<Color?> foregroundColorHover) {
     return SizedBox(
       width: 24,
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
         child: ListView(
-          padding: const EdgeInsets.only(bottom:  _itemHeight * 2),
-          children: widget.letterList.map((letter) {
-            return TextButton(
-              onPressed: () {
-                final offset = letterOffsets[letter];
-                if (offset != null) {
-                  _scrollController.jumpTo(
-                    offset.clamp(0, _scrollController.position.maxScrollExtent),
-                  );
-                }
-              },
-              style: ButtonStyle(
-                foregroundColor: foregroundColorHover,
-                padding: const WidgetStatePropertyAll(EdgeInsets.zero),
-                shape: const WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: _borderRadius)),
-              ),
-              child: Text(letter, style: const TextStyle(fontSize: 11)),
-            );
-          }).toList(),
+          padding: EdgeInsets.zero,
+          children:
+              widget.letterList.map((letter) {
+                return TextButton(
+                  onPressed: () => _scrollToLetter(letter),
+                  style: ButtonStyle(
+                    foregroundColor: foregroundColorHover,
+                    padding: const WidgetStatePropertyAll(EdgeInsets.zero),
+                    shape: const WidgetStatePropertyAll(
+                      RoundedRectangleBorder(borderRadius: _borderRadius),
+                    ),
+                  ),
+                  child: Text(letter, style: const TextStyle(fontSize: 11)),
+                );
+              }).toList(),
         ),
       ),
+    );
+  }
+
+  /// 导航到详情页 传入路径列表和标题
+  void _navigateTo(_ContentItem item) {
+    Get.toNamed(
+      widget.toRoute,
+      arguments: {'pathList': item.paths, 'title': item.title},
+      id: 1,
     );
   }
 }
