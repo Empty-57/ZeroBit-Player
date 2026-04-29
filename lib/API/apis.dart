@@ -5,6 +5,8 @@ import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:get/get.dart' hide Response;
 
 import '../getxController/setting_ctrl.dart';
+import '../tools/krc_decryptor.dart';
+import '../tools/lrcTool/krc_extract_decode.dart';
 import '../tools/lrcTool/lyric_model.dart';
 import '../tools/qrc_decryptor.dart';
 
@@ -13,6 +15,10 @@ const _neLrcUrl = "https://music.163.com/api/song/lyric";
 
 const _qmSearchUrl = "https://u.y.qq.com/cgi-bin/musicu.fcg";
 const _qmLrcUrl = "https://c.y.qq.com/qqmusic/fcgi-bin/lyric_download.fcg";
+
+const _kgSearchUrl = "http://mobilecdn.kugou.com/api/v3/search/song";
+const _kgSearchLrcUrl = "http://lyrics.kugou.com/search";
+const _kgDownloadLrcUrl = "http://lyrics.kugou.com/download";
 
 const _coverSize = 800; // 150, 300, 500, 800
 
@@ -40,7 +46,8 @@ final _qmDio = Dio(
 
 final SettingController _settingController = Get.find<SettingController>();
 
-Map<String, String?> parseLyricByRegex(String rawXml) {
+/// 提取 qrc 正文 翻译 罗马音
+Map<String, String?> _qrcParseLyricByRegex(String rawXml) {
   String? extract(String tagName) {
     // 匹配标签内的 CDATA 内容
     // 允许标签有属性，匹配 <tag ...><![CDATA[内容]]></tag>
@@ -163,7 +170,7 @@ Future<Get4NetLrcModel?> _qmGetLrc({required int id}) async {
   }
 
   //Original、ts、roma
-  final data = parseLyricByRegex(body);
+  final data = _qrcParseLyricByRegex(body);
   String? encryptedOriginal = data['lyric'];
   String? encryptedTranslate = data['trans'];
   String? decryptedRoma = data['roma'];
@@ -385,14 +392,185 @@ Future<List<SearchLrcModel?>> _neGetLrcBySearch({
   }
 }
 
+Future<dynamic> _kgSearchByText({
+  required String text,
+  required int offset,
+  required int limit,
+}) async {
+  final response = await _dio.get(
+    _kgSearchUrl,
+    queryParameters: {
+      "format": "json",
+      "keyword": text,
+      "page": offset,
+      "pagesize": limit,
+    },
+    options: Options(responseType: ResponseType.plain),
+  );
+  if (response.data != null) {
+    return jsonDecode(response.data);
+  }
+  return null;
+}
+
+Future<dynamic> _kgSaveCoverByText({
+  required String text,
+  required String songPath,
+  bool? saveCover = true,
+}) async {
+  String? picUrl;
+  try {
+    final Map<String, dynamic> data = await _kgSearchByText(
+      text: text,
+      offset: 1,
+      limit: 1,
+    );
+    final songList = data["data"]?["info"];
+    if (songList is! List || songList.isEmpty) {
+      return null;
+    }
+
+    final groupList = songList.first['group'];
+
+    if (groupList is! List || groupList.isEmpty) {
+      return null;
+    }
+
+    final unionCover = groupList.first['trans_param']?['union_cover'];
+
+    if (unionCover != null && unionCover.isNotEmpty) {
+      picUrl = unionCover.toString().replaceFirst("{size}", "$_coverSize");
+      return await _saveNetCover(
+        songPath: songPath,
+        picUrl: picUrl,
+        saveCover: saveCover!,
+      );
+    }
+  } catch (e) {
+    debugPrint('$e,$picUrl');
+  }
+  return null;
+}
+
+Future<Get4NetLrcModel?> _kgGetLrc({required String id}) async {
+  final response = await _dio.get(
+    _kgSearchLrcUrl,
+    queryParameters: {"ver": '1', "man": 'yes', "client": "pc", "hash": id},
+    options: Options(responseType: ResponseType.plain),
+  );
+
+  final nullModel = Get4NetLrcModel(
+    lrc: null,
+    verbatimLrc: null,
+    translate: null,
+    type: LyricFormat.krc,
+  );
+
+  if (response.data == null) {
+    return nullModel;
+  }
+
+  final candidate = jsonDecode(response.data)?['candidates'];
+
+  if (candidate is! List || candidate.isEmpty) {
+    return nullModel;
+  }
+
+  final String? id_ = candidate.first['id'];
+  final String? accesskey = candidate.first['accesskey'];
+
+  if (id_ == null || accesskey == null || id_.isEmpty || accesskey.isEmpty) {
+    return nullModel;
+  }
+
+  final lyricResponse = await _dio.get(
+    _kgDownloadLrcUrl,
+    queryParameters: {
+      "ver": '1',
+      "client": "pc",
+      "id": id_,
+      "accesskey": accesskey,
+      'fmt': 'krc',
+      'charset': 'utf8',
+    },
+    options: Options(responseType: ResponseType.plain),
+  );
+
+  if (lyricResponse.data == null) {
+    return nullModel;
+  }
+
+  final String? content = jsonDecode(lyricResponse.data)?['content'];
+
+  if (content == null || content.isEmpty) {
+    return nullModel;
+  }
+
+  final String? contentcDecrypted = decodeKrc(content);
+
+  final String? translate = krcExtractAndDecodeLanguage(contentcDecrypted);
+
+  return Get4NetLrcModel(
+    lrc: null,
+    verbatimLrc: contentcDecrypted,
+    translate: translate,
+    type: LyricFormat.krc,
+  );
+}
+
+Future<List<SearchLrcModel?>> _kgGetLrcBySearch({
+  required String text,
+  required int offset,
+  required int limit,
+}) async {
+  final List<SearchLrcModel> lrcData = [];
+  try {
+    final Map<String, dynamic> data = await _kgSearchByText(
+      text: text,
+      offset: offset,
+      limit: limit,
+    );
+    final songList = data["data"]?["info"];
+    if (songList is! List || songList.isEmpty) {
+      return [];
+    }
+
+    for (final item in songList) {
+      final data = await _kgGetLrc(id: item["hash"]);
+      if (data == null) {
+        continue;
+      }
+
+      lrcData.add(
+        SearchLrcModel(
+          title: item["songname"] ?? 'UNKNOWN',
+          artist: item["singername"] ?? 'UNKNOWN',
+          id: item["hash"] ?? 'UNKNOWN',
+          lyric: data,
+        ),
+      );
+    }
+    return lrcData;
+  } catch (err) {
+    debugPrint(err.toString());
+    return lrcData;
+  }
+}
+
 Future<dynamic> saveCoverByText({
   required String text,
   required String songPath,
   bool? saveCover = true,
 }) async {
-  return await [_qmSaveCoverByText, _neSaveCoverByText][_settingController
-      .apiIndex
-      .value](text: text, songPath: songPath, saveCover: saveCover);
+  return await [
+    _qmSaveCoverByText,
+    _neSaveCoverByText,
+    _kgSaveCoverByText,
+  ][_settingController.apiIndex.value](
+    text: text,
+    songPath: songPath,
+    saveCover: saveCover,
+  );
 }
 
 Future<List<SearchLrcModel?>> getLrcBySearch({
@@ -400,7 +578,13 @@ Future<List<SearchLrcModel?>> getLrcBySearch({
   required int offset,
   required int limit,
 }) async {
-  return await [_qmGetLrcBySearch, _neGetLrcBySearch][_settingController
-      .apiIndex
-      .value](text: text, offset: offset, limit: limit);
+  return await [
+    _qmGetLrcBySearch,
+    _neGetLrcBySearch,
+    _kgGetLrcBySearch,
+  ][_settingController.apiIndex.value](
+    text: text,
+    offset: offset,
+    limit: limit,
+  );
 }

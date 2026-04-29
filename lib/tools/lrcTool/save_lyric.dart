@@ -6,8 +6,11 @@ import 'lyric_model.dart';
 
 const String lyricTsSuffix = LyricFormat.lrc;
 
-Future<void> saveLyrics({required String? path ,required Get4NetLrcModel? lrcData}) async {
-  if (lrcData==null || path == null || path.isEmpty) {
+Future<void> saveLyrics({
+  required String? path,
+  required Get4NetLrcModel? lrcData,
+}) async {
+  if (lrcData == null || path == null || path.isEmpty) {
     return;
   }
 
@@ -15,21 +18,27 @@ Future<void> saveLyrics({required String? path ,required Get4NetLrcModel? lrcDat
     final String dir = p.dirname(path);
     final String baseName = p.basenameWithoutExtension(path);
 
-    final String lyricType = lrcData.type.startsWith('.') ? lrcData.type:'.${lrcData.type}';
-    final String? lrcContent = lrcData.verbatimLrc??lrcData.lrc;
+    final String lyricType =
+        lrcData.type.startsWith('.') ? lrcData.type : '.${lrcData.type}';
+    final String? lrcContent = lrcData.verbatimLrc ?? lrcData.lrc;
 
-    if (lrcContent==null || lrcContent.isEmpty) {
+    if (lrcContent == null || lrcContent.isEmpty) {
       return;
     }
 
     final String? translateContent = lrcData.translate;
 
     final deleteQrcFile = File(p.join(dir, '$baseName${LyricFormat.qrc}'));
+    final deleteKrcFile = File(p.join(dir, '$baseName${LyricFormat.krc}'));
     final deleteYrcFile = File(p.join(dir, '$baseName${LyricFormat.yrc}'));
     final deleteLrcFile = File(p.join(dir, '$baseName${LyricFormat.lrc}'));
 
     if (await deleteQrcFile.exists()) {
       await deleteQrcFile.delete();
+    }
+
+    if (await deleteKrcFile.exists()) {
+      await deleteKrcFile.delete();
     }
 
     if (await deleteYrcFile.exists()) {
@@ -43,11 +52,12 @@ Future<void> saveLyrics({required String? path ,required Get4NetLrcModel? lrcDat
     final newLrcFile = File(p.join(dir, '$baseName$lyricType'));
     await newLrcFile.writeAsString(lrcContent);
 
-    if (translateContent != null && translateContent.isNotEmpty) {
+    if (translateContent != null &&
+        translateContent.isNotEmpty &&
+        (lyricType == LyricFormat.qrc || lyricType == LyricFormat.yrc)) {
       final newTranslateFile = File(p.join(dir, '$baseName$lyricTsSuffix'));
       await newTranslateFile.writeAsString(translateContent);
     }
-
   } catch (err) {
     debugPrint('saveLyrics err: $err');
   }

@@ -7,11 +7,13 @@ import 'package:zerobit_player/tools/lrcTool/parse_lyrics.dart';
 
 import '../../src/rust/api/music_tag_tool.dart';
 import '../qrc_decryptor.dart';
+import 'krc_extract_decode.dart';
 import 'lyric_model.dart';
 
 /// 支持的歌词扩展名
 const List<String> _lyricExts = [
   LyricFormat.qrc,
+  LyricFormat.krc,
   LyricFormat.yrc,
   LyricFormat.lrc,
 ];
@@ -112,8 +114,12 @@ Future<_LyricModel?> _getLyrics({String? filePath}) async {
         type = LyricFormat.byWordLrc;
       }
 
-      if (type != LyricFormat.lrc) {
+      if (type == LyricFormat.qrc || type == LyricFormat.yrc) {
         lyricsTs = await _safeReadFile(vtsPath);
+      }
+
+      if (type == LyricFormat.krc) {
+        lyricsTs = krcExtractAndDecodeLanguage(lyrics);
       }
 
       return _LyricModel(lyrics: lyrics, lyricsTs: lyricsTs, type: type);
@@ -193,7 +199,8 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
     );
   }
   if (lyricsData.type == LyricFormat.yrc ||
-      lyricsData.type == LyricFormat.qrc) {
+      lyricsData.type == LyricFormat.qrc ||
+      lyricsData.type == LyricFormat.krc) {
     return ParsedLyricModel(
       parsedLrc: parseKaraOkLyric(
         lyricData: lyricsData.lyrics,

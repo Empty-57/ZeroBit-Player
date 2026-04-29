@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -239,9 +241,26 @@ class _SearchResultItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final v = lyricInfo;
     final String? verbatimLrc = v.lyric!.verbatimLrc;
-    final String? ts = v.lyric!.translate;
+    String? ts = v.lyric!.translate;
     final String title = v.title;
     final String artist = v.artist;
+
+    if (v.lyric!.type == LyricFormat.krc && ts != null && ts.isNotEmpty) {
+      try {
+        final content = jsonDecode(ts);
+
+        for (final item in content['content']) {
+          if (item['type'] == 1) {
+            String str = '';
+            str = (item['lyricContent'] as List).fold(
+              '',
+              (s, l) => '${'${s.trim()}\n'}${(l as List).join()}',
+            );
+            ts = str;
+          }
+        }
+      } catch (_) {}
+    }
 
     return TextButton(
       onPressed: () {
@@ -254,7 +273,9 @@ class _SearchResultItem extends StatelessWidget {
             ),
             type: type,
           );
-        } else if (type == LyricFormat.yrc || type == LyricFormat.qrc) {
+        } else if (type == LyricFormat.yrc ||
+            type == LyricFormat.qrc ||
+            type == LyricFormat.krc) {
           _audioController.currentLyrics.value = ParsedLyricModel(
             parsedLrc: parseKaraOkLyric(
               lyricData: v.lyric!.verbatimLrc,
@@ -526,19 +547,16 @@ class LrcView extends StatelessWidget {
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
                     onTap: () => _onlyCover.value = !_onlyCover.value,
-                    child: Obx(
-                      (){
-                        final cover=_audioController.currentCover.value;
-                        return AnimatedSwitcher(
+                    child: Obx(() {
+                      final cover = _audioController.currentCover.value;
+                      return AnimatedSwitcher(
                         duration: 300.ms,
                         transitionBuilder:
                             (child, anim) =>
                                 FadeTransition(opacity: anim, child: child),
                         child: Image.memory(
                           cover,
-                          key: ValueKey(
-                            cover,
-                          ),
+                          key: ValueKey(cover),
                           cacheWidth: _coverRenderSize,
                           cacheHeight: _coverRenderSize,
                           height: coverSize,
@@ -547,8 +565,7 @@ class LrcView extends StatelessWidget {
                           gaplessPlayback: true,
                         ),
                       );
-                      },
-                    ),
+                    }),
                   ),
                 ),
               ),
@@ -1241,7 +1258,7 @@ class LrcView extends StatelessWidget {
                             Obx(() {
                               final titleStyle_ = titleStyle.copyWith(
                                 fontWeight: FontWeight.w100,
-                                fontSize: titleStyle.fontSize!-2
+                                fontSize: titleStyle.fontSize! - 2,
                               );
                               final metadata =
                                   _audioController.currentMetadata.value;

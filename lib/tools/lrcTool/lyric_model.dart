@@ -72,7 +72,7 @@ class Get4NetLrcModel{
 class SearchLrcModel{
   final String title;
   final String artist;
-  final int id;
+  final dynamic id;
   final Get4NetLrcModel? lyric;
 
   const SearchLrcModel({required this.title,required this.artist,required this.id,required this.lyric});
@@ -81,6 +81,7 @@ class SearchLrcModel{
 abstract class LyricFormat{
   static const qrc='.qrc';
   static const yrc='.yrc';
+  static const krc='.krc';
   static const lrc='.lrc';
   static const byWordLrc='.byWordLrc';
 }

@@ -162,7 +162,7 @@ class SettingController extends GetxController {
   int hotKeyNextHid = 0x0007004f;
   int hotKeyPreviousHid = 0x00070050;
 
-  static const Map<int, String> apiMap = {0: "QQ音乐", 1: "网易云音乐"};
+  static const Map<int, String> apiMap = {0: "QQ音乐", 1: "网易云音乐",2: "酷狗音乐"};
 
   static const Map<int, String> sortType = {
     0: '标题',
