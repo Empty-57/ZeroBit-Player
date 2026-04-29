@@ -143,7 +143,6 @@ class _SpringItem extends StatefulWidget {
   final Key boxKey;
   final Widget child;
   const _SpringItem({
-    super.key,
     required this.index,
     required this.boxKey,
     required this.child,

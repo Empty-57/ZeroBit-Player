@@ -328,7 +328,6 @@ class _ControllerButton extends StatelessWidget {
   final bool onlyDarkMode;
 
   const _ControllerButton({
-    super.key,
     required this.icon,
     this.hoverColor,
     required this.fn,
