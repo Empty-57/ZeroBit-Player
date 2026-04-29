@@ -23,7 +23,7 @@ final List<int> _krcKey = [
   105,
 ];
 
-String? decodeKrc(String content) {
+String? krcDecrypt(String content) {
   List<int> bytes = base64Decode(content);
 
   if (bytes.length <= 4) {

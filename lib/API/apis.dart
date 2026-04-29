@@ -506,7 +506,7 @@ Future<Get4NetLrcModel?> _kgGetLrc({required String id}) async {
     return nullModel;
   }
 
-  final String? contentcDecrypted = decodeKrc(content);
+  final String? contentcDecrypted = krcDecrypt(content);
 
   final String? translate = krcExtractAndDecodeLanguage(contentcDecrypted);
 

@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:zerobit_player/tools/lrcTool/parse_lyrics.dart';
 
 import '../../src/rust/api/music_tag_tool.dart';
+import '../krc_decryptor.dart';
 import '../qrc_decryptor.dart';
 import 'krc_extract_decode.dart';
 import 'lyric_model.dart';
@@ -72,6 +73,14 @@ Future<String?> _safeReadFile(String filePath) async {
       if (!lrc.trimLeft().startsWith('<?xml') &&
           !lrc.trimLeft().startsWith('<Qrc')) {
         return await qrcDecrypt(encryptedQrc: bytes, isLocal: true);
+      }
+      return lrc;
+    }
+
+    if (ext == LyricFormat.krc) {
+      if (!lrc.trimLeft().startsWith('[ti:') &&
+          !lrc.trimLeft().contains(']<0')) {
+        return krcDecrypt(lrc);
       }
       return lrc;
     }
