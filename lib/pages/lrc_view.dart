@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -1010,6 +1011,15 @@ class LrcView extends StatelessWidget {
     );
   }
 
+  KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.escape) {
+      Get.back();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
   @override
   Widget build(BuildContext context) {
     double coverSize = (context.width * 0.3).clamp(300, 500);
@@ -1168,7 +1178,10 @@ class LrcView extends StatelessWidget {
       ),
     ];
 
-    return BlurWithCoverBackground(
+    return Focus(
+      autofocus: true,
+      onKeyEvent: _onKeyEvent,
+      child: BlurWithCoverBackground(
       cover: _audioController.currentCover,
       useGradient: false,
       sigma: 256,
@@ -1386,6 +1399,7 @@ class LrcView extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
