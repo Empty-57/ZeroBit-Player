@@ -1178,7 +1178,10 @@ class LrcView extends StatelessWidget {
       ),
     ];
 
-    return BlurWithCoverBackground(
+    return Focus(
+      autofocus: true,
+      onKeyEvent: _onKeyEvent,
+      child: BlurWithCoverBackground(
       cover: _audioController.currentCover,
       useGradient: false,
       sigma: 256,
@@ -1396,6 +1399,7 @@ class LrcView extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
