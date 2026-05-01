@@ -1011,6 +1011,15 @@ class LrcView extends StatelessWidget {
     );
   }
 
+  KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.escape) {
+      Get.back();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
   @override
   Widget build(BuildContext context) {
     double coverSize = (context.width * 0.3).clamp(300, 500);
