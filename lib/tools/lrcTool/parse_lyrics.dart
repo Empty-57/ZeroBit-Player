@@ -407,7 +407,7 @@ void _applyTranslate(LyricEntry trans, LyricEntry primary) {
   }
 }
 
-/// 修正 byWordLrc 末尾单词的 duration
+/// 修正 byWordLrc 末尾单词的 duration, byWordLrc 每一行最后一个词为空白符 代表本行的结束时间
 void _fixByWordLrcLastWordDuration(List<LyricEntry> mainEntries) {
   for (var i = 0; i < mainEntries.length - 1; i++) {
     double duration = 0.0;
@@ -415,10 +415,10 @@ void _fixByWordLrcLastWordDuration(List<LyricEntry> mainEntries) {
     for (var j = 1; j < 4; j++) {
       // 因为最多三行：注音、原文、翻译
       if (i + j > mainEntries.length - 1) break;
-      final start = mainEntries[i + j].start;
+      final start = mainEntries[i + j].start; // 向下最多三行查找可能存在的 注音、原文、翻译
       final currStart =
-          (mainEntries[i].lyricText as List<WordEntry>).first.start;
-      if (start == currStart) continue;
+          (mainEntries[i].lyricText as List<WordEntry>).first.start; // 本行的开始时间
+      if (start == currStart) continue; // 若第一个词开始时间与本行时间相同，说明是同一句歌词的 注音、原文、翻译
       duration =
           start - (mainEntries[i].lyricText as List<WordEntry>).last.start;
       break;

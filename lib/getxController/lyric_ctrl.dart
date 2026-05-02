@@ -30,7 +30,9 @@ class LyricController extends GetxController {
 
   int _wordsLen = 0; // 当前行长度
 
-  static const _lowIntervalThreshold = 90; // 间奏进度下限
+  static const _showIntervalLowLimit = 95; // 间奏进度下限, 最后一个词过渡到 95% 就开始显示间奏, 给出场动画稍微预留一些时间
+  static const _showIntervalHighLimit = 95; // 间奏进度上限, 间奏完成到 95% 就开始退出间奏, 给下一句歌词入场一些预留时间
+  static const _intervalThreshold= 4; // 间奏阈值, 超过此秒数则为间奏
 
   WordEntry? _currentWord; // 当前词信息
 
@@ -70,7 +72,7 @@ class LyricController extends GetxController {
       final rowCurrentLine = lyrics[lineIndex];
       final lastWord = _currentLine![_currentLine!.length - 1];
       if (_audioController.currentLyrics.value?.type == LyricFormat.byWordLrc) {
-        _interval = rowCurrentLine.nextTime - (lastWord.start);
+        _interval = rowCurrentLine.nextTime - lastWord.start; // byWordLrc 每一行最后一个词为空白符 代表本行的结束时间
       } else {
         _interval =
             rowCurrentLine.nextTime - (lastWord.start + lastWord.duration);
@@ -111,19 +113,25 @@ class LyricController extends GetxController {
       showInterlude.value = false;
       return;
     }
+    final currentLyric=_audioController.currentLyrics.value;
+
     final int len =
-        (_audioController.currentLyrics.value?.parsedLrc?.length ?? 0) - 1;
-    int threshold = _lowIntervalThreshold;
-    if (_audioController.currentLyrics.value?.type == LyricFormat.byWordLrc) {
-      threshold = -8; // 我也忘了这里为什么是 -8 了
+        (currentLyric?.parsedLrc?.length ?? 0) - 1;
+    int threshold = _showIntervalLowLimit;
+    if (currentLyric?.type == LyricFormat.byWordLrc) {
+      threshold = 0; // byWordLrc 每一行最后一个词为空白符 代表本行的结束时间 不需要预设下限 本行的结束时间就是间奏开始时间
     }
     showInterlude.value =
         isLast &&
-        _interval >= 4 &&
+        _interval >= _intervalThreshold &&
         wordProgress.value >=
-            (threshold + 10) && // >= (threshold + 10) 这个词过渡完才允许显示间奏
-        interludeProcess.value <= 95 && // <= 95 是为了给动画退场一点时间
+            threshold && // 这个词过渡完才允许显示间奏
+        interludeProcess.value <= _showIntervalHighLimit && // <= 95 是为了给动画退场一点时间
         currentLineIndex.value < len;
+
+      if (showInterlude.value) {
+        interludeProcess.value += 2 / _interval;
+      }
   }
 
   @override
@@ -167,15 +175,6 @@ class LyricController extends GetxController {
         wordProgress.value = 0;
         currentWordIndex.value = newWordIndex;
         _updateLyricsInfo(updateLineOnly: false);
-      }
-
-      int threshold = _lowIntervalThreshold;
-      if (_audioController.currentLyrics.value?.type == LyricFormat.byWordLrc) {
-        threshold = -8;
-      }
-      if (wordProgress.value >= threshold + 10 &&
-          currentWordIndex.value == _wordsLen - 1) {
-        interludeProcess.value += 2 / _interval;
       }
 
       wordProgress.value += _wordProgressIncrement;
