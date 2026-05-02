@@ -48,7 +48,8 @@ const _lrcAlignmentIcons = [
 ];
 final _isBarHover = false.obs;
 final _isHeadHover = false.obs;
-final _onlyCover = false.obs;
+// 0: 默认（歌词+封面）, 1: 封面完全居中, 2: 封面+详情
+final _coverViewMode = 0.obs;
 const double _menuBtnWidth = 180;
 const double _menuBtnHeight = 48;
 const double _menuBtnRadius = 0;
@@ -547,7 +548,7 @@ class LrcView extends StatelessWidget {
                 child: MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
-                    onTap: () => _onlyCover.value = !_onlyCover.value,
+                    onTap: () => _coverViewMode.value = (_coverViewMode.value + 1) % 3,
                     child: Obx(() {
                       final cover = _audioController.currentCover.value;
                       return AnimatedSwitcher(
@@ -1235,12 +1236,16 @@ class LrcView extends StatelessWidget {
                               () => AnimatedPositioned(
                                 duration: 300.ms,
                                 curve: Curves.fastOutSlowIn,
-                                right: _onlyCover.value ? (-halfWidth) : 0,
+                                right:
+                                    _coverViewMode.value == 0
+                                        ? 0
+                                        : (-halfWidth),
                                 width: halfWidth, // 水平约束
                                 top: 0, // 垂直约束
                                 bottom: 0, // 垂直约束
                                 child: AnimatedOpacity(
-                                  opacity: _onlyCover.value ? 0.0 : 1.0,
+                                  opacity:
+                                      _coverViewMode.value == 0 ? 1.0 : 0.0,
                                   duration: 100.ms,
                                   child: _buildLyricsSide(context),
                                 ),
@@ -1252,10 +1257,12 @@ class LrcView extends StatelessWidget {
                                 duration: 300.ms,
                                 curve: Curves.fastOutSlowIn,
                                 left:
-                                    _onlyCover.value
-                                        ? halfWidth +
-                                            (halfWidth - coverSize) / 2
-                                        : (halfWidth - coverSize) / 2,
+                                    _coverViewMode.value == 0
+                                        ? (halfWidth - coverSize) / 2
+                                        : _coverViewMode.value == 1
+                                            ? (context.width - coverSize) / 2
+                                            : halfWidth +
+                                                (halfWidth - coverSize) / 2,
                                 width: coverSize, // 水平约束 (使用封面自身的尺寸)
                                 top: 0, // 垂直约束
                                 bottom: 0, // 垂直约束
@@ -1279,7 +1286,7 @@ class LrcView extends StatelessWidget {
                                 duration: 300.ms,
                                 curve: Curves.fastOutSlowIn,
                                 left:
-                                    _onlyCover.value
+                                    _coverViewMode.value == 2
                                         ? (halfWidth - 100) / 4
                                         : (-halfWidth),
                                 width: halfWidth - 100, // 水平约束
