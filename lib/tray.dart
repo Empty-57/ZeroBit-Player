@@ -3,9 +3,14 @@ import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:get/get.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:zerobit_player/getxController/audio_ctrl.dart';
+import 'package:zerobit_player/getxController/setting_ctrl.dart';
+
+import 'desktop_lyrics_sever.dart';
 
 class Tray extends GetxController with TrayListener {
   AudioController get _audioController => Get.find<AudioController>();
+  DesktopLyricsSever get _desktopLyricsSever => Get.find<DesktopLyricsSever>();
+  SettingController get _settingController => Get.find<SettingController>();
 
   @override
   void onInit() async {
@@ -56,6 +61,22 @@ class Tray extends GetxController with TrayListener {
           key: 'next',
           label: '下一首',
           onClick: (_) async => await _audioController.audioToNext(),
+        ),
+        MenuItem(
+          key: 'desktopLyric',
+          label:
+              _settingController.showDesktopLyrics.value ? '关闭桌面歌词' : '显示桌面歌词',
+          onClick: (_) async {
+            _settingController.showDesktopLyrics.value =
+                !_settingController.showDesktopLyrics.value;
+            await _settingController.putScalableCache();
+
+            if (_settingController.showDesktopLyrics.value) {
+              _desktopLyricsSever.connect();
+            } else {
+              _desktopLyricsSever.close();
+            }
+          },
         ),
         MenuItem.separator(),
         MenuItem(
