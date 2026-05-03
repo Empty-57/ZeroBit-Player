@@ -338,7 +338,6 @@ class _LyricsRenderState extends State<LyricsRender> {
   Widget build(BuildContext context) {
     Theme.of(context).colorScheme.onSecondaryContainer; // 用来更新颜色的触发器
     // 要将样式定义在 build 内而不是定义成 getter 否则动画会不连贯
-    final strutStyle = _lyricsStyle.strutStyle;
     final hoverColor = _lyricsStyle.hoverColor;
     final mixColor = _lyricsStyle.mixColor;
 
@@ -364,6 +363,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                 final tsLyricStyle = _lyricsStyle.tsLyricStyle;
                 final romaLyricStyle = _lyricsStyle.romaLyricStyle;
                 final interludeLyricStyle = _lyricsStyle.interludeLyricStyle;
+                final strutStyle = _lyricsStyle.strutStyle;
 
                 final useSpringscroll =
                     _settingController.useSpringScroll.value;

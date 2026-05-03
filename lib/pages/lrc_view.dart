@@ -1269,9 +1269,9 @@ class LrcView extends StatelessWidget {
                             ),
                             // --- 详情侧 ---
                             Obx(() {
-                              final titleStyle_ = titleStyle.copyWith(
+                              final textStyle_ = titleStyle.copyWith(
                                 fontWeight: FontWeight.w100,
-                                fontSize: titleStyle.fontSize! - 2,
+                                fontSize: titleStyle.fontSize! - 3,
                               );
                               final metadata =
                                   _audioController.currentMetadata.value;
@@ -1292,47 +1292,47 @@ class LrcView extends StatelessWidget {
                                   children: [
                                     Text(
                                       "标题：${metadata.title}",
-                                      style: titleStyle_,
+                                      style: textStyle_,
                                     ),
                                     Text(
                                       "艺术家：${metadata.artist}",
-                                      style: titleStyle_,
+                                      style: textStyle_,
                                     ),
                                     Text(
                                       "专辑：${metadata.album}",
-                                      style: titleStyle_,
+                                      style: textStyle_,
                                     ),
                                     Text(
                                       "流派：${metadata.genre}",
-                                      style: titleStyle_,
+                                      style: textStyle_,
                                     ),
                                     Text(
                                       "时长：${formatTime(totalSeconds: metadata.duration)}",
-                                      style: titleStyle_,
+                                      style: textStyle_,
                                     ),
                                     Text(
                                       "比特率：${metadata.bitrate ?? "UNKNOWN"}kbps",
-                                      style: titleStyle_,
+                                      style: textStyle_,
                                     ),
                                     Text(
                                       "采样率：${metadata.sampleRate ?? "UNKNOWN"}hz",
-                                      style: titleStyle_,
+                                      style: textStyle_,
                                     ),
                                     Text(
                                       "音轨号：${metadata.trackNumber}",
-                                      style: titleStyle_,
+                                      style: textStyle_,
                                     ),
                                     Text(
                                       "位深度：${metadata.bitDepth}",
-                                      style: titleStyle_,
+                                      style: textStyle_,
                                     ),
                                     Text(
                                       "通道数：${metadata.channels}",
-                                      style: titleStyle_,
+                                      style: textStyle_,
                                     ),
                                     Text(
                                       "路径：${metadata.path}",
-                                      style: titleStyle_,
+                                      style: textStyle_,
                                       maxLines: 5,
                                     ),
                                   ],
