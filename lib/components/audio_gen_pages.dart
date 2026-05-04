@@ -364,8 +364,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         Obx(
           () => CustomBtn(
             fn: () {
-              _settingController.isReverse.value =
-                  !_settingController.isReverse.value;
+              _settingController.isReverse.toggle();
               _settingController.putCache();
               widget.controller.itemReverse();
               _audioController.syncCurrentIndex();

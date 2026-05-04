@@ -476,9 +476,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                         size: _ctrlBtnMinSize,
                         color: mixColor,
                         fn: () {
-                          _settingController.setShowTranslate(
-                            show: !_settingController.showTranslate.value,
-                          );
+                          _settingController.setShowTranslate();
                         },
                       ),
                       GenIconBtn(
@@ -490,9 +488,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                         size: _ctrlBtnMinSize,
                         color: mixColor,
                         fn: () {
-                          _settingController.setShowRoma(
-                            show: !_settingController.showRoma.value,
-                          );
+                          _settingController.setShowRoma();
                         },
                       ),
                     ],

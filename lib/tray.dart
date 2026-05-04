@@ -67,8 +67,7 @@ class Tray extends GetxController with TrayListener {
           label:
               _settingController.showDesktopLyrics.value ? '关闭桌面歌词' : '显示桌面歌词',
           onClick: (_) async {
-            _settingController.showDesktopLyrics.value =
-                !_settingController.showDesktopLyrics.value;
+            _settingController.showDesktopLyrics.toggle();
             await _settingController.putScalableCache();
 
             if (_settingController.showDesktopLyrics.value) {

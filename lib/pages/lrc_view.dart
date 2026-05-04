@@ -946,8 +946,7 @@ class LrcView extends StatelessWidget {
                             size: _ctrlBtnMinSize,
                             color: mixColor,
                             fn: () {
-                              _settingController.showSpectrogram.value =
-                                  !_settingController.showSpectrogram.value;
+                              _settingController.showSpectrogram.toggle();
                               _settingController.putScalableCache();
                               spectrogramController
                                   .toggleSpectrogramVisibility();
@@ -965,10 +964,7 @@ class LrcView extends StatelessWidget {
                             color: mixColor,
                             fn:
                                 () async {
-                                  _settingController.showDesktopLyrics.value =
-                                      !_settingController
-                                          .showDesktopLyrics
-                                          .value;
+                                  _settingController.showDesktopLyrics.toggle();
                                   await _settingController.putScalableCache();
 
                                   if (_settingController

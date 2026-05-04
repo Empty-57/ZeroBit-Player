@@ -501,16 +501,16 @@ class SettingController extends GetxController {
     );
   }
 
-  void setShowTranslate({required bool show}) {
-    showTranslate.value = show;
+  void setShowTranslate() {
+    showTranslate.toggle();
     if (prefs == null) {
       return;
     }
     prefs!.setBool('showTranslate', showTranslate.value);
   }
 
-  void setShowRoma({required bool show}) {
-    showRoma.value = show;
+  void setShowRoma() {
+    showRoma.toggle();
     if (prefs == null) {
       return;
     }
