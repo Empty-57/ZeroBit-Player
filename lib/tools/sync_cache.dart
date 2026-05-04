@@ -33,11 +33,19 @@ const Set<String> supportedExts = {
   '.wv',
 };
 
-Future<Set<String>> scanAudioPaths(List<String> folders) async {
+Future<Set<String>> scanAudioPaths(
+  List<String> folders,
+  SettingController setCtrl,
+) async {
   final Set<String> paths = {};
-  for (final dirPath in folders) {
+  bool removedFolders = false;
+  for (final dirPath in [...folders]) {
     final directory = Directory(dirPath);
-    if (!await directory.exists()) continue;
+    if (!await directory.exists()) {
+      setCtrl.folders.remove(dirPath); // 清除不可访问的路径
+      removedFolders = true;
+      continue;
+    }
     await for (final entity in directory.list(
       recursive: true,
       followLinks: false,
@@ -47,6 +55,9 @@ Future<Set<String>> scanAudioPaths(List<String> folders) async {
         paths.add(entity.path);
       }
     }
+  }
+  if (removedFolders) {
+    await setCtrl.putCache();
   }
   return paths;
 }
@@ -93,7 +104,7 @@ Future<void> syncCache() async {
   final audioCtrl = Get.find<AudioController>();
   final musicBox = HiveManager.musicCacheBox;
 
-  final scannedPaths = await scanAudioPaths(settingCtrl.folders);
+  final scannedPaths = await scanAudioPaths(settingCtrl.folders, settingCtrl);
 
   final existingKeys =
       musicBox

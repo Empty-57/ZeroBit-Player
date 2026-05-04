@@ -16,7 +16,7 @@ class FoldersViewPage extends StatelessWidget {
 
   void createMap() async {
     for (String folder in _settingController.folders) {
-      folderPathMap[folder] = (await scanAudioPaths([folder])).toList();
+      folderPathMap[folder] = (await scanAudioPaths([folder],_settingController)).toList();
     }
   }
 
