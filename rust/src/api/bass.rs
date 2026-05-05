@@ -735,10 +735,10 @@ impl BassApi {
         } else {
             let mut final_bytes = pos_bytes;
             if WASEXCLUSIVE.load(Ordering::Relaxed) {
-                let decode_bytes =
-                    unsafe { (self.wasapi_get_data)(null_mut(), BASS_DATA_AVAILABLE) }; // 获取解码进度
-                if decode_bytes > 0 && decode_bytes != !0 {
-                    final_bytes = final_bytes.saturating_sub(decode_bytes as u64);// 真实进度 = 解码进度 - 缓冲区残留
+                let buffered_bytes =
+                    unsafe { (self.wasapi_get_data)(null_mut(), BASS_DATA_AVAILABLE) }; // 获取缓冲区大小
+                if buffered_bytes > 0 && buffered_bytes != !0 {
+                    final_bytes = final_bytes.saturating_sub(buffered_bytes as u64);// 真实进度 = 解码进度 - 缓冲区残留
                 }
             }
             unsafe { (self.bytes2sec)(self.stream_handle, final_bytes) }.max(0.0)
