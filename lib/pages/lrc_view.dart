@@ -48,7 +48,7 @@ const _lrcAlignmentIcons = [
 ];
 final _isBarHover = false.obs;
 final _isHeadHover = false.obs;
-// 0: 默认（歌词+封面）, 1: 封面完全居中, 2: 封面+详情
+// 0: 默认（封面+歌词）, 1: 封面完全居中, 2: 封面+详情
 final _coverViewMode = 0.obs;
 const double _menuBtnWidth = 180;
 const double _menuBtnHeight = 48;
@@ -545,31 +545,44 @@ class LrcView extends StatelessWidget {
               ),
               child: ClipRRect(
                 borderRadius: _borderRadius,
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () => _coverViewMode.value = (_coverViewMode.value + 1) % 3,
-                    child: Obx(() {
-                      final cover = _audioController.currentCover.value;
-                      return AnimatedSwitcher(
-                        duration: 300.ms,
-                        transitionBuilder:
-                            (child, anim) =>
-                                FadeTransition(opacity: anim, child: child),
-                        child: Image.memory(
-                          cover,
-                          key: ValueKey(cover),
-                          cacheWidth: _coverRenderSize,
-                          cacheHeight: _coverRenderSize,
-                          height: coverSize,
-                          width: coverSize,
-                          fit: BoxFit.cover,
-                          gaplessPlayback: true,
-                        ),
-                      );
-                    }),
-                  ),
-                ),
+                child: Obx(() {
+                  final mode = _coverViewMode.value;
+                  final tip =
+                      mode == 0
+                          ? '切换居中模式'
+                          : mode == 1
+                              ? '展开详情'
+                              : '切换歌词模式';
+                  return Tooltip(
+                    message: tip,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () =>
+                            _coverViewMode.value = (_coverViewMode.value + 1) % 3,
+                        child: Obx(() {
+                          final cover = _audioController.currentCover.value;
+                          return AnimatedSwitcher(
+                            duration: 300.ms,
+                            transitionBuilder:
+                                (child, anim) =>
+                                    FadeTransition(opacity: anim, child: child),
+                            child: Image.memory(
+                              cover,
+                              key: ValueKey(cover),
+                              cacheWidth: _coverRenderSize,
+                              cacheHeight: _coverRenderSize,
+                              height: coverSize,
+                              width: coverSize,
+                              fit: BoxFit.cover,
+                              gaplessPlayback: true,
+                            ),
+                          );
+                        }),
+                      ),
+                    ),
+                  );
+                }),
               ),
             ),
           ),
