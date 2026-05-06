@@ -93,48 +93,101 @@ class SpringListView extends StatelessWidget {
     final controller = Get.put(SpringController());
     controller.totalLength = length;
 
-    return Obx(() {
-      if (controller.currentIndex.value < lineDuration.length &&
-          controller.currentIndex.value >= 0) {
-        controller.duration = (lineDuration[controller.currentIndex.value] *
-                    1000 -
-                controller.delay)
-            .clamp(
-              SpringController.durationMax * 0.2,
-              SpringController.durationMax,
-            );
-      } else {
-        controller.duration = SpringController.durationMax;
-      }
+    /// 为了防止即将离开可视区域的列表项的滚动动画无效的方案(视觉欺骗)
+    /// 将可滚动区域向上下两个方向拉伸一定距离(至少大于deltaY的值) ,使列表项在滚动动画开始的时候还在Layout(布局)内
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const double extraSpace = 300.0; // 向上下两个方向拉伸的距离 至少要大于deltaY的值
+        final double screenHeight = constraints.maxHeight; // 视窗真实高度
+        final double newHeight = screenHeight + extraSpace * 2; // 视窗拉伸后的高度
 
-      Key? centerKey;
-      if (controller.totalLength > 0 &&
-          controller.currentIndex.value >= 0 &&
-          controller.currentIndex.value < controller.totalLength) {
-        centerKey = controller.getSliverKey(controller.currentIndex.value);
-      }
-      return CustomScrollView(
-        key: controller.scrollAreaKey,
-        controller: controller.scrollController,
-        center: centerKey,
-        anchor: controller.anchorPercentage,
-        slivers: [
-          SliverToBoxAdapter(child: SizedBox(height: context.height * 0.3)),
+        // 重新计算 anchor 百分比
+        // 为了在视觉上使锚点仍然保持在屏幕的 controller.anchorPercentage 处
+        // 新 anchor算法: 原 anchor 距视窗顶部的位置(targetAnchorPixel)加上extraSpace后 占新视窗的百分比
+        final double targetAnchorPixel =
+            screenHeight * controller.anchorPercentage; // 原 anchor 距离屏幕顶部的距离
+        final double newAnchorPercentage =
+            (targetAnchorPixel + extraSpace) / newHeight;
 
-          for (int i = 0; i < length; i++)
-            SliverToBoxAdapter(
-              key: controller.getSliverKey(i),
-              child: _SpringItem(
-                index: i,
-                boxKey: controller.getBoxKey(i),
-                child: itemBuilder(context, i),
-              ),
+        return SizedBox(
+          // 将原有的 scrollAreaKey 从 CustomScrollView 移到代表真实屏幕尺寸的外层 SizedBox
+          // 保证 deltaY 计算依然精准 (deltaY 不受拉伸影响)
+          key: controller.scrollAreaKey,
+          width: constraints.maxWidth,
+          height: screenHeight,
+          child: ClipRect(
+            // 裁剪掉超出屏幕的渲染区域
+            child: Stack(
+              // 这里使用 Stack 是因为要使用 Positioned 脱离组件树（文档流） 并拉伸大小
+              clipBehavior: Clip.none, // 让子组件可以超出 Stack
+              children: [
+                //如果同时指定了 top 和 bottom，则 height = Stack高度 - top - bottom
+                Positioned(
+                  top: -extraSpace, // 往上拉伸 extraSpace 并往上偏移 extraSpace 距离
+                  bottom: -extraSpace, // 往下拉伸 extraSpace
+                  left: 0,
+                  right: 0,
+                  child: Obx(() {
+                    if (controller.currentIndex.value < lineDuration.length &&
+                        controller.currentIndex.value >= 0) {
+                      controller.duration =
+                          (lineDuration[controller.currentIndex.value] * 1000 -
+                                  controller.delay)
+                              .clamp(
+                                SpringController.durationMax * 0.2,
+                                SpringController.durationMax,
+                              );
+                    } else {
+                      controller.duration = SpringController.durationMax;
+                    }
+
+                    Key? centerKey;
+                    if (controller.totalLength > 0 &&
+                        controller.currentIndex.value >= 0 &&
+                        controller.currentIndex.value <
+                            controller.totalLength) {
+                      centerKey = controller.getSliverKey(
+                        controller.currentIndex.value,
+                      );
+                    }
+
+                    return CustomScrollView(
+                      controller: controller.scrollController,
+                      center: centerKey,
+                      anchor: newAnchorPercentage, // 使用转换后的锚点比例
+                      cacheExtent: 200.0,
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: SizedBox(
+                            height: context.height * 0.3 + extraSpace,
+                          ), // 前后留白区域也要加上拉伸值
+                        ),
+
+                        for (int i = 0; i < length; i++)
+                          SliverToBoxAdapter(
+                            key: controller.getSliverKey(i),
+                            child: _SpringItem(
+                              index: i,
+                              boxKey: controller.getBoxKey(i),
+                              child: itemBuilder(context, i),
+                            ),
+                          ),
+
+                        SliverToBoxAdapter(
+                          child: SizedBox(
+                            height: context.height * 0.3 + extraSpace,
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                ),
+              ],
             ),
-
-          SliverToBoxAdapter(child: SizedBox(height: context.height * 0.3)),
-        ],
-      );
-    });
+          ),
+        );
+      },
+    );
   }
 }
 
