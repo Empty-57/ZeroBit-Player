@@ -6,19 +6,20 @@ import 'package:get/get.dart';
 
 import '../components/audio_gen_pages.dart';
 
-final MusicCacheController _musicCacheController =
-    Get.find<MusicCacheController>();
+
 
 class LocalMusic extends StatelessWidget {
   const LocalMusic({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final MusicCacheController musicCacheController =
+    Get.find<MusicCacheController>();
     return AudioGenPages(
       title: "音乐",
       operateArea: OperateArea.allMusic,
       audioSource: AudioSource.allMusic,
-      controller: _musicCacheController,
+      controller: musicCacheController,
     );
   }
 }

@@ -17,10 +17,6 @@ const double _ctrlBtnMinSize = 40.0;
 const double _itemHeight = 64.0;
 const double _resViewThresholds = 1100;
 
-final MusicCacheController _musicCacheController =
-    Get.find<MusicCacheController>();
-final AudioController _audioController = Get.find<AudioController>();
-
 class _FloatingBtn extends StatelessWidget {
   final String tooltip;
   final IconData icon;
@@ -60,12 +56,16 @@ class FloatingButton extends StatelessWidget {
   final ScrollController scrollControllerGrid;
   final String operateArea;
 
-  const FloatingButton({
+  FloatingButton({
     super.key,
     required this.scrollControllerList,
     required this.scrollControllerGrid,
     required this.operateArea,
   });
+
+  final MusicCacheController _musicCacheController =
+    Get.find<MusicCacheController>();
+final AudioController _audioController = Get.find<AudioController>();
 
   int _getCurrentPlayingIndex() {
     final currentPath = _audioController.currentPath.value;

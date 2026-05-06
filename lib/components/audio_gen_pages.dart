@@ -34,11 +34,7 @@ const double _menuBtnHeight = 48;
 const double _menuBtnRadius = 0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 
-final SettingController _settingController = Get.find<SettingController>();
-final AudioController _audioController = Get.find<AudioController>();
-final AudioSource _audioSource = Get.find<AudioSource>();
-
-class _MusicMenuController extends GetxController {
+class _MusicMenuController {
   final menuController = MenuController();
   final Rxn<Offset> menuPosition = Rxn<Offset>();
   final Rxn<MusicCache> currentMetadata = Rxn<MusicCache>();
@@ -62,8 +58,6 @@ class _MusicMenuController extends GetxController {
   }
 }
 
-final _MusicMenuController _musicMenuCtrl = Get.put(_MusicMenuController());
-
 List<Widget> _genMenuItems({
   required BuildContext context,
   required MenuController menuController,
@@ -72,14 +66,16 @@ List<Widget> _genMenuItems({
   required int index,
   required String operateArea,
   required List<Widget> playList,
+  required AudioController ctrl,
+  required AudioSource source,
   bool renderMaybeDel = false,
 }) {
   return <Widget>[
     CustomBtn(
       fn: () {
-        _audioSource.currentAudioSource.value = userKey;
+        source.currentAudioSource.value = userKey;
         menuController.close();
-        _audioController.audioPlay(metadata: metadata);
+        ctrl.audioPlay(metadata: metadata);
       },
       btnHeight: _menuBtnHeight,
       btnWidth: _menuBtnWidth,
@@ -93,7 +89,7 @@ List<Widget> _genMenuItems({
     CustomBtn(
       fn: () {
         menuController.close();
-        _audioController.insertNext(metadata: metadata);
+        ctrl.insertNext(metadata: metadata);
       },
       btnHeight: _menuBtnHeight,
       btnWidth: _menuBtnWidth,
@@ -148,10 +144,7 @@ List<Widget> _genMenuItems({
       CustomBtn(
         fn: () async {
           menuController.close();
-          await _audioController.audioRemove(
-            userKey: userKey,
-            metadata: metadata,
-          );
+          await ctrl.audioRemove(userKey: userKey, metadata: metadata);
         },
         btnHeight: _menuBtnHeight,
         btnWidth: _menuBtnWidth,
@@ -166,11 +159,12 @@ List<Widget> _genMenuItems({
   ];
 }
 
-List<Widget> Function(MusicCache metadata) _playListBuilder = (metadata) {
-  return _audioController.allUserKey.map((v) {
+List<Widget> Function(MusicCache metadata, AudioController ctrl)
+_playListBuilder = (metadata, ctrl) {
+  return ctrl.allUserKey.map((v) {
     return MenuItemButton(
       onPressed: () {
-        _audioController.addToAudioList(metadata: metadata, userKey: v);
+        ctrl.addToAudioList(metadata: metadata, userKey: v);
       },
       child: Center(child: Text(v.split(TagSuffix.playList)[0])),
     );
@@ -203,6 +197,12 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   late final MenuController _playListMenuController;
   late final ScrollController _scrollControllerList;
   late final ScrollController _scrollControllerGrid;
+  late final SettingController _settingController =
+      Get.find<SettingController>();
+  late final AudioSource _audioSource = Get.find<AudioSource>();
+  late final AudioController _audioController = Get.find<AudioController>();
+  late final _MusicMenuController _musicMenuCtrl =
+      _MusicMenuController(); // maybe Get.put()
 
   @override
   void initState() {
@@ -464,17 +464,44 @@ class _AudioGenPagesState extends State<AudioGenPages> {
 
   Widget _buildSortButton() {
     final itemMap = {
-      0: [SettingController.sortType[0], PhosphorIconsRegular.textT],
-      1: [SettingController.sortType[1], PhosphorIconsRegular.userFocus],
-      2: [SettingController.sortType[2], PhosphorIconsRegular.vinylRecord],
-      6: [SettingController.sortType[6], PhosphorIconsRegular.hash],
-      3: [SettingController.sortType[3], PhosphorIconsRegular.clockCountdown],
-      4: [SettingController.sortType[4], PhosphorIconsRegular.fileMagnifyingGlass],
-      5: [SettingController.sortType[5], PhosphorIconsRegular.filePlus],
+      SortType.title: [
+        SettingController.sortType[SortType.title],
+        PhosphorIconsRegular.textT,
+      ],
+      SortType.artist: [
+        SettingController.sortType[SortType.artist],
+        PhosphorIconsRegular.userFocus,
+      ],
+      SortType.album: [
+        SettingController.sortType[SortType.album],
+        PhosphorIconsRegular.vinylRecord,
+      ],
+      SortType.trackNumber: [
+        SettingController.sortType[SortType.trackNumber],
+        PhosphorIconsRegular.hash,
+      ],
+      SortType.duration: [
+        SettingController.sortType[SortType.duration],
+        PhosphorIconsRegular.clockCountdown,
+      ],
+      SortType.editTime: [
+        SettingController.sortType[SortType.editTime],
+        PhosphorIconsRegular.fileMagnifyingGlass,
+      ],
+      SortType.createTime: [
+        SettingController.sortType[SortType.createTime],
+        PhosphorIconsRegular.filePlus,
+      ],
     };
-    if (widget.operateArea == OperateArea.artistList) itemMap.remove(1);
-    if (widget.operateArea == OperateArea.albumList) itemMap.remove(2);
-    if (widget.operateArea != OperateArea.albumList) itemMap.remove(6);
+    if (widget.operateArea == OperateArea.artistList) {
+      itemMap.remove(SortType.artist);
+    }
+    if (widget.operateArea == OperateArea.albumList) {
+      itemMap.remove(SortType.album);
+    }
+    if (widget.operateArea != OperateArea.albumList) {
+      itemMap.remove(SortType.trackNumber);
+    }
 
     return CustomDropdownMenu(
       itemMap: itemMap,
@@ -605,7 +632,9 @@ class _AudioGenPagesState extends State<AudioGenPages> {
                   index: _musicMenuCtrl.currentIndex.value,
                   renderMaybeDel: widget.operateArea == OperateArea.playList,
                   operateArea: widget.operateArea,
-                  playList: _playListBuilder(currentMetadata),
+                  playList: _playListBuilder(currentMetadata, _audioController),
+                  source: _audioSource,
+                  ctrl: _audioController,
                 ),
               ),
             ),
@@ -706,6 +735,9 @@ class _AudioGenPagesState extends State<AudioGenPages> {
           operateArea: widget.operateArea,
           isMulSelect: _isMulSelect,
           selectedList: _selectedList,
+          settingController: _settingController,
+          audioController: _audioController,
+          audioSourceClass: _audioSource,
         ),
       ),
     );

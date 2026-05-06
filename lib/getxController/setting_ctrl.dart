@@ -15,6 +15,16 @@ import '../src/rust/api/bass.dart';
 import '../tools/sync_cache.dart';
 import 'audio_ctrl.dart';
 
+class SortType{
+  static const int title=0;
+  static const int artist=1;
+  static const int album=2;
+  static const int duration=3;
+  static const int editTime=4;
+  static const int createTime=5;
+  static const int trackNumber=6;
+}
+
 class SettingController extends GetxController {
   final themeMode = 'dark'.obs;
   final apiIndex = 0.obs;
@@ -165,13 +175,13 @@ class SettingController extends GetxController {
   static const Map<int, String> apiMap = {0: "QQ音乐", 1: "网易云音乐",2: "酷狗音乐"};
 
   static const Map<int, String> sortType = {
-    0: '标题',
-    1: '艺术家',
-    2: '专辑',
-    3: '时长',
-    4: '修改时间',
-    5: '创建时间',
-    6: '音轨号',
+    SortType.title: '标题',
+    SortType.artist: '艺术家',
+    SortType.album: '专辑',
+    SortType.duration: '时长',
+    SortType.editTime: '修改时间',
+    SortType.createTime: '创建时间',
+    SortType.trackNumber: '音轨号',
   };
 
   static const Map<int, String> playModeMap = {0: '单曲循环', 1: '列表循环', 2: '随机播放'};

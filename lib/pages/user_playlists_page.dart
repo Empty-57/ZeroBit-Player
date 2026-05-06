@@ -8,18 +8,17 @@ import '../getxController/user_playlist_ctrl.dart';
 import '../tools/general_style.dart';
 import '../field/tag_suffix.dart';
 
-final UserPlayListController _userPlayListController =
-    Get.find<UserPlayListController>();
 const double _itemHeight = 64.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 
-class UserPlayList extends StatelessWidget {
+class UserPlayList extends GetView<UserPlayListController> {
   const UserPlayList({super.key});
 
   Future<void> _createOrRename({
     required BuildContext context,
     required String title,
     required int actionId,
+    required UserPlayListController c,
     String? oldName,
   }) async {
     showDialog(
@@ -74,12 +73,10 @@ class UserPlayList extends StatelessWidget {
                         fn: () {
                           Navigator.pop(context, 'actions');
                           if (actionId == 0) {
-                            _userPlayListController.createPlayList(
-                              userKey: textCtrl.text,
-                            );
+                            c.createPlayList(userKey: textCtrl.text);
                           }
                           if (actionId == 1) {
-                            _userPlayListController.renamePlayList(
+                            c.renamePlayList(
                               oldKey: oldName!,
                               newKey: textCtrl.text,
                             );
@@ -106,6 +103,7 @@ class UserPlayList extends StatelessWidget {
   Widget build(BuildContext context) {
     final textStyle1 = generalTextStyle(ctx: context, size: 'md');
     final textStyle2 = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
+    final userPlayListController = controller;
 
     return Container(
       alignment: Alignment.centerLeft,
@@ -139,7 +137,7 @@ class UserPlayList extends StatelessWidget {
                   ),
                   Obx(
                     () => Text(
-                      '共${_userPlayListController.items.length}个歌单',
+                      '共${userPlayListController.items.length}个歌单',
                       style: generalTextStyle(ctx: context, size: 'md'),
                     ),
                   ),
@@ -150,7 +148,12 @@ class UserPlayList extends StatelessWidget {
 
               CustomBtn(
                 fn: () {
-                  _createOrRename(context: context, title: '新建歌单', actionId: 0);
+                  _createOrRename(
+                    context: context,
+                    title: '新建歌单',
+                    c: userPlayListController,
+                    actionId: 0,
+                  );
                 },
                 label: "新建歌单",
                 icon: PhosphorIconsLight.plus,
@@ -164,19 +167,15 @@ class UserPlayList extends StatelessWidget {
             flex: 1,
             child: Obx(
               () => ListView.builder(
-                itemCount: _userPlayListController.items.length,
+                itemCount: userPlayListController.items.length,
                 itemExtent: _itemHeight,
                 cacheExtent: _itemHeight * 1,
                 itemBuilder: (context, index) {
-                  final items = _userPlayListController.items[index];
+                  final items = userPlayListController.items[index];
 
                   return TextButton(
                     onPressed: () {
-                      Get.toNamed(
-                        AppRoutes.playList,
-                        arguments: items,
-                        id: 1,
-                      );
+                      Get.toNamed(AppRoutes.playList, arguments: items, id: 1);
                     },
                     style: TextButton.styleFrom(
                       shape: RoundedRectangleBorder(
@@ -188,29 +187,33 @@ class UserPlayList extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       spacing: 8,
                       children: [
-                        Expanded(flex: 1, child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              items.userKey.split(TagSuffix.playList)[0],
-                              style: textStyle1,
-                              softWrap: true,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                            Text(
-                              "共${items.pathList.length}首音乐",
-                              style: textStyle2,
-                            ),
-                          ],
-                        )),
+                        Expanded(
+                          flex: 1,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                items.userKey.split(TagSuffix.playList)[0],
+                                style: textStyle1,
+                                softWrap: true,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                              Text(
+                                "共${items.pathList.length}首音乐",
+                                style: textStyle2,
+                              ),
+                            ],
+                          ),
+                        ),
                         CustomBtn(
                           fn: () {
                             _createOrRename(
                               context: context,
                               title: '重命名',
                               actionId: 1,
+                              c: userPlayListController,
                               oldName: items.userKey,
                             );
                           },
@@ -223,7 +226,7 @@ class UserPlayList extends StatelessWidget {
                         ),
                         CustomBtn(
                           fn: () {
-                            _userPlayListController.removePlayList(
+                            userPlayListController.removePlayList(
                               userKey: items.userKey,
                             );
                           },

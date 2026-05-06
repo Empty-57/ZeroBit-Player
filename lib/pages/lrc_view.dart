@@ -29,10 +29,6 @@ import '../tools/lrcTool/parse_lyrics.dart';
 import '../tools/rect_value_indicator.dart';
 import 'dart:async';
 
-final AudioController _audioController = Get.find<AudioController>();
-final SettingController _settingController = Get.find<SettingController>();
-final DesktopLyricsSever _desktopLyricsSever = Get.find<DesktopLyricsSever>();
-
 const double _ctrlBtnMinSize = 40.0;
 const double _thumbRadius = 10.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
@@ -57,6 +53,8 @@ const double _menuBtnRadius = 0;
 // --- 频谱图控制器 ---
 class _SpectrogramController extends GetxController {
   Timer? _spectrogramAnimationTimer;
+  final AudioController _audioController = Get.find<AudioController>();
+  final SettingController _settingController = Get.find<SettingController>();
 
   @override
   void onClose() {
@@ -98,6 +96,7 @@ class _SpectrogramController extends GetxController {
 
 // --- 歌词搜索控制器 ---
 class _LrcSearchController extends GetxController {
+  final AudioController _audioController = Get.find<AudioController>();
   final currentNetLrc = <SearchLrcModel?>[].obs;
   final currentNetLrcOffest = 0.obs;
   final searchText = "".obs;
@@ -236,8 +235,15 @@ class _GradientSliderTrackShape extends SliderTrackShape {
 class _SearchResultItem extends StatelessWidget {
   final SearchLrcModel lyricInfo;
   final TextStyle textStyle;
+  final AudioController audioController;
+  final SettingController settingController;
 
-  const _SearchResultItem({required this.lyricInfo, required this.textStyle});
+  const _SearchResultItem({
+    required this.lyricInfo,
+    required this.textStyle,
+    required this.audioController,
+    required this.settingController,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -268,7 +274,7 @@ class _SearchResultItem extends StatelessWidget {
       onPressed: () {
         final type = v.lyric!.type;
         if (type == LyricFormat.lrc) {
-          _audioController.currentLyrics.value = ParsedLyricModel(
+          audioController.currentLyrics.value = ParsedLyricModel(
             parsedLrc: parseLrc(
               lyricData: v.lyric!.lrc,
               lyricDataTs: v.lyric!.translate,
@@ -278,7 +284,7 @@ class _SearchResultItem extends StatelessWidget {
         } else if (type == LyricFormat.yrc ||
             type == LyricFormat.qrc ||
             type == LyricFormat.krc) {
-          _audioController.currentLyrics.value = ParsedLyricModel(
+          audioController.currentLyrics.value = ParsedLyricModel(
             parsedLrc: parseKaraOkLyric(
               lyricData: v.lyric!.verbatimLrc,
               lyricDataTs: v.lyric!.translate,
@@ -288,11 +294,8 @@ class _SearchResultItem extends StatelessWidget {
           );
         }
 
-        if (_settingController.autoDownloadLrc.value) {
-          saveLyrics(
-            path: _audioController.currentPath.value,
-            lrcData: v.lyric,
-          );
+        if (settingController.autoDownloadLrc.value) {
+          saveLyrics(path: audioController.currentPath.value, lrcData: v.lyric);
         }
 
         Navigator.pop(context);
@@ -376,6 +379,10 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
     _LrcSearchController(),
   );
   final TextEditingController textEditingController = TextEditingController();
+
+  late final AudioController _audioController = Get.find<AudioController>();
+  late final SettingController _settingController =
+      Get.find<SettingController>();
 
   @override
   void dispose() {
@@ -475,6 +482,8 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
                   return _SearchResultItem(
                     lyricInfo: lrcSearchController.currentNetLrc[index]!,
                     textStyle: textStyle,
+                    audioController: _audioController,
+                    settingController: _settingController,
                   );
                 },
               );
@@ -502,6 +511,9 @@ class LrcView extends StatelessWidget {
   const LrcView({super.key});
 
   ThemeService get _themeService => Get.find<ThemeService>();
+  DesktopLyricsSever get _desktopLyricsSever => Get.find<DesktopLyricsSever>();
+  AudioController get _audioController => Get.find<AudioController>();
+  SettingController get _settingController => Get.find<SettingController>();
 
   Widget _buildScrollText(String text, TextStyle textStyle) {
     return TextScroll(
@@ -1102,6 +1114,8 @@ class LrcView extends StatelessWidget {
       );
     }
 
+    final settingController = _settingController;
+
     List<Widget> playListBuilder(MusicCache metadata) {
       return _audioController.allUserKey.map((v) {
         return MenuItemButton(
@@ -1115,50 +1129,50 @@ class LrcView extends StatelessWidget {
 
     final menuItem = [
       Obx(
-        () => createInfoBar(text: "字号 ${_settingController.lrcFontSize.value}"),
+        () => createInfoBar(text: "字号 ${settingController.lrcFontSize.value}"),
       ),
       _createMenuBtn(
         text: "字号+",
         fn: () {
-          if (_settingController.lrcFontSize.value <
+          if (settingController.lrcFontSize.value <
               SettingController.lrcFontSizeMax) {
-            _settingController.lrcFontSize.value++;
-            _settingController.putCache(isSaveFolders: false);
+            settingController.lrcFontSize.value++;
+            settingController.putCache(isSaveFolders: false);
           }
         },
       ),
       _createMenuBtn(
         text: "字号-",
         fn: () {
-          if (_settingController.lrcFontSize.value >
+          if (settingController.lrcFontSize.value >
               SettingController.lrcFontSizeMin) {
-            _settingController.lrcFontSize.value--;
-            _settingController.putCache(isSaveFolders: false);
+            settingController.lrcFontSize.value--;
+            settingController.putCache(isSaveFolders: false);
           }
         },
       ),
       Obx(
         () => createInfoBar(
-          text: "字重 ${_settingController.lrcFontWeight.value * 100 + 100}",
+          text: "字重 ${settingController.lrcFontWeight.value * 100 + 100}",
         ),
       ),
       _createMenuBtn(
         text: "字重+",
         fn: () {
-          if (_settingController.lrcFontWeight.value <
+          if (settingController.lrcFontWeight.value <
               SettingController.lrcFontWeightMax) {
-            _settingController.lrcFontWeight.value++;
-            _settingController.putCache(isSaveFolders: false);
+            settingController.lrcFontWeight.value++;
+            settingController.putCache(isSaveFolders: false);
           }
         },
       ),
       _createMenuBtn(
         text: "字重-",
         fn: () {
-          if (_settingController.lrcFontWeight.value >
+          if (settingController.lrcFontWeight.value >
               SettingController.lrcFontWeightMin) {
-            _settingController.lrcFontWeight.value--;
-            _settingController.putCache(isSaveFolders: false);
+            settingController.lrcFontWeight.value--;
+            settingController.putCache(isSaveFolders: false);
           }
         },
       ),
@@ -1364,7 +1378,7 @@ class LrcView extends StatelessWidget {
                                     ..._audioController.audioFFT,
                                   ];
                                   if (fftList.isEmpty ||
-                                      !_settingController
+                                      !settingController
                                           .showSpectrogram
                                           .value) {
                                     return const SizedBox.shrink();

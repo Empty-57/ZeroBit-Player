@@ -24,11 +24,10 @@ final _mainRoutes = AppRoutes.orderMap.keys.toList();
 
 final _playQueueController = MenuController();
 final _playQueueScrollController = ScrollController();
-final AudioController _audioController = Get.find<AudioController>();
 const double _itemHeight = 64;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 
-class CustomNavigationBtn extends StatelessWidget {
+class CustomNavigationBtn extends GetView<AudioController> {
   final String label;
   final IconData icon;
   final int localIndex;
@@ -86,7 +85,7 @@ class CustomNavigationBtn extends StatelessWidget {
                     Tooltip(
                       message:
                           context.width > _resViewThresholds
-                              ? _audioController.navigationIsExtend.value
+                              ? controller.navigationIsExtend.value
                                   ? ""
                                   : label
                               : label,
@@ -104,7 +103,7 @@ class CustomNavigationBtn extends StatelessWidget {
                           curve: Curves.easeOutCubic,
                           opacity:
                               (context.width > _resViewThresholds &&
-                                      _audioController.navigationIsExtend.value)
+                                      controller.navigationIsExtend.value)
                                   ? 1.0
                                   : 0.0,
                           child: Text(
@@ -154,7 +153,7 @@ class CustomNavigationBtn extends StatelessWidget {
   }
 }
 
-class CustomNavigation extends StatelessWidget {
+class CustomNavigation extends GetView<AudioController> {
   const CustomNavigation({super.key, required this.btnList});
 
   final List<Widget> btnList;
@@ -174,8 +173,10 @@ class CustomNavigation extends StatelessWidget {
       color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
     );
 
+    final c = controller;
+
     return Obx(() {
-      final isExtend = _audioController.navigationIsExtend.value;
+      final isExtend = c.navigationIsExtend.value;
       final targetWidth =
           context.width > _resViewThresholds
               ? isExtend
@@ -225,8 +226,7 @@ class CustomNavigation extends StatelessWidget {
                             flex: 1,
                             child: Obx(() {
                               return ListView.builder(
-                                itemCount:
-                                    _audioController.playListCacheItems.length,
+                                itemCount: c.playListCacheItems.length,
                                 itemExtent: _itemHeight,
                                 cacheExtent: _itemHeight * 1,
                                 controller: _playQueueScrollController,
@@ -234,14 +234,10 @@ class CustomNavigation extends StatelessWidget {
                                   bottom: _itemHeight * 2,
                                 ),
                                 itemBuilder: (context, index) {
-                                  final items =
-                                      _audioController
-                                          .playListCacheItems[index];
+                                  final items = c.playListCacheItems[index];
                                   return TextButton(
                                     onPressed: () async {
-                                      await _audioController.audioPlay(
-                                        metadata: items,
-                                      );
+                                      await c.audioPlay(metadata: items);
                                     }.throttle(ms: 300),
                                     style: TextButton.styleFrom(
                                       shape: const RoundedRectangleBorder(
@@ -251,10 +247,7 @@ class CustomNavigation extends StatelessWidget {
                                     child: SizedBox.expand(
                                       child: Obx(() {
                                         final isCurrent =
-                                            _audioController
-                                                .currentPath
-                                                .value ==
-                                            items.path;
+                                            c.currentPath.value == items.path;
                                         final subTextStyle =
                                             !isCurrent
                                                 ? subStyle
@@ -300,13 +293,10 @@ class CustomNavigation extends StatelessWidget {
                   onOpen: () {
                     SchedulerBinding.instance.addPostFrameCallback((_) {
                       _playQueueScrollController.jumpTo(
-                        (_itemHeight * _audioController.currentIndex.value)
-                            .clamp(
-                              0.0,
-                              _playQueueScrollController
-                                  .position
-                                  .maxScrollExtent,
-                            ),
+                        (_itemHeight * c.currentIndex.value).clamp(
+                          0.0,
+                          _playQueueScrollController.position.maxScrollExtent,
+                        ),
                       );
                     });
                   },
@@ -394,8 +384,7 @@ class CustomNavigation extends StatelessWidget {
                     onPressed:
                         context.width > _resViewThresholds
                             ? () {
-                              _audioController.navigationIsExtend.value =
-                                  !isExtend;
+                              c.navigationIsExtend.value = !isExtend;
                             }
                             : null,
                     style: TextButton.styleFrom(

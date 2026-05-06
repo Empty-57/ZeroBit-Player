@@ -357,18 +357,18 @@ class _SlideTransition extends CustomTransition {
   }
 }
 
-final ThemeService themeService = Get.find<ThemeService>();
-
 class MainFrame extends StatelessWidget {
   const MainFrame({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final ThemeService themeService = Get.find<ThemeService>();
+    final SettingController settingController = Get.find<SettingController>();
     return Obx(
       () => GetMaterialApp(
         theme: themeService.lightTheme,
         darkTheme: themeService.darkTheme,
-        themeMode: themeMode.value == 'dark' ? ThemeMode.dark : ThemeMode.light,
+        themeMode: settingController.themeMode.value == 'dark' ? ThemeMode.dark : ThemeMode.light,
         transitionDuration: 200.ms,
         customTransition: _SlideTransition(),
         debugShowCheckedModeBanner: false,

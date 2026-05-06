@@ -12,16 +12,6 @@ import '../tools/general_style.dart';
 import '../getxController/setting_ctrl.dart';
 import 'get_snack_bar.dart';
 
-final SettingController _settingController = Get.find<SettingController>();
-final ThemeService _themeService = Get.find<ThemeService>();
-final MusicCacheController _musicCacheController =
-    Get.find<MusicCacheController>();
-final AudioController _audioController = Get.find<AudioController>();
-
-final DesktopLyricsSever _desktopLyricsSever = Get.find<DesktopLyricsSever>();
-
-final themeMode = _settingController.themeMode;
-
 const double _controllerBarHeight = 48;
 const double _itemHeight = 64;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
@@ -31,6 +21,8 @@ const int _coverSmallRenderSize = 150;
 class _WindowListener extends GetxController with WindowListener {
   final _isMaximized = false.obs;
   final _isFullScreen = false.obs;
+  final DesktopLyricsSever _desktopLyricsSever = Get.find<DesktopLyricsSever>();
+  final SettingController _settingController = Get.find<SettingController>();
 
   @override
   void onInit() {
@@ -132,7 +124,9 @@ class _WindowListener extends GetxController with WindowListener {
 }
 
 class _SearchDialog extends StatelessWidget {
-  const _SearchDialog();
+  final AudioController ctrl;
+  final MusicCacheController cacheCtrl;
+  const _SearchDialog({required this.ctrl, required this.cacheCtrl});
   @override
   Widget build(BuildContext context) {
     final titleStyle = generalTextStyle(ctx: context, size: 'md');
@@ -140,8 +134,8 @@ class _SearchDialog extends StatelessWidget {
     return _ControllerButton(
       icon: PhosphorIconsLight.magnifyingGlass,
       fn: () {
-        _musicCacheController.searchResult.clear();
-        _musicCacheController.searchText.value = '';
+        cacheCtrl.searchResult.clear();
+        cacheCtrl.searchText.value = '';
         final searchCtrl = TextEditingController();
         showDialog(
           barrierDismissible: true,
@@ -177,27 +171,23 @@ class _SearchDialog extends StatelessWidget {
                           labelText: '搜索',
                         ),
                         onChanged: (String text) {
-                          _musicCacheController.searchText.value = text;
+                          cacheCtrl.searchText.value = text;
                         },
                       ),
                       Expanded(
                         flex: 1,
                         child: Obx(
                           () => ListView.builder(
-                            itemCount:
-                                _musicCacheController.searchResult.length,
+                            itemCount: cacheCtrl.searchResult.length,
                             itemExtent: _itemHeight,
                             cacheExtent: _itemHeight * 1,
                             padding: EdgeInsets.only(bottom: _itemHeight * 2),
                             itemBuilder: (context, index) {
-                              final items =
-                                  _musicCacheController.searchResult[index];
+                              final items = cacheCtrl.searchResult[index];
                               final menuController = MenuController();
                               return TextButton(
                                 onPressed: () {
-                                  _audioController.searchInsert(
-                                    metadata: items,
-                                  );
+                                  ctrl.searchInsert(metadata: items);
                                 },
                                 style: TextButton.styleFrom(
                                   shape: RoundedRectangleBorder(
@@ -240,23 +230,18 @@ class _SearchDialog extends StatelessWidget {
                                                 .arrowBendDownRight,
                                         tooltip: '添加到下一首',
                                         fn: () {
-                                          _audioController.insertNext(
-                                            metadata: items,
-                                          );
+                                          ctrl.insertNext(metadata: items);
                                         },
                                       ),
                                       MenuAnchor(
                                         menuChildren:
-                                            _audioController.allUserKey.map((
-                                              v,
-                                            ) {
+                                            ctrl.allUserKey.map((v) {
                                               return MenuItemButton(
                                                 onPressed: () {
-                                                  _audioController
-                                                      .addToAudioList(
-                                                        metadata: items,
-                                                        userKey: v,
-                                                      );
+                                                  ctrl.addToAudioList(
+                                                    metadata: items,
+                                                    userKey: v,
+                                                  );
                                                 },
                                                 child: Center(
                                                   child: Text(
@@ -278,9 +263,7 @@ class _SearchDialog extends StatelessWidget {
                                           icon: PhosphorIconsLight.plus,
                                           tooltip: '添加到歌单',
                                           fn: () {
-                                            if (_audioController
-                                                .allUserKey
-                                                .isEmpty) {
+                                            if (ctrl.allUserKey.isEmpty) {
                                               showSnackBar(
                                                 title: "WARNING",
                                                 msg: "还未创建任何歌单",
@@ -320,7 +303,7 @@ class _SearchDialog extends StatelessWidget {
   }
 }
 
-class _ControllerButton extends StatelessWidget {
+class _ControllerButton extends GetView<ThemeService> {
   final IconData icon;
   final Color? hoverColor;
   final VoidCallback fn;
@@ -341,7 +324,7 @@ class _ControllerButton extends StatelessWidget {
       icon: Icon(icon),
       color:
           onlyDarkMode
-              ? _themeService.darkTheme.colorScheme.onSurface
+              ? controller.darkTheme.colorScheme.onSurface
               : Theme.of(context).colorScheme.onSurface,
       tooltip: tooltip,
       iconSize: getIconSize(size: 'lg'),
@@ -372,13 +355,18 @@ class WindowControllerBar extends StatelessWidget {
     this.showLogo = true,
     this.useCaretDown = false,
     this.useSearch = true,
-    this.useThemeSwitch=true,
+    this.useThemeSwitch = true,
     this.onlyDarkMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final windowListener = Get.put(_WindowListener());
+    final windowListener = Get.put(_WindowListener()); // 需要注入
+    final AudioController audioController = Get.find<AudioController>();
+    final MusicCacheController musicCacheController =
+        Get.find<MusicCacheController>();
+    final SettingController settingController = Get.find<SettingController>();
+    final ThemeService themeService = Get.find<ThemeService>();
 
     return Container(
       height: _controllerBarHeight,
@@ -438,26 +426,30 @@ class WindowControllerBar extends StatelessWidget {
             ),
           ),
 
-          if (useSearch) const _SearchDialog(),
+          if (useSearch)
+            _SearchDialog(
+              ctrl: audioController,
+              cacheCtrl: musicCacheController,
+            ),
 
-          if(useThemeSwitch)
+          if (useThemeSwitch)
             Padding(
-            padding: EdgeInsets.only(right: 8, left: 8),
-            child: Obx(
-              () => _ControllerButton(
-                onlyDarkMode: onlyDarkMode,
-                icon:
-                    _settingController.themeMode.value == 'dark'
-                        ? PhosphorIconsLight.moon
-                        : PhosphorIconsLight.sun,
-                fn: _themeService.setThemeMode,
-                tooltip:
-                    _settingController.themeMode.value == 'dark'
-                        ? "暗色主题"
-                        : "亮色主题",
+              padding: EdgeInsets.only(right: 8, left: 8),
+              child: Obx(
+                () => _ControllerButton(
+                  onlyDarkMode: onlyDarkMode,
+                  icon:
+                      settingController.themeMode.value == 'dark'
+                          ? PhosphorIconsLight.moon
+                          : PhosphorIconsLight.sun,
+                  fn: themeService.setThemeMode,
+                  tooltip:
+                      settingController.themeMode.value == 'dark'
+                          ? "暗色主题"
+                          : "亮色主题",
+                ),
               ),
             ),
-          ),
 
           Obx(
             () => Visibility(
@@ -514,7 +506,7 @@ class WindowControllerBar extends StatelessWidget {
             icon: PhosphorIconsLight.x,
             hoverColor: Colors.red,
             fn: () async {
-              if(_settingController.close2Tray.value){
+              if (settingController.close2Tray.value) {
                 await windowManager.hide();
                 return;
               }

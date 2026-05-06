@@ -13,8 +13,6 @@ import '../src/rust/api/bass.dart';
 import '../tools/diamond_silder_thumb.dart';
 import '../tools/format_time.dart';
 
-final AudioController _audioController = Get.find<AudioController>();
-final SettingController _settingController = Get.find<SettingController>();
 const double _radius = 6;
 final _isSeekBarDragging = false.obs;
 
@@ -46,6 +44,7 @@ class GenIconBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
+      waitDuration: Duration(milliseconds: 100),
       message: tooltip,
       child: TextButton(
         onPressed: () {
@@ -73,11 +72,14 @@ class AudioCtrlWidget {
   final double size;
   final BuildContext context;
   final Color? color;
-  const AudioCtrlWidget({
+  AudioCtrlWidget({
     required this.size,
     required this.context,
     this.color,
   });
+
+  final AudioController _audioController = Get.find<AudioController>();
+final SettingController _settingController = Get.find<SettingController>();
 
   Widget get speedSet {
     const double btnW = 72;

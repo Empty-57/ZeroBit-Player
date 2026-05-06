@@ -3,17 +3,17 @@ import 'package:mesh_gradient/mesh_gradient.dart';
 import 'package:get/get.dart';
 import '../getxController/audio_ctrl.dart';
 
-final AudioController _audioController = Get.find<AudioController>();
-
-class LyricsMesh extends StatelessWidget {
+class LyricsMesh extends GetView<AudioController> {
   const LyricsMesh({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final c=controller;
+
     return Obx((){
-      List<Color> coverList=_audioController.coverPalette;
-      if(_audioController.coverPalette.length>=4){
-        coverList=_audioController.coverPalette.sublist(0,4);
+      List<Color> coverList=c.coverPalette;
+      if(coverList.length>=4){
+        coverList=coverList.sublist(0,4);
       }
       return AnimatedMeshGradient(
       colors: coverList,

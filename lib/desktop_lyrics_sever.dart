@@ -40,7 +40,9 @@ class DesktopLyricsSever extends GetxController {
     }
 
     _stateWorker = ever(_audioController.currentState, (_) {
-      _refreshStatus();
+      if (_settingController.showDesktopLyrics.value) {
+        _refreshStatus();
+      }
     });
   }
 

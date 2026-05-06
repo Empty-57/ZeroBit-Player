@@ -15,10 +15,6 @@ import '../tools/format_time.dart';
 const double _itemSpacing = 16.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 
-final SettingController _settingController = Get.find<SettingController>();
-final AudioController _audioController = Get.find<AudioController>();
-final AudioSource _audioSource = Get.find<AudioSource>();
-
 class MusicTile extends StatelessWidget {
   final MusicCache metadata;
   final TextStyle titleStyle;
@@ -29,6 +25,9 @@ class MusicTile extends StatelessWidget {
   final String operateArea;
   final RxBool isMulSelect;
   final RxList<MusicCache> selectedList;
+  final SettingController settingController;
+final AudioController audioController;
+final AudioSource audioSourceClass;
 
   const MusicTile({
     super.key,
@@ -41,6 +40,9 @@ class MusicTile extends StatelessWidget {
     required this.operateArea,
     required this.isMulSelect,
     required this.selectedList,
+    required this.settingController,
+    required this.audioController,
+    required this.audioSourceClass,
   });
 
   void _onTileTapped() {
@@ -52,8 +54,8 @@ class MusicTile extends StatelessWidget {
         selectedList.add(metadata);
       }
     } else {
-      _audioSource.currentAudioSource.value = audioSource;
-      _audioController.audioPlay(metadata: metadata);
+      audioSourceClass.currentAudioSource.value = audioSource;
+      audioController.audioPlay(metadata: metadata);
     }
   }
 
@@ -62,9 +64,9 @@ class MusicTile extends StatelessWidget {
     final Widget cover = AsyncCover(music: metadata);
 
     return Obx(() {
-      final isPlaying = _audioController.currentPath.value == metadata.path;
+      final isPlaying = audioController.currentPath.value == metadata.path;
       final isSelected = selectedList.any((v) => v.path == metadata.path);
-      final showAlbum = _settingController.viewModeMap[operateArea] ?? false;
+      final showAlbum = settingController.viewModeMap[operateArea] ?? false;
 
       final subTextStyle = isPlaying ? highLightSubStyle : subStyle;
       final textStyle = isPlaying ? highLightTitleStyle : titleStyle;

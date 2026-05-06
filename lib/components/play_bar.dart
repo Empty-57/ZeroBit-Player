@@ -29,13 +29,12 @@ const double _ctrlBtnMinSize = 40.0;
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 const int _coverRenderSize = 150;
 
-final AudioController _audioController = Get.find<AudioController>();
-
-class _ProgressBar extends StatelessWidget {
+class _ProgressBar extends GetView<AudioController> {
   const _ProgressBar();
 
   @override
   Widget build(BuildContext context) {
+    final c=controller;
     final progressColor = Theme.of(
       context,
     ).colorScheme.secondaryContainer.withValues(alpha: 0.8);
@@ -49,7 +48,7 @@ class _ProgressBar extends StatelessWidget {
         () => CustomPaint(
           size: const Size(_barWidth, _barHeight),
           painter: _ProgressPainter(
-            progress: _audioController.progress.value,
+            progress: c.progress.value,
             fgPaint: fgPaint,
           ),
         ),
@@ -82,15 +81,10 @@ class _ProgressPainter extends CustomPainter {
   }
 }
 
-class PlayBar extends StatefulWidget {
+final _isBarHover = false.obs;
+
+class PlayBar extends GetView<AudioController> {
   const PlayBar({super.key});
-
-  @override
-  State<PlayBar> createState() => _PlayBarState();
-}
-
-class _PlayBarState extends State<PlayBar> {
-  bool _isBarHover = false;
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +98,7 @@ class _PlayBarState extends State<PlayBar> {
       final rightOffset =
           (screenWidth -
                   (screenWidth > _resViewThresholds
-                      ? _audioController.navigationIsExtend.value
+                      ? controller.navigationIsExtend.value
                           ? _navigationWidth
                           : _navigationWidthSmall
                       : _navigationWidthSmall)) /
@@ -129,8 +123,7 @@ class _PlayBarState extends State<PlayBar> {
       );
     });
   }
-
-  // 构建 Slider 部分
+// 构建 Slider 部分
   Widget _buildSlider(BuildContext context, AudioCtrlWidget audioCtrlWidget) {
     return Material(
       color: Colors.transparent,
@@ -180,6 +173,8 @@ class _PlayBarState extends State<PlayBar> {
       color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
     );
 
+    final c=controller;
+
     return Stack(
       children: [
         // 背景容器
@@ -205,7 +200,7 @@ class _PlayBarState extends State<PlayBar> {
         // 交互层
         TextButton(
           onPressed: () => Get.toNamed(AppRoutes.lrcView),
-          onHover: (v) => setState(() => _isBarHover = v),
+          onHover: (v) => _isBarHover.value=v,
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             fixedSize: const Size(_barWidth, _barHeight),
@@ -218,10 +213,10 @@ class _PlayBarState extends State<PlayBar> {
             crossAxisAlignment: CrossAxisAlignment.center,
             spacing: 8,
             children: [
-              _buildCoverAndInfo(timeTextStyle),
+              _buildCoverAndInfo(context,timeTextStyle),
               _buildControlButtons(audioCtrlWidget),
               audioCtrlWidget.toggle,
-              _buildTimeDisplay(timeTextStyle),
+              _buildTimeDisplay(c,timeTextStyle),
             ],
           ),
         ),
@@ -245,7 +240,7 @@ class _PlayBarState extends State<PlayBar> {
   }
 
   // 构建封面和歌曲信息
-  Widget _buildCoverAndInfo(TextStyle timeTextStyle) {
+  Widget _buildCoverAndInfo(BuildContext context,TextStyle timeTextStyle) {
     final titleStyle = generalTextStyle(
       ctx: context,
       size: 'md',
@@ -264,7 +259,7 @@ class _PlayBarState extends State<PlayBar> {
                 child: FadeInImage(
                   placeholder: MemoryImage(kTransparentImage),
                   image: ResizeImage(
-                    MemoryImage(_audioController.currentSmallCover.value),
+                    MemoryImage(controller.currentSmallCover.value),
                     width: _coverRenderSize,
                     height: _coverRenderSize,
                   ),
@@ -284,10 +279,10 @@ class _PlayBarState extends State<PlayBar> {
               children: [
                 Obx(() {
                   final title =
-                      _audioController.currentMetadata.value.title.isNotEmpty
-                          ? _audioController.currentMetadata.value.title
+                      controller.currentMetadata.value.title.isNotEmpty
+                          ? controller.currentMetadata.value.title
                           : "ZeroBit Player";
-                  return _isBarHover
+                  return _isBarHover.value
                       ? _buildScrollText(title, titleStyle)
                       : Text(
                         title,
@@ -300,10 +295,10 @@ class _PlayBarState extends State<PlayBar> {
                 }),
                 Obx(() {
                   final artist =
-                      _audioController.currentMetadata.value.artist.isNotEmpty
-                          ? _audioController.currentMetadata.value.artist
+                      controller.currentMetadata.value.artist.isNotEmpty
+                          ? controller.currentMetadata.value.artist
                           : "39";
-                  return _isBarHover
+                  return _isBarHover.value
                       ? _buildScrollText(artist, timeTextStyle)
                       : Text(
                         artist,
@@ -324,12 +319,12 @@ class _PlayBarState extends State<PlayBar> {
 
   // 构建可显隐的控制按钮
   Widget _buildControlButtons(AudioCtrlWidget audioCtrlWidget) {
-    return AnimatedOpacity(
-      opacity: _isBarHover ? 1.0 : 0.0,
+    return Obx(()=>AnimatedOpacity(
+      opacity: _isBarHover.value ? 1.0 : 0.0,
       duration: const Duration(milliseconds: 200),
       // 即使透明，也不让它接收点击事件
       child: IgnorePointer(
-        ignoring: !_isBarHover,
+        ignoring: !_isBarHover.value,
         child: Row(
           children: [
             audioCtrlWidget.volumeSet,
@@ -339,20 +334,21 @@ class _PlayBarState extends State<PlayBar> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   // 构建时间显示
-  Widget _buildTimeDisplay(TextStyle timeTextStyle) {
+  Widget _buildTimeDisplay(AudioController c,TextStyle timeTextStyle) {
     return Obx(() {
       final duration =
-          _audioController.currentDuration.value > 0
-              ? formatTime(totalSeconds: _audioController.currentDuration.value)
+          c.currentDuration.value > 0
+              ? formatTime(totalSeconds: c.currentDuration.value)
               : "--:--";
       final currentSec = formatTime(
-        totalSeconds: _audioController.currentSec.value,
+        totalSeconds: c.currentSec.value,
       );
       return Text("$currentSec / $duration", style: timeTextStyle);
     });
   }
 }
+

@@ -20,8 +20,6 @@ import '../getxController/setting_ctrl.dart';
 
 const double btnW = 108;
 final SettingController _settingController = Get.find<SettingController>();
-final MusicCacheController _musicCacheController =
-    Get.find<MusicCacheController>();
 
 final DesktopLyricsSettingController _desktopLyricsSettingController =
     Get.find<DesktopLyricsSettingController>();
@@ -83,11 +81,13 @@ class _SetDivider extends StatelessWidget {
   }
 }
 
-class _FolderManagerDialog extends StatelessWidget {
+class _FolderManagerDialog extends GetView<MusicCacheController> {
   const _FolderManagerDialog();
 
   @override
   Widget build(BuildContext context) {
+
+    final musicCacheController=controller;
     return CustomBtn(
       fn: () {
         var foldersClone = [..._settingController.folders];
@@ -171,11 +171,11 @@ class _FolderManagerDialog extends StatelessWidget {
                       Obx(
                         () => Visibility(
                           visible:
-                              _musicCacheController.currentScanAudio.value == ''
+                              musicCacheController.currentScanAudio.value == ''
                                   ? false
                                   : true,
                           child: Text(
-                            '已扫描到：${_musicCacheController.currentScanAudio.value}',
+                            '已扫描到：${musicCacheController.currentScanAudio.value}',
                             style: generalTextStyle(ctx: context, size: 'md'),
                             softWrap: true,
                             maxLines: 1,
@@ -187,7 +187,7 @@ class _FolderManagerDialog extends StatelessWidget {
                       Obx(
                         () => Visibility(
                           visible:
-                              _musicCacheController.currentScanAudio.value == ''
+                              musicCacheController.currentScanAudio.value == ''
                                   ? true
                                   : false,
                           child: Row(

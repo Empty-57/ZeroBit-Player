@@ -4,9 +4,8 @@ import 'package:zerobit_player/tools/websocket_model.dart';
 
 import '../desktop_lyrics_sever.dart';
 
-final DesktopLyricsSever _desktopLyricsSever = Get.find<DesktopLyricsSever>();
-
 class DesktopLyricsSettingController extends GetxController {
+  final DesktopLyricsSever _desktopLyricsSever = Get.find<DesktopLyricsSever>();
   final fontFamily = "Microsoft YaHei Light".obs;
   final fontSize = 24.obs; // 16-36
   final fontWeight = 5.obs; // 0-8  w100-w900

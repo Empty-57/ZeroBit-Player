@@ -28,11 +28,6 @@ const double _menuWidth = 180;
 const double _menuHeight = 48;
 const double _menuRadius = 0;
 
-final MusicCacheController _musicCacheController =
-    Get.find<MusicCacheController>();
-
-final AudioController _audioController = Get.find<AudioController>();
-
 class EditMetadataDialog extends StatelessWidget {
   final MenuController menuController;
   final MusicCache metadata;
@@ -112,6 +107,10 @@ class _MetadataEditorState extends State<_MetadataEditor> {
   late final TextEditingController _artistCtrl;
   late final TextEditingController _albumCtrl;
   late final TextEditingController _genreCtrl;
+  late final MusicCacheController _musicCacheController =
+    Get.find<MusicCacheController>();
+
+late final AudioController _audioController = Get.find<AudioController>();
 
   bool _isLoading = false;
 

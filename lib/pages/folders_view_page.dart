@@ -5,27 +5,25 @@ import '../getxController/setting_ctrl.dart';
 import '../tools/general_style.dart';
 import '../tools/sync_cache.dart';
 
-final SettingController _settingController = Get.find<SettingController>();
 const double _itemHeight = 64.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 
-final folderPathMap = <String, List<String>>{}.obs;
-
-class FoldersViewPage extends StatelessWidget {
+class FoldersViewPage extends GetView<SettingController> {
   const FoldersViewPage({super.key});
 
-  void createMap() async {
-    for (String folder in _settingController.folders) {
-      folderPathMap[folder] = (await scanAudioPaths([folder],_settingController)).toList();
+  void createMap(SettingController c,RxMap<String, List<String>> map) async {
+    for (String folder in c.folders) {
+      map[folder] = (await scanAudioPaths([folder],c)).toList();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final folderPathMap = <String, List<String>>{}.obs; // 每次重新扫描
     final textStyle1 = generalTextStyle(ctx: context, size: 'md');
     final textStyle2 = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-
-    createMap();
+    final settingController=controller;
+    createMap(settingController,folderPathMap);
 
     return Container(
       alignment: Alignment.centerLeft,
@@ -56,7 +54,7 @@ class FoldersViewPage extends StatelessWidget {
                 ),
                 Obx(
                   () => Text(
-                    '共${_settingController.folders.length}个文件夹',
+                    '共${settingController.folders.length}个文件夹',
                     style: generalTextStyle(ctx: context, size: 'md'),
                   ),
                 ),
@@ -68,7 +66,7 @@ class FoldersViewPage extends StatelessWidget {
             child: Obx(() {
               final folders = folderPathMap.keys.toList();
               return ListView.builder(
-                itemCount: _settingController.folders.length,
+                itemCount: settingController.folders.length,
                 itemExtent: _itemHeight,
                 cacheExtent: _itemHeight * 1,
                 itemBuilder: (context, index) {
