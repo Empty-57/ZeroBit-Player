@@ -24,8 +24,9 @@ class SpringController extends GetxController {
 
   int totalLength = 0;
 
-  final int delay = 60;
   static const double durationMax = 1200;
+  static const int delayMax = 60;
+  int delay = delayMax;
   double duration = durationMax;
 
   GlobalKey getSliverKey(int index) =>
@@ -132,9 +133,16 @@ class SpringListView extends StatelessWidget {
                   child: Obx(() {
                     if (controller.currentIndex.value < lineDuration.length &&
                         controller.currentIndex.value >= 0) {
+                      // 原式: controller.delay = lineDuration[controller.currentIndex.value] *1000 / SpringController.durationMax *SpringController.delayMax
+                      controller.delay =
+                          (lineDuration[controller.currentIndex.value] * 50)
+                              .clamp(
+                                SpringController.delayMax * 0.2,
+                                SpringController.delayMax,
+                              )
+                              .toInt();
                       controller.duration =
-                          (lineDuration[controller.currentIndex.value] * 1000 -
-                                  controller.delay)
+                          (lineDuration[controller.currentIndex.value] * 1000)
                               .clamp(
                                 SpringController.durationMax * 0.2,
                                 SpringController.durationMax,
