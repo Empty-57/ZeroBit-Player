@@ -143,7 +143,6 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
   if (filePath == null || filePath.isEmpty) return null;
 
   final lyricsData = await _getLyrics(filePath: filePath);
-
   if (lyricsData == null) {
     // 此if块需要判断是否为增强型Lrc
     final embeddedLyrics = await getEmbeddedLyric(path: filePath);
@@ -158,6 +157,7 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
       String? lyricsTs = data['lyricsTs'];
 
       final detectType = detectLrcType(lyrics);
+      debugPrint("currentLyrics | embeddedLyricType: $detectType");
       if (type == LyricFormat.lrc &&
           (detectType == LrcType.enhanced ||
               detectType == LrcType.wordByWord)) {
@@ -200,6 +200,7 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
     return null;
   }
 
+  debugPrint("currentLyrics | localType: ${lyricsData.type}");
   if (lyricsData.type == LyricFormat.lrc ||
       lyricsData.type == LyricFormat.byWordLrc) {
     return ParsedLyricModel(

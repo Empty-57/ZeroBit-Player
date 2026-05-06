@@ -122,20 +122,22 @@ List<LyricEntry> _parseLyrics(String text) {
   final reg1 = RegExp(r'<\d{2}:\d{2}\.\d{2,3}>');
   final reg2 = RegExp(r'\[\d{2}:\d{2}\.\d{2,3}\]');
 
-  return [
-    for (final match in _lrcLineRegex.allMatches(text))
-      () {
+  return _lrcLineRegex
+      .allMatches(text)
+      .map((match) {
         try {
           final start = _parseTime(match[1]!, match[2]!);
           final lyric =
               match[3]!.replaceAll(reg1, '').replaceAll(reg2, '').trim();
+          if (lyric.isEmpty) return null;
           return LyricEntry(start: start, lyricText: lyric);
         } catch (e) {
           debugPrint('Invalid lyric line: ${match.group(0)} → $e');
           return null;
         }
-      }(),
-  ].whereType<LyricEntry>().toList();
+      })
+      .whereType<LyricEntry>()
+      .toList();
 }
 
 // ─────────────────────────── 增强 / 逐字 LRC 解析 ───────────────────────────
@@ -546,6 +548,6 @@ List<LyricEntry>? parseKaraOkLyric({
         (i < segments.length - 1) ? segments[i + 1].start : double.infinity;
   }
 
-  debugPrint("currentLyrics | type: $type");
+  debugPrint("currentLyrics | parsedType: $type");
   return _mergeTranslations(segments, lyricDataTs, type: type);
 }

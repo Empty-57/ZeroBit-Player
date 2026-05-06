@@ -94,8 +94,8 @@ class LyricController extends GetxController {
       _currentWord = word;
 
 
-      // 增量计算:  total/(duration/loopTime)
-      // 百分比: total=100 字持续时间: duration(Ms) 轮询周期: loopTime=20(Ms)
+      // 增量计算: total*(loopTime/duration)
+      // 百分比: total=100 字持续时间: duration(s) 轮询周期: loopTime=0.02(s)
       final duration = word.duration;
       if (duration <= 0) {
         _wordProgressIncrement = 0;
@@ -113,32 +113,46 @@ class LyricController extends GetxController {
     }
   }
 
-  // 判断是否显示间奏
+  // 判断是否显示间奏/前奏
   void _updateInterludeState() {
-    final isLast = currentWordIndex.value == _wordsLen - 1;
-    if (!isLast) {
-      showInterlude.value = false;
-      return;
-    }
-    final currentLyric = _audioController.currentLyrics.value;
-
-    final int len = (currentLyric?.parsedLrc?.length ?? 0) - 1;
-    int threshold = _showIntervalLowLimit;
-    if (currentLyric?.type == LyricFormat.byWordLrc) {
-      threshold = 0; // byWordLrc 每一行最后一个词为空白符 代表本行的结束时间 不需要预设下限 本行的结束时间就是间奏开始时间
-    }
-    showInterlude.value =
-        isLast &&
-        _interval >= _intervalThreshold &&
-        wordProgress.value >= threshold && // 这个词过渡完才允许显示间奏
-        interludeProcess.value <=
-            _showIntervalHighLimit && // <= 95 是为了给动画退场一点时间
-        currentLineIndex.value < len;
-
-    if (showInterlude.value) {
-      interludeProcess.value += 2 / _interval;
-    }
+  final lyrics = _audioController.currentLyrics.value;
+  final parsedLrc = lyrics?.parsedLrc;
+  if (parsedLrc == null || parsedLrc.isEmpty) {
+    showInterlude.value = false;
+    return;
   }
+  final lineIndex = currentLineIndex.value;
+
+  // 前奏
+  if (lineIndex < 0) {
+    _interval = parsedLrc[0].start;
+    final show = _interval > _intervalThreshold &&
+        interludeProcess.value <= _showIntervalHighLimit - 10 &&
+        _interval < 60; // 超过1分钟认为歌词时间轴有误
+    showInterlude.value = show;
+    if (show) interludeProcess.value += 2 / _interval;
+    return;
+  }
+
+  // 间奏
+  if (currentWordIndex.value != _wordsLen - 1) {
+    showInterlude.value = false;
+    return;
+  }
+
+  final interlude = interludeProcess.value;
+  final int threshold = lyrics!.type == LyricFormat.byWordLrc
+      ? 0  // byWordLrc 每一行最后一个词为空白符 代表本行的结束时间 不需要预设下限 本行的结束时间就是间奏开始时间
+      : _showIntervalLowLimit;
+
+  final show = _interval >= _intervalThreshold &&
+      wordProgress.value >= threshold && // 这个词过渡完才允许显示间
+      interlude <= _showIntervalHighLimit &&  //<= _showIntervalHighLimit 是为了给动画退场一点时间
+      lineIndex < parsedLrc.length - 1;
+
+  showInterlude.value = show;
+  if (show) interludeProcess.value += 2 / _interval; // 算法同词增量计算
+}
 
   @override
   void onInit() {
@@ -168,6 +182,7 @@ class LyricController extends GetxController {
               LyricFormat.lrc ||
           currentLineIndex.value < 0 ||
           _currentLine == null) {
+        _updateInterludeState();
         return;
       }
       final newWordIndex = _findLrcPos(

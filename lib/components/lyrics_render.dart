@@ -593,6 +593,14 @@ class _StaggeredLyricItem extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: _lrcCrossAlignment[lrcAlignment],
         children: [
+          if (index == 0)
+            _InterludeWidget(
+              lyricController: lyricController,
+              lrcAlignment: lrcAlignment,
+              interludeLyricStyle: interludeLyricStyle,
+              strutStyle: strutStyle,
+              isCurrent: lyricController.currentLineIndex.value < 0,
+            ),
           if (lrcType == LyricFormat.lrc)
             _creatScaleWidget(
               child: _LrcLyricWidget(
@@ -638,109 +646,13 @@ class _StaggeredLyricItem extends StatelessWidget {
               textAlign: textAlign,
               highLightAlpha: _currentAlpha,
             ),
-
-          Obx(() {
-            final show = lyricController.showInterlude.value;
-            return AnimatedSwitcher(
-              duration: const Duration(milliseconds: 500),
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                final sizeAnimation = CurvedAnimation(
-                  //尺寸曲线
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                  reverseCurve: Curves.easeInCubic,
-                );
-
-                final scaleAnimation = CurvedAnimation(
-                  //回弹曲线
-                  parent: animation,
-                  curve: Curves.easeOutBack,
-                  reverseCurve: Curves.easeInBack,
-                );
-
-                final fadeAnimation = CurvedAnimation(
-                  // 透明度曲线
-                  parent: animation,
-                  curve: Curves.easeOut,
-                  reverseCurve: Curves.easeIn,
-                );
-
-                return SizeTransition(
-                  axis: Axis.vertical,
-                  axisAlignment: 0.0, // 从顶部开始撑开
-                  sizeFactor: sizeAnimation,
-                  child: FadeTransition(
-                    opacity: fadeAnimation,
-                    child: ScaleTransition(
-                      scale: scaleAnimation,
-                      alignment: _lrcScaleAlignment[lrcAlignment],
-                      child: child,
-                    ),
-                  ),
-                );
-              },
-              child:
-                  (isCurrent && show)
-                      ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: _lrcMainAlignment[lrcAlignment],
-                        children: [
-                          RepaintBoundary(
-                            child: Obx(
-                                  () => _HighlightedWord(
-                                    text: "  ● ● ●  ",
-                                    progress:
-                                        lyricController.interludeProcess.value /
-                                        100,
-                                    style: interludeLyricStyle,
-                                    strutStyle: strutStyle,
-                                    scale: 2,
-                                    gradientColors: [
-                                      interludeLyricStyle.color!.withValues(
-                                        alpha: _highLightAlpha,
-                                      ),
-                                      interludeLyricStyle.color!.withValues(
-                                        alpha: _highLightAlpha,
-                                      ),
-                                      interludeLyricStyle.color!,
-                                    ],
-                                  ),
-                                )
-                                .animate(
-                                  onPlay:
-                                      (controller) =>
-                                          controller.repeat(reverse: true),
-                                )
-                                .custom(
-                                  // 使用customEffect,并向Transform.scale添加filterQuality参数防止字体缩放抖动(像素对齐冲突)
-                                  duration: 1500.ms,
-                                  curve: Curves.easeInOut,
-                                  builder:
-                                      (
-                                        context,
-                                        value,
-                                        child,
-                                      ) => Transform.scale(
-                                        alignment:
-                                            _lrcScaleAlignment[lrcAlignment],
-                                        scale:
-                                            ui.lerpDouble(
-                                              1.0,
-                                              _lrcScale,
-                                              value,
-                                            )!,
-                                        filterQuality:
-                                            FilterQuality
-                                                .low, // 使用 FilterQuality.low 质量就已足够
-                                        child: child,
-                                      ),
-                                ),
-                          ),
-                        ],
-                      )
-                      : const SizedBox.shrink(),
-            );
-          }),
+          _InterludeWidget(
+            lyricController: lyricController,
+            lrcAlignment: lrcAlignment,
+            interludeLyricStyle: interludeLyricStyle,
+            strutStyle: strutStyle,
+            isCurrent: isCurrent,
+          ),
         ],
       );
 
@@ -782,6 +694,116 @@ class _StaggeredLyricItem extends StatelessWidget {
                   child: RepaintBoundary(child: content),
                 )
                 : lyricLine,
+      );
+    });
+  }
+}
+
+class _InterludeWidget extends StatelessWidget {
+  final LyricController lyricController;
+  final int lrcAlignment;
+  final TextStyle interludeLyricStyle;
+  final StrutStyle strutStyle;
+  final bool isCurrent;
+  const _InterludeWidget({
+    required this.lyricController,
+    required this.lrcAlignment,
+    required this.interludeLyricStyle,
+    required this.strutStyle,
+    required this.isCurrent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final show = lyricController.showInterlude.value;
+      return AnimatedSwitcher(
+        duration: const Duration(milliseconds: 500),
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          final sizeAnimation = CurvedAnimation(
+            //尺寸曲线
+            parent: animation,
+            curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic,
+          );
+
+          final scaleAnimation = CurvedAnimation(
+            //回弹曲线
+            parent: animation,
+            curve: Curves.easeOutBack,
+            reverseCurve: Curves.easeInBack,
+          );
+
+          final fadeAnimation = CurvedAnimation(
+            // 透明度曲线
+            parent: animation,
+            curve: Curves.easeOut,
+            reverseCurve: Curves.easeIn,
+          );
+
+          return SizeTransition(
+            axis: Axis.vertical,
+            axisAlignment: 0.0, // 从顶部开始撑开
+            sizeFactor: sizeAnimation,
+            child: FadeTransition(
+              opacity: fadeAnimation,
+              child: ScaleTransition(
+                scale: scaleAnimation,
+                alignment: _lrcScaleAlignment[lrcAlignment],
+                child: child,
+              ),
+            ),
+          );
+        },
+        child:
+            (isCurrent && show)
+                ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: _lrcMainAlignment[lrcAlignment],
+                  children: [
+                    RepaintBoundary(
+                      child: Obx(
+                            () => _HighlightedWord(
+                              text: "  ● ● ●  ",
+                              progress:
+                                  lyricController.interludeProcess.value / 100,
+                              style: interludeLyricStyle,
+                              strutStyle: strutStyle,
+                              scale: 2,
+                              gradientColors: [
+                                interludeLyricStyle.color!.withValues(
+                                  alpha: _highLightAlpha,
+                                ),
+                                interludeLyricStyle.color!.withValues(
+                                  alpha: _highLightAlpha,
+                                ),
+                                interludeLyricStyle.color!,
+                              ],
+                            ),
+                          )
+                          .animate(
+                            onPlay:
+                                (controller) =>
+                                    controller.repeat(reverse: true),
+                          )
+                          .custom(
+                            // 使用customEffect,并向Transform.scale添加filterQuality参数防止字体缩放抖动(像素对齐冲突)
+                            duration: 1500.ms,
+                            curve: Curves.easeInOut,
+                            builder:
+                                (context, value, child) => Transform.scale(
+                                  alignment: _lrcScaleAlignment[lrcAlignment],
+                                  scale: ui.lerpDouble(1.0, _lrcScale, value)!,
+                                  filterQuality:
+                                      FilterQuality
+                                          .low, // 使用 FilterQuality.low 质量就已足够
+                                  child: child,
+                                ),
+                          ),
+                    ),
+                  ],
+                )
+                : const SizedBox.shrink(),
       );
     });
   }
