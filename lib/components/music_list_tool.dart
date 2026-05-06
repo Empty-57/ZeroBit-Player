@@ -222,7 +222,7 @@ class _AsyncCoverState extends State<AsyncCover> {
       borderRadius: _coverBorderRadius,
       child: Image.memory(
           imageBytes,
-          key: ValueKey(imageBytes.hashCode), // 只要图片数据变了，就重建
+          key: ValueKey(imageBytes), // 只要图片数据变了，就重建
           width: widget.size,
           height: widget.size,
           fit: BoxFit.cover,
