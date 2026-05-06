@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -142,13 +144,12 @@ class SpringListView extends StatelessWidget {
                     }
 
                     Key? centerKey;
-                    if (controller.totalLength > 0 &&
-                        controller.currentIndex.value >= 0 &&
-                        controller.currentIndex.value <
-                            controller.totalLength) {
-                      centerKey = controller.getSliverKey(
-                        controller.currentIndex.value,
+                    if (controller.totalLength > 0) {
+                      int effectiveIndex = controller.currentIndex.value.clamp(
+                        0, // 前奏时也为0
+                        controller.totalLength - 1,
                       );
+                      centerKey = controller.getSliverKey(effectiveIndex);
                     }
 
                     return CustomScrollView(
@@ -159,7 +160,7 @@ class SpringListView extends StatelessWidget {
                       slivers: [
                         SliverToBoxAdapter(
                           child: SizedBox(
-                            height: context.height * 0.3 + extraSpace,
+                            height: screenHeight * 0.3 + extraSpace,
                           ), // 前后留白区域也要加上拉伸值
                         ),
 
@@ -175,7 +176,7 @@ class SpringListView extends StatelessWidget {
 
                         SliverToBoxAdapter(
                           child: SizedBox(
-                            height: context.height * 0.3 + extraSpace,
+                            height: screenHeight * 0.3 + extraSpace,
                           ),
                         ),
                       ],
