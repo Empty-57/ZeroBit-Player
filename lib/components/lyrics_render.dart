@@ -241,7 +241,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
                   return Obx(
                     () => _HighlightedWord(
                       text: word,
-                      progress: lyricController.wordProgress.value / 100.0,
+                      progress: lyricController.wordProgress.value,
                       style: style,
                       strutStyle: strutStyle,
                       scale: scale,
@@ -766,7 +766,7 @@ class _InterludeWidget extends StatelessWidget {
                             () => _HighlightedWord(
                               text: "  ● ● ●  ",
                               progress:
-                                  lyricController.interludeProcess.value / 100,
+                                  lyricController.interludeProcess.value,
                               style: interludeLyricStyle,
                               strutStyle: strutStyle,
                               scale: 2,

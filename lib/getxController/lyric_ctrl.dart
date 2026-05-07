@@ -30,11 +30,11 @@ class LyricController extends GetxController {
 
   int _wordsLen = 0; // 当前行长度
 
-  static const _showIntervalLowLimit =
-      95; // 间奏进度下限, 最后一个词过渡到 95% 就开始显示间奏, 给出场动画稍微预留一些时间
-  static const _showIntervalHighLimit =
-      95; // 间奏进度上限, 间奏完成到 95% 就开始退出间奏, 给下一句歌词入场一些预留时间
-  static const _intervalThreshold = 4; // 间奏阈值, 超过此秒数则为间奏
+  static const double _showIntervalLowLimit =
+      0.95; // 间奏进度下限, 最后一个词过渡到 95% 就开始显示间奏, 给出场动画稍微预留一些时间
+  static const double _showIntervalHighLimit =
+      0.95; // 间奏进度上限, 间奏完成到 95% 就开始退出间奏, 给下一句歌词入场一些预留时间
+  static const int  _intervalThreshold = 4; // 间奏阈值, 超过此秒数则为间奏
 
   List<WordEntry>? _currentLine; // 当前行信息
 
@@ -89,8 +89,8 @@ class LyricController extends GetxController {
 
       final word = line[wordIndex];
 
-      // 增量计算: total*(loopTime/duration)
-      // 百分比: total=100 字持续时间: duration(s) 轮询周期: loopTime=0.02(s)
+      // 增量计算: loopTime/duration
+      // 字持续时间: duration(s) 轮询周期: loopTime=0.02(s)
       final duration = word.duration;
       if (duration <= 0) {
         _wordProgressIncrement = 0;
@@ -102,9 +102,9 @@ class LyricController extends GetxController {
       final diffTime = ms - word.start;
       _wordProgressIncrement =
           diffTime >= 0.02
-              ? 2 /
+              ? 0.02 /
                   (duration - diffTime) // 校准分支 误差大于一个周期就校准
-              : 2 / duration; // 正常分支
+              : 0.02 / duration; // 正常分支
     }
   }
 
@@ -123,10 +123,10 @@ class LyricController extends GetxController {
       _interval = parsedLrc[0].start;
       final show =
           _interval > _intervalThreshold &&
-          interludeProcess.value <= _showIntervalHighLimit - 10 &&
+          interludeProcess.value <= _showIntervalHighLimit - 0.1 &&
           _interval < 60; // 超过1分钟认为歌词时间轴有误
       showInterlude.value = show;
-      if (show) interludeProcess.value += 2 / _interval;
+      if (show) interludeProcess.value += 0.02 / _interval;
       return;
     }
 
@@ -137,7 +137,7 @@ class LyricController extends GetxController {
     }
 
     final interlude = interludeProcess.value;
-    final int threshold =
+    final double threshold =
         lyrics!.type == LyricFormat.byWordLrc
             ? 0 // byWordLrc 每一行最后一个词为空白符 代表本行的结束时间 不需要预设下限 本行的结束时间就是间奏开始时间
             : _showIntervalLowLimit;
@@ -150,7 +150,7 @@ class LyricController extends GetxController {
         lineIndex < parsedLrc.length - 1;
 
     showInterlude.value = show;
-    if (show) interludeProcess.value += 2 / _interval; // 算法同词增量计算
+    if (show) interludeProcess.value += 0.02 / _interval; // 算法同词增量计算
   }
 
   @override
