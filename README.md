@@ -1,14 +1,21 @@
+# ZeroBit Player
+
 <div align="center">
   <img src="assets/app_icon.ico" alt="logo" width=150 height=150>
+<p align="center">
+  一款基于Flutter+Rust的Material风格本地音乐播放器
+</p>
 </div>
 <div align="center">
   <a href="https://deepwiki.com/Empty-57/ZeroBit-Player"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+<img src="https://img.shields.io/badge/Platform-Windows-blue" alt="Platform">
+  <img src="https://img.shields.io/badge/Flutter-3.7+-0044aa" alt="Flutter">
+  <img src="https://img.shields.io/badge/Rust-1.92+-black" alt="Rust">
+  <img src="https://img.shields.io/badge/License-GPL--3.0-green" alt="License">
 </div>
 
 <p align="center">Logo来源：阿里巴巴矢量图库</p>
 
-# ZeroBit Player
-一款基于flutter+rust的Material风格本地音乐播放器
 
 ![show](screenshot/7.png)
 
@@ -16,19 +23,29 @@
 ### 安装
 [点击此处安装](https://github.com/Empty-57/ZeroBit-Player/releases/latest)
 ### 快速开始
-- 安装Rust环境
-- 安装Flutter SDK 3.7.2
-- 安装Flutter 3.32.6
-- 安装Dart 3.8.1
+#### 环境要求：
+- Windows 10/11
+- Flutter 3.7+
+- Rust 1.92+
 
-### 安装依赖
+### 开发
 ```
+# 安装依赖
 flutter pub get
+
+# 运行开发模式
+flutter run
+
+# 构建 Release 版本
+flutter build windows --release
+
+# 构建 Debug 版本
+flutter build windows --debug
 ```
 
-### 启动项目
+### 生成FRB绑定
 ```
-flutter run
+flutter_rust_bridge_codegen generate --watch
 ```
 
 ### 注意
@@ -149,7 +166,7 @@ flutter run
 
 手动写入内嵌歌词：</br>
 
-![editLyrics](screenshot/11.png)
+![editLyrics](screenshot/14.png)
 
 ## 关于歌曲封面
 可以选择本地图片作为封面,也可以点击 `网络封面` 来设置封面</br>
@@ -166,22 +183,24 @@ flutter run
 1.4.3以后的版本，配置文件的位置从 `C:\Users\<用户名>\Documents` 移动到 `C:\Users\<用户名>\Documents\zerobit_config` 
 
 ## 感谢
-[coriander_player](https://github.com/Ferry-200/coriander_player)： 借鉴了UI设计</br>
-[BASS](https://www.un4seen.com/)： 播放器内核</br>
-[Lofty](https://crates.io/crates/lofty)： 读取音频元数据
+项目在开发过程中参考/使用了以下优秀的项目:
+- [coriander_player](https://github.com/Ferry-200/coriander_player) — 借鉴了UI设计
+- [BASS](https://www.un4seen.com/) — 播放器内核
+- [Lofty](https://crates.io/crates/lofty) — 读写音频元数据
 
 ## 桌面歌词展示
 ![show](screenshot/12.png)
 ![show](screenshot/13.png)
-![show](screenshot/14.png)
 
-## 软件截图
+## 软件展示
+### 深色模式
 ![show](screenshot/1.png)
 ![show](screenshot/2.png)
 ![show](screenshot/3.png)
 ![show](screenshot/4.png)
 ![show](screenshot/5.png)
 ![show](screenshot/6.png)
+### 浅色模式
 ![show](screenshot/7.png)
 ![show](screenshot/8.png)
 ![show](screenshot/9.png)

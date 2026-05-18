@@ -5,6 +5,7 @@ import 'dart:ui';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:path/path.dart' as p;
@@ -253,6 +254,7 @@ void main() async {
     );
   }
 
+  debugRepaintRainbowEnabled=true;
   runApp(const MainFrame());
 
   WidgetsBinding.instance.addPostFrameCallback((_) async {
