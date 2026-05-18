@@ -212,6 +212,7 @@ class _SearchResultItem extends StatelessWidget {
       try {
         final content = jsonDecode(ts);
 
+        ts = null;
         for (final item in content['content']) {
           if (item['type'] == 1) {
             String str = '';
@@ -380,8 +381,8 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
     ).colorScheme.secondaryContainer.withValues(alpha: 0.4);
 
     return SizedBox(
-      width: context.width / 2,
-      height: context.height / 2,
+      width: context.width * 0.65,
+      height: context.height * 0.65,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 8,
@@ -421,6 +422,39 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
                 backgroundColor: bgColor,
                 fn: () => lrcSearchController.currentNetLrcOffest.value++,
               ),
+            ],
+          ),
+          Row(
+            spacing: 8,
+            children: [
+              for (final key in SettingController.apiMap.keys) ...[
+                Obx(
+                  () => TextButton(
+                    onPressed: () async {
+                      _settingController.apiIndex.value = key;
+                      await lrcSearchController.search();
+                    },
+                    style: TextButton.styleFrom(
+                      backgroundColor:
+                          _settingController.apiIndex.value == key
+                              ? Theme.of(context).colorScheme.primary
+                              : null,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    child: Text(
+                      SettingController.apiMap[key] ?? 'QQ音乐',
+                      style:
+                          _settingController.apiIndex.value == key
+                              ? textStyle.copyWith(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              )
+                              : textStyle,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
           Expanded(
@@ -705,28 +739,30 @@ class LrcView extends StatelessWidget {
                 children: [
                   SizedBox(
                     width: context.width * 0.25,
-                    height: _audioCtrlBarHeight-24, // 固定高度避免重新layout
-                    child: RepaintBoundary(child: Obx(
-                      () => Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            formatTime(
-                              totalSeconds: _audioController.currentSec.value,
+                    height: _audioCtrlBarHeight - 24, // 固定高度避免重新layout
+                    child: RepaintBoundary(
+                      child: Obx(
+                        () => Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              formatTime(
+                                totalSeconds: _audioController.currentSec.value,
+                              ),
+                              style: timeCurrentStyle,
                             ),
-                            style: timeCurrentStyle,
-                          ),
-                          Text(
-                            formatTime(
-                              totalSeconds:
-                                  _audioController.currentDuration.value,
+                            Text(
+                              formatTime(
+                                totalSeconds:
+                                    _audioController.currentDuration.value,
+                              ),
+                              style: timeTotalStyle,
                             ),
-                            style: timeTotalStyle,
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),),
+                    ),
                   ),
                   Expanded(
                     child: Obx(
