@@ -27,6 +27,10 @@ const BorderRadius _borderRadius = BorderRadius.all(Radius.circular(4));
 const double _ctrlBtnMinSize = 40.0;
 const double _floatingY = -1.5;
 const double _rippleThreshold = 1.5;
+const double _ripplesScaleMin = 1.1;
+const double _glowAlphaMin = 0.2;
+const double _ripplesScaleExtra = 0.1;
+const double _glowAlphaExtra = 0.3;
 
 const _lrcCrossAlignment = <CrossAxisAlignment>[
   CrossAxisAlignment.start,
@@ -50,8 +54,6 @@ const _lrcWrapAlignment = <WrapAlignment>[
 ];
 const _gradientStops = <double>[0.0, 0.333, 0.666];
 const double _lrcScale = 1.1;
-
-double _translateGradientScale = 2;
 
 class _LyricsStyle {
   final SettingController _settingController = Get.find<SettingController>();
@@ -96,7 +98,9 @@ class _HighlightedWord extends StatefulWidget {
   final StrutStyle strutStyle;
   final List<Color> gradientColors;
   final double duartion;
-  final double ripplesMaxScale;
+  final double ripplesScaleMax;
+  final double glowAlphaMax;
+  final double translateGradientScale;
 
   const _HighlightedWord({
     required this.text,
@@ -105,7 +109,9 @@ class _HighlightedWord extends StatefulWidget {
     required this.strutStyle,
     required this.gradientColors,
     required this.duartion,
-    required this.ripplesMaxScale,
+    required this.ripplesScaleMax,
+    required this.glowAlphaMax,
+    required this.translateGradientScale,
   });
 
   @override
@@ -113,7 +119,7 @@ class _HighlightedWord extends StatefulWidget {
 }
 
 class _HighlightedWordState extends State<_HighlightedWord> {
-  // 只依赖 text，text 不变则不重算
+  // text 不变或 duration 未超过 _rippleThreshold 则不重算
   late List<String> _charList;
   late int _charCount;
 
@@ -146,8 +152,8 @@ class _HighlightedWordState extends State<_HighlightedWord> {
   @override
   void didUpdateWidget(_HighlightedWord old) {
     super.didUpdateWidget(old);
-    // 只有 text 变化时才重算
-    if (old.text != widget.text) {
+    // 只有超过阈值且 text 变化时才重算
+    if (old.text != widget.text && widget.duartion >= _rippleThreshold) {
       _initCachedValues();
     }
   }
@@ -176,7 +182,10 @@ class _HighlightedWordState extends State<_HighlightedWord> {
           end: Alignment.centerRight,
           colors: widget.gradientColors,
           stops: _gradientStops,
-          transform: _ScaledTranslateGradientTransform(dx: dx),
+          transform: _ScaledTranslateGradientTransform(
+            dx: dx,
+            translateGradientScale: widget.translateGradientScale,
+          ),
         ).createShader(bounds);
       },
       blendMode: BlendMode.dstIn,
@@ -244,8 +253,9 @@ class _HighlightedWordState extends State<_HighlightedWord> {
 
       // 将 animationCurve 应用到缩放与辉光效果线性插值
       final double scale =
-          ui.lerpDouble(1.0, widget.ripplesMaxScale, animationCurve)!;
-      final double glowAlpha = ui.lerpDouble(0.0, 0.5, animationCurve)!;
+          ui.lerpDouble(1.0, widget.ripplesScaleMax, animationCurve)!;
+      final double glowAlpha =
+          ui.lerpDouble(0.0, widget.glowAlphaMax, animationCurve)!;
 
       // glow 层：字符本身透明，只显示 shadow
       // glowAlpha 接近 0 时跳过 shadow 计算，用透明占位保持布局稳定
@@ -318,13 +328,17 @@ class _HighlightedWordState extends State<_HighlightedWord> {
 
 class _ScaledTranslateGradientTransform extends GradientTransform {
   final double dx;
-  const _ScaledTranslateGradientTransform({required this.dx});
+  final double translateGradientScale;
+  const _ScaledTranslateGradientTransform({
+    required this.dx,
+    required this.translateGradientScale,
+  });
   @override
   Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
     // final double scale=entry.value.duration>=1.0 ? 3:2; 动态 scale 视觉效果更好
     // 先将x轴扩大scale倍，然后平移x轴
     return Matrix4.identity()
-      ..scale(_translateGradientScale, 1.0, 1.0)
+      ..scale(translateGradientScale, 1.0, 1.0)
       ..translate(dx, 0.0, 0.0);
   }
 }
@@ -415,39 +429,45 @@ class _KaraOkLyricWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget content;
 
+    final WrapAlignment alignment = _lrcWrapAlignment[lrcAlignmentIndex];
+    final gradientColors = <Color>[
+      style.color!.withValues(alpha: _highLightAlpha),
+      style.color!.withValues(alpha: _highLightAlpha),
+      style.color!.withValues(alpha: _highLightAlpha),
+    ];
+
     if (isCurrent) {
       content = Obx(() {
         final currWordIndex = lyricController.currentWordIndex.value;
         return Wrap(
-          alignment: _lrcWrapAlignment[lrcAlignmentIndex],
+          alignment: alignment,
           crossAxisAlignment: WrapCrossAlignment.end,
           children:
               text.asMap().entries.map((entry) {
                 final wordIndex = entry.key;
                 final word = entry.value.lyricWord;
                 final dura = entry.value.duration;
-                _translateGradientScale = dura >= 1.0 ? 3 : 2;
+                final translateGradientScale = dura >= 1.0 ? 3.0 : 2.0;
                 final floatingDuration = dura * (1000 * 1.8) + 50; // 加50ms的最小时长
                 final floatingDelay = dura * (1000 * 0.2);
 
                 if (wordIndex == currWordIndex) {
-                  final List<Color> gradientColors = [
-                    style.color!.withValues(alpha: _highLightAlpha),
-                    style.color!.withValues(alpha: _highLightAlpha),
-                    style.color!.withValues(
-                      alpha:
-                          wordIndex == 0
-                              ? _currentAlpha - 0.15
-                              : _currentAlpha, // 欺骗视觉，防止第一个词出现亮度突变
-                    ),
-                  ];
-                  double ripplesMaxScale = 1.1;
+                  gradientColors[2] = style.color!.withValues(
+                    alpha:
+                        wordIndex == 0 ? _currentAlpha - 0.15 : _currentAlpha,
+                  );
+                  double ripplesScaleMax = _ripplesScaleMin;
+                  double glowAlphaMax = _glowAlphaMin;
 
                   if (dura >= _rippleThreshold) {
-                    ripplesMaxScale += (0.1 *
-                            ((dura - _rippleThreshold) /
-                                (3 - _rippleThreshold))) // 最大3s
-                        .clamp(0.0, 0.1);
+                    // 将词的持续时间 dura 在 [_rippleThreshold, 3] 区间内归一化为 [0.0, 1.0] 的比例值
+                    // 用于控制特效的最大值
+                    final effectRatio = (((dura - _rippleThreshold) /
+                            (3 - _rippleThreshold))) // 最大观测长度 3s
+                        .clamp(0.0, 1.0);
+
+                    ripplesScaleMax += _ripplesScaleExtra * effectRatio;
+                    glowAlphaMax += _glowAlphaExtra * effectRatio;
                   }
 
                   // 正在唱的单词
@@ -460,7 +480,9 @@ class _KaraOkLyricWidget extends StatelessWidget {
                         strutStyle: strutStyle,
                         gradientColors: gradientColors,
                         duartion: dura,
-                        ripplesMaxScale: ripplesMaxScale,
+                        ripplesScaleMax: ripplesScaleMax,
+                        glowAlphaMax: glowAlphaMax,
+                        translateGradientScale: translateGradientScale,
                       ),
                     ),
                     duration: floatingDuration,
@@ -482,6 +504,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
                 } else {
                   // 还没唱到的单词
                   return TweenAnimationBuilder<Color?>(
+                    // key: ValueKey('unplayed_${index}_$wordIndex'),
                     tween: ColorTween(
                       begin: style.color,
                       end: style.color?.withValues(alpha: _currentAlpha),
@@ -1008,7 +1031,6 @@ class _InterludeWidget extends StatelessWidget {
                   children: [
                     RepaintBoundary(
                       child: Obx(() {
-                            _translateGradientScale = 2;
                             return _HighlightedWord(
                               text: "  ● ● ●  ",
                               progress: lyricController.interludeProcess.value,
@@ -1024,7 +1046,9 @@ class _InterludeWidget extends StatelessWidget {
                                 interludeLyricStyle.color!,
                               ],
                               duartion: 0,
-                              ripplesMaxScale: 1.1,
+                              ripplesScaleMax: 1.1,
+                              glowAlphaMax: 0.2,
+                              translateGradientScale: 2.0,
                             );
                           })
                           .animate(
