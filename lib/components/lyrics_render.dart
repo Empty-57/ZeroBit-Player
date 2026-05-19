@@ -23,31 +23,33 @@ const double _highLightAlpha = 0.9;
 const double _currentAlpha = 0.4;
 const double _notPlayedLightAlpha = 0.25;
 const double _notPlayedDarkAlpha = 0.15;
-const _borderRadius = BorderRadius.all(Radius.circular(4));
+const BorderRadius _borderRadius = BorderRadius.all(Radius.circular(4));
 const double _ctrlBtnMinSize = 40.0;
+const double _floatingY = -1.5;
+const double _rippleThreshold = 1.5;
 
-const _lrcCrossAlignment = [
+const _lrcCrossAlignment = <CrossAxisAlignment>[
   CrossAxisAlignment.start,
   CrossAxisAlignment.center,
   CrossAxisAlignment.end,
 ];
-const _lrcMainAlignment = [
+const _lrcMainAlignment = <MainAxisAlignment>[
   MainAxisAlignment.start,
   MainAxisAlignment.center,
   MainAxisAlignment.end,
 ];
-const _lrcScaleAlignment = [
+const _lrcScaleAlignment = <Alignment>[
   Alignment.centerLeft,
   Alignment.center,
   Alignment.centerRight,
 ];
-const _lrcWrapAlignment = [
+const _lrcWrapAlignment = <WrapAlignment>[
   WrapAlignment.start,
   WrapAlignment.center,
   WrapAlignment.end,
 ];
-const List<double> _gradientStops = [0.0, 0.333, 0.666];
-const _lrcScale = 1.1;
+const _gradientStops = <double>[0.0, 0.333, 0.666];
+const double _lrcScale = 1.1;
 
 double _translateGradientScale = 2;
 
@@ -87,45 +89,229 @@ class _LyricsStyle {
   );
 }
 
-class _HighlightedWord extends StatelessWidget {
+class _HighlightedWord extends StatefulWidget {
   final String text;
   final double progress;
   final TextStyle style;
   final StrutStyle strutStyle;
   final List<Color> gradientColors;
+  final double duartion;
+  final double ripplesMaxScale;
+
   const _HighlightedWord({
     required this.text,
     required this.progress,
     required this.style,
     required this.strutStyle,
     required this.gradientColors,
+    required this.duartion,
+    required this.ripplesMaxScale,
   });
 
   @override
-  Widget build(BuildContext context) {
+  State<_HighlightedWord> createState() => _HighlightedWordState();
+}
+
+class _HighlightedWordState extends State<_HighlightedWord> {
+  // 只依赖 text，text 不变则不重算
+  late List<String> _charList;
+  late int _charCount;
+
+  // 涟漪效果核心算法
+  // 推进步长 stepRatio（0.0 ~ 1.0）：决定前后两个字的动画有多少交集。
+  // 设为 0.1 意味着：当前一个字的动画跑到 10% 时，后一个字的动画就要开始了
+  static const double _stepRatio = 0.1;
+
+  // 动画时间比例
+  static const double _animatedRatio = 0.6;
+
+  // 计算出每个字的动画在总进度里占多少"时间窗口"(即动画持续时间)
+  // 算法：
+  // waveWidth + (charCount - 1) * stepRatio * waveWidth = 1
+  // 第一个字占一个完整窗口 所以 +waveWidth
+  // charCount - 1 推进次数(即字符之间有多少个间隔) 第一个字不推进所以-1
+  // stepRatio * waveWidth 每次推进的宽度 即后一个字动画的开始时间
+  // 提取后得到 waveWidth = 1.0 / (_stepRatio * (_charCount - 1) + 1.0)
+  late double _waveWidth;
+
+  // 每个字的 windowStart 只依赖 i / stepRatio / waveWidth，全部不变，预计算缓存
+  late List<double> _windowStarts;
+
+  @override
+  void initState() {
+    super.initState();
+    _initCachedValues();
+  }
+
+  @override
+  void didUpdateWidget(_HighlightedWord old) {
+    super.didUpdateWidget(old);
+    // 只有 text 变化时才重算
+    if (old.text != widget.text) {
+      _initCachedValues();
+    }
+  }
+
+  void _initCachedValues() {
+    _charList = widget.text.split('');
+    _charCount = _charList.length;
+    _waveWidth = 1.0 / (_stepRatio * (_charCount - 1) + 1.0);
+    _windowStarts = List.generate(
+      _charCount,
+      // 这个字动画开始的时间 依照 i 和 stepRatio 设置动画区间用于延时启动
+      (i) => i * _stepRatio * _waveWidth,
+    );
+  }
+
+  Widget _shaderMaskWrap(Widget child) {
     return ShaderMask(
       shaderCallback: (bounds) {
-        /// 颜色平均分三段：高亮区 过渡区 透明区
-        /// 在动画开始的时候，覆盖到 Text 上的应该是透明区，应该先把整个遮罩层应该向左移动
-        /// 但是因为遮罩层放大了3倍，所以应该用 -0.666 * bounds.width 得到透明区位置，负号为向左
-        /// 随着 progress 增大 遮罩会逐渐向右移动
-        final double dx = (-0.666 * bounds.width) * (1 - progress);
+        // 颜色平均分三段：高亮区 过渡区 透明区
+        // 在动画开始的时候，覆盖到 Text 上的应该是透明区，应该先把整个遮罩层应该向左移动
+        // 但是因为遮罩层放大了3倍，所以应该用 -0.666 * bounds.width 得到透明区位置，负号为向左
+        // 随着 progress 增大 遮罩会逐渐向右移动
+        final double dx = (-0.666 * bounds.width) * (1 - widget.progress);
         return LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: gradientColors,
+          colors: widget.gradientColors,
           stops: _gradientStops,
           transform: _ScaledTranslateGradientTransform(dx: dx),
         ).createShader(bounds);
       },
       blendMode: BlendMode.dstIn,
-      child: Text(
-        text,
-        style: style.copyWith(
-          color: style.color?.withValues(alpha: 1),
-        ), // alpha=1 为了透明度不变，否则将会和 style 上的透明度进行乘算
-        strutStyle: strutStyle,
-      ),
+      child: child,
+    );
+  }
+
+  Widget _transformScaleWrap(Widget child, {required double scale}) {
+    // scale == 1.0 时跳过 Transform，减少不必要的开销
+    if (scale == 1.0) return child;
+    return Transform.scale(
+      alignment: Alignment.bottomCenter,
+      scale: scale,
+      filterQuality: FilterQuality.low,
+      child: child,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.duartion < _rippleThreshold) {
+      // 小于阈值则不应用涟漪效果
+      return _shaderMaskWrap(
+        Text(
+          widget.text,
+          style: widget.style.copyWith(
+            color: widget.style.color?.withValues(alpha: 1),
+          ),
+          strutStyle: widget.strutStyle,
+        ),
+      );
+    }
+
+    // 预计算每个字的 scale 和 glowAlpha
+    // 同时构建两层的 children，避免遍历两次
+    final glowChildren = <Widget>[];
+    final mainChildren = <Widget>[];
+
+    for (int i = 0; i < _charCount; i++) {
+      final char = _charList[i];
+
+      // 当 progress>=windowStart 时 这个字才会开始动画
+      // 将 progress 进度分别映射到每个字的进度上
+      final double charProgress =
+      // 这个字动画持续的时间为 _waveWidth
+      ((widget.progress - _windowStarts[i]) / _waveWidth).clamp(0.0, 1.0);
+
+      // 使用非对称曲线，设置 animatedRatio 可控制放大与缩小所占的时间比例
+      double animationCurve;
+      if (charProgress < _animatedRatio) {
+        // 前 animatedRatio 的时间用于放大的曲线
+        // 使用 easeOut 曲线
+        animationCurve = Curves.easeOut.transform(
+          charProgress / _animatedRatio,
+        );
+      } else {
+        // 后 1 - animatedRatio 的时间用于缩小的曲线
+        // 使用 easeIn 曲线
+        animationCurve =
+            1.0 -
+            Curves.easeIn.transform(
+              (charProgress - _animatedRatio) / (1 - _animatedRatio),
+            );
+      }
+
+      // 将 animationCurve 应用到缩放与辉光效果线性插值
+      final double scale =
+          ui.lerpDouble(1.0, widget.ripplesMaxScale, animationCurve)!;
+      final double glowAlpha = ui.lerpDouble(0.0, 0.5, animationCurve)!;
+
+      // glow 层：字符本身透明，只显示 shadow
+      // glowAlpha 接近 0 时跳过 shadow 计算，用透明占位保持布局稳定
+      glowChildren.add(
+        glowAlpha > 0.01
+            ? _transformScaleWrap(
+              Text(
+                char,
+                style: widget.style.copyWith(
+                  color: widget.style.color?.withValues(alpha: 0),
+                  shadows: [
+                    Shadow(
+                      color: widget.style.color!.withValues(
+                        alpha: glowAlpha * 0.6,
+                      ),
+                      blurRadius: 4,
+                    ),
+                    Shadow(
+                      color: widget.style.color!.withValues(alpha: glowAlpha),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                strutStyle: widget.strutStyle,
+              ),
+              scale: scale,
+            )
+            : Text(
+              char,
+              style: widget.style.copyWith(color: const Color(0x00000000)),
+              strutStyle: widget.strutStyle,
+            ),
+      );
+
+      // 主层：显示涟漪效果
+      mainChildren.add(
+        _transformScaleWrap(
+          Text(
+            char,
+            style: widget.style.copyWith(
+              color: widget.style.color?.withValues(alpha: 1),
+            ),
+            strutStyle: widget.strutStyle,
+          ),
+          scale: scale,
+        ),
+      );
+    }
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // glow 层：辉光动画在 ShaderMask 外，Shadow 不受 dstIn 裁切
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.end,
+          children: glowChildren,
+        ),
+
+        // 主层：ShaderMask + 缩放动画
+        _shaderMaskWrap(
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.end,
+            children: mainChildren,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -205,6 +391,26 @@ class _KaraOkLyricWidget extends StatelessWidget {
     );
   }
 
+  /// 微动特效包装器
+  Widget _createFloatingAnimatedText(
+    Widget child, {
+    required double duration,
+    required double delay,
+  }) {
+    return child.animate().custom(
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, ui.lerpDouble(0.0, _floatingY, value)!),
+          filterQuality: FilterQuality.low,
+          child: child,
+        );
+      },
+      curve: Curves.easeInOut,
+      duration: duration.ms,
+      delay: delay.ms,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget content;
@@ -219,7 +425,10 @@ class _KaraOkLyricWidget extends StatelessWidget {
               text.asMap().entries.map((entry) {
                 final wordIndex = entry.key;
                 final word = entry.value.lyricWord;
-                _translateGradientScale = entry.value.duration >= 1.0 ? 3 : 2;
+                final dura = entry.value.duration;
+                _translateGradientScale = dura >= 1.0 ? 3 : 2;
+                final floatingDuration = dura * (1000 * 1.8) + 50; // 加50ms的最小时长
+                final floatingDelay = dura * (1000 * 0.2);
 
                 if (wordIndex == currWordIndex) {
                   final List<Color> gradientColors = [
@@ -232,25 +441,43 @@ class _KaraOkLyricWidget extends StatelessWidget {
                               : _currentAlpha, // 欺骗视觉，防止第一个词出现亮度突变
                     ),
                   ];
+                  double ripplesMaxScale = 1.1;
+
+                  if (dura >= _rippleThreshold) {
+                    ripplesMaxScale += (0.1 *
+                            ((dura - _rippleThreshold) /
+                                (3 - _rippleThreshold))) // 最大3s
+                        .clamp(0.0, 0.1);
+                  }
 
                   // 正在唱的单词
-                  return Obx(
-                    () => _HighlightedWord(
-                      text: word,
-                      progress: lyricController.wordProgress.value,
-                      style: style,
-                      strutStyle: strutStyle,
-                      gradientColors: gradientColors,
+                  return _createFloatingAnimatedText(
+                    Obx(
+                      () => _HighlightedWord(
+                        text: word,
+                        progress: lyricController.wordProgress.value,
+                        style: style,
+                        strutStyle: strutStyle,
+                        gradientColors: gradientColors,
+                        duartion: dura,
+                        ripplesMaxScale: ripplesMaxScale,
+                      ),
                     ),
+                    duration: floatingDuration,
+                    delay: floatingDelay,
                   );
                 } else if (wordIndex < currWordIndex) {
                   // 已经唱完的单词
-                  return Text(
-                    word,
-                    style: style.copyWith(
-                      color: style.color?.withValues(alpha: _highLightAlpha),
+                  return _createFloatingAnimatedText(
+                    Text(
+                      word,
+                      style: style.copyWith(
+                        color: style.color?.withValues(alpha: _highLightAlpha),
+                      ),
+                      strutStyle: strutStyle,
                     ),
-                    strutStyle: strutStyle,
+                    duration: floatingDuration,
+                    delay: floatingDelay,
                   );
                 } else {
                   // 还没唱到的单词
@@ -283,10 +510,21 @@ class _KaraOkLyricWidget extends StatelessWidget {
               begin: style.color?.withValues(alpha: _highLightAlpha),
               end: style.color,
             ),
+            curve: Curves.easeInOut,
             duration: const Duration(milliseconds: 600),
             builder: (_, color, __) {
               return _createTextWarp(color: color);
             },
+          ).animate().custom(
+            builder: (context, value, child) {
+              return Transform.translate(
+                offset: Offset(0, ui.lerpDouble(_floatingY, 0.0, value)!),
+                filterQuality: FilterQuality.low,
+                child: child,
+              );
+            },
+            curve: Curves.easeInCubic,
+            duration: 600.ms,
           );
         }
 
@@ -785,6 +1023,8 @@ class _InterludeWidget extends StatelessWidget {
                                 ),
                                 interludeLyricStyle.color!,
                               ],
+                              duartion: 0,
+                              ripplesMaxScale: 1.1,
                             );
                           })
                           .animate(
