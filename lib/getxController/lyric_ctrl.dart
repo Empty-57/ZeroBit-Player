@@ -35,6 +35,7 @@ class LyricController extends GetxController {
   static const double _showIntervalHighLimit =
       0.95; // 间奏进度上限, 间奏完成到 95% 就开始退出间奏, 给下一句歌词入场一些预留时间
   static const int  _intervalThreshold = 4; // 间奏阈值, 超过此秒数则为间奏
+  static const double _loopTime=0.02;
 
   List<WordEntry>? _currentLine; // 当前行信息
 
@@ -89,8 +90,8 @@ class LyricController extends GetxController {
 
       final word = line[wordIndex];
 
-      // 增量计算: loopTime/duration
-      // 字持续时间: duration(s) 轮询周期: loopTime=0.02(s)
+      // 增量计算: 1/(duration/loopTime)=loopTime/duration
+      // 字持续时间: duration(s) 轮询周期: loopTime=0.02(s) 1: 百分比
       final duration = word.duration;
       if (duration <= 0) {
         _wordProgressIncrement = 0;
@@ -101,10 +102,10 @@ class LyricController extends GetxController {
 
       final diffTime = ms - word.start;
       _wordProgressIncrement =
-          diffTime >= 0.02
-              ? 0.02 /
+          diffTime >= _loopTime
+              ? _loopTime /
                   (duration - diffTime) // 校准分支 误差大于一个周期就校准
-              : 0.02 / duration; // 正常分支
+              : _loopTime / duration; // 正常分支
     }
   }
 
@@ -126,7 +127,7 @@ class LyricController extends GetxController {
           interludeProcess.value <= _showIntervalHighLimit - 0.1 &&
           _interval < 60; // 超过1分钟认为歌词时间轴有误
       showInterlude.value = show;
-      if (show) interludeProcess.value += 0.02 / _interval;
+      if (show) interludeProcess.value += _loopTime / _interval;
       return;
     }
 
@@ -150,7 +151,7 @@ class LyricController extends GetxController {
         lineIndex < parsedLrc.length - 1;
 
     showInterlude.value = show;
-    if (show) interludeProcess.value += 0.02 / _interval; // 算法同词增量计算
+    if (show) interludeProcess.value += _loopTime / _interval; // 算法同词增量计算
   }
 
   @override
