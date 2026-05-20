@@ -198,11 +198,14 @@ class AudioController extends GetxController {
       _settingController.lastAudioInfo[SettingController.lastAudioMetadataKey] =
           currentMetadata.value;
       await _settingController.putScalableCache();
+      currentLyrics.value = null;
       currentLyrics.value = await getParsedLyric(
         filePath: currentMetadata.value.path,
       );
 
-      _springConntroller.clearState();
+      if (Get.isRegistered<SpringListView>()) {
+        _springConntroller.clearState();
+      }
     });
 
     try {

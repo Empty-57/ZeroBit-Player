@@ -13,7 +13,7 @@ class LyricController extends GetxController {
   final lrcViewScrollController = ItemScrollController();
   final isPointerScroll = false.obs;
   final AudioController _audioController = Get.find<AudioController>();
-  final SpringController _springConntroller = Get.find<SpringController>();
+  SpringController get _springConntroller => Get.find<SpringController>();
   final SettingController _settingController = Get.find<SettingController>();
 
   final currentLineIndex = (-1).obs;
@@ -217,13 +217,15 @@ class LyricController extends GetxController {
   }
 
   void springScrollToCenter() {
-    _springConntroller.nextLyric(currentLineIndex.value);
+    if (Get.isRegistered<SpringController>()) {
+      _springConntroller.nextLyric(currentLineIndex.value);
+    }
   }
 
   void scrollToCenter() {
     if (_settingController.useSpringScroll.value) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _springConntroller.nextLyric(currentLineIndex.value);
+        springScrollToCenter();
       });
     } else {
       if (!lrcViewScrollController.isAttached) {

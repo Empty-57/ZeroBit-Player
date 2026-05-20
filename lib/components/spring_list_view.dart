@@ -76,9 +76,17 @@ class SpringController extends GetxController {
       _scrollController.jumpTo(0.0);
     }
   }
+
+  @override
+  void onClose() {
+    _sliverKeys.clear();
+    _boxKeys.clear();
+    _scrollController.dispose();
+    super.onClose();
+  }
 }
 
-class SpringListView extends StatelessWidget {
+class SpringListView extends StatefulWidget {
   final int length;
   final List<double> lineDuration;
   final Widget Function(BuildContext context, int index) itemBuilder;
@@ -88,11 +96,21 @@ class SpringListView extends StatelessWidget {
     required this.itemBuilder,
     required this.lineDuration,
   });
+  @override
+  State<SpringListView> createState() => _SpringListViewState();
+}
+
+class _SpringListViewState extends State<SpringListView> {
+  @override
+  void dispose() {
+    Get.delete<SpringController>();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(SpringController());
-    controller._totalLength = length;
+    controller._totalLength = widget.length;
 
     /// 为了防止即将离开可视区域的列表项的滚动动画无效的方案(视觉欺骗)
     /// 将可滚动区域向上下两个方向拉伸一定距离(至少大于deltaY的值) ,使列表项在滚动动画开始的时候还在Layout(布局)内
@@ -134,18 +152,21 @@ class SpringListView extends StatelessWidget {
                     right: 0,
                     child: Obx(() {
                       if (controller._currentIndex.value <
-                              lineDuration.length &&
+                              widget.lineDuration.length &&
                           controller._currentIndex.value >= 0) {
                         // 原式: controller.delay = lineDuration[controller.currentIndex.value] *1000 / SpringController.durationMax *SpringController.delayMax
                         controller._delay =
-                            (lineDuration[controller._currentIndex.value] * 50)
+                            (widget.lineDuration[controller
+                                        ._currentIndex
+                                        .value] *
+                                    50)
                                 .clamp(
                                   SpringController._delayMax * 0.2,
                                   SpringController._delayMax,
                                 )
                                 .toInt();
                         controller._duration =
-                            lineDuration[controller._currentIndex.value];
+                            widget.lineDuration[controller._currentIndex.value];
                       } else {
                         controller._duration = SpringController._durationMax;
                       }
@@ -172,13 +193,13 @@ class SpringListView extends StatelessWidget {
                             ), // 前后留白区域也要加上拉伸值
                           ),
 
-                          for (int i = 0; i < length; i++)
+                          for (int i = 0; i < widget.length; i++)
                             SliverToBoxAdapter(
                               key: controller.getSliverKey(i),
                               child: _SpringItem(
                                 index: i,
                                 boxKey: controller.getBoxKey(i),
-                                child: itemBuilder(context, i),
+                                child: widget.itemBuilder(context, i),
                               ),
                             ),
 
