@@ -1,8 +1,6 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:get/get.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 class _JumpSignal {
   final int triggerId;
@@ -11,56 +9,56 @@ class _JumpSignal {
 }
 
 class SpringController extends GetxController {
-  final ScrollController scrollController = ScrollController();
-  final GlobalKey scrollAreaKey = GlobalKey();
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _scrollAreaKey = GlobalKey();
 
-  final RxInt currentIndex = 0.obs;
+  final RxInt _currentIndex = 0.obs;
 
-  final Map<int, GlobalKey> sliverKeys = {};
-  final Map<int, GlobalKey> boxKeys = {};
+  final Map<int, GlobalKey> _sliverKeys = {};
+  final Map<int, GlobalKey> _boxKeys = {};
 
   final Rx<_JumpSignal> _jumpSignal = _JumpSignal(0, 0.0).obs;
-  final double anchorPercentage = 0.3;
+  static const double _anchorPercentage = 0.3;
 
-  int totalLength = 0;
+  int _totalLength = 0;
 
-  static const double durationMax = 1200;
-  static const int delayMax = 60;
-  int delay = delayMax;
-  double duration = durationMax;
+  static const int _centerOffset = 0; // 这个常量作用是将滚动开始的中心向上/下偏移，实现弹簧从上/下拉的效果
+  static const double _durationMax = 1.5; // sec
+  static const int _delayMax = 60; // ms
+  int _delay = _delayMax; // ms
+  double _duration = _durationMax; // sec
 
   GlobalKey getSliverKey(int index) =>
-      sliverKeys.putIfAbsent(index, () => GlobalKey());
-  GlobalKey getBoxKey(int index) => boxKeys.putIfAbsent(
+      _sliverKeys.putIfAbsent(index, () => GlobalKey());
+  GlobalKey getBoxKey(int index) => _boxKeys.putIfAbsent(
     index,
     () => GlobalKey(),
   ); // 每次center更新的时候，此方法会被重新循环调用
 
-  void nextLyric() async {
+  void nextLyric(int nextIndex) async {
     // 如果还没超过一首歌曲的长度，且当前没有被锁定
-    if (currentIndex.value < totalLength - 1) {
-      final nextIndex = currentIndex.value + 1;
+    if (nextIndex < _totalLength - 1) {
       final nextBoxKey = getBoxKey(nextIndex);
       double deltaY = 60.0;
 
       if (nextBoxKey.currentContext != null &&
-          scrollAreaKey.currentContext != null) {
+          _scrollAreaKey.currentContext != null) {
         final scrollBox =
-            scrollAreaKey.currentContext!.findRenderObject() as RenderBox;
+            _scrollAreaKey.currentContext!.findRenderObject() as RenderBox;
         final nextBox =
             nextBoxKey.currentContext!.findRenderObject() as RenderBox;
 
         //计算下一行行相对于滚动区域的高度，用这个相对高度减去锚点高度获取偏移量
         double nextLocalY =
             scrollBox.globalToLocal(nextBox.localToGlobal(Offset.zero)).dy;
-        double anchorY = scrollBox.size.height * anchorPercentage;
+        double anchorY = scrollBox.size.height * _anchorPercentage;
         deltaY = nextLocalY - anchorY;
       }
 
       // 列表重建后强制对齐
-      currentIndex.value = nextIndex;
-      if (scrollController.hasClients) {
-        scrollController.jumpTo(0.0);
+      _currentIndex.value = nextIndex;
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(0.0);
       }
 
       _jumpSignal.value = _JumpSignal(
@@ -71,11 +69,11 @@ class SpringController extends GetxController {
   }
 
   void clearState() {
-    sliverKeys.clear();
-    boxKeys.clear();
-    currentIndex.value = 0;
-    if (scrollController.hasClients) {
-      scrollController.jumpTo(0.0);
+    _sliverKeys.clear();
+    _boxKeys.clear();
+    _currentIndex.value = 0;
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0.0);
     }
   }
 }
@@ -94,7 +92,7 @@ class SpringListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(SpringController());
-    controller.totalLength = length;
+    controller._totalLength = length;
 
     /// 为了防止即将离开可视区域的列表项的滚动动画无效的方案(视觉欺骗)
     /// 将可滚动区域向上下两个方向拉伸一定距离(至少大于deltaY的值) ,使列表项在滚动动画开始的时候还在Layout(布局)内
@@ -111,14 +109,15 @@ class SpringListView extends StatelessWidget {
           // 为了在视觉上使锚点仍然保持在屏幕的 controller.anchorPercentage 处
           // 新 anchor算法: 原 anchor 距视窗顶部的位置(targetAnchorPixel)加上extraSpace后 占新视窗的百分比
           final double targetAnchorPixel =
-              screenHeight * controller.anchorPercentage; // 原 anchor 距离屏幕顶部的距离
+              screenHeight *
+              SpringController._anchorPercentage; // 原 anchor 距离屏幕顶部的距离
           final double newAnchorPercentage =
               (targetAnchorPixel + extraSpace) / newHeight;
 
           return SizedBox(
             // 将原有的 scrollAreaKey 从 CustomScrollView 移到代表真实屏幕尺寸的外层 SizedBox
             // 保证 deltaY 计算依然精准 (deltaY 不受拉伸影响)
-            key: controller.scrollAreaKey,
+            key: controller._scrollAreaKey,
             width: constraints.maxWidth,
             height: screenHeight,
             child: ClipRect(
@@ -134,38 +133,35 @@ class SpringListView extends StatelessWidget {
                     left: 0,
                     right: 0,
                     child: Obx(() {
-                      if (controller.currentIndex.value < lineDuration.length &&
-                          controller.currentIndex.value >= 0) {
+                      if (controller._currentIndex.value <
+                              lineDuration.length &&
+                          controller._currentIndex.value >= 0) {
                         // 原式: controller.delay = lineDuration[controller.currentIndex.value] *1000 / SpringController.durationMax *SpringController.delayMax
-                        controller.delay =
-                            (lineDuration[controller.currentIndex.value] * 50)
+                        controller._delay =
+                            (lineDuration[controller._currentIndex.value] * 50)
                                 .clamp(
-                                  SpringController.delayMax * 0.2,
-                                  SpringController.delayMax,
+                                  SpringController._delayMax * 0.2,
+                                  SpringController._delayMax,
                                 )
                                 .toInt();
-                        controller.duration =
-                            (lineDuration[controller.currentIndex.value] * 1000)
-                                .clamp(
-                                  SpringController.durationMax * 0.2,
-                                  SpringController.durationMax,
-                                );
+                        controller._duration =
+                            lineDuration[controller._currentIndex.value];
                       } else {
-                        controller.duration = SpringController.durationMax;
+                        controller._duration = SpringController._durationMax;
                       }
 
                       Key? centerKey;
-                      if (controller.totalLength > 0) {
-                        int effectiveIndex = controller.currentIndex.value
+                      if (controller._totalLength > 0) {
+                        int effectiveIndex = controller._currentIndex.value
                             .clamp(
                               0, // 前奏时也为0
-                              controller.totalLength - 1,
+                              controller._totalLength - 1,
                             );
                         centerKey = controller.getSliverKey(effectiveIndex);
                       }
 
                       return CustomScrollView(
-                        controller: controller.scrollController,
+                        controller: controller._scrollController,
                         center: centerKey,
                         anchor: newAnchorPercentage, // 使用转换后的锚点比例
                         cacheExtent: 200.0,
@@ -225,14 +221,14 @@ class _SpringItemState extends State<_SpringItem>
   late AnimationController _animController;
   Worker? _worker;
 
-  double _currentDeltaY = 60.0;
   int _animTriggerId = 0;
 
   @override
   void initState() {
     super.initState();
-    _animController = AnimationController(vsync: this, duration: 800.ms);
-    _animController.value = 1.0;
+    // 使用无边界控制器，它的 value 直接代表 Y 轴的偏移像素(deltaY)
+    _animController = AnimationController.unbounded(vsync: this)
+      ..value = 0.0; // 0.0 表示在原位
 
     _worker = ever(controller._jumpSignal, (_JumpSignal signal) {
       //监听滚动信号
@@ -243,33 +239,56 @@ class _SpringItemState extends State<_SpringItem>
   void _triggerAnimation(double deltaY) async {
     if (!mounted) return;
 
-    int relativeIndex =
-        (widget.index - controller.currentIndex.value).abs(); //计算相对索引
+    final int relativeIndex =
+        widget.index -
+        controller._currentIndex.value +
+        SpringController._centerOffset; //计算相对索引
 
-    // 在屏幕外的元素不执行动画
-    if (relativeIndex > 10) {
-      setState(() {
-        _currentDeltaY = 0.0;
-      });
-      _animController.value = 1.0;
+    final int relativeIndexAbs = relativeIndex.abs();
+
+    // 在屏幕外的元素不执行动画，直接归位
+    if (relativeIndexAbs > 10) {
+      _animController.value = 0.0;
       return;
     }
 
-    int delayMs = (relativeIndex + 1) * controller.delay;
-
-    setState(() {
-      _currentDeltaY = deltaY;
-    });
-
-    _animController.value = 0.0; //从偏移位置回到原位
+    int delayMs =
+        relativeIndex < 0 && SpringController._centerOffset != 0
+            ? 0
+            : (relativeIndexAbs + 1) * controller._delay;
     final currentTriggerId = ++_animTriggerId;
+
+    // 动画准备阶段：瞬间将元素偏移到 deltaY 的位置
+    _animController.value = deltaY;
 
     if (delayMs > 0) {
       await Future.delayed(Duration(milliseconds: delayMs)); //延时启动动画
     }
 
     if (mounted && currentTriggerId == _animTriggerId) {
-      _animController.forward();
+      // 动态计算刚度 (决定运动快慢)
+      // 弹簧振子的周期公式 T=2*pi*sqrt(m/k)
+      // m: 质量 ,k: 刚度 ,T: duration
+      double stiffness = 200.0 / (controller._duration * controller._duration);
+      stiffness = stiffness.clamp(100.0, 200.0);
+
+      // 动态计算弹性,duration越大越有弹性
+      double durationProgress = (controller._duration /
+              SpringController._durationMax)
+          .clamp(0.0, 1.0);
+      double springRatio = 1.0 - (0.25 * durationProgress); // 区间 [0.75,1.0]
+
+      final springDesc = SpringDescription.withDampingRatio(
+        mass: 1.0,
+        stiffness: stiffness,
+        ratio: springRatio,
+      );
+
+      // 创建弹簧物理仿真 (从当前的 deltaY 运动到 0，初始速度为 0)
+      final simulation = SpringSimulation(springDesc, deltaY, 0.0, 0.0);
+
+      // 使用物理仿真驱动动画控制器
+      _animController.animateWith(simulation);
     }
   }
 
@@ -282,16 +301,18 @@ class _SpringItemState extends State<_SpringItem>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-          key: widget.boxKey,
-          child: RepaintBoundary(child: widget.child),
-        )
-        .animate(controller: _animController, autoPlay: false)
-        .moveY(
-          begin: _currentDeltaY,
-          end: 0,
-          duration: controller.duration.ms,
-          curve: Curves.easeOutCubic,
+    return AnimatedBuilder(
+      animation: _animController,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _animController.value), // 直接应用物理控制器的值
+          child: child,
         );
+      },
+      child: Container(
+        key: widget.boxKey,
+        child: RepaintBoundary(child: widget.child),
+      ),
+    );
   }
 }

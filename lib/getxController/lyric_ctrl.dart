@@ -34,8 +34,8 @@ class LyricController extends GetxController {
       0.95; // 间奏进度下限, 最后一个词过渡到 95% 就开始显示间奏, 给出场动画稍微预留一些时间
   static const double _showIntervalHighLimit =
       0.95; // 间奏进度上限, 间奏完成到 95% 就开始退出间奏, 给下一句歌词入场一些预留时间
-  static const int  _intervalThreshold = 4; // 间奏阈值, 超过此秒数则为间奏
-  static const double _loopTime=0.02;
+  static const int _intervalThreshold = 4; // 间奏阈值, 超过此秒数则为间奏
+  static const double _loopTime = 0.02;
 
   List<WordEntry>? _currentLine; // 当前行信息
 
@@ -217,21 +217,13 @@ class LyricController extends GetxController {
   }
 
   void springScrollToCenter() {
-    _springConntroller.nextLyric();
-    _springConntroller.currentIndex.value = currentLineIndex.value;
+    _springConntroller.nextLyric(currentLineIndex.value);
   }
 
   void scrollToCenter() {
     if (_settingController.useSpringScroll.value) {
-      _springConntroller.currentIndex.value = currentLineIndex.value;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_springConntroller.scrollController.hasClients) {
-          _springConntroller.scrollController.animateTo(
-            0.0,
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.easeOut,
-          );
-        }
+        _springConntroller.nextLyric(currentLineIndex.value);
       });
     } else {
       if (!lrcViewScrollController.isAttached) {
