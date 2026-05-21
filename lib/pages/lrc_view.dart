@@ -559,18 +559,18 @@ class LrcView extends StatelessWidget {
                             ? '展开详情'
                             : '切换歌词模式';
                     final cover = _audioController.currentCover.value;
-                    return AnimatedSwitcher(
-                      duration: 300.ms,
-                      transitionBuilder:
-                          (child, anim) =>
-                              FadeTransition(opacity: anim, child: child),
-                      child: Tooltip(
-                        message: tip,
-                        mouseCursor: SystemMouseCursors.click,
-                        verticalOffset: -coverSize / 2 - 32,
+                    return Tooltip(
+                      message: tip,
+                      mouseCursor: SystemMouseCursors.click,
+                      verticalOffset: -coverSize / 2 - 32,
+                      child: AnimatedSwitcher(
+                        duration: 300.ms,
+                        transitionBuilder:
+                            (child, anim) =>
+                                FadeTransition(opacity: anim, child: child),
                         child: Image.memory(
                           cover,
-                          key: ValueKey(cover),
+                          key: ValueKey(cover.hashCode),
                           cacheWidth: _coverRenderSize,
                           cacheHeight: _coverRenderSize,
                           height: coverSize,
