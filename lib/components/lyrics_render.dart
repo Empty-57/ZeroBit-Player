@@ -911,15 +911,15 @@ class _StaggeredLyricItem extends StatelessWidget {
       // 是否需要挂载 ImageFiltered (当前行保持挂载防动画中断，除首行外其余行在视距内且未滚动时挂载)
       final bool applyFilter =
           useBlur &&
-          (isCurrent || (!isPointerScrolling && diff <= 10)) &&
-          (index > 0 || currentLineIndex > 0);
+          (isCurrent || (!isPointerScrolling && diff <= 10));
 
       Widget finalContent = content;
 
       if (applyFilter) {
         // 当前行模糊度为 0，其余行根据距离取 1~4
         final double targetSigma =
-            isCurrent ? 0.0 : diff.clamp(0, 4).toDouble();
+            isCurrent ||
+          (index <= 0 && currentLineIndex <= 0) ? 0.0 : diff.clamp(0, 4).toDouble();
 
         finalContent = ImageFiltered(
           imageFilter: _getBlurFilter(targetSigma), // 取缓存的ImageFilter
