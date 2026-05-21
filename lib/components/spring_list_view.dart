@@ -297,7 +297,7 @@ class _SpringItemState extends State<_SpringItem>
       double durationProgress = (controller._duration /
               SpringController._durationMax)
           .clamp(0.0, 1.0);
-      double springRatio = 1.0 - (0.25 * durationProgress); // 区间 [0.75,1.0]
+      double springRatio = 1.0 - (0.3 * durationProgress); // 区间 [0.75,1.0]
 
       final springDesc = SpringDescription.withDampingRatio(
         mass: 1.0,
@@ -305,8 +305,19 @@ class _SpringItemState extends State<_SpringItem>
         ratio: springRatio,
       );
 
+      // 加入容差，防止像素抖动
+      final tolerance = Tolerance(
+        distance: 0.5, // 离目标位置还有 0.5 逻辑像素时，直接掐断动画设为0
+        velocity: 0.1, // 速度极慢时停止
+      );
       // 创建弹簧物理仿真 (从当前的 deltaY 运动到 0，初始速度为 0)
-      final simulation = SpringSimulation(springDesc, deltaY, 0.0, 0.0);
+      final simulation = SpringSimulation(
+        springDesc,
+        deltaY,
+        0.0,
+        0.0,
+        tolerance: tolerance,
+      );
 
       // 使用物理仿真驱动动画控制器
       _animController.animateWith(simulation);
