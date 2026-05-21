@@ -471,38 +471,60 @@ List<LyricEntry> _mergeByTimeMatch(
   String? lyricDataTs,
   String type,
 ) {
-  final transQueue =
-      lyricDataTs != null ? _parseLyrics(lyricDataTs) : <LyricEntry>[];
-  int transIdx = 0;
+  if (mainEntries.isEmpty || lyricDataTs == null || lyricDataTs.isEmpty) {
+    return mainEntries;
+  }
+
+  final transQueue = _parseLyrics(lyricDataTs);
+  if (transQueue.isEmpty) return mainEntries;
 
   final String Function(LyricEntry) getTranslate =
       type == LyricFormat.qrc
           ? (e) => e.lyricText == '//' ? ' ' : e.lyricText as String
           : (e) => e.lyricText as String;
 
-  final tolerance =
-      (type == LyricFormat.qrc || type == LyricFormat.lrc) ? 0.1 : 0.8;
+  // 记录上一句被匹配上的原文索引
+  int lastMatchedMainIdx = -1;
 
-  for (var i = 0; i < mainEntries.length; i++) {
-    final curr = mainEntries[i];
-    curr.nextTime =
-        (i < mainEntries.length - 1)
-            ? mainEntries[i + 1].start
-            : double.infinity;
-    if (curr.lyricText.isEmpty) continue;
+  // 最大容许的时间漂移
+  final double maxDrift = 5.0;
 
-    while (transIdx < transQueue.length) {
-      final te = transQueue[transIdx];
-      if (curr.start >= te.start - tolerance) {
-        if (curr.start <= te.start + tolerance) {
-          curr.translate = getTranslate(te).trim();
-        }
-      } else {
+  for (final te in transQueue) {
+    int minDiffIdx = -1; // 最小时间差的索引
+    double minDiff = double.infinity; // 当前找到的最小时间差
+
+    // 强制从上一次匹配成功的下一行开始找，防止覆盖数据
+    int startIndex = lastMatchedMainIdx + 1;
+
+    for (int i = startIndex; i < mainEntries.length; i++) {
+      final currMain = mainEntries[i];
+      if (currMain.lyricText.isEmpty) continue;
+
+      // 计算当前原文和这句翻译的时间差
+      final double diff = (currMain.start - te.start).abs();
+
+      if (diff < minDiff) {
+        minDiff = diff; // 更新最小时间差及其索引
+        minDiffIdx = i;
+      } else if (diff > minDiff) {
+        // 由于时间戳是递增的，当时间差开始变大时，说明我们已经越过了最小时间差，直接停止查找
         break;
       }
-      transIdx++;
+      // 若 diff == minDiff 继续查找 直到 diff < minDiff 或 diff > minDiff
+    }
+
+    // 如果找到了最近的行，并且误差在合理范围内，则进行赋值
+    if (minDiffIdx != -1 && minDiff <= maxDrift) {
+      mainEntries[minDiffIdx].translate = getTranslate(te).trim();
+      // 推进游标，下一句翻译只能找 minDiffIdx 之后的行
+      lastMatchedMainIdx = minDiffIdx;
+    }
+    // 抛弃的翻译
+    else {
+      debugPrint("丢弃翻译 (时间偏差过大或无剩余原文): ${getTranslate(te)}");
     }
   }
+
   return mainEntries;
 }
 
