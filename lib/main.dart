@@ -190,7 +190,6 @@ void main() async {
   Get.put(SettingController());
   Get.put(MusicCacheController());
   Get.put(AudioController());
-  Get.put(SpringController());
   Get.put(LyricController());
   Get.put(ThemeService());
   Get.put(DesktopLyricsSever());
@@ -254,7 +253,7 @@ void main() async {
     );
   }
 
-  debugRepaintRainbowEnabled=true;
+  debugRepaintRainbowEnabled=false;
   runApp(const MainFrame());
 
   WidgetsBinding.instance.addPostFrameCallback((_) async {
