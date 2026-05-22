@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:zerobit_player/HIveCtrl/models/music_cache_model.dart';
+import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
 
@@ -12,6 +13,7 @@ import '../custom_widgets/custom_button.dart';
 import '../custom_widgets/custom_drop_menu.dart';
 import '../field/audio_source.dart';
 import '../getxController/audio_ctrl.dart';
+import '../getxController/music_cache_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
 import '../tools/audio_ctrl_mixin.dart';
 import '../tools/general_style.dart';
@@ -65,51 +67,139 @@ List<Widget> _genMenuItems({
   required String userKey,
   required int index,
   required String operateArea,
-  required List<Widget> playList,
   required AudioController ctrl,
+  required MusicCacheController cacheCtrl,
   required AudioSource source,
   bool renderMaybeDel = false,
 }) {
-  return <Widget>[
-    CustomBtn(
+  final Widget divider = Divider(
+    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+    height: 0.5,
+    thickness: 0.5,
+  );
+
+  Widget buildMenuBtn({
+    required VoidCallback fn,
+    required IconData icon,
+    required String label,
+    String? tooltip,
+  }) {
+    return CustomBtn(
       fn: () {
-        source.currentAudioSource.value = userKey;
         menuController.close();
-        ctrl.audioPlay(metadata: metadata);
+        fn();
       },
       btnHeight: _menuBtnHeight,
       btnWidth: _menuBtnWidth,
       radius: _menuBtnRadius,
-      icon: PhosphorIconsLight.play,
-      label: "播放",
+      icon: icon,
+      label: label,
+      tooltip: tooltip,
       mainAxisAlignment: MainAxisAlignment.start,
       backgroundColor: Colors.transparent,
       padding: const EdgeInsets.symmetric(horizontal: 16),
-    ),
-    CustomBtn(
-      fn: () {
-        menuController.close();
-        ctrl.insertNext(metadata: metadata);
-      },
-      btnHeight: _menuBtnHeight,
-      btnWidth: _menuBtnWidth,
-      radius: _menuBtnRadius,
+    );
+  }
+
+  // 数据预处理
+  final artistList = metadata.artist.split('/');
+  final album = metadata.album;
+  final albumWithLetter = cacheCtrl.getLetter(str: album) + album;
+
+  final artistFirst = artistList.first;
+  final artistFirstWithLetter =
+      cacheCtrl.getLetter(str: artistFirst) + artistFirst;
+
+  return <Widget>[
+    buildMenuBtn(
+      fn: () => ctrl.insertNext(metadata: metadata),
       icon: PhosphorIconsLight.arrowBendDownRight,
       label: "添加到下一首",
-      mainAxisAlignment: MainAxisAlignment.start,
-      backgroundColor: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
     ),
+
     EditMetadataDialog(
       menuController: menuController,
       metadata: metadata,
       index: index,
       operateArea: operateArea,
     ),
+
     EditEmbeddedLyricsDialog(
       menuController: menuController,
       metadata: metadata,
     ),
+
+    divider,
+
+    buildMenuBtn(
+      fn:
+          () => Get.toNamed(
+            AppRoutes.albumList,
+            arguments: {
+              'pathList': cacheCtrl.albumItemsDict.value[albumWithLetter],
+              'title': metadata.album,
+            },
+            id: 1,
+          ),
+      icon: PhosphorIconsLight.vinylRecord,
+      label: metadata.album,
+      tooltip: metadata.album,
+    ),
+
+    if (artistList.length == 1)
+      buildMenuBtn(
+        fn:
+            () => Get.toNamed(
+              AppRoutes.artistList,
+              arguments: {
+                'pathList':
+                    cacheCtrl.artistItemsDict.value[artistFirstWithLetter],
+                'title': artistFirst,
+              },
+              id: 1,
+            ),
+        icon: PhosphorIconsLight.userFocus,
+        label: artistFirst,
+        tooltip: artistFirst,
+      ),
+
+    if (artistList.length > 1)
+      SubmenuButton(
+        style: ButtonStyle(
+          padding: WidgetStateProperty.all(
+            const EdgeInsets.symmetric(horizontal: 16),
+          ),
+        ),
+        menuStyle: const MenuStyle(alignment: Alignment.topRight),
+        leadingIcon: Icon(
+          PhosphorIconsLight.userFocus,
+          size: getIconSize(size: 'md'),
+        ),
+        menuChildren:
+            artistList.map((v) {
+              return MenuItemButton(
+                onPressed: () {
+                  menuController.close();
+                  Get.toNamed(
+                    AppRoutes.artistList,
+                    arguments: {
+                      'pathList':
+                          cacheCtrl
+                              .artistItemsDict
+                              .value[cacheCtrl.getLetter(str: v) + v],
+                      'title': v,
+                    },
+                    id: 1,
+                  );
+                },
+                child: Center(child: Text(v)),
+              );
+            }).toList(),
+        child: const Text('查看艺术家'),
+      ),
+
+    divider,
+
     SubmenuButton(
       style: ButtonStyle(
         padding: WidgetStateProperty.all(
@@ -117,59 +207,36 @@ List<Widget> _genMenuItems({
         ),
       ),
       menuStyle: const MenuStyle(alignment: Alignment.topRight),
-      menuChildren: playList,
       leadingIcon: Icon(PhosphorIconsLight.plus, size: getIconSize(size: 'md')),
+      menuChildren:
+          ctrl.allUserKey.map((v) {
+            return MenuItemButton(
+              onPressed: () {
+                menuController.close();
+                ctrl.addToAudioList(metadata: metadata, userKey: v);
+              },
+              child: Center(child: Text(v.split(TagSuffix.playList)[0])),
+            );
+          }).toList(),
       child: const Text('添加到歌单'),
     ),
-    CustomBtn(
-      fn: () {
-        menuController.close();
-        Process.run('explorer.exe', ['/select,', metadata.path]);
-      },
-      btnHeight: _menuBtnHeight,
-      btnWidth: _menuBtnWidth,
-      radius: _menuBtnRadius,
+
+    buildMenuBtn(
+      fn: () => Process.run('explorer.exe', ['/select,', metadata.path]),
       icon: PhosphorIconsLight.folderOpen,
       label: "打开本地资源",
-      mainAxisAlignment: MainAxisAlignment.start,
-      backgroundColor: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
     ),
+
     if (renderMaybeDel) ...[
-      Divider(
-        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-        height: 0.5,
-        thickness: 0.5,
-      ),
-      CustomBtn(
-        fn: () async {
-          menuController.close();
-          await ctrl.audioRemove(userKey: userKey, metadata: metadata);
-        },
-        btnHeight: _menuBtnHeight,
-        btnWidth: _menuBtnWidth,
-        radius: _menuBtnRadius,
+      divider,
+      buildMenuBtn(
+        fn: () => ctrl.audioRemove(userKey: userKey, metadata: metadata),
         icon: PhosphorIconsLight.trash,
         label: "删除",
-        mainAxisAlignment: MainAxisAlignment.start,
-        backgroundColor: Colors.transparent,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
       ),
     ],
   ];
 }
-
-List<Widget> Function(MusicCache metadata, AudioController ctrl)
-_playListBuilder = (metadata, ctrl) {
-  return ctrl.allUserKey.map((v) {
-    return MenuItemButton(
-      onPressed: () {
-        ctrl.addToAudioList(metadata: metadata, userKey: v);
-      },
-      child: Center(child: Text(v.split(TagSuffix.playList)[0])),
-    );
-  }).toList();
-};
 
 class AudioGenPages extends StatefulWidget {
   final String title;
@@ -201,8 +268,32 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       Get.find<SettingController>();
   late final AudioSource _audioSource = Get.find<AudioSource>();
   late final AudioController _audioController = Get.find<AudioController>();
+  late final MusicCacheController _musicCacheController =
+      Get.find<MusicCacheController>();
   late final _MusicMenuController _musicMenuCtrl =
       _MusicMenuController(); // maybe Get.put()
+
+  late TextStyle _titleStyle;
+  late TextStyle _highLightTitleStyle;
+  late TextStyle _subStyle;
+  late TextStyle _highLightSubStyle;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _titleStyle = generalTextStyle(ctx: context, size: 'md');
+    _highLightTitleStyle = generalTextStyle(
+      ctx: context,
+      size: 'md',
+      color: Theme.of(context).colorScheme.primary,
+    );
+    _subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
+    _highLightSubStyle = generalTextStyle(
+      ctx: context,
+      size: 'sm',
+      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+    );
+  }
 
   @override
   void initState() {
@@ -218,6 +309,10 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   void dispose() {
     _scrollControllerList.dispose();
     _scrollControllerGrid.dispose();
+
+    _musicMenuCtrl.menuPosition.close();
+    _musicMenuCtrl.currentMetadata.close();
+    _musicMenuCtrl.currentIndex.close();
     super.dispose();
   }
 
@@ -463,23 +558,26 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   }
 
   Widget _buildSortButton() {
-    final itemMap = {
+    final itemMap = <int, List<dynamic>>{
       SortType.title: [
         SettingController.sortType[SortType.title],
         PhosphorIconsRegular.textT,
       ],
-      SortType.artist: [
-        SettingController.sortType[SortType.artist],
-        PhosphorIconsRegular.userFocus,
-      ],
-      SortType.album: [
-        SettingController.sortType[SortType.album],
-        PhosphorIconsRegular.vinylRecord,
-      ],
-      SortType.trackNumber: [
-        SettingController.sortType[SortType.trackNumber],
-        PhosphorIconsRegular.hash,
-      ],
+      if (widget.operateArea != OperateArea.artistList)
+        SortType.artist: [
+          SettingController.sortType[SortType.artist],
+          PhosphorIconsRegular.userFocus,
+        ],
+      if (widget.operateArea != OperateArea.albumList)
+        SortType.album: [
+          SettingController.sortType[SortType.album],
+          PhosphorIconsRegular.vinylRecord,
+        ],
+      if (widget.operateArea == OperateArea.albumList)
+        SortType.trackNumber: [
+          SettingController.sortType[SortType.trackNumber],
+          PhosphorIconsRegular.hash,
+        ],
       SortType.duration: [
         SettingController.sortType[SortType.duration],
         PhosphorIconsRegular.clockCountdown,
@@ -493,15 +591,6 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         PhosphorIconsRegular.filePlus,
       ],
     };
-    if (widget.operateArea == OperateArea.artistList) {
-      itemMap.remove(SortType.artist);
-    }
-    if (widget.operateArea == OperateArea.albumList) {
-      itemMap.remove(SortType.album);
-    }
-    if (widget.operateArea != OperateArea.albumList) {
-      itemMap.remove(SortType.trackNumber);
-    }
 
     return CustomDropdownMenu(
       itemMap: itemMap,
@@ -568,19 +657,6 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   }
 
   Widget _buildMusicList() {
-    final titleStyle = generalTextStyle(ctx: context, size: 'md');
-    final highLightTitleStyle = generalTextStyle(
-      ctx: context,
-      size: 'md',
-      color: Theme.of(context).colorScheme.primary,
-    );
-    final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-    final highLightSubStyle = generalTextStyle(
-      ctx: context,
-      size: 'sm',
-      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-    );
-
     return RawMenuAnchor(
       controller: _musicMenuCtrl.menuController,
       consumeOutsideTaps: true,
@@ -593,7 +669,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
 
         double left = position.dx + 16;
         double top = position.dy;
-        final itemCount = widget.operateArea == OperateArea.playList ? 7 : 6;
+        final itemCount = widget.operateArea == OperateArea.playList ? 8 : 7;
         if (top + _menuBtnHeight * (itemCount + 1.5) > Get.height) {
           top = top - _menuBtnHeight * itemCount;
         }
@@ -632,9 +708,9 @@ class _AudioGenPagesState extends State<AudioGenPages> {
                   index: _musicMenuCtrl.currentIndex.value,
                   renderMaybeDel: widget.operateArea == OperateArea.playList,
                   operateArea: widget.operateArea,
-                  playList: _playListBuilder(currentMetadata, _audioController),
                   source: _audioSource,
                   ctrl: _audioController,
+                  cacheCtrl: _musicCacheController,
                 ),
               ),
             ),
@@ -644,54 +720,53 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       child: Stack(
         children: [
           Obx(
-            () => Offstage(
-              offstage: !_settingController.viewModeMap[widget.operateArea]!,
-              child: ListView.builder(
-                controller: _scrollControllerList,
-                itemCount: widget.controller.items.length,
-                itemExtent: _itemHeight,
-                cacheExtent: _itemHeight * 2,
-                padding: const EdgeInsets.only(bottom: _itemHeight * 2),
-                addRepaintBoundaries: false,
-                itemBuilder:
-                    (context, index) => _buildMusicTile(
-                      context,
-                      index,
-                      titleStyle,
-                      highLightTitleStyle,
-                      subStyle,
-                      highLightSubStyle,
+            () =>
+                _settingController.viewModeMap[widget.operateArea]!
+                    ? ListView.builder(
+                      controller: _scrollControllerList,
+                      itemCount: widget.controller.items.length,
+                      itemExtent: _itemHeight,
+                      cacheExtent: _itemHeight * 2,
+                      padding: const EdgeInsets.only(bottom: _itemHeight * 2),
+                      addRepaintBoundaries: true,
+                      addAutomaticKeepAlives: false,
+                      addSemanticIndexes: false,
+                      itemBuilder:
+                          (context, index) => _buildMusicTile(
+                            context,
+                            index,
+                            _titleStyle,
+                            _highLightTitleStyle,
+                            _subStyle,
+                            _highLightSubStyle,
+                          ),
+                    )
+                    : GridView.builder(
+                      controller: _scrollControllerGrid,
+                      itemCount: widget.controller.items.length,
+                      cacheExtent: _itemHeight * 2,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount:
+                            context.width < resViewThresholds ? 3 : 4,
+                        mainAxisSpacing: 4.0,
+                        crossAxisSpacing: 8.0,
+                        childAspectRatio: 1.0,
+                        mainAxisExtent: _itemHeight,
+                      ),
+                      padding: const EdgeInsets.only(bottom: _itemHeight * 2),
+                      addRepaintBoundaries: true,
+                      addAutomaticKeepAlives: false,
+                      addSemanticIndexes: false,
+                      itemBuilder:
+                          (context, index) => _buildMusicTile(
+                            context,
+                            index,
+                            _titleStyle,
+                            _highLightTitleStyle,
+                            _subStyle,
+                            _highLightSubStyle,
+                          ),
                     ),
-              ),
-            ),
-          ),
-          Obx(
-            () => Offstage(
-              offstage: _settingController.viewModeMap[widget.operateArea]!,
-              child: GridView.builder(
-                controller: _scrollControllerGrid,
-                itemCount: widget.controller.items.length,
-                cacheExtent: _itemHeight * 2,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: context.width < resViewThresholds ? 3 : 4,
-                  mainAxisSpacing: 4.0,
-                  crossAxisSpacing: 8.0,
-                  childAspectRatio: 1.0,
-                  mainAxisExtent: _itemHeight,
-                ),
-                padding: const EdgeInsets.only(bottom: _itemHeight * 2),
-                addRepaintBoundaries: false,
-                itemBuilder:
-                    (context, index) => _buildMusicTile(
-                      context,
-                      index,
-                      titleStyle,
-                      highLightTitleStyle,
-                      subStyle,
-                      highLightSubStyle,
-                    ),
-              ),
-            ),
           ),
           FloatingButton(
             scrollControllerList: _scrollControllerList,
@@ -712,33 +787,31 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     TextStyle highLightSubStyle,
   ) {
     final metadata = widget.controller.items[index];
-    return RepaintBoundary(
-      child: GestureDetector(
-        onSecondaryTapDown: (e) {
-          RenderBox overlayBox =
-              Overlay.of(context).context.findRenderObject() as RenderBox;
-          Offset overlayOffset = overlayBox.globalToLocal(e.globalPosition);
-          _musicMenuCtrl.openMenu(
-            overlayOffset: overlayOffset,
-            metadata: metadata,
-            index: index,
-          );
-        },
-        child: MusicTile(
-          key: ValueKey(metadata.path),
+    return GestureDetector(
+      onSecondaryTapDown: (e) {
+        RenderBox overlayBox =
+            Overlay.of(context).context.findRenderObject() as RenderBox;
+        Offset overlayOffset = overlayBox.globalToLocal(e.globalPosition);
+        _musicMenuCtrl.openMenu(
+          overlayOffset: overlayOffset,
           metadata: metadata,
-          titleStyle: titleStyle,
-          highLightTitleStyle: highLightTitleStyle,
-          subStyle: subStyle,
-          highLightSubStyle: highLightSubStyle,
-          audioSource: widget.audioSource,
-          operateArea: widget.operateArea,
-          isMulSelect: _isMulSelect,
-          selectedList: _selectedList,
-          settingController: _settingController,
-          audioController: _audioController,
-          audioSourceClass: _audioSource,
-        ),
+          index: index,
+        );
+      },
+      child: MusicTile(
+        key: ValueKey(metadata.path),
+        metadata: metadata,
+        titleStyle: titleStyle,
+        highLightTitleStyle: highLightTitleStyle,
+        subStyle: subStyle,
+        highLightSubStyle: highLightSubStyle,
+        audioSource: widget.audioSource,
+        operateArea: widget.operateArea,
+        isMulSelect: _isMulSelect,
+        selectedList: _selectedList,
+        settingController: _settingController,
+        audioController: _audioController,
+        audioSourceClass: _audioSource,
       ),
     );
   }
