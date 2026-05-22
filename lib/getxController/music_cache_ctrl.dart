@@ -82,7 +82,7 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
     _loadItem4Album();
   }
 
-  String _getLetter({required String str}) {
+  String getLetter({required String str}) {
     final str_ = str.trim();
     if (str_.isEmpty) {
       return '#';
@@ -102,7 +102,7 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
     artistHasLetter.clear();
     for (var v in items) {
       v.artist.split('/').forEach((i) {
-        final String letter = _getLetter(str: i);
+        final String letter = getLetter(str: i);
         artistItemsDict.value
             .putIfAbsent(letter + i, () => <String>[])
             .add(v.path);
@@ -120,7 +120,7 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
       if (album.isEmpty) {
         album = 'UNKNOWN';
       }
-      final String letter = _getLetter(str: album);
+      final String letter = getLetter(str: album);
       albumItemsDict.value
           .putIfAbsent(letter + album, () => <String>[])
           .add(v.path);
