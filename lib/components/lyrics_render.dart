@@ -918,8 +918,8 @@ class _StaggeredLyricItem extends StatelessWidget {
       if (applyFilter) {
         // 首行和当前行模糊度为 0，其余行未滚动时根据距离取 1~4
         final double targetSigma =
-            (isCurrent || (index <= 0 && currentLineIndex <= 0)) &&
-                    !isPointerScrolling
+            isCurrent || (index <= 0 && currentLineIndex <= 0) ||
+                    isPointerScrolling
                 ? 0.0
                 : diff.clamp(0, 4).toDouble();
 
