@@ -570,11 +570,6 @@ class _LyricsRenderState extends State<LyricsRender> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final lrcStylePackage = _LyricsStyle(_settingController, _themeService);
     Color? mixColor = lrcStylePackage.mixColor;
@@ -908,20 +903,21 @@ class _StaggeredLyricItem extends StatelessWidget {
       final int diff =
           (lyricController.currentLineIndex.value - index).abs(); // 视距
 
-      // 是否需要挂载 ImageFiltered (当前行保持挂载防动画中断，除首行外其余行在视距内且未滚动时挂载)
-      final bool applyFilter =
-          useBlur &&
-          (isCurrent || (!isPointerScrolling && diff <= 10));
+      // 是否需要挂载 ImageFiltered (当前行保持挂载防动画中断，其余行在视距内挂载)
+      final bool applyFilter = useBlur && (isCurrent || diff <= 10);
 
       Widget finalContent = content;
 
       if (applyFilter) {
-        // 当前行模糊度为 0，其余行根据距离取 1~4
+        // 首行和当前行模糊度为 0，其余行未滚动时根据距离取 1~4
         final double targetSigma =
-            isCurrent ||
-          (index <= 0 && currentLineIndex <= 0) ? 0.0 : diff.clamp(0, 4).toDouble();
+            (isCurrent || (index <= 0 && currentLineIndex <= 0)) &&
+                    !isPointerScrolling
+                ? 0.0
+                : diff.clamp(0, 4).toDouble();
 
         finalContent = ImageFiltered(
+          enabled: targetSigma <= 0 ? false : true,
           imageFilter: _getBlurFilter(targetSigma), // 取缓存的ImageFilter
           child: content,
         );
