@@ -56,6 +56,8 @@ class SortedListView extends StatefulWidget {
   final String toRoute;
   final List<MusicCache> items;
   final List<String> letterList;
+  final double? Function({required String route, bool rw, double? offset})
+  rwScrollOffset;
 
   const SortedListView({
     super.key,
@@ -65,6 +67,7 @@ class SortedListView extends StatefulWidget {
     required this.toRoute,
     required this.items,
     required this.letterList,
+    required this.rwScrollOffset,
   });
 
   @override
@@ -74,6 +77,7 @@ class SortedListView extends StatefulWidget {
 class _SortedListViewState extends State<SortedListView> {
   // 以首字母为键、以 GlobalKey 为值的映射，用于定位滚动
   final Map<String, GlobalKey> _sectionKeys = {};
+  final _scrollController = ScrollController();
 
   /// 处理已排序的音频数据，返回 _SectionItem 列表；
   List<_SectionItem> _processData(
@@ -113,6 +117,26 @@ class _SortedListViewState extends State<SortedListView> {
       final sectionKey = _sectionKeys.putIfAbsent(e.key, () => GlobalKey());
       return _SectionItem(letter: e.key, key: sectionKey, items: e.value);
     }).toList();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _sectionKeys.clear();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final offset = widget.rwScrollOffset(route: widget.toRoute, rw: true)!;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _scrollController.jumpTo(
+          offset.clamp(0.0, _scrollController.position.maxScrollExtent),
+        );
+      }
+    });
   }
 
   // 根据首字母找到对应 GlobalKey 并滚动到该位置
@@ -233,45 +257,56 @@ class _SortedListViewState extends State<SortedListView> {
     final maxCrossAxisExtent = isAlbum ? _itemWidth : _itemWidth_2;
     final mainAxisExtent = isAlbum ? _itemHeight : _itemHeight_2;
 
-    return CustomScrollView(
-      slivers: [
-        for (final section in sections) ...[
-          // 首字母标题
-          SliverToBoxAdapter(
-            key: section.key,
-            child: Padding(
-              padding: const EdgeInsets.only(top: _itemSpacing*2,bottom: _itemSpacing),
-              child: Text(section.letter, style: letterTitleStyle),
+    return NotificationListener<ScrollEndNotification>(
+      onNotification: (notification) {
+        final offset = notification.metrics.pixels; // 滚动停止时的偏移量
+        widget.rwScrollOffset(route: widget.toRoute, rw: false, offset: offset);
+        return false; // false = 继续冒泡
+      },
+      child: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          for (final section in sections) ...[
+            // 首字母标题
+            SliverToBoxAdapter(
+              key: section.key,
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  top: _itemSpacing * 2,
+                  bottom: _itemSpacing,
+                ),
+                child: Text(section.letter, style: letterTitleStyle),
+              ),
             ),
-          ),
-          // 内容网格
-          SliverGrid(
-            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: maxCrossAxisExtent,
-              mainAxisExtent: mainAxisExtent,
-              crossAxisSpacing: _itemSpacing,
-              mainAxisSpacing: _itemSpacing,
+            // 内容网格
+            SliverGrid(
+              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: maxCrossAxisExtent,
+                mainAxisExtent: mainAxisExtent,
+                crossAxisSpacing: _itemSpacing,
+                mainAxisSpacing: _itemSpacing,
+              ),
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final item = section.items[index];
+                return isAlbum
+                    ? _buildAlbumTile(
+                      item,
+                      titleStyle,
+                      subStyle,
+                      itemBackgroundColor,
+                    )
+                    : _buildArtistTile(
+                      item,
+                      titleStyle,
+                      subStyle,
+                      itemBackgroundColor,
+                    );
+              }, childCount: section.items.length),
             ),
-            delegate: SliverChildBuilderDelegate((context, index) {
-              final item = section.items[index];
-              return isAlbum
-                  ? _buildAlbumTile(
-                    item,
-                    titleStyle,
-                    subStyle,
-                    itemBackgroundColor,
-                  )
-                  : _buildArtistTile(
-                    item,
-                    titleStyle,
-                    subStyle,
-                    itemBackgroundColor,
-                  );
-            }, childCount: section.items.length),
-          ),
+          ],
+          SliverToBoxAdapter(child: const SizedBox(height: 128)),
         ],
-        SliverToBoxAdapter(child: const SizedBox(height: 128)),
-      ],
+      ),
     );
   }
 

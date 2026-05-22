@@ -19,6 +19,7 @@ class ArtistViewPage extends StatelessWidget {
       toRoute: AppRoutes.artistList,
       items: musicCacheController.items,
       letterList: musicCacheController.artistHasLetter,
+      rwScrollOffset: musicCacheController.rwScrollOffset,
     );
   }
 }

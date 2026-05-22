@@ -51,27 +51,61 @@ class _FloatingBtn extends StatelessWidget {
 }
 
 // --- 主组件 (FloatingButton) ---
-class FloatingButton extends StatelessWidget {
+class FloatingButton extends StatefulWidget {
   final ScrollController scrollControllerList;
   final ScrollController scrollControllerGrid;
   final String operateArea;
 
-  FloatingButton({
+  const FloatingButton({
     super.key,
     required this.scrollControllerList,
     required this.scrollControllerGrid,
     required this.operateArea,
   });
 
+  @override
+  State<FloatingButton> createState() => _FloatingButtonState();
+}
+
+class _FloatingButtonState extends State<FloatingButton> {
   final MusicCacheController _musicCacheController =
-    Get.find<MusicCacheController>();
-final AudioController _audioController = Get.find<AudioController>();
+      Get.find<MusicCacheController>();
+  final AudioController _audioController = Get.find<AudioController>();
+  late final Worker _jumpWorker;
+
+  @override
+  void initState() {
+    super.initState();
+    // 首次进入页面时，跳转到当前行
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _jumpToCurrent(useAnimate: false);
+      }
+    });
+
+    _jumpWorker = ever(_audioController.currentPath, (_) {
+      _jumpToCurrent(useAnimate: false, scrollOnVisible: false);
+    });
+  }
+
+  @override
+  void dispose() {
+    _jumpWorker.dispose();
+    super.dispose();
+  }
+
+  bool _isOffsetVisible(ScrollController controller, double targetOffset) {
+    final current = controller.offset; // 当前滚动位置
+    final viewport = controller.position.viewportDimension; // 可视区域高度
+
+    return targetOffset >= current && targetOffset <= current + viewport;
+  }
 
   int _getCurrentPlayingIndex() {
     final currentPath = _audioController.currentPath.value;
     if (currentPath.isEmpty) return -1;
 
-    switch (operateArea) {
+    switch (widget.operateArea) {
       case OperateArea.allMusic:
         return _musicCacheController.items.indexWhere(
           (m) => m.path == currentPath,
@@ -97,15 +131,19 @@ final AudioController _audioController = Get.find<AudioController>();
     }
   }
 
-  void _scrollTo(ScrollController ctrl, double to) {
-    ctrl.animateTo(
-      duration: Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
-      to,
-    );
+  void _scrollTo(ScrollController ctrl, double to, [bool useAnimate = true]) {
+    if (useAnimate) {
+      ctrl.animateTo(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        to,
+      );
+    } else {
+      ctrl.jumpTo(to);
+    }
   }
 
-  void _jumpToCurrent(BuildContext context) {
+  void _jumpToCurrent({bool useAnimate = true, bool scrollOnVisible = true}) {
     final index = _getCurrentPlayingIndex();
 
     final screenSize = MediaQuery.of(context).size;
@@ -113,21 +151,31 @@ final AudioController _audioController = Get.find<AudioController>();
     // 头部区域的大致高度，用于计算屏幕中间位置
     // 这个值应该与 AudioGenPages 中的头部高度保持一致
     final double headerOffset =
-        (operateArea == OperateArea.allMusic ||
-                operateArea == OperateArea.foldersList)
+        (widget.operateArea == OperateArea.allMusic ||
+                widget.operateArea == OperateArea.foldersList)
             ? 280
             : 384;
     final double middleOffset = (screenSize.height - headerOffset) / 2;
 
     // --- ListView 定位逻辑 ---
-    if (scrollControllerList.hasClients) {
+    if (widget.scrollControllerList.hasClients) {
       final double targetOffsetList = (index * _itemHeight - middleOffset)
-          .clamp(0.0, scrollControllerList.position.maxScrollExtent);
-      _scrollTo(scrollControllerList, targetOffsetList);
+          .clamp(0.0, widget.scrollControllerList.position.maxScrollExtent);
+
+      if (scrollOnVisible) {
+        _scrollTo(widget.scrollControllerList, targetOffsetList, useAnimate);
+      } else {
+        if (!_isOffsetVisible(
+          widget.scrollControllerList,
+          targetOffsetList + middleOffset,
+        )) {
+          _scrollTo(widget.scrollControllerList, targetOffsetList, useAnimate);
+        }
+      }
     }
 
     // --- 计算 GridView 的定位逻辑 ---
-    if (scrollControllerGrid.hasClients) {
+    if (widget.scrollControllerGrid.hasClients) {
       // 计算列数
       final int crossAxisCount = screenSize.width < _resViewThresholds ? 3 : 4;
 
@@ -139,9 +187,18 @@ final AudioController _audioController = Get.find<AudioController>();
 
       // 计算最终的滚动偏移量
       final double targetOffsetGrid = (targetRow * rowHeight - middleOffset)
-          .clamp(0.0, scrollControllerGrid.position.maxScrollExtent);
+          .clamp(0.0, widget.scrollControllerGrid.position.maxScrollExtent);
 
-      _scrollTo(scrollControllerGrid, targetOffsetGrid);
+      if (scrollOnVisible) {
+        _scrollTo(widget.scrollControllerGrid, targetOffsetGrid, useAnimate);
+      } else {
+        if (!_isOffsetVisible(
+          widget.scrollControllerGrid,
+          targetOffsetGrid + middleOffset,
+        )) {
+          _scrollTo(widget.scrollControllerGrid, targetOffsetGrid, useAnimate);
+        }
+      }
     }
   }
 
@@ -159,18 +216,18 @@ final AudioController _audioController = Get.find<AudioController>();
             tooltip: '回到顶部',
             icon: PhosphorIconsFill.arrowLineUp,
             onPressed: () {
-              if (scrollControllerList.hasClients) {
-                _scrollTo(scrollControllerList, 0.0);
+              if (widget.scrollControllerList.hasClients) {
+                _scrollTo(widget.scrollControllerList, 0.0);
               }
-              if (scrollControllerGrid.hasClients) {
-                _scrollTo(scrollControllerGrid, 0.0);
+              if (widget.scrollControllerGrid.hasClients) {
+                _scrollTo(widget.scrollControllerGrid, 0.0);
               }
             },
           ),
           _FloatingBtn(
             tooltip: '定位',
             icon: PhosphorIconsLight.diamond,
-            onPressed: () => _jumpToCurrent(context),
+            onPressed: () => _jumpToCurrent(),
           ),
         ],
       ),

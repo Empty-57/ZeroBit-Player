@@ -19,6 +19,7 @@ class AlbumViewPage extends StatelessWidget {
       toRoute: AppRoutes.albumList,
       items: musicCacheController.items,
       letterList: musicCacheController.albumHasLetter,
+      rwScrollOffset: musicCacheController.rwScrollOffset,
     );
   }
 }
