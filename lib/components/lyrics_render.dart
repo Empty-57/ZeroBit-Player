@@ -557,10 +557,12 @@ class _LyricsRenderState extends State<LyricsRender> {
   final LyricController _lyricController = Get.find<LyricController>();
   final ThemeService _themeService = Get.find<ThemeService>();
   final _isHover = false.obs;
+  late _LyricsStyle lrcStylePackage;
 
   @override
   void initState() {
     super.initState();
+    lrcStylePackage = _LyricsStyle(_settingController, _themeService);
     // 首次进入页面时，跳转到当前行
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -570,8 +572,13 @@ class _LyricsRenderState extends State<LyricsRender> {
   }
 
   @override
+  void dispose() {
+    _blurFilterCache.clear();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final lrcStylePackage = _LyricsStyle(_settingController, _themeService);
     Color? mixColor = lrcStylePackage.mixColor;
 
     final dynamicPadding = context.width / 2 * (1 - 1 / _lrcScale);
@@ -961,7 +968,6 @@ class _InterludeWidget extends StatelessWidget {
   final bool isCurrent;
 
   const _InterludeWidget({
-    super.key,
     required this.lyricController,
     required this.lrcAlignment,
     required this.interludeLyricStyle,
