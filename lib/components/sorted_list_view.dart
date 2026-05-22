@@ -79,52 +79,12 @@ class _SortedListViewState extends State<SortedListView> {
   final Map<String, GlobalKey> _sectionKeys = {};
   final _scrollController = ScrollController();
 
-  /// 处理已排序的音频数据，返回 _SectionItem 列表；
-  List<_SectionItem> _processData(
-    SplayTreeMap<String, List<String>> dict,
-    List<MusicCache> allItems,
-  ) {
-    // 创建以 path 为键、以 MusicCache 为值的 map
-    final Map<String, MusicCache> itemMap = {
-      for (final item in allItems) item.path: item,
-    };
+  List<_SectionItem> _sections = [];
+  Map<String, MusicCache> _itemMap = {};
 
-    // 以首字母为键、以内容项列表为值的分组 map
-    final Map<String, List<_ContentItem>> grouped = {};
-
-    for (final entry in dict.entries) {
-      final key = entry.key;
-      if (key.isEmpty) continue;
-
-      final letter = key[0]; // 首字母
-      final title = key.substring(1); // 标题
-      final paths = entry.value; // 音频路径列表
-
-      // 取第一首作为封面
-      final coverMusic = paths.isNotEmpty ? itemMap[paths[0]] : null;
-
-      grouped
-          .putIfAbsent(letter, () => [])
-          .add(
-            _ContentItem(title: title, paths: paths, coverMusic: coverMusic),
-          );
-    }
-
-    // 清理已失效的 section key，避免 Map 无限膨胀
-    _sectionKeys.removeWhere((k, _) => !grouped.containsKey(k));
-
-    return grouped.entries.map((e) {
-      final sectionKey = _sectionKeys.putIfAbsent(e.key, () => GlobalKey());
-      return _SectionItem(letter: e.key, key: sectionKey, items: e.value);
-    }).toList();
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    _sectionKeys.clear();
-    super.dispose();
-  }
+  late TextStyle _letterTitleStyle;
+  late TextStyle _titleStyle;
+  late TextStyle _subStyle;
 
   @override
   void initState() {
@@ -137,6 +97,59 @@ class _SortedListViewState extends State<SortedListView> {
         );
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 依赖 context 的样式统一初始化缓存
+    _letterTitleStyle = generalTextStyle(ctx: context, size: 'xl');
+    _titleStyle = generalTextStyle(ctx: context, size: 'md');
+    _subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _sectionKeys.clear();
+    _sections.clear();
+    _itemMap.clear();
+    super.dispose();
+  }
+
+  void _updateDataIfNeeded() {
+    final dict = widget.sortedDict.value;
+
+    // 以首字母为键、以内容项列表为值的分组 map
+    _itemMap = {for (final item in widget.items) item.path: item};
+
+    final Map<String, List<_ContentItem>> grouped = {};
+    for (final entry in dict.entries) {
+      final key = entry.key;
+      if (key.isEmpty) continue;
+
+      final letter = key[0]; // 首字母
+      final title = key.substring(1); // 标题
+      final paths = entry.value; // 音频路径列表
+
+      // 取第一首作为封面
+      final coverMusic = paths.isNotEmpty ? _itemMap[paths[0]] : null;
+
+      grouped
+          .putIfAbsent(letter, () => [])
+          .add(
+            _ContentItem(title: title, paths: paths, coverMusic: coverMusic),
+          );
+    }
+
+    // 清理已失效的 section key，避免 Map 无限膨胀
+    _sectionKeys.removeWhere((k, _) => !grouped.containsKey(k));
+
+    _sections =
+        grouped.entries.map((e) {
+          final sectionKey = _sectionKeys.putIfAbsent(e.key, () => GlobalKey());
+          return _SectionItem(letter: e.key, key: sectionKey, items: e.value);
+        }).toList();
   }
 
   // 根据首字母找到对应 GlobalKey 并滚动到该位置
@@ -154,10 +167,6 @@ class _SortedListViewState extends State<SortedListView> {
 
   @override
   Widget build(BuildContext context) {
-    final letterTitleStyle = generalTextStyle(ctx: context, size: 'xl');
-    final titleStyle = generalTextStyle(ctx: context, size: 'md');
-    final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-
     final foregroundColorHover = WidgetStateProperty.resolveWith<Color>((
       states,
     ) {
@@ -187,20 +196,13 @@ class _SortedListViewState extends State<SortedListView> {
           const SizedBox(height: 16),
           Expanded(
             child: Obx(() {
-              final sections = _processData(
-                widget.sortedDict.value,
-                widget.items,
-              );
-
+              _updateDataIfNeeded();
               return Row(
                 children: [
                   Expanded(
                     child: _buildMainList(
-                      sections,
+                      _sections,
                       viewType,
-                      letterTitleStyle,
-                      titleStyle,
-                      subStyle,
                       itemBackgroundColor,
                     ),
                   ),
@@ -242,9 +244,6 @@ class _SortedListViewState extends State<SortedListView> {
   Widget _buildMainList(
     List<_SectionItem> sections,
     _ViewType viewType,
-    TextStyle letterTitleStyle,
-    TextStyle titleStyle,
-    TextStyle subStyle,
     Color itemBackgroundColor,
   ) {
     if (sections.isEmpty) {
@@ -275,7 +274,7 @@ class _SortedListViewState extends State<SortedListView> {
                   top: _itemSpacing * 2,
                   bottom: _itemSpacing,
                 ),
-                child: Text(section.letter, style: letterTitleStyle),
+                child: Text(section.letter, style: _letterTitleStyle),
               ),
             ),
             // 内容网格
@@ -289,34 +288,19 @@ class _SortedListViewState extends State<SortedListView> {
               delegate: SliverChildBuilderDelegate((context, index) {
                 final item = section.items[index];
                 return isAlbum
-                    ? _buildAlbumTile(
-                      item,
-                      titleStyle,
-                      subStyle,
-                      itemBackgroundColor,
-                    )
-                    : _buildArtistTile(
-                      item,
-                      titleStyle,
-                      subStyle,
-                      itemBackgroundColor,
-                    );
+                    ? _buildAlbumTile(item, itemBackgroundColor)
+                    : _buildArtistTile(item, itemBackgroundColor);
               }, childCount: section.items.length),
             ),
           ],
-          SliverToBoxAdapter(child: const SizedBox(height: 128)),
+          const SliverToBoxAdapter(child: SizedBox(height: 128)),
         ],
       ),
     );
   }
 
   /// album_view 样式
-  Widget _buildAlbumTile(
-    _ContentItem item,
-    TextStyle titleStyle,
-    TextStyle subStyle,
-    Color itemBackgroundColor,
-  ) {
+  Widget _buildAlbumTile(_ContentItem item, Color itemBackgroundColor) {
     return Tooltip(
       message: item.title,
       child: TextButton(
@@ -346,12 +330,12 @@ class _SortedListViewState extends State<SortedListView> {
                 children: [
                   Text(
                     item.title,
-                    style: titleStyle,
+                    style: _titleStyle,
                     maxLines: 1,
                     softWrap: false,
                     overflow: TextOverflow.fade,
                   ),
-                  Text('共${item.paths.length}首', style: subStyle),
+                  Text('共${item.paths.length}首', style: _subStyle),
                 ],
               ),
             ),
@@ -362,12 +346,7 @@ class _SortedListViewState extends State<SortedListView> {
   }
 
   /// artist_view 样式
-  Widget _buildArtistTile(
-    _ContentItem item,
-    TextStyle titleStyle,
-    TextStyle subStyle,
-    Color itemBackgroundColor,
-  ) {
+  Widget _buildArtistTile(_ContentItem item, Color itemBackgroundColor) {
     const double coverSize = _itemHeight_2;
     return Tooltip(
       message: item.title,
@@ -400,12 +379,12 @@ class _SortedListViewState extends State<SortedListView> {
                   children: [
                     Text(
                       item.title,
-                      style: titleStyle,
+                      style: _titleStyle,
                       maxLines: 1,
                       softWrap: false,
                       overflow: TextOverflow.fade,
                     ),
-                    Text('共${item.paths.length}首', style: subStyle),
+                    Text('共${item.paths.length}首', style: _subStyle),
                   ],
                 ),
               ),
@@ -423,7 +402,7 @@ class _SortedListViewState extends State<SortedListView> {
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
         child: ListView(
-          padding: EdgeInsets.only(bottom: 64),
+          padding: const EdgeInsets.only(bottom: 64),
           children:
               widget.letterList.map((letter) {
                 return TextButton(
