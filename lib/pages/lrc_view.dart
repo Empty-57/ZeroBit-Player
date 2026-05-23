@@ -10,6 +10,7 @@ import 'package:text_scroll/text_scroll.dart';
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/components/blur_background.dart';
 import 'package:zerobit_player/components/lyrics_render.dart';
+import 'package:zerobit_player/getxController/music_cache_ctrl.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
 import 'package:zerobit_player/tools/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
@@ -19,6 +20,7 @@ import '../components/audio_ctrl_btn.dart';
 import '../components/window_ctrl_bar.dart';
 import '../custom_widgets/custom_button.dart';
 import '../desktop_lyrics_sever.dart';
+import '../field/app_routes.dart';
 import '../field/tag_suffix.dart';
 import '../getxController/audio_ctrl.dart';
 import '../getxController/setting_ctrl.dart';
@@ -503,6 +505,8 @@ class LrcView extends StatelessWidget {
   DesktopLyricsSever get _desktopLyricsSever => Get.find<DesktopLyricsSever>();
   AudioController get _audioController => Get.find<AudioController>();
   SettingController get _settingController => Get.find<SettingController>();
+  MusicCacheController get _musicCacheController =>
+      Get.find<MusicCacheController>();
 
   Widget _buildScrollText(String text, TextStyle textStyle) {
     return TextScroll(
@@ -999,10 +1003,29 @@ class LrcView extends StatelessWidget {
     );
   }
 
+  Widget _createMenuIconBtn({
+    String? toolTip,
+    IconData? icon,
+    required void Function() fn,
+  }) {
+    return CustomBtn(
+      fn: fn,
+      btnHeight: 28,
+      btnWidth: 28,
+      tooltip: toolTip,
+      icon: icon,
+      contentColor: _themeService.darkTheme.colorScheme.onSecondaryContainer,
+      mainAxisAlignment: MainAxisAlignment.center,
+      backgroundColor: Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+    );
+  }
+
   Widget _createMenuBtn({
     required String text,
     IconData? icon,
     required void Function() fn,
+    String? toolTip,
   }) {
     return CustomBtn(
       fn: fn,
@@ -1011,11 +1034,237 @@ class LrcView extends StatelessWidget {
       radius: _menuBtnRadius,
       icon: icon,
       label: text,
+      tooltip: toolTip,
       contentColor: _themeService.darkTheme.colorScheme.onSecondaryContainer,
       mainAxisAlignment: MainAxisAlignment.start,
       backgroundColor: Colors.transparent,
       padding: const EdgeInsets.symmetric(horizontal: 16),
     );
+  }
+
+  Widget _createInfoBar({
+    required String text,
+    required ColorScheme darkColorScheme,
+    required void Function() addFn,
+    required void Function() decFn,
+  }) {
+    return Container(
+      height: 36,
+      color: darkColorScheme.surfaceContainer.withValues(alpha: 0.3),
+      child: Padding(
+        padding: EdgeInsetsGeometry.symmetric(horizontal: 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          spacing: 4,
+          children: [
+            Expanded(
+              child: Text(
+                text,
+                style: generalTextStyle(
+                  size: 'md',
+                  color:
+                      _themeService.darkTheme.colorScheme.onSecondaryContainer,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            _createMenuIconBtn(
+              toolTip: '增大',
+              icon: PhosphorIconsLight.plus,
+              fn: addFn,
+            ),
+
+            _createMenuIconBtn(
+              toolTip: '减小',
+              icon: PhosphorIconsLight.minus,
+              fn: decFn,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  SubmenuButton _createdSubmenuBtn({
+    required String text,
+    required ColorScheme darkColorScheme,
+    required List<Widget> menuChildren,
+  }) {
+    return SubmenuButton(
+      submenuIcon: WidgetStatePropertyAll(const SizedBox.shrink()),
+      style: ButtonStyle(
+        padding: WidgetStateProperty.all(
+          const EdgeInsets.symmetric(horizontal: 16),
+        ),
+      ),
+      menuStyle: MenuStyle(
+        alignment: Alignment.topRight,
+        backgroundColor: WidgetStatePropertyAll(
+          darkColorScheme.surfaceContainer.withValues(alpha: 0.6),
+        ),
+      ),
+      menuChildren: menuChildren,
+      child: Text(
+        text,
+        style: generalTextStyle(
+          size: 'md',
+          color: _themeService.darkTheme.colorScheme.onSecondaryContainer,
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _getMenuItem(
+    ColorScheme darkColorScheme,
+    Rx<MusicCache> currentMetadata,
+  ) {
+    final Widget divider = Divider(
+      color: darkColorScheme.primary.withValues(alpha: 0.8),
+      height: 0.5,
+      thickness: 0.5,
+    );
+    final settingController = _settingController;
+    final musicCacheController = _musicCacheController;
+
+    return [
+      Obx(
+        () => _createInfoBar(
+          text: "字号 ${settingController.lrcFontSize.value}",
+          darkColorScheme: darkColorScheme,
+          addFn: () {
+            if (settingController.lrcFontSize.value <
+                SettingController.lrcFontSizeMax) {
+              settingController.lrcFontSize.value++;
+              settingController.putCache(isSaveFolders: false);
+            }
+          },
+          decFn: () {
+            if (settingController.lrcFontSize.value >
+                SettingController.lrcFontSizeMin) {
+              settingController.lrcFontSize.value--;
+              settingController.putCache(isSaveFolders: false);
+            }
+          },
+        ),
+      ),
+      Obx(
+        () => _createInfoBar(
+          text: "字重 ${settingController.lrcFontWeight.value * 100 + 100}",
+          darkColorScheme: darkColorScheme,
+          addFn: () {
+            if (settingController.lrcFontWeight.value <
+                SettingController.lrcFontWeightMax) {
+              settingController.lrcFontWeight.value++;
+              settingController.putCache(isSaveFolders: false);
+            }
+          },
+          decFn: () {
+            if (settingController.lrcFontWeight.value >
+                SettingController.lrcFontWeightMin) {
+              settingController.lrcFontWeight.value--;
+              settingController.putCache(isSaveFolders: false);
+            }
+          },
+        ),
+      ),
+      divider,
+      Obx(() {
+        final album = currentMetadata.value.album;
+        final albumWithLetter =
+            musicCacheController.getLetter(str: album) + album;
+        return _createMenuBtn(
+          fn: () {
+            Get.back();
+            Get.toNamed(
+              AppRoutes.albumList,
+              arguments: {
+                'pathList':
+                    musicCacheController.albumItemsDict.value[albumWithLetter],
+                'title': album,
+              },
+              id: 1,
+            );
+          },
+          text: album,
+          toolTip: album,
+        );
+      }),
+      Obx(() {
+        final artistList = currentMetadata.value.artist.split('/');
+        final artistFirst = artistList.first;
+        final artistFirstWithLetter =
+            musicCacheController.getLetter(str: artistFirst) + artistFirst;
+
+        if (artistList.length == 1) {
+          return _createMenuBtn(
+            fn: () {
+              Get.back();
+              Get.toNamed(
+                AppRoutes.artistList,
+                arguments: {
+                  'pathList':
+                      musicCacheController
+                          .artistItemsDict
+                          .value[artistFirstWithLetter],
+                  'title': artistFirst,
+                },
+                id: 1,
+              );
+            },
+            text: artistFirst,
+            toolTip: artistFirst,
+          );
+        }
+        if (artistList.length > 1) {
+          return _createdSubmenuBtn(
+            text: '查看艺术家',
+            darkColorScheme: darkColorScheme,
+            menuChildren:
+                artistList.map((v) {
+                  return MenuItemButton(
+                    onPressed: () {
+                      Get.back();
+                      Get.toNamed(
+                        AppRoutes.artistList,
+                        arguments: {
+                          'pathList':
+                              musicCacheController
+                                  .artistItemsDict
+                                  .value[musicCacheController.getLetter(
+                                    str: v,
+                                  ) +
+                                  v],
+                          'title': v,
+                        },
+                        id: 1,
+                      );
+                    },
+                    child: Center(child: Text(v)),
+                  );
+                }).toList(),
+          );
+        }
+        return const SizedBox.shrink();
+      }),
+
+      divider,
+      _createdSubmenuBtn(
+        text: '添加到歌单',
+        darkColorScheme: darkColorScheme,
+        menuChildren:
+            _audioController.allUserKey.map((v) {
+              return MenuItemButton(
+                onPressed: () {
+                  _audioController.addToAudioList(
+                    metadata: currentMetadata.value,
+                    userKey: v,
+                  );
+                },
+                child: Center(child: Text(v.split(TagSuffix.playList)[0])),
+              );
+            }).toList(),
+      ),
+    ];
   }
 
   KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
@@ -1086,106 +1335,7 @@ class LrcView extends StatelessWidget {
     final spectrogramPaddingWidth = context.width * _spectrogramWidthFactorDiff;
 
     final menuController = MenuController();
-
-    Widget createInfoBar({required String text}) {
-      return Container(
-        height: 36,
-        color: darkColorScheme.surface.withValues(alpha: 0.3),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Padding(
-            padding: EdgeInsetsGeometry.symmetric(horizontal: 16),
-            child: Text(text, style: subTitleStyle),
-          ),
-        ),
-      );
-    }
-
     final settingController = _settingController;
-
-    List<Widget> playListBuilder(MusicCache metadata) {
-      return _audioController.allUserKey.map((v) {
-        return MenuItemButton(
-          onPressed: () {
-            _audioController.addToAudioList(metadata: metadata, userKey: v);
-          },
-          child: Center(child: Text(v.split(TagSuffix.playList)[0])),
-        );
-      }).toList();
-    }
-
-    final menuItem = [
-      Obx(
-        () => createInfoBar(text: "字号 ${settingController.lrcFontSize.value}"),
-      ),
-      _createMenuBtn(
-        text: "字号+",
-        fn: () {
-          if (settingController.lrcFontSize.value <
-              SettingController.lrcFontSizeMax) {
-            settingController.lrcFontSize.value++;
-            settingController.putCache(isSaveFolders: false);
-          }
-        },
-      ),
-      _createMenuBtn(
-        text: "字号-",
-        fn: () {
-          if (settingController.lrcFontSize.value >
-              SettingController.lrcFontSizeMin) {
-            settingController.lrcFontSize.value--;
-            settingController.putCache(isSaveFolders: false);
-          }
-        },
-      ),
-      Obx(
-        () => createInfoBar(
-          text: "字重 ${settingController.lrcFontWeight.value * 100 + 100}",
-        ),
-      ),
-      _createMenuBtn(
-        text: "字重+",
-        fn: () {
-          if (settingController.lrcFontWeight.value <
-              SettingController.lrcFontWeightMax) {
-            settingController.lrcFontWeight.value++;
-            settingController.putCache(isSaveFolders: false);
-          }
-        },
-      ),
-      _createMenuBtn(
-        text: "字重-",
-        fn: () {
-          if (settingController.lrcFontWeight.value >
-              SettingController.lrcFontWeightMin) {
-            settingController.lrcFontWeight.value--;
-            settingController.putCache(isSaveFolders: false);
-          }
-        },
-      ),
-      SubmenuButton(
-        submenuIcon: WidgetStatePropertyAll(const SizedBox.shrink()),
-        style: ButtonStyle(
-          padding: WidgetStateProperty.all(
-            const EdgeInsets.symmetric(horizontal: 16),
-          ),
-        ),
-        menuStyle: MenuStyle(
-          alignment: Alignment.topRight,
-          backgroundColor: WidgetStatePropertyAll(
-            darkColorScheme.surfaceContainer.withValues(alpha: 0.6),
-          ),
-        ),
-        menuChildren: playListBuilder(_audioController.currentMetadata.value),
-        child: Text(
-          '添加到歌单',
-          style: generalTextStyle(
-            size: 'md',
-            color: _themeService.darkTheme.colorScheme.onSecondaryContainer,
-          ),
-        ),
-      ),
-    ];
 
     return Focus(
       autofocus: true,
@@ -1236,7 +1386,10 @@ class LrcView extends StatelessWidget {
                               ),
                             ),
                           ),
-                          menuChildren: menuItem,
+                          menuChildren: _getMenuItem(
+                            darkColorScheme,
+                            _audioController.currentMetadata,
+                          ),
                           child: Stack(
                             children: [
                               // --- 歌词侧 ---
