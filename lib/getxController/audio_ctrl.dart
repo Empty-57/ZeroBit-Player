@@ -95,6 +95,8 @@ class AudioController extends GetxController {
   final coverPalette =
       <Color>[Colors.red, Colors.yellow, Colors.blue, Colors.green].obs;
 
+  int reTryCount=0;
+
   SpringController get _springConntroller => Get.find<SpringController>();
 
   /// 同步 `playListCacheItems`
@@ -381,6 +383,7 @@ class AudioController extends GetxController {
   Future<void> audioPlay({required MusicCache metadata}) async {
     currentMs100.value = 0.0;
     currentSec.value = 0.0;
+    final prevMetadata=currentMetadata.value;
     try {
       await smtcUpdateState(state: SMTCState.playing);
       await playFile(path: metadata.path);
@@ -398,14 +401,16 @@ class AudioController extends GetxController {
 
       syncCurrentIndex();
     } catch (e) {
-      currentMs100.value = 0.0;
-      currentSec.value = 0.0;
+      showSnackBar(title: "ERR:", msg: 'playingERR | $e');
+      if(reTryCount>4){
+        return;
+      }
+      await setVolume(vol: 0.0);
+      await audioPlay(metadata: prevMetadata);
+      await audioPause();
+      await setVolume(vol: _settingController.volume.value);
+      reTryCount++;
 
-      debugPrint(e.toString());
-      currentState.value = AudioState.stop;
-      showSnackBar(title: "ERR:", msg: e.toString());
-      await smtcClear();
-      await initSmtc();
     }
   }
 
@@ -421,7 +426,7 @@ class AudioController extends GetxController {
       await resume();
     } catch (e) {
       currentState.value = AudioState.stop;
-      showSnackBar(title: "ERR", msg: e.toString());
+      showSnackBar(title: "ERR", msg: 'resumeERR | $e');
     }
   }
 
@@ -437,7 +442,7 @@ class AudioController extends GetxController {
       await pause();
     } catch (e) {
       currentState.value = AudioState.stop;
-      showSnackBar(title: "ERR", msg: e.toString());
+      showSnackBar(title: "ERR", msg: 'pauseERR | $e');
     }
   }
 
@@ -449,7 +454,7 @@ class AudioController extends GetxController {
       await smtcUpdateState(state: SMTCState.paused);
       await stop();
     } catch (e) {
-      showSnackBar(title: "ERR", msg: e.toString());
+      showSnackBar(title: "ERR", msg: 'stopERR | $e');
     }
   }
 
