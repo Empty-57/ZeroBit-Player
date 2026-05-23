@@ -589,8 +589,9 @@ class SettingController extends GetxController {
     try {
       await switchExclusiveMode(exclusive: useExclusiveMode.value);
     } catch (e) {
+      showSnackBar(title: 'Err', msg: 'settingERR | $e');
       useExclusiveMode.value = prev;
-      showSnackBar(title: 'Err', msg: e.toString());
+      await switchExclusiveMode(exclusive: prev);
     }
     if (prefs == null) {
       return;
