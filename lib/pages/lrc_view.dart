@@ -251,6 +251,7 @@ class _SearchResultItem extends StatelessWidget {
             type: type,
           );
         }
+        audioController.update([GetBuilderId.lyricRender]);
 
         if (settingController.autoDownloadLrc.value) {
           saveLyrics(path: audioController.currentPath.value, lrcData: v.lyric);
@@ -1125,6 +1126,7 @@ class LrcView extends StatelessWidget {
     );
     final settingController = _settingController;
     final musicCacheController = _musicCacheController;
+    final audioController=_audioController;
 
     return [
       Obx(
@@ -1135,6 +1137,7 @@ class LrcView extends StatelessWidget {
             if (settingController.lrcFontSize.value <
                 SettingController.lrcFontSizeMax) {
               settingController.lrcFontSize.value++;
+              audioController.update([GetBuilderId.lyricRender]);
               settingController.putCache(isSaveFolders: false);
             }
           },
@@ -1142,6 +1145,7 @@ class LrcView extends StatelessWidget {
             if (settingController.lrcFontSize.value >
                 SettingController.lrcFontSizeMin) {
               settingController.lrcFontSize.value--;
+              audioController.update([GetBuilderId.lyricRender]);
               settingController.putCache(isSaveFolders: false);
             }
           },
@@ -1155,6 +1159,7 @@ class LrcView extends StatelessWidget {
             if (settingController.lrcFontWeight.value <
                 SettingController.lrcFontWeightMax) {
               settingController.lrcFontWeight.value++;
+              audioController.update([GetBuilderId.lyricRender]);
               settingController.putCache(isSaveFolders: false);
             }
           },
@@ -1162,6 +1167,7 @@ class LrcView extends StatelessWidget {
             if (settingController.lrcFontWeight.value >
                 SettingController.lrcFontWeightMin) {
               settingController.lrcFontWeight.value--;
+              audioController.update([GetBuilderId.lyricRender]);
               settingController.putCache(isSaveFolders: false);
             }
           },
@@ -1186,7 +1192,7 @@ class LrcView extends StatelessWidget {
             );
           },
           text: album,
-          toolTip: album,
+          toolTip: '跳转到 "$album"',
         );
       }),
       Obx(() {
@@ -1212,7 +1218,7 @@ class LrcView extends StatelessWidget {
               );
             },
             text: artistFirst,
-            toolTip: artistFirst,
+            toolTip: '跳转到 "$artistFirst"',
           );
         }
         if (artistList.length > 1) {

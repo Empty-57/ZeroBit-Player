@@ -29,6 +29,8 @@ import 'music_cache_ctrl.dart';
 
 enum AudioState { stop, playing, pause, ended }
 
+enum GetBuilderId { lyricRender }
+
 class AudioController extends GetxController {
   final currentPath = ''.obs;
   final currentIndex = (-1).obs;
@@ -95,7 +97,18 @@ class AudioController extends GetxController {
   final coverPalette =
       <Color>[Colors.red, Colors.yellow, Colors.blue, Colors.green].obs;
 
-  int reTryCount=0;
+  int reTryCount = 0;
+
+  // 这里预先缓存已处理歌词数据
+  List lineTextList = [];
+  List<String> translateList = [];
+  List<double> startTime = [];
+  List<String> romaList = [];
+  List<double> lineDurationList = [];
+
+  bool showLyricRender = false;
+
+  String currentlyricType = LyricFormat.lrc;
 
   SpringController get _springConntroller => Get.find<SpringController>();
 
@@ -200,7 +213,6 @@ class AudioController extends GetxController {
       _settingController.lastAudioInfo[SettingController.lastAudioMetadataKey] =
           currentMetadata.value;
       await _settingController.putScalableCache();
-      currentLyrics.value = null;
       currentLyrics.value = await getParsedLyric(
         filePath: currentMetadata.value.path,
       );
@@ -208,6 +220,23 @@ class AudioController extends GetxController {
       if (Get.isRegistered<SpringListView>()) {
         _springConntroller.clearState();
       }
+
+      // 重要：在这里就处理歌词数据，渲染端直接用,防止内存泄露
+      final parsedLrc = currentLyrics.value?.parsedLrc;
+      showLyricRender =
+          !(currentLyrics.value == null ||
+              parsedLrc is! List<LyricEntry> ||
+              parsedLrc.isEmpty);
+      if (showLyricRender) {
+        currentlyricType = currentLyrics.value!.type;
+        lineTextList = parsedLrc!.map((v) => v.lyricText).toList();
+        translateList = parsedLrc.map((v) => v.translate).toList();
+        startTime = parsedLrc.map((v) => v.start).toList();
+        romaList = parsedLrc.map((v) => v.roma).toList();
+        lineDurationList = parsedLrc.map((v) => v.nextTime - v.start).toList();
+      }
+
+      update([GetBuilderId.lyricRender]);
     });
 
     try {
@@ -383,7 +412,7 @@ class AudioController extends GetxController {
   Future<void> audioPlay({required MusicCache metadata}) async {
     currentMs100.value = 0.0;
     currentSec.value = 0.0;
-    final prevMetadata=currentMetadata.value;
+    final prevMetadata = currentMetadata.value;
     try {
       await smtcUpdateState(state: SMTCState.playing);
       await playFile(path: metadata.path);
@@ -402,7 +431,7 @@ class AudioController extends GetxController {
       syncCurrentIndex();
     } catch (e) {
       showSnackBar(title: "ERR:", msg: 'playingERR | $e');
-      if(reTryCount>4){
+      if (reTryCount > 4) {
         return;
       }
       await setVolume(vol: 0.0);
@@ -410,7 +439,6 @@ class AudioController extends GetxController {
       await audioPause();
       await setVolume(vol: _settingController.volume.value);
       reTryCount++;
-
     }
   }
 

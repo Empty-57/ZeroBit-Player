@@ -597,7 +597,7 @@ class _LyricsRenderState extends State<LyricsRender> {
               behavior: ScrollConfiguration.of(
                 context,
               ).copyWith(scrollbars: false),
-              child: Obx(() {
+              child: GetBuilder<AudioController>(id: GetBuilderId.lyricRender,builder: (c){
                 // 将 style 定义在Obx内以接收样式更改信号
                 final lyricsStyle = lrcStylePackage.lyricStyle;
                 final tsLyricStyle = lrcStylePackage.tsLyricStyle;
@@ -609,12 +609,8 @@ class _LyricsRenderState extends State<LyricsRender> {
 
                 final useSpringscroll =
                     _settingController.useSpringScroll.value;
-                final currentLyrics = _audioController.currentLyrics.value;
-                final parsedLrc = currentLyrics?.parsedLrc;
-
-                if (currentLyrics == null ||
-                    parsedLrc is! List<LyricEntry> ||
-                    parsedLrc.isEmpty) {
+                debugPrint("LyricRenderReBuild");
+                if (!c.showLyricRender) {
                   return Center(
                     child: Text(
                       "无歌词",
@@ -627,23 +623,10 @@ class _LyricsRenderState extends State<LyricsRender> {
                   );
                 }
 
-                // 重要：提前加载数据 | 疑似内存泄漏
-                final String lrcType = currentLyrics.type;
-                final List lineList =
-                    parsedLrc.map((v) => v.lyricText).toList();
-                final List<String> translateList =
-                    parsedLrc.map((v) => v.translate).toList();
-                final List<double> startTime =
-                    parsedLrc.map((v) => v.start).toList();
-                final List<String> romaList =
-                    parsedLrc.map((v) => v.roma).toList();
-                final List<double> lineDurationList =
-                    parsedLrc.map((v) => v.nextTime - v.start).toList();
-
                 Widget creatLyricItem(index) {
-                  if ((lrcType == LyricFormat.lrc &&
-                          lineList[index].isEmpty &&
-                          translateList[index].isEmpty) ||
+                  if ((c.currentlyricType == LyricFormat.lrc &&
+                          c.lineTextList[index].isEmpty &&
+                          c.translateList[index].isEmpty) ||
                       index == -1) {
                     return const SizedBox.shrink();
                   }
@@ -653,11 +636,11 @@ class _LyricsRenderState extends State<LyricsRender> {
                     lyricController: _lyricController,
                     audioController: _audioController,
                     settingController: _settingController,
-                    lrcType: lrcType,
-                    lineText: lineList[index],
-                    translateText: translateList[index],
-                    romaText: romaList[index],
-                    startTime: startTime[index],
+                    lrcType: c.currentlyricType,
+                    lineText: c.lineTextList[index],
+                    translateText: c.translateList[index],
+                    romaText: c.romaList[index],
+                    startTime: c.startTime[index],
                     lyricStyle: lyricsStyle,
                     tsLyricStyle: tsLyricStyle,
                     romaLyricStyle: romaLyricStyle,
@@ -670,8 +653,8 @@ class _LyricsRenderState extends State<LyricsRender> {
 
                 return useSpringscroll
                     ? SpringListView(
-                      lineDuration: lineDurationList,
-                      length: parsedLrc.length,
+                      lineDuration: c.lineDurationList,
+                      length: c.lineTextList.length,
                       itemBuilder: (BuildContext context, int index) {
                         return creatLyricItem(index);
                       },
@@ -680,7 +663,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                       canRequestFocus: false,
                       descendantsAreFocusable: false,
                       child: ScrollablePositionedList.builder(
-                        itemCount: parsedLrc.length,
+                        itemCount: c.lineTextList.length,
                         initialScrollIndex: 0,
                         initialAlignment: 0.4,
                         itemScrollController:
@@ -848,7 +831,7 @@ class _StaggeredLyricItem extends StatelessWidget {
               lrcAlignment: lrcAlignment,
               interludeLyricStyle: interludeLyricStyle,
               strutStyle: strutStyle,
-              isCurrent: lyricController.currentLineIndex.value < 0,
+              isCurrent: currentLineIndex < 0,
             ),
           if (lrcType == LyricFormat.lrc)
             _creatScaleWidget(
@@ -908,7 +891,7 @@ class _StaggeredLyricItem extends StatelessWidget {
 
       final bool useBlur = settingController.useBlur.value;
       final int diff =
-          (lyricController.currentLineIndex.value - index).abs(); // 视距
+          (currentLineIndex - index).abs(); // 视距
 
       // 是否需要挂载 ImageFiltered (当前行保持挂载防动画中断，其余行在视距内挂载)
       final bool applyFilter = useBlur && (isCurrent || diff <= 10);
@@ -924,7 +907,7 @@ class _StaggeredLyricItem extends StatelessWidget {
                 : diff.clamp(0, 4).toDouble();
 
         finalContent = ImageFiltered(
-          enabled: targetSigma <= 0 ? false : true,
+          enabled: targetSigma > 0,
           imageFilter: _getBlurFilter(targetSigma), // 取缓存的ImageFilter
           child: content,
         );
