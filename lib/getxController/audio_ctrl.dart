@@ -90,7 +90,7 @@ class AudioController extends GetxController {
 
   static const bassDataFFT512 = 256;
 
-  final randomPlayedList = <int>[];
+  final _unplayedIndex = <int>[];
 
   final navigationIsExtend = true.obs;
 
@@ -274,7 +274,7 @@ class AudioController extends GetxController {
   }
 
   Future<void> _syncInfo() async {
-    if (_isSyncing) {
+    if (_isSyncing || currentMetadata.value.path.isEmpty) {
       return;
     }
 
@@ -294,6 +294,7 @@ class AudioController extends GetxController {
     try {
       currentDuration.value = await getLen();
     } catch (_) {
+      _isSyncing = false;
       currentDuration.value = 999;
     } // 防止读取的时间不准
 
@@ -333,7 +334,9 @@ class AudioController extends GetxController {
     await windowManager.setTitle(title + artist);
     try {
       await trayManager.setToolTip(title + artist);
-    } catch (_) {}
+    } catch (_) {
+      _isSyncing = false;
+    }
     try {
       await smtcUpdateMetadata(
         title: currentMetadata.value.title,
@@ -344,6 +347,7 @@ class AudioController extends GetxController {
     } catch (_) {
       await smtcClear();
       await initSmtc();
+      _isSyncing = false;
     }
     _isSyncing = false;
   }
@@ -429,6 +433,7 @@ class AudioController extends GetxController {
       }
 
       syncCurrentIndex();
+      reTryCount = 0;
     } catch (e) {
       showSnackBar(title: "ERR:", msg: 'playingERR | $e');
       if (reTryCount > 4) {
@@ -539,42 +544,33 @@ class AudioController extends GetxController {
 
   /// 改变播放模式
   void changePlayMode() {
-    if (_settingController.playMode.value >= 0 &&
-        _settingController.playMode.value < 2) {
-      _settingController.playMode.value++;
-    } else {
-      _settingController.playMode.value = 0;
-    }
+    _settingController.playMode.value =
+        (_settingController.playMode.value + 1) % 3;
     _settingController.putCache();
   }
 
   /// 改变歌词对齐模式
   void changeLrcAlignment() {
-    if (_settingController.lrcAlignment.value >= 0 &&
-        _settingController.lrcAlignment.value < 2) {
-      _settingController.lrcAlignment.value++;
-    } else {
-      _settingController.lrcAlignment.value = 0;
-    }
+    _settingController.lrcAlignment.value =
+        (_settingController.lrcAlignment.value + 1) % 3;
     _settingController.putCache();
+  }
+
+  void _pickNextRandomIndex() {
+    if (_unplayedIndex.isEmpty) {
+      _unplayedIndex.addAll(
+        List.generate(playListCacheItems.length, (i) => i)
+          ..remove(currentIndex.value), // 避免连续播同一首
+      );
+      _unplayedIndex.shuffle();
+    }
+    currentIndex.value = _unplayedIndex.removeLast();
   }
 
   Future<void> _maybeRandomPlay() async {
     if (_settingController.playMode.value == 2 &&
         playListCacheItems.length > 1) {
-      syncCurrentIndex();
-      for (int i = 0; i < 20; i++) {
-        final index = Random().nextInt(playListCacheItems.length);
-        if (randomPlayedList.length >= playListCacheItems.length) {
-          randomPlayedList.clear();
-        }
-        if (randomPlayedList.contains(index)) {
-          continue;
-        }
-        currentIndex.value = index;
-        randomPlayedList.add(index);
-        break;
-      }
+      _pickNextRandomIndex();
     }
 
     if (_hasNextAudioMetadata != null) {
