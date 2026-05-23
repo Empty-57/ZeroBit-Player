@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:core';
+import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 
@@ -156,7 +157,7 @@ List<WordEntry> _enhancedAndWordByWordLrcAnalysis(
     );
 
     if (words.isNotEmpty) {
-      words.last.duration = curr.start - words.last.start;
+      words.last.duration = max(0.0,curr.start - words.last.start);
     }
     words.add(curr);
   }
