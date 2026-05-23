@@ -137,13 +137,13 @@ List<Widget> _genMenuItems({
             AppRoutes.albumList,
             arguments: {
               'pathList': cacheCtrl.albumItemsDict.value[albumWithLetter],
-              'title': metadata.album,
+              'title': album
             },
             id: 1,
           ),
       icon: PhosphorIconsLight.vinylRecord,
-      label: metadata.album,
-      tooltip: metadata.album,
+      label: album,
+      tooltip: '跳转到 "$album"',
     ),
 
     if (artistList.length == 1)
@@ -160,7 +160,7 @@ List<Widget> _genMenuItems({
             ),
         icon: PhosphorIconsLight.userFocus,
         label: artistFirst,
-        tooltip: artistFirst,
+        tooltip: '跳转到 "$artistFirst"',
       ),
 
     if (artistList.length > 1)
