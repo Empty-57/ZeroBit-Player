@@ -144,9 +144,15 @@ class _FloatingButtonState extends State<FloatingButton> {
   }
 
   void _jumpToCurrent({bool useAnimate = true, bool scrollOnVisible = true}) {
-    final index = _getCurrentPlayingIndex();
+    if (!mounted) return;
 
-    final screenSize = MediaQuery.of(context).size;
+    final index = _getCurrentPlayingIndex();
+    if (index < 0) return;
+
+    final mediaQuery = MediaQuery.maybeOf(context);
+    if (mediaQuery == null) return;
+
+    final screenSize = mediaQuery.size;
 
     // 头部区域的大致高度，用于计算屏幕中间位置
     // 这个值应该与 AudioGenPages 中的头部高度保持一致
@@ -157,25 +163,30 @@ class _FloatingButtonState extends State<FloatingButton> {
             : 384;
     final double middleOffset = (screenSize.height - headerOffset) / 2;
 
+    final scrollControllerList = widget.scrollControllerList;
+    final scrollControllerGrid = widget.scrollControllerGrid;
+
     // --- ListView 定位逻辑 ---
-    if (widget.scrollControllerList.hasClients) {
+    if (scrollControllerList.hasClients &&
+        scrollControllerList.position.hasContentDimensions) {
       final double targetOffsetList = (index * _itemHeight - middleOffset)
-          .clamp(0.0, widget.scrollControllerList.position.maxScrollExtent);
+          .clamp(0.0, scrollControllerList.position.maxScrollExtent);
 
       if (scrollOnVisible) {
-        _scrollTo(widget.scrollControllerList, targetOffsetList, useAnimate);
+        _scrollTo(scrollControllerList, targetOffsetList, useAnimate);
       } else {
         if (!_isOffsetVisible(
-          widget.scrollControllerList,
+          scrollControllerList,
           targetOffsetList + middleOffset,
         )) {
-          _scrollTo(widget.scrollControllerList, targetOffsetList, useAnimate);
+          _scrollTo(scrollControllerList, targetOffsetList, useAnimate);
         }
       }
     }
 
     // --- 计算 GridView 的定位逻辑 ---
-    if (widget.scrollControllerGrid.hasClients) {
+    if (scrollControllerGrid.hasClients &&
+        scrollControllerGrid.position.hasContentDimensions) {
       // 计算列数
       final int crossAxisCount = screenSize.width < _resViewThresholds ? 3 : 4;
 
@@ -187,16 +198,16 @@ class _FloatingButtonState extends State<FloatingButton> {
 
       // 计算最终的滚动偏移量
       final double targetOffsetGrid = (targetRow * rowHeight - middleOffset)
-          .clamp(0.0, widget.scrollControllerGrid.position.maxScrollExtent);
+          .clamp(0.0, scrollControllerGrid.position.maxScrollExtent);
 
       if (scrollOnVisible) {
-        _scrollTo(widget.scrollControllerGrid, targetOffsetGrid, useAnimate);
+        _scrollTo(scrollControllerGrid, targetOffsetGrid, useAnimate);
       } else {
         if (!_isOffsetVisible(
-          widget.scrollControllerGrid,
+          scrollControllerGrid,
           targetOffsetGrid + middleOffset,
         )) {
-          _scrollTo(widget.scrollControllerGrid, targetOffsetGrid, useAnimate);
+          _scrollTo(scrollControllerGrid, targetOffsetGrid, useAnimate);
         }
       }
     }
