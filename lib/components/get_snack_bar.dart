@@ -19,6 +19,8 @@ void showSnackBar({
     textColor = Theme.of(ctx).colorScheme.onSecondaryContainer;
   }
 
+  debugPrint(msg);
+
   Get.rawSnackbar(
     maxWidth: Get.width * 0.8,
     borderRadius: 4,
