@@ -19,6 +19,7 @@ import '../getxController/play_list_ctrl.dart';
 import '../src/rust/api/music_tag_tool.dart';
 import '../tools/format_time.dart';
 import '../tools/general_style.dart';
+import 'get_snack_bar.dart';
 
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 
@@ -85,37 +86,42 @@ class _MetadataEditor extends StatefulWidget {
   State<_MetadataEditor> createState() => _MetadataEditorState();
 }
 
-// 定义一个类来管理封面的不同来源
-abstract class _CoverSource {}
+sealed class _CoverSource {}
+
 class _InitialCover extends _CoverSource {
   final Uint8List bytes;
   _InitialCover(this.bytes);
 }
+
 class _FileCover extends _CoverSource {
   final PlatformFile file;
   _FileCover(this.file);
 }
+
 class _GeneratedCover extends _CoverSource {
   final Uint8List bytes;
   _GeneratedCover(this.bytes);
 }
-class _NoCover extends _CoverSource {}
 
+class _NoCover extends _CoverSource {}
 
 class _MetadataEditorState extends State<_MetadataEditor> {
   late final TextEditingController _titleCtrl;
   late final TextEditingController _artistCtrl;
   late final TextEditingController _albumCtrl;
   late final TextEditingController _genreCtrl;
-  late final MusicCacheController _musicCacheController =
-    Get.find<MusicCacheController>();
 
-late final AudioController _audioController = Get.find<AudioController>();
+  late final MusicCacheController _musicCacheController =
+      Get.find<MusicCacheController>();
+  late final AudioController _audioController = Get.find<AudioController>();
+
+  static const _inputBorder = OutlineInputBorder();
 
   bool _isLoading = false;
 
-  Future<_CoverSource>? _initialCoverFuture;
+  // 统一封面状态管理
   _CoverSource? _currentCoverSource;
+  bool _isCoverLoading = true;
 
   @override
   void initState() {
@@ -124,7 +130,7 @@ late final AudioController _audioController = Get.find<AudioController>();
     _artistCtrl = TextEditingController(text: widget.metadata.artist);
     _albumCtrl = TextEditingController(text: widget.metadata.album);
     _genreCtrl = TextEditingController(text: widget.metadata.genre);
-    _initialCoverFuture = _loadInitialCover();
+    _loadInitialCover();
   }
 
   @override
@@ -136,124 +142,193 @@ late final AudioController _audioController = Get.find<AudioController>();
     super.dispose();
   }
 
-  Future<_CoverSource> _loadInitialCover() async {
-    final bytes = await getCover(path: widget.metadata.path, sizeFlag: 1);
-    if (bytes != null) {
-      return _InitialCover(bytes);
+  Future<void> _loadInitialCover() async {
+    try {
+      final bytes = await getCover(path: widget.metadata.path, sizeFlag: 1);
+      if (mounted) {
+        setState(() {
+          _currentCoverSource =
+              bytes != null ? _InitialCover(bytes) : _NoCover();
+          _isCoverLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _currentCoverSource = _NoCover();
+          _isCoverLoading = false;
+        });
+      }
     }
-    return _NoCover();
   }
 
   Future<void> _pickLocalCover() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.image, withData: true);
-    if (result != null && result.files.isNotEmpty) {
-      setState(() {
-        _currentCoverSource = _FileCover(result.files.first);
-      });
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        withData: true,
+      );
+      if (result != null && result.files.isNotEmpty && mounted) {
+        setState(() => _currentCoverSource = _FileCover(result.files.first));
+      }
+    } catch (e) {
+      _showError('选择本地封面失败: $e');
     }
   }
 
   Future<void> _fetchNetworkCover() async {
     setState(() => _isLoading = true);
-    final title = _titleCtrl.text;
-    final artist = (_artistCtrl.text.isNotEmpty&&_artistCtrl.text!='UNKNOWN') ? ' - ${_artistCtrl.text}' : '';
-    final coverData = await saveCoverByText(
-      text: title + artist,
-      songPath: widget.metadata.path,
-      saveCover: false,
-    );
-    if (mounted && coverData != null && coverData.isNotEmpty) {
-      setState(() {
-        _currentCoverSource = _GeneratedCover(Uint8List.fromList(coverData));
-      });
+    try {
+      final title = _titleCtrl.text;
+      final artist =
+          (_artistCtrl.text.isNotEmpty && _artistCtrl.text != 'UNKNOWN')
+              ? ' - ${_artistCtrl.text}'
+              : '';
+
+      final coverData = await saveCoverByText(
+        text: title + artist,
+        songPath: widget.metadata.path,
+        saveCover: false,
+      );
+
+      if (mounted && coverData != null && coverData.isNotEmpty) {
+        setState(
+          () =>
+              _currentCoverSource = _GeneratedCover(
+                Uint8List.fromList(coverData),
+              ),
+        );
+      } else {
+        _showError('未找到网络封面');
+      }
+    } catch (e) {
+      _showError('获取网络封面失败: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-    if (mounted) setState(() => _isLoading = false);
   }
 
   Future<void> _saveChanges() async {
     if (_isLoading) return;
     setState(() => _isLoading = true);
 
-    // 保存封面
-    if (_currentCoverSource != null) {
-      Uint8List? coverBytes;
-      if (_currentCoverSource is _FileCover) {
-        final file = (_currentCoverSource as _FileCover).file;
-        coverBytes = file.bytes;
-
-      } else if (_currentCoverSource is _GeneratedCover) {
-        coverBytes = (_currentCoverSource as _GeneratedCover).bytes;
-      }
-
-      if (coverBytes != null) {
-        try{
-          await editCover(path: widget.metadata.path, src: coverBytes);
-        }catch(e){
-          debugPrint(e.toString());
+    try {
+      // 保存封面
+      if (_currentCoverSource != null) {
+        Uint8List? coverBytes;
+        if (_currentCoverSource is _FileCover) {
+          coverBytes = (_currentCoverSource as _FileCover).file.bytes;
+        } else if (_currentCoverSource is _GeneratedCover) {
+          coverBytes = (_currentCoverSource as _GeneratedCover).bytes;
         }
-        // 清除旧的封面缓存，让它下次重新加载
-        _musicCacheController.items[widget.index].src = null;
+
+        if (coverBytes != null) {
+          await editCover(path: widget.metadata.path, src: coverBytes);
+
+          // 清除旧的封面缓存
+          final cacheIndex = _musicCacheController.items.indexWhere(
+            (m) => m.path == widget.metadata.path,
+          );
+          if (cacheIndex != -1) {
+            _musicCacheController.items[cacheIndex].src = null;
+          }
+        }
       }
+
+      // 保存元数据
+      final newCache = _musicCacheController.putMetadata(
+        path: widget.metadata.path,
+        index: _musicCacheController.items.indexWhere(
+          (v) => v.path == widget.metadata.path,
+        ),
+        data: EditableMetadata(
+          title: _titleCtrl.text.trim(),
+          artist: _artistCtrl.text.trim(),
+          album: _albumCtrl.text.trim(),
+          genre: _genreCtrl.text.trim(),
+        ),
+      );
+
+      // 同步到其他列表
+      _syncToControllers(newCache);
+
+      // 安全关闭弹窗
+      if (mounted) Navigator.pop(context, 'actions');
+    } catch (e) {
+      debugPrint("保存失败: $e");
+      _showError('保存失败，请重试');
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
 
-    // 保存元数据
-    final newCache = _musicCacheController.putMetadata(
-      path: widget.metadata.path,
-      index: _musicCacheController.items.indexWhere((v) => v.path == widget.metadata.path),
-      data: EditableMetadata(
-        title: _titleCtrl.text,
-        artist: _artistCtrl.text,
-        album: _albumCtrl.text,
-        genre: _genreCtrl.text,
-      ),
-    );
-
-    // 同步到其他列表
+  void _syncToControllers(MusicCache newCache) {
     switch (widget.operateArea) {
       case OperateArea.playList:
-        PlayListController.audioListSyncMetadata(index: widget.index, newCache: newCache);
+        PlayListController.audioListSyncMetadata(
+          index: widget.index,
+          newCache: newCache,
+        );
         break;
       case OperateArea.artistList:
-        ArtistListController.audioListSyncMetadata(index: widget.index, newCache: newCache);
+        ArtistListController.audioListSyncMetadata(
+          index: widget.index,
+          newCache: newCache,
+        );
         break;
       case OperateArea.albumList:
-        AlbumListController.audioListSyncMetadata(index: widget.index, newCache: newCache);
+        AlbumListController.audioListSyncMetadata(
+          index: widget.index,
+          newCache: newCache,
+        );
         break;
       case OperateArea.foldersList:
-        FoldersListController.audioListSyncMetadata(index: widget.index, newCache: newCache);
+        FoldersListController.audioListSyncMetadata(
+          index: widget.index,
+          newCache: newCache,
+        );
         break;
     }
-    _audioController.audioListSyncMetadata(path: widget.metadata.path, newCache: newCache);
+    _audioController.audioListSyncMetadata(
+      path: widget.metadata.path,
+      newCache: newCache,
+    );
+  }
 
-    if (mounted) {
-      Navigator.pop(context, 'actions');
-    }
+  void _showError(String message) {
+    if (!mounted) return;
+    showSnackBar(
+      title: 'Err',
+      msg: message,
+      duration: Duration(milliseconds: 1000),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final textStyle = generalTextStyle(ctx: context, size: 'lg');
-    final border = OutlineInputBorder();
 
     return AlertDialog(
-      title: SizedBox(
-        width: context.width/2,
-        child: Text(
-          widget.metadata.title,
-          softWrap: false,
-          overflow: TextOverflow.ellipsis,
-          maxLines: 1,
-        ),
+      title: Text(
+        widget.metadata.title,
+        softWrap: false,
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
       ),
-      titleTextStyle: generalTextStyle(ctx: context, size: 'xl', weight: FontWeight.w600),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(4))),
+      titleTextStyle: generalTextStyle(
+        ctx: context,
+        size: 'xl',
+        weight: FontWeight.w600,
+      ),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(4)),
+      ),
       backgroundColor: Theme.of(context).colorScheme.surface,
       actionsAlignment: MainAxisAlignment.end,
       contentPadding: const EdgeInsets.symmetric(horizontal: 24.0),
       actionsPadding: const EdgeInsets.all(24.0).copyWith(top: 0),
       content: SizedBox(
-        width: context.width*2/3,
-        height: context.height*2/3,
+        width: context.width * 2 / 3,
+        height: context.height * 2 / 3,
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,17 +336,11 @@ late final AudioController _audioController = Get.find<AudioController>();
               const SizedBox(height: 24),
               Center(child: _buildCover()),
               const SizedBox(height: 24),
-              _buildTextField(controller: _titleCtrl, label: '标题', border: border),
-              _buildTextField(controller: _artistCtrl, label: '艺术家', border: border),
-              _buildTextField(controller: _albumCtrl, label: '专辑', border: border),
-              _buildTextField(controller: _genreCtrl, label: '流派', border: border),
-              _buildInfoText("时长  ${formatTime(totalSeconds: widget.metadata.duration)}", textStyle),
-              _buildInfoText("比特率  ${widget.metadata.bitrate ?? "UNKNOWN"}kbps", textStyle),
-              _buildInfoText("采样率  ${widget.metadata.sampleRate ?? "UNKNOWN"}hz", textStyle),
-              _buildInfoText("音轨号  ${widget.metadata.trackNumber}", textStyle),
-              _buildInfoText("位深度  ${widget.metadata.bitDepth}", textStyle),
-              _buildInfoText("通道数  ${widget.metadata.channels}", textStyle),
-              _buildInfoText("路径  ${widget.metadata.path}", textStyle, maxLines: 3),
+              _buildTextField(controller: _titleCtrl, label: '标题'),
+              _buildTextField(controller: _artistCtrl, label: '艺术家'),
+              _buildTextField(controller: _albumCtrl, label: '专辑'),
+              _buildTextField(controller: _genreCtrl, label: '流派'),
+              _buildInfoSection(textStyle),
             ],
           ),
         ),
@@ -281,34 +350,24 @@ late final AudioController _audioController = Get.find<AudioController>();
   }
 
   Widget _buildCover() {
-    // 优先显示用户选择的新封面
-    if (_currentCoverSource != null) {
-      return _buildImageProvider(_getImageProvider(_currentCoverSource!));
+    if (_isCoverLoading) {
+      return const SizedBox(
+        height: _bigCoverSize,
+        width: _bigCoverSize,
+        child: Center(child: CircularProgressIndicator()),
+      );
     }
-
-    // 否则，显示从文件加载的初始封面
-    return FutureBuilder<_CoverSource>(
-      future: _initialCoverFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-          return _buildImageProvider(_getImageProvider(snapshot.data!));
-        }
-        // 加载中或失败时显示占位符
-        return const SizedBox(height: _bigCoverSize, width: _bigCoverSize);
-      },
+    return _buildImageProvider(
+      _getImageProvider(_currentCoverSource ?? _NoCover()),
     );
   }
 
-  ImageProvider _getImageProvider(_CoverSource source) {
-    if (source is _InitialCover) return MemoryImage(source.bytes);
-    if (source is _GeneratedCover) return MemoryImage(source.bytes);
-    if (source is _FileCover) {
-        if (source.file.bytes != null) {
-      return MemoryImage(source.file.bytes!);
-    }
-    }
-    return MemoryImage(kTransparentImage);
-  }
+  ImageProvider _getImageProvider(_CoverSource source) => switch (source) {
+    _InitialCover(:final bytes) => MemoryImage(bytes),
+    _GeneratedCover(:final bytes) => MemoryImage(bytes),
+    _FileCover(:final file) => MemoryImage(file.bytes ?? kTransparentImage),
+    _NoCover() => MemoryImage(kTransparentImage),
+  };
 
   Widget _buildImageProvider(ImageProvider provider) {
     return ClipRRect(
@@ -338,14 +397,37 @@ late final AudioController _audioController = Get.find<AudioController>();
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
-    required OutlineInputBorder border,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: TextField(
         controller: controller,
-        decoration: InputDecoration(border: border, labelText: label),
+        decoration: InputDecoration(border: _inputBorder, labelText: label),
       ),
+    );
+  }
+
+  Widget _buildInfoSection(TextStyle textStyle) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildInfoText(
+          "时长  ${formatTime(totalSeconds: widget.metadata.duration)}",
+          textStyle,
+        ),
+        _buildInfoText(
+          "比特率  ${widget.metadata.bitrate ?? "UNKNOWN"}kbps",
+          textStyle,
+        ),
+        _buildInfoText(
+          "采样率  ${widget.metadata.sampleRate ?? "UNKNOWN"}hz",
+          textStyle,
+        ),
+        _buildInfoText("音轨号  ${widget.metadata.trackNumber}", textStyle),
+        _buildInfoText("位深度  ${widget.metadata.bitDepth}", textStyle),
+        _buildInfoText("通道数  ${widget.metadata.channels}", textStyle),
+        _buildInfoText("路径  ${widget.metadata.path}", textStyle, maxLines: 3),
+      ],
     );
   }
 
@@ -363,32 +445,53 @@ late final AudioController _audioController = Get.find<AudioController>();
   }
 
   Widget _buildActionButtons() {
-    return Padding(padding: const EdgeInsets.only(top: 16.0),child: AnimatedSwitcher(
-      duration: const Duration(milliseconds: 200),
-      child: _isLoading
-          ? Row(
-              key: const ValueKey('saving'),
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(
-                  "执行中……",
-                  style: generalTextStyle(ctx: context, size: 'md', color: Theme.of(context).colorScheme.primary),
+    return Padding(
+      padding: const EdgeInsets.only(top: 16.0),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 200),
+        child:
+            _isLoading
+                ? Row(
+                  key: const ValueKey('saving'),
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      "执行中……",
+                      style: generalTextStyle(
+                        ctx: context,
+                        size: 'md',
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                )
+                : Row(
+                  key: const ValueKey('buttons'),
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  spacing: 8,
+                  children: [
+                    _actionButton(label: "网络封面", onPressed: _fetchNetworkCover),
+                    _actionButton(label: "本地封面", onPressed: _pickLocalCover),
+                    const Spacer(),
+                    _actionButton(
+                      label: "取消",
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    _actionButton(
+                      label: "确定",
+                      onPressed: _saveChanges,
+                      isPrimary: true,
+                    ),
+                  ],
                 ),
-              ],
-            )
-          : Row(
-              key: const ValueKey('buttons'),
-              mainAxisAlignment: MainAxisAlignment.end,
-              spacing: 8,
-              children: [
-                _actionButton(label: "网络封面", onPressed: _fetchNetworkCover),
-                _actionButton(label: "本地封面", onPressed: _pickLocalCover),
-                const Spacer(),
-                _actionButton(label: "取消", onPressed: () => Navigator.pop(context)),
-                _actionButton(label: "确定", onPressed: _saveChanges, isPrimary: true),
-              ],
-            ),
-    ),);
+      ),
+    );
   }
 
   Widget _actionButton({
@@ -396,11 +499,12 @@ late final AudioController _audioController = Get.find<AudioController>();
     required VoidCallback onPressed,
     bool isPrimary = false,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return CustomBtn(
       fn: onPressed,
-      backgroundColor: isPrimary ? Theme.of(context).colorScheme.primary : Colors.transparent,
-      contentColor: isPrimary ? Theme.of(context).colorScheme.onPrimary : null,
-      overlayColor: isPrimary ? Theme.of(context).colorScheme.surfaceContainer : null,
+      backgroundColor: isPrimary ? colorScheme.primary : Colors.transparent,
+      contentColor: isPrimary ? colorScheme.onPrimary : null,
+      overlayColor: isPrimary ? colorScheme.surfaceContainer : null,
       btnWidth: 108,
       btnHeight: 36,
       label: label,
