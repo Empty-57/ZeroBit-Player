@@ -5,7 +5,8 @@ import '../field/operate_area.dart';
 import '../tools/audio_ctrl_mixin.dart';
 import 'music_cache_ctrl.dart';
 
-class FoldersListController extends GetxController with AudioControllerGenClass {
+class FoldersListController extends GetxController
+    with AudioControllerGenClass {
   final List<String> pathList;
   FoldersListController({required this.pathList});
 
@@ -32,9 +33,10 @@ class FoldersListController extends GetxController with AudioControllerGenClass 
   }
 
   void _loadData() async {
+    final pathSet = pathList.toSet();
     audioListItems.value =
         _musicCacheController.items
-            .where((v) => pathList.contains(v.path))
+            .where((v) => pathSet.contains(v.path))
             .toList();
     itemReSort(type: _settingController.sortMap[OperateArea.foldersList]);
   }

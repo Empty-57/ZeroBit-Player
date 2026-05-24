@@ -14,18 +14,18 @@ const _borderRadius = BorderRadius.all(Radius.circular(4));
 class UserPlayList extends GetView<UserPlayListController> {
   const UserPlayList({super.key});
 
-  Future<void> _createOrRename({
-    required BuildContext context,
+  Future<String?> _showInputDialog(
+    BuildContext context, {
     required String title,
-    required int actionId,
-    required UserPlayListController c,
-    String? oldName,
+    String initialText = '',
   }) async {
-    showDialog(
-      barrierDismissible: true,
+    final TextEditingController textCtrl = TextEditingController(
+      text: initialText,
+    );
+
+    return showDialog<String>(
       context: context,
       builder: (BuildContext context) {
-        final TextEditingController textCtrl = TextEditingController();
         return AlertDialog(
           title: Text(title),
           titleTextStyle: generalTextStyle(
@@ -33,65 +33,38 @@ class UserPlayList extends GetView<UserPlayListController> {
             size: 20,
             weight: FontWeight.w600,
           ),
-          shape: RoundedRectangleBorder(
+          shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(4)),
           ),
           backgroundColor: Theme.of(context).colorScheme.surface,
-
-          actionsAlignment: MainAxisAlignment.end,
-          actions: [
-            SizedBox(
-              width: 400,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                spacing: 8,
-                children: [
-                  TextField(
-                    autofocus: true,
-                    controller: textCtrl,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: '歌单名称',
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      CustomBtn(
-                        fn: () {
-                          Navigator.pop(context, 'actions');
-                        },
-                        backgroundColor: Colors.transparent,
-                        contentColor: Theme.of(context).colorScheme.primary,
-                        btnWidth: 72,
-                        btnHeight: 36,
-                        label: "取消",
-                      ),
-                      CustomBtn(
-                        fn: () {
-                          Navigator.pop(context, 'actions');
-                          if (actionId == 0) {
-                            c.createPlayList(userKey: textCtrl.text);
-                          }
-                          if (actionId == 1) {
-                            c.renamePlayList(
-                              oldKey: oldName!,
-                              newKey: textCtrl.text,
-                            );
-                          }
-                        },
-                        backgroundColor: Colors.transparent,
-                        contentColor: Theme.of(context).colorScheme.primary,
-                        btnWidth: 72,
-                        btnHeight: 36,
-                        label: "确定",
-                      ),
-                    ],
-                  ),
-                ],
+          content: SizedBox(
+            width: 400,
+            child: TextField(
+              autofocus: true,
+              controller: textCtrl,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: '歌单名称',
               ),
+              onSubmitted: (value) => Navigator.pop(context, value),
+            ),
+          ),
+          actions: [
+            CustomBtn(
+              fn: () => Navigator.pop(context, null),
+              backgroundColor: Colors.transparent,
+              contentColor: Theme.of(context).colorScheme.primary,
+              btnWidth: 72,
+              btnHeight: 36,
+              label: "取消",
+            ),
+            CustomBtn(
+              fn: () => Navigator.pop(context, textCtrl.text),
+              backgroundColor: Colors.transparent,
+              contentColor: Theme.of(context).colorScheme.primary,
+              btnWidth: 72,
+              btnHeight: 36,
+              label: "确定",
             ),
           ],
         );
@@ -99,154 +72,187 @@ class UserPlayList extends GetView<UserPlayListController> {
     );
   }
 
+  Future<bool> _showDeleteConfirmDialog(
+    BuildContext context,
+    String playlistName,
+  ) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('删除歌单'),
+              content: Text('确定要删除歌单 "$playlistName" 吗？此操作无法撤销。'),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(4)),
+              ),
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              actions: [
+                CustomBtn(
+                  fn: () => Navigator.pop(context, false),
+                  backgroundColor: Colors.transparent,
+                  contentColor: Theme.of(context).colorScheme.primary,
+                  btnWidth: 72,
+                  btnHeight: 36,
+                  label: "取消",
+                ),
+                CustomBtn(
+                  fn: () => Navigator.pop(context, true),
+                  backgroundColor: Colors.transparent,
+                  contentColor: Colors.red,
+                  btnWidth: 72,
+                  btnHeight: 36,
+                  label: "删除",
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final textStyle1 = generalTextStyle(ctx: context, size: 'md');
-    final textStyle2 = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-    final userPlayListController = controller;
-
     return Container(
       alignment: Alignment.centerLeft,
-      padding: EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
+      padding: const EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 16,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            spacing: 8,
-            children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 8,
-                children: [
-                  Text(
-                    '歌单',
-                    style: generalTextStyle(
-                      ctx: context,
-                      size: 'title',
-                      weight: FontWeight.w600,
-                    ),
-                  ),
-                  Obx(
-                    () => Text(
-                      '共${userPlayListController.items.length}个歌单',
-                      style: generalTextStyle(ctx: context, size: 'md'),
-                    ),
-                  ),
-                ],
+          _buildHeader(context),
+          const SizedBox(height: 16),
+          Expanded(child: Obx(() => _buildListView(context))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '歌单',
+              style: generalTextStyle(
+                ctx: context,
+                size: 'title',
+                weight: FontWeight.w600,
               ),
+            ),
+            const SizedBox(height: 8),
+            Obx(
+              () => Text(
+                '共${controller.items.length}个歌单',
+                style: generalTextStyle(ctx: context, size: 'md'),
+              ),
+            ),
+          ],
+        ),
+        const Spacer(),
+        CustomBtn(
+          fn: () async {
+            final result = await _showInputDialog(context, title: '新建歌单');
+            if (result != null && result.trim().isNotEmpty) {
+              controller.createPlayList(userKey: result);
+            }
+          },
+          label: "新建歌单",
+          icon: PhosphorIconsLight.plus,
+          btnWidth: 128,
+          btnHeight: 42,
+          mainAxisAlignment: MainAxisAlignment.center,
+        ),
+      ],
+    );
+  }
 
-              Expanded(flex: 1, child: Container()),
+  Widget _buildListView(BuildContext context) {
+    final textStyle1 = generalTextStyle(ctx: context, size: 'md');
+    final textStyle2 = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
 
+    return ListView.builder(
+      itemCount: controller.items.length,
+      itemExtent: _itemHeight,
+      cacheExtent: _itemHeight * 1,
+      itemBuilder: (context, index) {
+        final item = controller.items[index];
+        final displayName = item.userKey.split(TagSuffix.playList)[0];
+
+        return TextButton(
+          onPressed:
+              () => Get.toNamed(AppRoutes.playList, arguments: item, id: 1),
+          style: TextButton.styleFrom(
+            shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      displayName,
+                      style: textStyle1,
+                      softWrap: true,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                    Text("共${item.pathList.length}首音乐", style: textStyle2),
+                  ],
+                ),
+              ),
               CustomBtn(
-                fn: () {
-                  _createOrRename(
-                    context: context,
-                    title: '新建歌单',
-                    c: userPlayListController,
-                    actionId: 0,
+                fn: () async {
+                  final result = await _showInputDialog(
+                    context,
+                    title: '重命名',
+                    initialText: displayName,
                   );
+                  if (result != null &&
+                      result.trim().isNotEmpty &&
+                      result != displayName) {
+                    controller.renamePlayList(
+                      oldKey: item.userKey,
+                      newKey: result,
+                    );
+                  }
                 },
-                label: "新建歌单",
-                icon: PhosphorIconsLight.plus,
-                btnWidth: 128,
-                btnHeight: 42,
-                mainAxisAlignment: MainAxisAlignment.center,
+                btnHeight: 48,
+                btnWidth: 48,
+                radius: 4,
+                tooltip: "重命名",
+                icon: PhosphorIconsLight.pencilSimpleLine,
+                backgroundColor: Colors.transparent,
+              ),
+              CustomBtn(
+                fn: () async {
+                  final confirm = await _showDeleteConfirmDialog(
+                    context,
+                    displayName,
+                  );
+                  if (confirm) {
+                    controller.removePlayList(userKey: item.userKey);
+                  }
+                },
+                btnHeight: 48,
+                btnWidth: 48,
+                radius: 4,
+                tooltip: "删除",
+                icon: PhosphorIconsLight.trash,
+                contentColor: Colors.red,
+                backgroundColor: Colors.transparent,
               ),
             ],
           ),
-          Expanded(
-            flex: 1,
-            child: Obx(
-              () => ListView.builder(
-                itemCount: userPlayListController.items.length,
-                itemExtent: _itemHeight,
-                cacheExtent: _itemHeight * 1,
-                itemBuilder: (context, index) {
-                  final items = userPlayListController.items[index];
-
-                  return TextButton(
-                    onPressed: () {
-                      Get.toNamed(AppRoutes.playList, arguments: items, id: 1);
-                    },
-                    style: TextButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: _borderRadius,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      spacing: 8,
-                      children: [
-                        Expanded(
-                          flex: 1,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                items.userKey.split(TagSuffix.playList)[0],
-                                style: textStyle1,
-                                softWrap: true,
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                              Text(
-                                "共${items.pathList.length}首音乐",
-                                style: textStyle2,
-                              ),
-                            ],
-                          ),
-                        ),
-                        CustomBtn(
-                          fn: () {
-                            _createOrRename(
-                              context: context,
-                              title: '重命名',
-                              actionId: 1,
-                              c: userPlayListController,
-                              oldName: items.userKey,
-                            );
-                          },
-                          btnHeight: 48,
-                          btnWidth: 48,
-                          radius: 4,
-                          tooltip: "重命名",
-                          icon: PhosphorIconsLight.pencilSimpleLine,
-                          backgroundColor: Colors.transparent,
-                        ),
-                        CustomBtn(
-                          fn: () {
-                            userPlayListController.removePlayList(
-                              userKey: items.userKey,
-                            );
-                          },
-                          btnHeight: 48,
-                          btnWidth: 48,
-                          radius: 4,
-                          tooltip: "删除",
-                          icon: PhosphorIconsLight.trash,
-                          contentColor: Colors.red,
-                          backgroundColor: Colors.transparent,
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

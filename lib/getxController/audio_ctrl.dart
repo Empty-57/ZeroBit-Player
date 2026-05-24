@@ -110,52 +110,43 @@ class AudioController extends GetxController {
 
   String currentlyricType = LyricFormat.lrc;
 
-  SpringController get _springConntroller => Get.find<SpringController>();
+  bool _isFftCleared = true;
+
+  SpringController get _springController => Get.find<SpringController>();
 
   /// 同步 `playListCacheItems`
   void syncPlayListCacheItems() {
-    if (allUserKey.contains(_audioSource.currentAudioSource.value)) {
-      playListCacheItems.value =
-          _musicCacheController.items
-              .where(
-                (v) => _userPlayListCacheBox
-                    .get(key: _audioSource.currentAudioSource.value)!
-                    .pathList
-                    .contains(v.path),
-              )
-              .toList();
+    final sourceKey = _audioSource.currentAudioSource.value;
+
+    if (sourceKey == AudioSource.allMusic) {
+      playListCacheItems.value = [..._musicCacheController.items];
       return;
     }
 
-    if (_musicCacheController.artistItemsDict.keys.any(
-      (v) =>
-          v.substring(1) + TagSuffix.artistList ==
-          _audioSource.currentAudioSource.value,
-    )) {
+    if (allUserKey.contains(sourceKey)) {
+      final pathSet =
+          _userPlayListCacheBox.get(key: sourceKey)!.pathList.toSet();
+      playListCacheItems.value = [
+        ..._musicCacheController.items.where((v) => pathSet.contains(v.path)),
+      ];
+      return;
+    }
+
+    // 艺术家
+    if (sourceKey.endsWith(TagSuffix.artistList)) {
       playListCacheItems.value = [...ArtistListController.audioListItems];
       return;
     }
 
-    if (_musicCacheController.albumItemsDict.keys.any(
-      (v) =>
-          v.substring(1) + TagSuffix.albumList ==
-          _audioSource.currentAudioSource.value,
-    )) {
+    // 专辑
+    if (sourceKey.endsWith(TagSuffix.albumList)) {
       playListCacheItems.value = [...AlbumListController.audioListItems];
       return;
     }
 
-    if (_settingController.folders.any(
-      (v) => v + TagSuffix.foldersList == _audioSource.currentAudioSource.value,
-    )) {
+    if (sourceKey.endsWith(TagSuffix.foldersList)) {
       playListCacheItems.value = [...FoldersListController.audioListItems];
       return;
-    }
-
-    switch (_audioSource.currentAudioSource.value) {
-      case AudioSource.allMusic:
-        playListCacheItems.value = [..._musicCacheController.items];
-        return;
     }
   }
 
@@ -163,16 +154,17 @@ class AudioController extends GetxController {
   void getAudioFFt() async {
     if (currentState.value == AudioState.pause ||
         currentState.value == AudioState.stop) {
-      if (listEquals(audioFFT, _defaultFFT)) {
-        return;
+      if (!_isFftCleared) {
+        audioFFT.value = _defaultFFT;
+        _isFftCleared = true;
       }
-      audioFFT.value = _defaultFFT;
       return;
     }
 
     final fft = await getChanData();
     if (fft != null) {
-      audioFFT.value = [...fft];
+      audioFFT.value = fft;
+      _isFftCleared = false;
     }
   }
 
@@ -213,46 +205,24 @@ class AudioController extends GetxController {
       _settingController.lastAudioInfo[SettingController.lastAudioMetadataKey] =
           currentMetadata.value;
       await _settingController.putScalableCache();
-      currentLyrics.value = await getParsedLyric(
-        filePath: currentMetadata.value.path,
-      );
-
-      if (Get.isRegistered<SpringListView>()) {
-        _springConntroller.clearState();
-      }
-
-      // 重要：在这里就处理歌词数据，渲染端直接用,防止内存泄露
-      final parsedLrc = currentLyrics.value?.parsedLrc;
-      showLyricRender =
-          !(currentLyrics.value == null ||
-              parsedLrc is! List<LyricEntry> ||
-              parsedLrc.isEmpty);
-      if (showLyricRender) {
-        currentlyricType = currentLyrics.value!.type;
-        lineTextList = parsedLrc!.map((v) => v.lyricText).toList();
-        translateList = parsedLrc.map((v) => v.translate).toList();
-        startTime = parsedLrc.map((v) => v.start).toList();
-        romaList = parsedLrc.map((v) => v.roma).toList();
-        lineDurationList = parsedLrc.map((v) => v.nextTime - v.start).toList();
-      }
-
-      update([GetBuilderId.lyricRender]);
+      await _loadLyrics(currentMetadata.value.path);
     });
 
+    _initRestoreState();
+  }
+
+  Future<void> _initRestoreState() async {
     try {
       final lastMetadata =
           _settingController.lastAudioInfo[SettingController
                   .lastAudioMetadataKey]
               as MusicCache;
-
-      if (playListCacheItems.isEmpty || lastMetadata.path.isEmpty) {
-        return;
-      }
+      if (playListCacheItems.isEmpty || lastMetadata.path.isEmpty) return;
 
       currentMetadata.value = lastMetadata;
-      currentPath.value = currentMetadata.value.path;
+      currentPath.value = lastMetadata.path;
       await setVolume(vol: 0.0);
-      await audioPlay(metadata: currentMetadata.value); // 设置流
+      await audioPlay(metadata: lastMetadata);
       await audioPause();
       await setVolume(vol: _settingController.volume.value);
 
@@ -263,22 +233,45 @@ class AudioController extends GetxController {
                   .lastAudioPlayPathListKey]
               as List<String>;
       if (lastPlayPathList.isNotEmpty) {
+        final pathSet = lastPlayPathList.toSet();
         playListCacheItems.value =
             _musicCacheController.items
-                .where((v) => lastPlayPathList.contains(v.path))
+                .where((v) => pathSet.contains(v.path))
                 .toList();
       }
     } catch (e) {
-      debugPrint(e.toString());
+      debugPrint("Restore State Error: $e");
     }
   }
 
+  Future<void> _loadLyrics(String path) async {
+    currentLyrics.value = await getParsedLyric(filePath: path);
+    if (Get.isRegistered<SpringListView>()) {
+      _springController.clearState();
+    }
+
+    final parsedLrc = currentLyrics.value?.parsedLrc;
+    showLyricRender = parsedLrc != null && parsedLrc.isNotEmpty;
+
+    // 重要：在这里就处理歌词数据，渲染端直接用,防止内存泄露
+    if (showLyricRender) {
+      currentlyricType = currentLyrics.value!.type;
+      lineTextList = parsedLrc!.map((v) => v.lyricText).toList();
+      translateList = parsedLrc.map((v) => v.translate).toList();
+      startTime = parsedLrc.map((v) => v.start).toList();
+      romaList = parsedLrc.map((v) => v.roma).toList();
+      lineDurationList = parsedLrc.map((v) => v.nextTime - v.start).toList();
+    }
+    update([GetBuilderId.lyricRender]);
+  }
+
   Future<void> _syncInfo() async {
-    if (_isSyncing || currentMetadata.value.path.isEmpty) {
+    if (_isSyncing) {
       return;
     }
 
-    if (currentMetadata.value.path.isEmpty) {
+    final metadata = currentMetadata.value;
+    if (metadata.path.isEmpty) {
       await windowManager.setTitle('ZeroBit Player');
       try {
         await trayManager.setToolTip('ZeroBit Player');
@@ -298,11 +291,10 @@ class AudioController extends GetxController {
       currentDuration.value = 999;
     } // 防止读取的时间不准
 
-    final title = currentMetadata.value.title;
+    final title = metadata.title;
     final artist =
-        (currentMetadata.value.artist.isNotEmpty &&
-                currentMetadata.value.artist != 'UNKNOWN')
-            ? ' - ${currentMetadata.value.artist}'
+        (metadata.artist.isNotEmpty && metadata.artist != 'UNKNOWN')
+            ? ' - ${metadata.artist}'
             : '';
 
     final coverData = await getCover(path: currentPath.value, sizeFlag: 1);
@@ -312,7 +304,7 @@ class AudioController extends GetxController {
     } else {
       final coverDataNet = await saveCoverByText(
         text: title + artist,
-        songPath: currentMetadata.value.path,
+        songPath: metadata.path,
         saveCover: false,
       );
 
@@ -323,9 +315,8 @@ class AudioController extends GetxController {
       }
     }
 
-    currentSmallCover.value = currentMetadata.value.src ?? kTransparentImage;
-    if (currentMetadata.value.src == null ||
-        currentMetadata.value.src!.isEmpty) {
+    currentSmallCover.value = metadata.src ?? kTransparentImage;
+    if (metadata.src == null || metadata.src!.isEmpty) {
       currentSmallCover.value =
           await getCover(path: currentPath.value, sizeFlag: 0) ??
           kTransparentImage;
@@ -339,9 +330,9 @@ class AudioController extends GetxController {
     }
     try {
       await smtcUpdateMetadata(
-        title: currentMetadata.value.title,
-        artist: currentMetadata.value.artist,
-        album: currentMetadata.value.album,
+        title: metadata.title,
+        artist: metadata.artist,
+        album: metadata.album,
         coverSrc: currentCover.value,
       );
     } catch (_) {
@@ -354,8 +345,9 @@ class AudioController extends GetxController {
 
   void _setThemeColor({required int color}) {
     _settingController.themeColor.value = color;
-    if (!coverPalette.contains(Color(color))) {
-      coverPalette.insert(0, Color(_settingController.themeColor.value));
+    final newColor = Color(color);
+    if (!coverPalette.contains(newColor)) {
+      coverPalette.insert(0, newColor);
     }
     _settingController.putCache();
   }
@@ -370,7 +362,7 @@ class AudioController extends GetxController {
         kTransparentImage;
     final PaletteGenerator generator = await PaletteGenerator.fromImageProvider(
       MemoryImage(src),
-      size: Size(150, 150),
+      size: Size(120, 120),
     );
 
     if (generator.paletteColors.length >= 4) {
@@ -706,39 +698,43 @@ class AudioController extends GetxController {
   }
 
   /// 用于向自定义歌单添加所选的所有音频
+  /// 用于向自定义歌单添加所选的所有音频
   void addAllToAudioList({
     required List<MusicCache> selectedList,
     required String userKey,
   }) async {
-    if (!allUserKey.contains(userKey)) {
-      return;
-    }
+    if (!allUserKey.contains(userKey)) return;
 
     if (selectedList.isEmpty) {
       showSnackBar(
         title: "WARNING",
         msg: "未选择音频！",
-        duration: Duration(milliseconds: 1500),
+        duration: const Duration(milliseconds: 1500),
       );
       return;
     }
 
-    List<String> newList = _userPlayListCacheBox.get(key: userKey)!.pathList;
+    final targetList = _userPlayListCacheBox.get(key: userKey)!;
+    final existingPathSet = targetList.pathList.toSet();
 
-    selectedList.removeWhere((v) => newList.contains(v.path));
+    selectedList.removeWhere((v) => existingPathSet.contains(v.path));
 
-    final l = selectedList.length;
+    if (selectedList.isEmpty) {
+      showSnackBar(
+        title: "WARNING",
+        msg: "重复添加！歌曲均已存在于歌单中。",
+        duration: const Duration(milliseconds: 1500),
+      );
+      return;
+    }
 
-    newList.addAll(selectedList.map((v) => v.path));
+    final addedCount = selectedList.length;
 
-    await _userPlayListCacheBox.put(
-      data: UserPlayListCache(pathList: newList, userKey: userKey),
-      key: userKey,
-    );
+    targetList.pathList.addAll(selectedList.map((v) => v.path));
+    await _userPlayListCacheBox.put(data: targetList, key: userKey);
 
-    selectedList.removeWhere(
-      (v) => playListCacheItems.any((p) => p.path == v.path),
-    );
+    final currentPlaySet = playListCacheItems.map((v) => v.path).toSet();
+    selectedList.removeWhere((v) => currentPlaySet.contains(v.path));
 
     if (_audioSource.currentAudioSource.value == userKey) {
       playListCacheItems.addAll(selectedList);
@@ -749,8 +745,8 @@ class AudioController extends GetxController {
 
     showSnackBar(
       title: "OK",
-      msg: "已将去重后的 $l 首歌添加到歌单 ${userKey.split(TagSuffix.playList)[0]}",
-      duration: Duration(milliseconds: 1500),
+      msg: "已将去重后的 $addedCount 首歌添加到歌单 ${userKey.split(TagSuffix.playList)[0]}",
+      duration: const Duration(milliseconds: 1500),
     );
   }
 
@@ -801,7 +797,7 @@ class AudioController extends GetxController {
       return;
     }
 
-    if (removeList.isEmpty) {
+    if (removeList.isEmpty || !allUserKey.contains(userKey)) {
       showSnackBar(
         title: "WARNING",
         msg: "未选择音频！",
@@ -810,24 +806,19 @@ class AudioController extends GetxController {
       return;
     }
 
-    List<String> newList = _userPlayListCacheBox.get(key: userKey)!.pathList;
+    final removePathSet = removeList.map((v) => v.path).toSet();
+    final targetList = _userPlayListCacheBox.get(key: userKey)!;
 
-    newList.removeWhere((v) => removeList.any((p) => p.path == v));
-
-    await _userPlayListCacheBox.put(
-      data: UserPlayListCache(pathList: newList, userKey: userKey),
-      key: userKey,
-    );
+    targetList.pathList.removeWhere((path) => removePathSet.contains(path));
+    await _userPlayListCacheBox.put(data: targetList, key: userKey);
 
     if (_audioSource.currentAudioSource.value == userKey) {
-      playListCacheItems.removeWhere(
-        (v) => removeList.any((p) => p.path == v.path),
-      );
+      playListCacheItems.removeWhere((v) => removePathSet.contains(v.path));
       syncCurrentIndex();
     }
 
     PlayListController.audioListItems.removeWhere(
-      (v) => removeList.any((p) => p.path == v.path),
+      (v) => removePathSet.contains(v.path),
     );
 
     showSnackBar(
