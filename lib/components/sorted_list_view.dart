@@ -85,6 +85,8 @@ class _SortedListViewState extends State<SortedListView> {
   late TextStyle _letterTitleStyle;
   late TextStyle _titleStyle;
   late TextStyle _subStyle;
+  late WidgetStateProperty<Color?> _foregroundColorHover;
+late Color _itemBackgroundColor;
 
   @override
   void initState() {
@@ -101,6 +103,12 @@ class _SortedListViewState extends State<SortedListView> {
     _letterTitleStyle = generalTextStyle(ctx: context, size: 'xl');
     _titleStyle = generalTextStyle(ctx: context, size: 'md');
     _subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
+    _itemBackgroundColor = Theme.of(context).colorScheme.surfaceContainer;
+  _foregroundColorHover = WidgetStateProperty.resolveWith<Color>((states) {
+    return states.contains(WidgetState.hovered)
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8);
+  });
   }
 
    @override
@@ -170,15 +178,6 @@ class _SortedListViewState extends State<SortedListView> {
 
   @override
   Widget build(BuildContext context) {
-    final foregroundColorHover = WidgetStateProperty.resolveWith<Color>((
-      states,
-    ) {
-      return states.contains(WidgetState.hovered)
-          ? Theme.of(context).colorScheme.primary
-          : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8);
-    });
-
-    final itemBackgroundColor = Theme.of(context).colorScheme.surfaceContainer;
 
     // 根据路由判断视图类型
     final viewType =
@@ -204,11 +203,11 @@ class _SortedListViewState extends State<SortedListView> {
                   child: _buildMainList(
                     _sections,
                     viewType,
-                    itemBackgroundColor,
+                    _itemBackgroundColor,
                   ),
                 ),
                 const SizedBox(width: 4),
-                _buildLetterIndexer(foregroundColorHover),
+                _buildLetterIndexer(_foregroundColorHover),
               ],
             ),
           ),
