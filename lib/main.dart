@@ -113,7 +113,6 @@ Future<Box> openSafeBox<T>(String boxName) async {
 }
 
 void main() async {
-
   if (!await FlutterSingleInstance().isFirstInstance()) {
     await FlutterSingleInstance().focus();
     exit(0);
@@ -253,8 +252,11 @@ void main() async {
     );
   }
 
-  debugRepaintRainbowEnabled=false;
+  debugRepaintRainbowEnabled = false;
   runApp(const MainFrame());
+
+  final AudioController audioController = Get.find<AudioController>();
+  final LyricController lyricController = Get.find<LyricController>();
 
   WidgetsBinding.instance.addPostFrameCallback((_) async {
     // 异步进行缓存清理，不阻塞启动
@@ -269,12 +271,9 @@ void main() async {
               .toList();
       await musicBox.deleteAll(keysToDelete); //清除不是音频格式的路径，防止路径被污染
       await syncCache();
+      await audioController.initRestoreState();
     });
   });
-
-
-  final AudioController audioController = Get.find<AudioController>();
-  final LyricController lyricController = Get.find<LyricController>();
 
   await _audioEventSub?.cancel();
   await _progressSub?.cancel();
@@ -367,9 +366,13 @@ class MainFrame extends StatelessWidget {
     final SettingController settingController = Get.find<SettingController>();
     return Obx(
       () => GetMaterialApp(
+        enableLog: false,
         theme: themeService.lightTheme,
         darkTheme: themeService.darkTheme,
-        themeMode: settingController.themeMode.value == 'dark' ? ThemeMode.dark : ThemeMode.light,
+        themeMode:
+            settingController.themeMode.value == 'dark'
+                ? ThemeMode.dark
+                : ThemeMode.light,
         transitionDuration: 200.ms,
         customTransition: _SlideTransition(),
         debugShowCheckedModeBanner: false,
@@ -403,6 +406,7 @@ class MainFrame extends StatelessWidget {
           ),
           GetPage(
             name: AppRoutes.lrcView,
+            maintainState: false,
             page: () => const LrcView(),
             transition: Transition.fade,
             curve: Curves.fastOutSlowIn,

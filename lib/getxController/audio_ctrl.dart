@@ -207,11 +207,9 @@ class AudioController extends GetxController {
       await _settingController.putScalableCache();
       await _loadLyrics(currentMetadata.value.path);
     });
-
-    _initRestoreState();
   }
 
-  Future<void> _initRestoreState() async {
+  Future<void> initRestoreState() async {
     try {
       final lastMetadata =
           _settingController.lastAudioInfo[SettingController

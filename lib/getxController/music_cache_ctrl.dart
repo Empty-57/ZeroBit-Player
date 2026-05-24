@@ -38,8 +38,6 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
   @override
   void onInit() {
     super.onInit();
-    loadData();
-
     debounce(searchText, (_) {
       search(
         searchResult: searchResult,
@@ -70,9 +68,10 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
   }
 
   void _groupItems() {
-    final tempArtistLetters = <String>{};
-    final tempAlbumLetters = <String>{};
-
+    artistItemsDict.clear(); // 都次都清除旧数据
+    albumItemsDict.clear();
+    artistHasLetter.clear();
+    albumHasLetter.clear();
     for (var v in items) {
       // 处理艺术家
       final artists = v.artist.split('/');
@@ -82,7 +81,7 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
         final key = letter + name;
 
         artistItemsDict.putIfAbsent(key, () => []).add(v.path);
-        tempArtistLetters.add(letter);
+        artistHasLetter.addIf(!artistHasLetter.contains(letter), letter);
       }
 
       // 处理专辑
@@ -91,12 +90,10 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
       final albumKey = albumLetter + album;
 
       albumItemsDict.putIfAbsent(albumKey, () => []).add(v.path);
-      tempAlbumLetters.add(albumLetter);
+      albumHasLetter.addIf(!albumHasLetter.contains(albumLetter), albumLetter);
     }
-
-    artistHasLetter.assignAll(tempArtistLetters.toList()..sort());
-
-    albumHasLetter.assignAll(tempAlbumLetters.toList()..sort());
+    artistHasLetter.sort();
+    albumHasLetter.sort();
   }
 
   Future<void> remove({required MusicCache metadata}) async {
@@ -104,7 +101,7 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
     await _musicCacheBox.del(
       key: md5.convert(utf8.encode(metadata.path)).toString(),
     );
-    _groupItems(); // 【优化6】数据删除后重新分组，修复分类列表不同步的 Bug
+    _groupItems(); // 数据删除后重新分组
   }
 
   double? rwScrollOffset({
