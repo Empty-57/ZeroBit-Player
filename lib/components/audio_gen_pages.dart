@@ -787,6 +787,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   ) {
     final metadata = widget.controller.items[index];
     return GestureDetector(
+      key: ValueKey(metadata.path),
       onSecondaryTapDown: (e) {
         RenderBox overlayBox =
             Overlay.of(context).context.findRenderObject() as RenderBox;
@@ -798,7 +799,6 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         );
       },
       child: MusicTile(
-        key: ValueKey(metadata.path),
         metadata: metadata,
         titleStyle: titleStyle,
         highLightTitleStyle: highLightTitleStyle,
