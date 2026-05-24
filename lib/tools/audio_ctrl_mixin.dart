@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 
 import '../getxController/setting_ctrl.dart';
 import 'get_sort_type.dart';
-
+import '../field/sort_type.dart';
 const int _audioLimit = 400;
 
 Future<List<MusicCache>> _sortFilesByTime(
@@ -78,13 +78,13 @@ mixin AudioControllerGenClass {
   Rx<Uint8List> get headCover => kTransparentImage.obs;
 
   void itemReSort({required int type}) async {
-    if (type == 4 || type == 5) {
+    if (type == SortType.editTime || type == SortType.createTime) {
       items.value = await _sortFilesByTime(
         items,
         descending: _settingController.isReverse.value,
         getTime: (File file) async {
           try {
-            if (type == 4) {
+            if (type == SortType.editTime) {
               return file.lastModified();
             } else {
               return (await file.stat()).changed;
@@ -97,7 +97,7 @@ mixin AudioControllerGenClass {
       return;
     }
 
-    if (type == 6) {
+    if (type == SortType.trackNumber) {
       // 按照音轨排序数据量一般很小，不做处理
       items.sort(
         (a, b) =>

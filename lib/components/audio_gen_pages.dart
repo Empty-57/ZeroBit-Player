@@ -23,6 +23,7 @@ import 'edit_metadata_dialog.dart';
 import 'floating_button.dart';
 import 'get_snack_bar.dart';
 import 'music_list_tool.dart';
+import '../field/sort_type.dart';
 
 const double _itemHeight = 64.0;
 const double _headCoverSize = 240;
@@ -137,7 +138,7 @@ List<Widget> _genMenuItems({
             AppRoutes.albumList,
             arguments: {
               'pathList': cacheCtrl.albumItemsDict.value[albumWithLetter],
-              'title': album
+              'title': album,
             },
             id: 1,
           ),

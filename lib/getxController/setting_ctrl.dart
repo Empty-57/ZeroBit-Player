@@ -11,19 +11,10 @@ import 'package:zerobit_player/field/operate_area.dart';
 import '../HIveCtrl/models/music_cache_model.dart';
 import '../components/get_snack_bar.dart';
 import '../field/scalable_config_keys.dart';
+import '../field/sort_type.dart';
 import '../src/rust/api/bass.dart';
 import '../tools/sync_cache.dart';
 import 'audio_ctrl.dart';
-
-class SortType{
-  static const int title=0;
-  static const int artist=1;
-  static const int album=2;
-  static const int duration=3;
-  static const int editTime=4;
-  static const int createTime=5;
-  static const int trackNumber=6;
-}
 
 class SettingController extends GetxController {
   final themeMode = 'dark'.obs;
@@ -32,11 +23,11 @@ class SettingController extends GetxController {
   final folders = <String>[].obs;
   final sortMap =
       <dynamic, dynamic>{
-        OperateArea.allMusic: 0,
-        OperateArea.playList: 0,
-        OperateArea.artistList: 0,
-        OperateArea.albumList: 0,
-        OperateArea.foldersList: 0,
+        OperateArea.allMusic: SortType.title,
+        OperateArea.playList: SortType.title,
+        OperateArea.artistList: SortType.title,
+        OperateArea.albumList: SortType.title,
+        OperateArea.foldersList: SortType.title,
       }.obs;
   final viewModeMap =
       <dynamic, dynamic>{
