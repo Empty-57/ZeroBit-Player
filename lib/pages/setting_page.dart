@@ -1543,7 +1543,7 @@ class Setting extends StatelessWidget {
                   ),
 
                   _createSetItem(
-                    text: '透明度',
+                    text: '不透明度',
                     child: const _DesktopLrcFontOpacityDropMenu(),
                     context: context,
                   ),
