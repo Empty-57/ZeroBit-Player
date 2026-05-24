@@ -137,7 +137,7 @@ List<Widget> _genMenuItems({
           () => Get.toNamed(
             AppRoutes.albumList,
             arguments: {
-              'pathList': cacheCtrl.albumItemsDict.value[albumWithLetter],
+              'pathList': cacheCtrl.albumItemsDict[albumWithLetter],
               'title': album,
             },
             id: 1,
@@ -153,8 +153,7 @@ List<Widget> _genMenuItems({
             () => Get.toNamed(
               AppRoutes.artistList,
               arguments: {
-                'pathList':
-                    cacheCtrl.artistItemsDict.value[artistFirstWithLetter],
+                'pathList': cacheCtrl.artistItemsDict[artistFirstWithLetter],
                 'title': artistFirst,
               },
               id: 1,
@@ -186,8 +185,7 @@ List<Widget> _genMenuItems({
                     arguments: {
                       'pathList':
                           cacheCtrl
-                              .artistItemsDict
-                              .value[cacheCtrl.getLetter(str: v) + v],
+                              .artistItemsDict[cacheCtrl.getLetter(str: v) + v],
                       'title': v,
                     },
                     id: 1,

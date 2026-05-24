@@ -15,59 +15,60 @@ class ArtistListController extends GetxController with AudioControllerGenClass {
 
   final MusicCacheController _musicCacheController =
       Get.find<MusicCacheController>();
-
   final SettingController _settingController = Get.find<SettingController>();
 
   static final audioListItems = <MusicCache>[].obs;
 
   @override
-  final headCover = kTransparentImage.obs;
+  final Rx<Uint8List> headCover = kTransparentImage.obs;
 
   @override
   RxList<MusicCache> get items => audioListItems;
 
   @override
   void onInit() {
-    headCover.value = kTransparentImage;
     super.onInit();
     _loadData();
   }
 
-  @override
-  void onClose() {
-    headCover.value = kTransparentImage;
-    audioListItems.value = [];
-    super.onClose();
-  }
+  Future<void> _loadData() async {
+    final pathSet = pathList.toSet();
 
-  void _loadData() async {
     audioListItems.value =
         _musicCacheController.items
-            .where((v) => pathList.contains(v.path))
+            .where((v) => pathSet.contains(v.path))
             .toList();
+
     itemReSort(type: _settingController.sortMap[OperateArea.artistList]);
 
-    if (audioListItems.isNotEmpty) {
-      final title = audioListItems[0].title;
-      final artist_ = audioListItems[0].artist;
-      final artist =
-          (artist_.isNotEmpty && artist_ != 'UNKNOWN') ? ' - $artist_' : '';
-      final cover = await getCover(path: audioListItems[0].path, sizeFlag: 1);
+    if (audioListItems.isEmpty) return;
+
+    try {
+      final firstItem = audioListItems.first;
+      final title = firstItem.title;
+      final artist = firstItem.artist;
+      final artistText =
+          (artist.isNotEmpty && artist != 'UNKNOWN') ? ' - $artist' : '';
+
+      final cover = await getCover(path: firstItem.path, sizeFlag: 1);
       if (cover != null && cover.isNotEmpty) {
         headCover.value = cover;
-      } else {
-        final coverDataNet = await saveCoverByText(
-          text: title + artist,
-          songPath: audioListItems[0].path,
-          saveCover: false,
-        );
-
-        if (coverDataNet != null && coverDataNet.isNotEmpty) {
-          headCover.value = Uint8List.fromList(coverDataNet);
-        } else {
-          headCover.value = kTransparentImage;
-        }
+        return;
       }
+
+      final coverDataNet = await saveCoverByText(
+        text: '$title$artistText',
+        songPath: firstItem.path,
+        saveCover: false,
+      );
+
+      if (coverDataNet != null && coverDataNet.isNotEmpty) {
+        headCover.value = Uint8List.fromList(coverDataNet);
+      } else {
+        headCover.value = kTransparentImage;
+      }
+    } catch (e) {
+      headCover.value = kTransparentImage;
     }
   }
 
@@ -75,7 +76,7 @@ class ArtistListController extends GetxController with AudioControllerGenClass {
     required int index,
     required MusicCache newCache,
   }) {
-    if (audioListItems.isEmpty || index > audioListItems.length - 1) {
+    if (audioListItems.isEmpty || index < 0 || index >= audioListItems.length) {
       return;
     }
     audioListItems[index] = newCache;

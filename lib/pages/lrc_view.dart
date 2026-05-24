@@ -1185,7 +1185,7 @@ class LrcView extends StatelessWidget {
               AppRoutes.albumList,
               arguments: {
                 'pathList':
-                    musicCacheController.albumItemsDict.value[albumWithLetter],
+                    musicCacheController.albumItemsDict[albumWithLetter],
                 'title': album,
               },
               id: 1,
@@ -1211,7 +1211,7 @@ class LrcView extends StatelessWidget {
                   'pathList':
                       musicCacheController
                           .artistItemsDict
-                          .value[artistFirstWithLetter],
+                          [artistFirstWithLetter],
                   'title': artistFirst,
                 },
                 id: 1,
@@ -1236,7 +1236,7 @@ class LrcView extends StatelessWidget {
                           'pathList':
                               musicCacheController
                                   .artistItemsDict
-                                  .value[musicCacheController.getLetter(
+                                  [musicCacheController.getLetter(
                                     str: v,
                                   ) +
                                   v],

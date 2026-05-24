@@ -16,24 +16,96 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
   @override
   final items = <MusicCache>[].obs;
 
-  final artistItemsDict =
-      SplayTreeMap<String, List<String>>((a, b) => a.compareTo(b)).obs;
-  final artistHasLetter = <String>[].obs;
+  SplayTreeMap<String, List<String>> artistItemsDict =
+      SplayTreeMap<String, List<String>>((a, b) => a.compareTo(b));
+  final artistHasLetter = <String>[];
   double _artistViewScrollOffset = 0.0;
 
-  final albumItemsDict =
-      SplayTreeMap<String, List<String>>((a, b) => a.compareTo(b)).obs;
-  final albumHasLetter = <String>[].obs;
+  SplayTreeMap<String, List<String>> albumItemsDict =
+      SplayTreeMap<String, List<String>>((a, b) => a.compareTo(b));
+  final albumHasLetter = <String>[];
   double _albumViewScrollOffset = 0.0;
 
   final _musicCacheBox = HiveManager.musicCacheBox;
   final SettingController _settingController = Get.find<SettingController>();
 
   final currentScanAudio = ''.obs;
-
   final searchText = ''.obs;
-
   final searchResult = <MusicCache>[].obs;
+
+  static final _alphaRegex = RegExp(r'[A-Z]');
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadData();
+
+    debounce(searchText, (_) {
+      search(
+        searchResult: searchResult,
+        items: items,
+        searchText: searchText.value,
+      );
+    }, time: const Duration(milliseconds: 500));
+  }
+
+  void loadData() {
+    items.value = _musicCacheBox.getAll();
+    itemReSort(type: _settingController.sortMap[OperateArea.allMusic]);
+    _groupItems();
+  }
+
+  String getLetter({required String str}) {
+    final trimmedStr = str.trim();
+    if (trimmedStr.isEmpty) return '#';
+
+    final firstChar = trimmedStr[0];
+    final pinyin = PinyinHelper.getFirstWordPinyin(firstChar);
+
+    if (pinyin.isEmpty) {
+      final upperChar = firstChar.toUpperCase();
+      return _alphaRegex.hasMatch(upperChar) ? upperChar : '#';
+    }
+    return pinyin[0].toUpperCase();
+  }
+
+  void _groupItems() {
+    final tempArtistLetters = <String>{};
+    final tempAlbumLetters = <String>{};
+
+    for (var v in items) {
+      // 处理艺术家
+      final artists = v.artist.split('/');
+      for (var artistName in artists) {
+        final name = artistName.trim().isEmpty ? 'UNKNOWN' : artistName.trim();
+        final letter = getLetter(str: name);
+        final key = letter + name;
+
+        artistItemsDict.putIfAbsent(key, () => []).add(v.path);
+        tempArtistLetters.add(letter);
+      }
+
+      // 处理专辑
+      final album = v.album.trim().isEmpty ? 'UNKNOWN' : v.album.trim();
+      final albumLetter = getLetter(str: album);
+      final albumKey = albumLetter + album;
+
+      albumItemsDict.putIfAbsent(albumKey, () => []).add(v.path);
+      tempAlbumLetters.add(albumLetter);
+    }
+
+    artistHasLetter.assignAll(tempArtistLetters.toList()..sort());
+
+    albumHasLetter.assignAll(tempAlbumLetters.toList()..sort());
+  }
+
+  Future<void> remove({required MusicCache metadata}) async {
+    items.removeWhere((v) => v.path == metadata.path);
+    await _musicCacheBox.del(
+      key: md5.convert(utf8.encode(metadata.path)).toString(),
+    );
+    _groupItems(); // 【优化6】数据删除后重新分组，修复分类列表不同步的 Bug
+  }
 
   double? rwScrollOffset({
     required String route,
@@ -61,81 +133,6 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
     }
   }
 
-  @override
-  void onInit() {
-    loadData();
-    super.onInit();
-
-    debounce(searchText, (_) {
-      search(
-        searchResult: searchResult,
-        items: items,
-        searchText: searchText.value,
-      );
-    }, time: Duration(milliseconds: 500));
-  }
-
-  void loadData() {
-    items.value = _musicCacheBox.getAll();
-    itemReSort(type: _settingController.sortMap[OperateArea.allMusic]);
-    _loadItem4Artist();
-    _loadItem4Album();
-  }
-
-  String getLetter({required String str}) {
-    final str_ = str.trim();
-    if (str_.isEmpty) {
-      return '#';
-    }
-
-    final String letter = PinyinHelper.getFirstWordPinyin(str_[0]);
-
-    if (letter.isEmpty) {
-      final String letter = str_[0].toUpperCase();
-      return letter.contains(RegExp(r'[A-Z]')) ? letter : '#';
-    }
-    return letter[0].toUpperCase();
-  }
-
-  void _loadItem4Artist() {
-    artistItemsDict.value.clear();
-    artistHasLetter.clear();
-    for (var v in items) {
-      v.artist.split('/').forEach((i) {
-        final String letter = getLetter(str: i);
-        artistItemsDict.value
-            .putIfAbsent(letter + i, () => <String>[])
-            .add(v.path);
-        artistHasLetter.addIf(!artistHasLetter.contains(letter), letter);
-      });
-    }
-    artistHasLetter.sort((a, b) => a.compareTo(b));
-  }
-
-  void _loadItem4Album() {
-    albumItemsDict.value.clear();
-    albumHasLetter.clear();
-    for (var v in items) {
-      String album = v.album;
-      if (album.isEmpty) {
-        album = 'UNKNOWN';
-      }
-      final String letter = getLetter(str: album);
-      albumItemsDict.value
-          .putIfAbsent(letter + album, () => <String>[])
-          .add(v.path);
-      albumHasLetter.addIf(!albumHasLetter.contains(letter), letter);
-    }
-    albumHasLetter.sort((a, b) => a.compareTo(b));
-  }
-
-  Future<void> remove({required MusicCache metadata}) async {
-    items.removeWhere((v) => v.path == metadata.path);
-    await HiveManager.musicCacheBox.del(
-      key: md5.convert(utf8.encode(metadata.path)).toString(),
-    );
-  }
-
   MusicCache putMetadata({
     required String path,
     required int index,
@@ -156,11 +153,15 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
       channels: oldCache.channels,
       path: oldCache.path,
     );
+
     _musicCacheBox.put(
       data: newCache,
       key: md5.convert(utf8.encode(path)).toString(),
     );
     items[index] = newCache;
+
+    _groupItems(); // 数据修改后重新分组
+
     return newCache;
   }
 }

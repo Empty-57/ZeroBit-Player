@@ -5,15 +5,9 @@ import 'package:zerobit_player/components/get_snack_bar.dart';
 import '../HIveCtrl/hive_manager.dart';
 import '../field/tag_suffix.dart';
 
-
 class UserPlayListController extends GetxController {
   final items = <UserPlayListCache>[].obs;
-
   final _userPlayListCacheBox = HiveManager.userPlayListCacheBox;
-
-  void initHive() {
-    items.value = _userPlayListCacheBox.getAll();
-  }
 
   @override
   void onInit() {
@@ -21,7 +15,9 @@ class UserPlayListController extends GetxController {
     initHive();
   }
 
-  List get allUserKey => _userPlayListCacheBox.getKeyAll();
+  void initHive() {
+    items.value = _userPlayListCacheBox.getAll();
+  }
 
   Future<void> createPlayList({required String userKey}) async {
     userKey = userKey.trim();
@@ -33,22 +29,23 @@ class UserPlayListController extends GetxController {
 
     userKey += TagSuffix.playList;
 
-    if (allUserKey.contains(userKey)) {
-      showSnackBar(title: "WARNING", msg: "重复的歌单名称！");
-      return;
-    }
-
-    if (userKey.length>255) {
+    if (userKey.length > 255) {
       showSnackBar(title: "WARNING", msg: "歌单名称过长！（最大255个字符）");
       return;
     }
 
-    await _userPlayListCacheBox.put(
-      data: UserPlayListCache(pathList: <String>[], userKey: userKey),
-      key: userKey,
+    if (items.any((e) => e.userKey == userKey)) {
+      showSnackBar(title: "WARNING", msg: "重复的歌单名称！");
+      return;
+    }
+
+    final newPlaylist = UserPlayListCache(
+      pathList: <String>[],
+      userKey: userKey,
     );
 
-    items.add(UserPlayListCache(pathList: <String>[], userKey: userKey));
+    await _userPlayListCacheBox.put(data: newPlaylist, key: userKey);
+    items.add(newPlaylist);
   }
 
   Future<void> removePlayList({required String userKey}) async {
@@ -65,24 +62,36 @@ class UserPlayListController extends GetxController {
       showSnackBar(title: "WARNING", msg: "歌单名称为空！");
       return;
     }
+
     newKey += TagSuffix.playList;
-    if (allUserKey.contains(newKey)) {
-      showSnackBar(title: "WARNING", msg: "重复的歌单名称！");
-      return;
-    }
-    if (newKey.length>255) {
+
+    if (newKey.length > 255) {
       showSnackBar(title: "WARNING", msg: "歌单名称过长！（最大255个字符）");
       return;
     }
-    final oldValue = _userPlayListCacheBox.get(key: oldKey);
-    if (oldValue == null) {
+
+    if (items.any((e) => e.userKey == newKey)) {
+      showSnackBar(title: "WARNING", msg: "重复的歌单名称！");
       return;
     }
-    await removePlayList(userKey: oldKey);
-    await _userPlayListCacheBox.put(
-      data: UserPlayListCache(pathList: oldValue.pathList, userKey: newKey),
-      key: newKey,
+
+    final oldValue = _userPlayListCacheBox.get(key: oldKey);
+    if (oldValue == null) return;
+
+    final updatedPlaylist = UserPlayListCache(
+      pathList: oldValue.pathList,
+      userKey: newKey,
     );
-    items.add(UserPlayListCache(pathList: oldValue.pathList, userKey: newKey));
+
+    // 更新 Hive 数据库
+    await _userPlayListCacheBox.del(key: oldKey);
+    await _userPlayListCacheBox.put(data: updatedPlaylist, key: newKey);
+
+    final index = items.indexWhere((v) => v.userKey == oldKey);
+    if (index != -1) {
+      items[index] = updatedPlaylist;
+    } else {
+      items.add(updatedPlaylist);
+    }
   }
 }

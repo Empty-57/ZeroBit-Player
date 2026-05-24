@@ -14,7 +14,7 @@ class AlbumViewPage extends StatelessWidget {
         Get.find<MusicCacheController>();
     return SortedListView(
       title: '专辑',
-      subTitle: '共${musicCacheController.albumItemsDict.value.length}张专辑',
+      subTitle: '共${musicCacheController.albumItemsDict.length}张专辑',
       sortedDict: musicCacheController.albumItemsDict,
       toRoute: AppRoutes.albumList,
       items: musicCacheController.items,

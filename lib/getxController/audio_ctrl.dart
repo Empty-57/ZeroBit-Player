@@ -127,7 +127,7 @@ class AudioController extends GetxController {
       return;
     }
 
-    if (_musicCacheController.artistItemsDict.value.keys.any(
+    if (_musicCacheController.artistItemsDict.keys.any(
       (v) =>
           v.substring(1) + TagSuffix.artistList ==
           _audioSource.currentAudioSource.value,
@@ -136,7 +136,7 @@ class AudioController extends GetxController {
       return;
     }
 
-    if (_musicCacheController.albumItemsDict.value.keys.any(
+    if (_musicCacheController.albumItemsDict.keys.any(
       (v) =>
           v.substring(1) + TagSuffix.albumList ==
           _audioSource.currentAudioSource.value,

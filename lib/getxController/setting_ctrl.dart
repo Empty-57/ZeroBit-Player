@@ -37,7 +37,7 @@ class SettingController extends GetxController {
         OperateArea.albumList: true,
         OperateArea.foldersList: true,
       }.obs;
-  final isReverse = false.obs;
+  final isReverse = false.obs; // 以后将分别应用到每个列表视图
   final themeColor = 0xff27272a.obs;
   final playMode = 0.obs;
   final dynamicThemeColor = true.obs;

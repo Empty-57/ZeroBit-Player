@@ -52,7 +52,7 @@ enum _ViewType { album, artist }
 class SortedListView extends StatefulWidget {
   final String title;
   final String subTitle;
-  final Rx<SplayTreeMap<String, List<String>>> sortedDict;
+  final SplayTreeMap<String, List<String>> sortedDict;
   final String toRoute;
   final List<MusicCache> items;
   final List<String> letterList;
@@ -77,7 +77,7 @@ class SortedListView extends StatefulWidget {
 class _SortedListViewState extends State<SortedListView> {
   // 以首字母为键、以 GlobalKey 为值的映射，用于定位滚动
   final Map<String, GlobalKey> _sectionKeys = {};
-  final _scrollController = ScrollController();
+ late final ScrollController _scrollController;
 
   List<_SectionItem> _sections = [];
   Map<String, MusicCache> _itemMap = {};
@@ -89,14 +89,9 @@ class _SortedListViewState extends State<SortedListView> {
   @override
   void initState() {
     super.initState();
-    final offset = widget.rwScrollOffset(route: widget.toRoute, rw: true)!;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _scrollController.jumpTo(
-          offset.clamp(0.0, _scrollController.position.maxScrollExtent),
-        );
-      }
-    });
+    final initialOffset = widget.rwScrollOffset(route: widget.toRoute, rw: true) ?? 0.0;
+    _scrollController = ScrollController(initialScrollOffset: initialOffset);
+    _processData();
   }
 
   @override
@@ -108,6 +103,14 @@ class _SortedListViewState extends State<SortedListView> {
     _subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
   }
 
+   @override
+  void didUpdateWidget(covariant SortedListView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.sortedDict != widget.sortedDict || oldWidget.items != widget.items) {
+      _processData();
+    }
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -117,8 +120,8 @@ class _SortedListViewState extends State<SortedListView> {
     super.dispose();
   }
 
-  void _updateDataIfNeeded() {
-    final dict = widget.sortedDict.value;
+  void _processData() {
+    final dict = widget.sortedDict;
 
     // 以首字母为键、以内容项列表为值的分组 map
     _itemMap = {for (final item in widget.items) item.path: item};
@@ -195,22 +198,19 @@ class _SortedListViewState extends State<SortedListView> {
           _buildHeader(),
           const SizedBox(height: 16),
           Expanded(
-            child: Obx(() {
-              _updateDataIfNeeded();
-              return Row(
-                children: [
-                  Expanded(
-                    child: _buildMainList(
-                      _sections,
-                      viewType,
-                      itemBackgroundColor,
-                    ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildMainList(
+                    _sections,
+                    viewType,
+                    itemBackgroundColor,
                   ),
-                  const SizedBox(width: 4),
-                  _buildLetterIndexer(foregroundColorHover),
-                ],
-              );
-            }),
+                ),
+                const SizedBox(width: 4),
+                _buildLetterIndexer(foregroundColorHover),
+              ],
+            ),
           ),
         ],
       ),
@@ -230,12 +230,10 @@ class _SortedListViewState extends State<SortedListView> {
             weight: FontWeight.w600,
           ),
         ),
-        Obx(
-          () => Text(
+        Text(
             widget.subTitle,
             style: generalTextStyle(ctx: context, size: 'md'),
           ),
-        ),
       ],
     );
   }
@@ -264,6 +262,7 @@ class _SortedListViewState extends State<SortedListView> {
       },
       child: CustomScrollView(
         controller: _scrollController,
+        cacheExtent: mainAxisExtent * 2,
         slivers: [
           for (final section in sections) ...[
             // 首字母标题
