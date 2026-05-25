@@ -68,7 +68,7 @@ class MusicCacheController extends GetxController with AudioControllerGenClass {
   }
 
   void _groupItems() {
-    artistItemsDict.clear(); // 都次都清除旧数据
+    artistItemsDict.clear(); // 每次都清除旧数据
     albumItemsDict.clear();
     artistHasLetter.clear();
     albumHasLetter.clear();

@@ -131,9 +131,8 @@ late Color _itemBackgroundColor;
   void _processData() {
     final dict = widget.sortedDict;
 
-    // 以首字母为键、以内容项列表为值的分组 map
     _itemMap = {for (final item in widget.items) item.path: item};
-
+    // 以首字母为键、以内容项列表为值的分组 map
     final Map<String, List<_ContentItem>> grouped = {};
     for (final entry in dict.entries) {
       final key = entry.key;

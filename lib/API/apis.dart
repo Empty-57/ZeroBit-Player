@@ -173,7 +173,7 @@ Future<Get4NetLrcModel?> _qmGetLrc({required int id}) async {
   final data = _qrcParseLyricByRegex(body);
   String? encryptedOriginal = data['lyric'];
   String? encryptedTranslate = data['trans'];
-  String? decryptedRoma = data['roma'];
+  // String? decryptedRoma = data['roma'];
 
   String? qrcDecrypted;
   String? translateDecrypted;

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -394,6 +395,7 @@ class AudioCtrlWidget {
           );
         }).toList();
 
+    final backgroundColor = Theme.of(context).colorScheme.primary;
     return GenIconBtn(
       tooltip: "均衡器",
       icon: PhosphorIconsLight.equalizer,
@@ -427,54 +429,57 @@ class AudioCtrlWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 16,
                     children: [
-                      Wrap(
-                        spacing: 2,
-                        runSpacing: 2,
-                        children:
-                            SettingController.equalizerGainPresets.entries.map((
-                              entry,
-                            ) {
-                              return Obx(() {
-                                final equalizerGains =
-                                    _settingController.equalizerGains;
-                                return CustomBtn(
-                                  fn: () async {
-                                    _settingController.equalizerGains.value =
-                                        entry.value;
-                                    await _settingController.putScalableCache();
-                                    for (final v in entry.value.indexed) {
-                                      await setEqParams(
-                                        freCenterIndex: v.$1,
-                                        gain: v.$2,
-                                      );
-                                    }
-                                  },
-                                  label:
-                                      SettingController
-                                          .equalizerGainPresetsText[entry.key],
-                                  backgroundColor:
-                                      equalizerGains == entry.value
-                                          ? Theme.of(
-                                            context,
-                                          ).colorScheme.primary
-                                          : Theme.of(context)
-                                              .colorScheme
-                                              .secondaryContainer
-                                              .withValues(alpha: 0.2),
-                                  contentColor:
-                                      equalizerGains == entry.value
-                                          ? Theme.of(
-                                            context,
-                                          ).colorScheme.onPrimary
-                                          : Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                  btnWidth: 96,
-                                  btnHeight: 36,
-                                );
-                              });
-                            }).toList(),
-                      ),
+                      Obx(() {
+                        final equalizerGains =
+                            _settingController.equalizerGains;
+                        return Wrap(
+                          spacing: 2,
+                          runSpacing: 2,
+                          children:
+                              SettingController.equalizerGainPresets.entries
+                                  .map((entry) {
+                                    final isEqual = listEquals(
+                                      equalizerGains,
+                                      entry.value,
+                                    );
+                                    return CustomBtn(
+                                      fn: () async {
+                                        _settingController
+                                            .equalizerGains
+                                            .value = entry.value;
+                                        await _settingController
+                                            .putScalableCache();
+                                        for (final v in entry.value.indexed) {
+                                          await setEqParams(
+                                            freCenterIndex: v.$1,
+                                            gain: v.$2,
+                                          );
+                                        }
+                                      },
+                                      label:
+                                          SettingController
+                                              .equalizerGainPresetsText[entry
+                                              .key],
+                                      backgroundColor:
+                                          isEqual
+                                              ? backgroundColor
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .secondaryContainer
+                                                  .withValues(alpha: 0.2),
+                                      contentColor:
+                                          isEqual
+                                              ? Theme.of(
+                                                context,
+                                              ).colorScheme.onPrimary
+                                              : backgroundColor,
+                                      btnWidth: 96,
+                                      btnHeight: 36,
+                                    );
+                                  })
+                                  .toList(),
+                        );
+                      }),
                       Expanded(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

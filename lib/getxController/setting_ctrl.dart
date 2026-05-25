@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:get/get.dart';
@@ -37,7 +36,7 @@ class SettingController extends GetxController {
   // 歌词状态
   final lrcAlignment = 0.obs;
   final lrcFontSize = 24.obs;
-  final lrcFontWeight = 5.obs;
+  final lrcFontWeight = 5.obs;// 0-8 w100-w900
   final autoDownloadLrc = true.obs;
   final showDesktopLyrics = false.obs;
 
@@ -484,8 +483,9 @@ class SettingController extends GetxController {
     if (actionType != toggleHidString && newSig == toggleSig) return true;
     if (actionType != nextHidString && newSig == nextSig) return true;
     if (actionType != previousHidString && newSig == prevSig) return true;
-    if (actionType != fullScreenHidString && newSig == fullScreenSig)
+    if (actionType != fullScreenHidString && newSig == fullScreenSig) {
       return true;
+    }
 
     return false;
   }
