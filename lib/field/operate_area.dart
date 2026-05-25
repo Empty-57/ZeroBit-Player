@@ -1,11 +1,7 @@
-import 'package:get/get.dart';
-class OperateArea extends GetxController{
+abstract class OperateArea {
   static const allMusic = 'allMusic';
   static const playList = 'playList';
   static const artistList = 'artistList';
   static const albumList = 'albumList';
   static const foldersList = 'foldersList';
-
-
-  final currentFiled=OperateArea.allMusic.obs;
 }
