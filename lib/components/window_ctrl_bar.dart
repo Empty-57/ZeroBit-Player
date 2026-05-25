@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:zerobit_player/src/rust/api/smtc.dart';
+import 'package:zerobit_player/getxController/window_ctrl.dart';
 import 'package:zerobit_player/theme_manager.dart';
-import '../desktop_lyrics_sever.dart';
 import '../field/tag_suffix.dart';
 import '../getxController/audio_ctrl.dart';
 import '../getxController/music_cache_ctrl.dart';
@@ -17,111 +16,6 @@ const double _itemHeight = 64;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 const double _logoSize = 24.0;
 const int _coverSmallRenderSize = 150;
-
-class _WindowListener extends GetxController with WindowListener {
-  final _isMaximized = false.obs;
-  final _isFullScreen = false.obs;
-  final DesktopLyricsSever _desktopLyricsSever = Get.find<DesktopLyricsSever>();
-  final SettingController _settingController = Get.find<SettingController>();
-
-  @override
-  void onInit() {
-    windowManager.addListener(this);
-    super.onInit();
-  }
-
-  @override
-  void onClose() {
-    windowManager.removeListener(this);
-    super.onClose();
-  }
-
-  void toggleMaximize() async {
-    if (await windowManager.isMaximized()) {
-      await windowManager.unmaximize();
-      _isMaximized.value = false;
-    } else {
-      await windowManager.maximize();
-      _isMaximized.value = true;
-    }
-  }
-
-  void toggleFullScreen() async {
-    if (await windowManager.isFullScreen()) {
-      await windowManager.setFullScreen(false);
-      _isFullScreen.value = false;
-    } else {
-      await windowManager.setFullScreen(true);
-      _isFullScreen.value = true;
-    }
-  }
-
-  @override
-  void onWindowClose() async {
-    await smtcClear();
-    await _desktopLyricsSever.close();
-    windowManager.removeListener(this);
-    super.onClose();
-  }
-
-  @override
-  void onWindowMaximize() {
-    _isMaximized.value = true;
-    _settingController.lastWindowInfo[SettingController
-            .lastWindowIsMaximizedKey] =
-        _isMaximized.value;
-    _settingController.putScalableCache();
-  }
-
-  @override
-  void onWindowUnmaximize() {
-    _isMaximized.value = false;
-    _settingController.lastWindowInfo[SettingController
-            .lastWindowIsMaximizedKey] =
-        _isMaximized.value;
-    _settingController.putScalableCache();
-  }
-
-  @override
-  void onWindowResized() async {
-    final size = await windowManager.getSize();
-    debugPrint('now size | width: ${size.width} height: ${size.height}');
-
-    final windowInfoSize =
-        _settingController.lastWindowInfo[SettingController.lastWindowSizeKey]
-            as List<double>?;
-    if (windowInfoSize != null && windowInfoSize.isNotEmpty) {
-      windowInfoSize[SettingController.lastWindowInfoWidthAndDx] = size.width;
-      windowInfoSize[SettingController.lastWindowInfoHeightAndDy] = size.height;
-
-      _settingController.lastWindowInfo[SettingController.lastWindowSizeKey] =
-          windowInfoSize;
-      _settingController.putScalableCache();
-    }
-  }
-
-  @override
-  void onWindowMoved() async {
-    final position = await windowManager.getPosition();
-    debugPrint('now position | x: ${position.dx} y: ${position.dy}');
-
-    final windowInfoPosition =
-        _settingController.lastWindowInfo[SettingController
-                .lastWindowPositonKey]
-            as List<double>?;
-    if (windowInfoPosition != null && windowInfoPosition.isNotEmpty) {
-      windowInfoPosition[SettingController.lastWindowInfoWidthAndDx] =
-          position.dx;
-      windowInfoPosition[SettingController.lastWindowInfoHeightAndDy] =
-          position.dy;
-
-      _settingController.lastWindowInfo[SettingController
-              .lastWindowPositonKey] =
-          windowInfoPosition;
-      _settingController.putScalableCache();
-    }
-  }
-}
 
 class _SearchDialog extends StatelessWidget {
   final AudioController ctrl;
@@ -341,7 +235,7 @@ class _ControllerButton extends GetView<ThemeService> {
   }
 }
 
-class WindowControllerBar extends StatelessWidget {
+class WindowControllerBar extends GetView<MyWindowListener> {
   final bool isNestedRoute;
   final bool showLogo;
   final bool useCaretDown;
@@ -361,7 +255,7 @@ class WindowControllerBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final windowListener = Get.put(_WindowListener()); // 需要注入
+    final windowListener = controller;
     final AudioController audioController = Get.find<AudioController>();
     final MusicCacheController musicCacheController =
         Get.find<MusicCacheController>();
@@ -453,7 +347,7 @@ class WindowControllerBar extends StatelessWidget {
 
           Obx(
             () => Visibility(
-              visible: !windowListener._isFullScreen.value,
+              visible: !windowListener.isFullScreen.value,
               child: Padding(
                 padding: EdgeInsets.only(right: 8),
                 child: _ControllerButton(
@@ -470,15 +364,15 @@ class WindowControllerBar extends StatelessWidget {
 
           Obx(
             () => Visibility(
-              visible: !windowListener._isFullScreen.value,
+              visible: !windowListener.isFullScreen.value,
               child: _ControllerButton(
                 onlyDarkMode: onlyDarkMode,
                 icon:
-                    windowListener._isMaximized.value
+                    windowListener.isMaximized.value
                         ? PhosphorIconsLight.cornersIn
                         : PhosphorIconsLight.cornersOut,
                 fn: windowListener.toggleMaximize,
-                tooltip: windowListener._isMaximized.value ? "还原" : "最大化",
+                tooltip: windowListener.isMaximized.value ? "还原" : "最大化",
               ),
             ),
           ),
@@ -487,16 +381,16 @@ class WindowControllerBar extends StatelessWidget {
             () => Padding(
               padding: EdgeInsets.only(
                 right: 8,
-                left: windowListener._isFullScreen.value ? 0 : 8,
+                left: windowListener.isFullScreen.value ? 0 : 8,
               ),
               child: _ControllerButton(
                 onlyDarkMode: onlyDarkMode,
                 icon:
-                    windowListener._isFullScreen.value
+                    windowListener.isFullScreen.value
                         ? PhosphorIconsLight.arrowsInSimple
                         : PhosphorIconsLight.arrowsOutSimple,
                 fn: windowListener.toggleFullScreen,
-                tooltip: windowListener._isFullScreen.value ? "还原" : "全屏",
+                tooltip: windowListener.isFullScreen.value ? "还原" : "全屏",
               ),
             ),
           ),

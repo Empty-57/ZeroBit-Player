@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
@@ -184,22 +185,53 @@ class AudioCtrlWidget {
         ),
       ),
     ],
-    style: MenuStyle(
-      padding: WidgetStatePropertyAll(const EdgeInsets.only(top: 16)),
+    style: const MenuStyle(
+      padding: WidgetStatePropertyAll(EdgeInsets.only(top: 16)),
     ),
     builder: (_, MenuController controller, Widget? child) {
-      return GenIconBtn(
-        tooltip: "音量",
-        icon: PhosphorIconsFill.speakerHigh,
-        size: size,
-        color: color,
-        fn: () {
-          if (controller.isOpen) {
-            controller.close();
-          } else {
-            controller.open();
+      // 使用 Listener 包裹按钮以监听鼠标事件
+      return Listener(
+        onPointerSignal: (pointerSignal) {
+          // 判断是否为鼠标滚轮事件
+          if (pointerSignal is PointerScrollEvent) {
+            final double currentVol = _settingController.volume.value;
+            // 每次滚动的步长，0.05 表示 5%
+            const double step = 0.05;
+            double newVol = currentVol;
+
+            // scrollDelta.dy < 0 表示滚轮向上推 -> 增加音量
+            // scrollDelta.dy > 0 表示滚轮向下滚 -> 减小音量
+            if (pointerSignal.scrollDelta.dy < 0) {
+              newVol = (currentVol + step).clamp(0.0, 1.0);
+            } else if (pointerSignal.scrollDelta.dy > 0) {
+              newVol = (currentVol - step).clamp(0.0, 1.0);
+            }
+
+            // 只有当音量真正发生变化时才执行更新
+            if (newVol != currentVol) {
+              _settingController.volume.value = newVol;
+              _audioController.audioSetVolume(vol: newVol);
+
+              _settingController.putCache.throttle(ms: 500)();
+            }
           }
         },
+        child: Obx(
+          () => GenIconBtn(
+            tooltip:
+                "音量：${(_settingController.volume * 100).toStringAsFixed(0)}",
+            icon: PhosphorIconsFill.speakerHigh,
+            size: size,
+            color: color,
+            fn: () {
+              if (controller.isOpen) {
+                controller.close();
+              } else {
+                controller.open();
+              }
+            },
+          ),
+        ),
       );
     },
   );

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -11,6 +12,7 @@ import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:zerobit_player/getxController/audio_ctrl.dart';
+import 'package:zerobit_player/getxController/window_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/get_fonts.dart';
 import '../components/get_snack_bar.dart';
 import '../getxController/desktop_lyrics_setting_ctrl.dart';
@@ -86,8 +88,7 @@ class _FolderManagerDialog extends GetView<MusicCacheController> {
 
   @override
   Widget build(BuildContext context) {
-
-    final musicCacheController=controller;
+    final musicCacheController = controller;
     return CustomBtn(
       fn: () {
         var foldersClone = [..._settingController.folders];
@@ -586,7 +587,10 @@ class _FontFamilyDialog extends StatelessWidget {
 }
 
 List<CustomBtn<dynamic>> _getFontSizeList(void Function(int) fn) {
-  return List.generate(SettingController.lrcFontSizeMax+1-SettingController.lrcFontSizeMin, (index) => index + SettingController.lrcFontSizeMin).map((i) {
+  return List.generate(
+    SettingController.lrcFontSizeMax + 1 - SettingController.lrcFontSizeMin,
+    (index) => index + SettingController.lrcFontSizeMin,
+  ).map((i) {
     return CustomBtn(
       fn: () => fn(i),
       btnWidth: btnW,
@@ -599,7 +603,10 @@ List<CustomBtn<dynamic>> _getFontSizeList(void Function(int) fn) {
 }
 
 List<CustomBtn<dynamic>> _getFontWeightList(void Function(int) fn) {
-  return List.generate(SettingController.lrcFontWeightMax+1, (index) => index).map((i) {
+  return List.generate(
+    SettingController.lrcFontWeightMax + 1,
+    (index) => index,
+  ).map((i) {
     return CustomBtn(
       fn: () => fn(i),
       btnWidth: btnW,
@@ -1039,8 +1046,10 @@ class _DesktopLyricsAlignmentRadio extends StatelessWidget {
 Widget _createHotKeyItem(
   BuildContext context, {
   required Rx<HotKey> myHotkey,
-  required void Function(HotKey) fn,
+  required String prefKey,
+  required Future<void> Function(HotKey) fn,
 }) {
+  final prev = myHotkey.value;
   final hotKey_ = myHotkey;
   return Row(
     mainAxisAlignment: MainAxisAlignment.center,
@@ -1060,7 +1069,12 @@ Widget _createHotKeyItem(
         ),
       ),
       CustomBtn(
-        fn: () {
+        fn: () async {
+          await hotKeyManager.unregisterAll();
+          if (!context.mounted) {
+            await _settingController.initHotKey();
+            return;
+          }
           showDialog(
             barrierDismissible: true,
             context: context,
@@ -1117,8 +1131,17 @@ Widget _createHotKeyItem(
                 ],
               );
             },
-          ).then((_) {
-            fn(hotKey_.value);
+          ).then((_) async {
+            if (_settingController.checkHotConflict(hotKey_.value, prefKey)) {
+              hotKey_.value = prev;
+              showSnackBar(
+                title: 'Err',
+                msg: '快捷键已被占用，请更换。',
+                duration: Duration(milliseconds: 1000),
+              );
+            }
+            await fn(hotKey_.value);
+            await _settingController.initHotKey();
           });
         },
         icon: PhosphorIconsLight.option,
@@ -1137,27 +1160,16 @@ Widget _createHotKeyItem(
 class _SetHotKeyToggleDialog extends StatelessWidget {
   const _SetHotKeyToggleDialog();
 
-  AudioController get _audioController => Get.find<AudioController>();
-
   @override
   Widget build(BuildContext context) {
     return _createHotKeyItem(
       context,
       myHotkey: _settingController.hotKeyToggle,
+      prefKey: SettingController.toggleHidString,
       fn: (h) async {
-        await hotKeyManager.unregister(_settingController.hotKeyToggle.value);
         // final hotKey_=HotKey(key: h.key,modifiers: h.modifiers,scope: _settingController.hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp);// 因库原因无法使用
         _settingController.hotKeyToggle.value = h;
         _settingController.setToggleHid(key: h);
-        await hotKeyManager.register(
-          _settingController.hotKeyToggle.value,
-          keyDownHandler: (hotKey) {
-            if(SettingController.isTextFieldFocused){
-          return;
-        }
-            _audioController.audioToggle();
-          },
-        );
       },
     );
   }
@@ -1166,27 +1178,16 @@ class _SetHotKeyToggleDialog extends StatelessWidget {
 class _SetHotKeyNextDialog extends StatelessWidget {
   const _SetHotKeyNextDialog();
 
-  AudioController get _audioController => Get.find<AudioController>();
-
   @override
   Widget build(BuildContext context) {
     return _createHotKeyItem(
       context,
       myHotkey: _settingController.hotKeyNext,
+      prefKey: SettingController.nextHidString,
       fn: (h) async {
-        await hotKeyManager.unregister(_settingController.hotKeyNext.value);
         // final hotKey_=HotKey(key: h.key,modifiers: h.modifiers,scope: _settingController.hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp);// 因库原因无法使用
         _settingController.hotKeyNext.value = h;
         _settingController.setNextHid(key: h);
-        await hotKeyManager.register(
-          _settingController.hotKeyNext.value,
-          keyDownHandler: (hotKey) {
-            if(SettingController.isTextFieldFocused){
-          return;
-        }
-            _audioController.audioToNext();
-          },
-        );
       },
     );
   }
@@ -1195,27 +1196,34 @@ class _SetHotKeyNextDialog extends StatelessWidget {
 class _SetHotKeyPreviousDialog extends StatelessWidget {
   const _SetHotKeyPreviousDialog();
 
-  AudioController get _audioController => Get.find<AudioController>();
-
   @override
   Widget build(BuildContext context) {
     return _createHotKeyItem(
       context,
       myHotkey: _settingController.hotKeyPrevious,
+      prefKey: SettingController.previousHidString,
       fn: (h) async {
-        await hotKeyManager.unregister(_settingController.hotKeyPrevious.value);
         // final hotKey_=HotKey(key: h.key,modifiers: h.modifiers,scope: _settingController.hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp);// 因库原因无法使用
         _settingController.hotKeyPrevious.value = h;
         _settingController.setPreviousHid(key: h);
-        await hotKeyManager.register(
-          _settingController.hotKeyPrevious.value,
-          keyDownHandler: (hotKey) {
-            if(SettingController.isTextFieldFocused){
-          return;
-        }
-            _audioController.audioToPrevious();
-          },
-        );
+      },
+    );
+  }
+}
+
+class _SetHotKeyFullScreenDialog extends StatelessWidget {
+  const _SetHotKeyFullScreenDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return _createHotKeyItem(
+      context,
+      myHotkey: _settingController.hotKeyFullScreen,
+      prefKey: SettingController.fullScreenHidString,
+      fn: (h) async {
+        // final hotKey_=HotKey(key: h.key,modifiers: h.modifiers,scope: _settingController.hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp);// 因库原因无法使用
+        _settingController.hotKeyFullScreen.value = h;
+        _settingController.setFullScreenHid(key: h);
       },
     );
   }
@@ -1364,8 +1372,7 @@ class Setting extends StatelessWidget {
                   _createSetItem(
                     text: '关闭窗口后在后台运行',
                     child: _createSwitchBtn(
-                      value:
-                          _settingController.close2Tray,
+                      value: _settingController.close2Tray,
                       trackColor: switchTrackColor,
                       context: context,
                       fn: (bool value) {
@@ -1676,6 +1683,12 @@ class Setting extends StatelessWidget {
                   _createSetItem(
                     text: '下一首',
                     child: const _SetHotKeyNextDialog(),
+                    context: context,
+                  ),
+
+                  _createSetItem(
+                    text: '切换全屏',
+                    child: const _SetHotKeyFullScreenDialog(),
                     context: context,
                   ),
 

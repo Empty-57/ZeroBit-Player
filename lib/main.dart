@@ -61,6 +61,7 @@ import 'getxController/lyric_ctrl.dart';
 import 'getxController/music_cache_ctrl.dart';
 import 'getxController/setting_ctrl.dart';
 
+import 'getxController/window_ctrl.dart';
 import 'logger.dart';
 import 'theme_manager.dart';
 
@@ -194,18 +195,20 @@ void main() async {
   Get.put(DesktopLyricsSever());
   Get.put(DesktopLyricsSettingController());
   Get.put(Tray());
+  Get.put(MyWindowListener());
 
   final SettingController settingController = Get.find<SettingController>();
 
   double w = 1200;
   double h = 800;
+  double x=0;
+  double y=0;
 
   final lastSize =
       settingController.lastWindowInfo[SettingController.lastWindowSizeKey]
           as List<double>?;
   if (lastSize != null && lastSize.isNotEmpty) {
-    w = lastSize[SettingController.lastWindowInfoWidthAndDx];
-    h = lastSize[SettingController.lastWindowInfoHeightAndDy];
+    [w,h] = lastSize;
   }
 
   WindowOptions windowOptions = WindowOptions(
@@ -222,10 +225,11 @@ void main() async {
         settingController.lastWindowInfo[SettingController.lastWindowPositonKey]
             as List<double>?;
     if (lastPosition != null && lastPosition.isNotEmpty) {
+      [x,y] = lastPosition;
       await windowManager.setPosition(
         Offset(
-          lastPosition[SettingController.lastWindowInfoWidthAndDx],
-          lastPosition[SettingController.lastWindowInfoHeightAndDy],
+          x,
+          y,
         ),
       );
     }

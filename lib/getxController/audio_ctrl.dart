@@ -547,7 +547,9 @@ class AudioController extends GetxController {
   }
 
   void _pickNextRandomIndex() {
-    if (_unplayedIndex.isEmpty) {
+    if (_unplayedIndex.isEmpty ||
+        currentIndex.value >= playListCacheItems.length) {
+      _unplayedIndex.clear();
       _unplayedIndex.addAll(
         List.generate(playListCacheItems.length, (i) => i)
           ..remove(currentIndex.value), // 避免连续播同一首
@@ -583,7 +585,8 @@ class AudioController extends GetxController {
     }
 
     if (_settingController.playMode.value != 2) {
-      if (currentIndex.value > 0) {
+      if (currentIndex.value > 0 &&
+          currentIndex.value < playListCacheItems.length) {
         currentIndex.value--;
       } else {
         currentIndex.value = playListCacheItems.length - 1;
