@@ -183,9 +183,7 @@ void main() async {
   await openSafeBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
   await openSafeBox<ScalableSettingCache>(HiveBoxes.scalableSettingCacheBox);
 
-  Get.put(AudioSource());
   Get.put(UserPlayListController());
-  Get.put(OperateArea());
   Get.put(SettingController());
   Get.put(MusicCacheController());
   Get.put(AudioController());
@@ -200,14 +198,14 @@ void main() async {
 
   double w = 1200;
   double h = 800;
-  double x=0;
-  double y=0;
+  double x = 0;
+  double y = 0;
 
   final lastSize =
       settingController.lastWindowInfo[SettingController.lastWindowSizeKey]
           as List<double>?;
   if (lastSize != null && lastSize.isNotEmpty) {
-    [w,h] = lastSize;
+    [w, h] = lastSize;
   }
 
   WindowOptions windowOptions = WindowOptions(
@@ -224,13 +222,8 @@ void main() async {
         settingController.lastWindowInfo[SettingController.lastWindowPositonKey]
             as List<double>?;
     if (lastPosition != null && lastPosition.isNotEmpty) {
-      [x,y] = lastPosition;
-      await windowManager.setPosition(
-        Offset(
-          x,
-          y,
-        ),
-      );
+      [x, y] = lastPosition;
+      await windowManager.setPosition(Offset(x, y));
     }
 
     final lastIsMaximized =

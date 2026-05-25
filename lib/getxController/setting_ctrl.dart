@@ -19,7 +19,7 @@ import '../tools/sync_cache.dart';
 import 'audio_ctrl.dart';
 
 class SettingController extends GetxController {
-  MyWindowListener get myWindowListener => Get.find<MyWindowListener>();
+  MyWindowListener get _myWindowListener => Get.find<MyWindowListener>();
 
   // UI & 偏好设置状态
   final themeMode = 'dark'.obs;
@@ -36,7 +36,7 @@ class SettingController extends GetxController {
   // 歌词状态
   final lrcAlignment = 0.obs;
   final lrcFontSize = 24.obs;
-  final lrcFontWeight = 5.obs;// 0-8 w100-w900
+  final lrcFontWeight = 5.obs; // 0-8 w100-w900
   final autoDownloadLrc = true.obs;
   final showDesktopLyrics = false.obs;
 
@@ -366,7 +366,7 @@ class SettingController extends GetxController {
     _registerHotKey(hotKeyToggle.value, _audioController.audioToggle);
     _registerHotKey(hotKeyNext.value, _audioController.audioToNext);
     _registerHotKey(hotKeyPrevious.value, _audioController.audioToPrevious);
-    _registerHotKey(hotKeyFullScreen.value, myWindowListener.toggleFullScreen);
+    _registerHotKey(hotKeyFullScreen.value, _myWindowListener.toggleFullScreen);
   }
 
   void _registerHotKey(HotKey hotKey, VoidCallback action) async {
