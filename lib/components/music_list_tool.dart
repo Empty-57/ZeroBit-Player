@@ -7,6 +7,7 @@ import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/getxController/audio_ctrl.dart';
 import 'package:zerobit_player/getxController/setting_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
+import 'package:zerobit_player/tools/audio_ctrl_mixin.dart';
 import 'package:zerobit_player/tools/func_extension.dart';
 import '../HIveCtrl/models/music_cache_model.dart';
 import '../field/audio_source.dart';
@@ -25,9 +26,8 @@ class MusicTile extends StatelessWidget {
   final String operateArea;
   final RxBool isMulSelect;
   final RxList<MusicCache> selectedList;
-  final SettingController settingController;
-final AudioController audioController;
-final AudioSource audioSourceClass;
+  final bool viewMode;
+  final AudioControllerGenClass baseBontroller;
 
   const MusicTile({
     super.key,
@@ -40,9 +40,8 @@ final AudioSource audioSourceClass;
     required this.operateArea,
     required this.isMulSelect,
     required this.selectedList,
-    required this.settingController,
-    required this.audioController,
-    required this.audioSourceClass,
+    required this.viewMode,
+    required this.baseBontroller,
   });
 
   void _onTileTapped() {
@@ -54,8 +53,7 @@ final AudioSource audioSourceClass;
         selectedList.add(metadata);
       }
     } else {
-      audioSourceClass.currentAudioSource.value = audioSource;
-      audioController.audioPlay(metadata: metadata);
+      baseBontroller.play(audioSource, metadata: metadata);
     }
   }
 
@@ -64,9 +62,9 @@ final AudioSource audioSourceClass;
     final Widget cover = AsyncCover(music: metadata);
 
     return Obx(() {
-      final isPlaying = audioController.currentPath.value == metadata.path;
+      final isPlaying =
+          baseBontroller.audioController.currentPath.value == metadata.path;
       final isSelected = selectedList.any((v) => v.path == metadata.path);
-      final showAlbum = settingController.viewModeMap[operateArea] ?? false;
 
       final subTextStyle = isPlaying ? highLightSubStyle : subStyle;
       final textStyle = isPlaying ? highLightTitleStyle : titleStyle;
@@ -114,7 +112,7 @@ final AudioSource audioSourceClass;
                 ],
               ),
             ),
-            if (showAlbum)
+            if (viewMode)
               Expanded(
                 flex: 2,
                 child: Padding(
@@ -221,15 +219,15 @@ class _AsyncCoverState extends State<AsyncCover> {
     return ClipRRect(
       borderRadius: _coverBorderRadius,
       child: Image.memory(
-          imageBytes,
-          key: ValueKey(imageBytes), // 只要图片数据变了，就重建
-          width: widget.size,
-          height: widget.size,
-          fit: BoxFit.cover,
-          cacheWidth: cacheResolution,
-          cacheHeight: cacheResolution,
-          gaplessPlayback: true,
-        ),
+        imageBytes,
+        key: ValueKey(imageBytes), // 只要图片数据变了，就重建
+        width: widget.size,
+        height: widget.size,
+        fit: BoxFit.cover,
+        cacheWidth: cacheResolution,
+        cacheHeight: cacheResolution,
+        gaplessPlayback: true,
+      ),
     );
   }
 

@@ -58,7 +58,6 @@ class AudioController extends GetxController {
   final currentState = AudioState.stop.obs;
 
   final SettingController _settingController = Get.find<SettingController>();
-  final AudioSource _audioSource = Get.find<AudioSource>();
   final MusicCacheController _musicCacheController =
       Get.find<MusicCacheController>();
 
@@ -111,43 +110,9 @@ class AudioController extends GetxController {
 
   bool _isFftCleared = true;
 
+  String currentAudioSource = AudioSource.allMusic;
+
   SpringController get _springController => Get.find<SpringController>();
-
-  /// 同步 `playListCacheItems`
-  void syncPlayListCacheItems() {
-    final sourceKey = _audioSource.currentAudioSource.value;
-
-    if (sourceKey == AudioSource.allMusic) {
-      playListCacheItems.value = [..._musicCacheController.items];
-      return;
-    }
-
-    if (allUserKey.contains(sourceKey)) {
-      final pathSet =
-          _userPlayListCacheBox.get(key: sourceKey)!.pathList.toSet();
-      playListCacheItems.value = [
-        ..._musicCacheController.items.where((v) => pathSet.contains(v.path)),
-      ];
-      return;
-    }
-
-    // 艺术家
-    if (sourceKey.endsWith(TagSuffix.artistList)) {
-      playListCacheItems.value = [...ArtistListController.audioListItems];
-      return;
-    }
-
-    // 专辑
-    if (sourceKey.endsWith(TagSuffix.albumList)) {
-      playListCacheItems.value = [...AlbumListController.audioListItems];
-      return;
-    }
-
-    if (sourceKey.endsWith(TagSuffix.foldersList)) {
-      playListCacheItems.value = [...FoldersListController.audioListItems];
-      return;
-    }
-  }
 
   /// 获取音频FFT数据
   void getAudioFFt() async {
@@ -183,13 +148,6 @@ class AudioController extends GetxController {
         progress.value = 0.0;
         currentMs100.value = 0.0;
       }
-    });
-
-    ever(_audioSource.currentAudioSource, (_) {
-      syncPlayListCacheItems();
-      _settingController.lastAudioInfo[SettingController
-              .lastAudioPlayPathListKey] =
-          playListCacheItems.map((v) => v.path).toList();
     });
 
     ever(currentMetadata, (_) async {
@@ -681,7 +639,7 @@ class AudioController extends GetxController {
       key: userKey,
     );
 
-    if (_audioSource.currentAudioSource.value == userKey) {
+    if (currentAudioSource == userKey) {
       if (!playListCacheItems.any((v) => v.path == metadata.path)) {
         playListCacheItems.add(metadata);
         syncCurrentIndex();
@@ -736,7 +694,7 @@ class AudioController extends GetxController {
     final currentPlaySet = playListCacheItems.map((v) => v.path).toSet();
     selectedList.removeWhere((v) => currentPlaySet.contains(v.path));
 
-    if (_audioSource.currentAudioSource.value == userKey) {
+    if (currentAudioSource == userKey) {
       playListCacheItems.addAll(selectedList);
       syncCurrentIndex();
     }
@@ -774,7 +732,7 @@ class AudioController extends GetxController {
         key: userKey,
       );
 
-      if (_audioSource.currentAudioSource.value == userKey) {
+      if (currentAudioSource == userKey) {
         playListCacheItems.remove(metadata);
         syncCurrentIndex();
       }
@@ -812,7 +770,7 @@ class AudioController extends GetxController {
     targetList.pathList.removeWhere((path) => removePathSet.contains(path));
     await _userPlayListCacheBox.put(data: targetList, key: userKey);
 
-    if (_audioSource.currentAudioSource.value == userKey) {
+    if (currentAudioSource == userKey) {
       playListCacheItems.removeWhere((v) => removePathSet.contains(v.path));
       syncCurrentIndex();
     }

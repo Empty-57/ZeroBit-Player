@@ -1,7 +1,3 @@
-import 'package:get/get.dart';
-
-class AudioSource extends GetxController {
+abstract class AudioSource {
   static const allMusic = 'allMusic';
-
-  final currentAudioSource = AudioSource.allMusic.obs;
 }

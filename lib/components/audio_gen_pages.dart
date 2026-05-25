@@ -70,7 +70,6 @@ List<Widget> _genMenuItems({
   required String operateArea,
   required AudioController ctrl,
   required MusicCacheController cacheCtrl,
-  required AudioSource source,
   bool renderMaybeDel = false,
 }) {
   final Widget divider = Divider(
@@ -265,7 +264,6 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   late final ScrollController _scrollControllerGrid;
   late final SettingController _settingController =
       Get.find<SettingController>();
-  late final AudioSource _audioSource = Get.find<AudioSource>();
   late final AudioController _audioController = Get.find<AudioController>();
   late final MusicCacheController _musicCacheController =
       Get.find<MusicCacheController>();
@@ -316,22 +314,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   }
 
   void _playAll() {
-    _audioSource.currentAudioSource.value = widget.audioSource;
-    if (widget.controller.items.isEmpty) {
-      showSnackBar(
-        title: "WARNING",
-        msg: "此歌单暂无音乐！",
-        duration: const Duration(milliseconds: 1500),
-      );
-      return;
-    }
-    final metadataToPlay =
-        _settingController.playMode.value == 2
-            ? widget.controller.items[Random().nextInt(
-              widget.controller.items.length,
-            )]
-            : widget.controller.items[0];
-    _audioController.audioPlay(metadata: metadataToPlay);
+    widget.controller.play(widget.audioSource);
   }
 
   @override
@@ -523,7 +506,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
               if (_selectedList.isNotEmpty) {
                 _selectedList.clear();
               } else {
-                _selectedList.assignAll(widget.controller.items);
+                _selectedList.value = [...widget.controller.items];
               }
             },
             icon:
@@ -707,7 +690,6 @@ class _AudioGenPagesState extends State<AudioGenPages> {
                   index: _musicMenuCtrl.currentIndex.value,
                   renderMaybeDel: widget.operateArea == OperateArea.playList,
                   operateArea: widget.operateArea,
-                  source: _audioSource,
                   ctrl: _audioController,
                   cacheCtrl: _musicCacheController,
                 ),
@@ -808,9 +790,8 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         operateArea: widget.operateArea,
         isMulSelect: _isMulSelect,
         selectedList: _selectedList,
-        settingController: _settingController,
-        audioController: _audioController,
-        audioSourceClass: _audioSource,
+        viewMode: _settingController.viewModeMap[widget.operateArea] ?? true,
+        baseBontroller: widget.controller,
       ),
     );
   }

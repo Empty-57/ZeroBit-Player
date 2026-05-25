@@ -134,6 +134,6 @@ Future<void> syncCache() async {
   musicCacheCtrl.items.clear();
   musicCacheCtrl.loadData();
 
-  audioCtrl.syncPlayListCacheItems();
+  audioCtrl.playListCacheItems.value=[...musicCacheCtrl.items];
   audioCtrl.syncCurrentIndex();
 }
