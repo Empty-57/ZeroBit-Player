@@ -7,18 +7,18 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 
-import '../API/apis.dart';
-import '../HIveCtrl/models/music_cache_model.dart';
-import '../custom_widgets/custom_button.dart';
-import '../getxController/album_list_crl.dart';
-import '../getxController/artist_list_ctrl.dart';
-import '../getxController/audio_ctrl.dart';
-import '../getxController/folders_list_ctrl.dart';
-import '../getxController/music_cache_ctrl.dart';
-import '../getxController/play_list_ctrl.dart';
-import '../src/rust/api/music_tag_tool.dart';
-import '../tools/format_time.dart';
-import '../tools/general_style.dart';
+import 'package:zerobit_player/API/apis.dart';
+import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
+import 'package:zerobit_player/custom_widgets/custom_button.dart';
+import 'package:zerobit_player/controller/album_details_ctrl.dart';
+import 'package:zerobit_player/controller/artist_details_ctrl.dart';
+import 'package:zerobit_player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/controller/folders_details_ctrl.dart';
+import 'package:zerobit_player/controller/music_cache_ctrl.dart';
+import 'package:zerobit_player/controller/playlist_details_ctrl.dart';
+import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
+import 'package:zerobit_player/tools/func/format_time.dart';
+import 'package:zerobit_player/tools/func/general_style.dart';
 import 'get_snack_bar.dart';
 
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
@@ -264,25 +264,25 @@ class _MetadataEditorState extends State<_MetadataEditor> {
   void _syncToControllers(MusicCache newCache) {
     switch (widget.operateArea) {
       case OperateArea.playList:
-        PlayListController.audioListSyncMetadata(
+        PlayListDetailsController.audioListSyncMetadata(
           index: widget.index,
           newCache: newCache,
         );
         break;
       case OperateArea.artistList:
-        ArtistListController.audioListSyncMetadata(
+        ArtistDetailsController.audioListSyncMetadata(
           index: widget.index,
           newCache: newCache,
         );
         break;
       case OperateArea.albumList:
-        AlbumListController.audioListSyncMetadata(
+        AlbumDetailsController.audioListSyncMetadata(
           index: widget.index,
           newCache: newCache,
         );
         break;
       case OperateArea.foldersList:
-        FoldersListController.audioListSyncMetadata(
+        FoldersDetailsController.audioListSyncMetadata(
           index: widget.index,
           newCache: newCache,
         );

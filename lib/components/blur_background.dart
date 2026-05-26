@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zerobit_player/components/lyrics_mesh.dart';
 
-import '../getxController/setting_ctrl.dart';
-import '../theme_manager.dart';
+import 'package:zerobit_player/controller/setting_ctrl.dart';
+import 'package:zerobit_player/theme_manager.dart';
 
 const int _coverBigRenderSize = 800;
 

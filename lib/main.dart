@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
-
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -10,57 +9,49 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:zerobit_player/HIveCtrl/adapters/scalable_setting_adapters.dart';
-import 'package:zerobit_player/HIveCtrl/adapters/user_playlist_adapter.dart';
-import 'package:zerobit_player/HIveCtrl/models/scalable_setting_cache_model.dart';
-import 'package:zerobit_player/HIveCtrl/models/setting_cache_model.dart';
-import 'package:zerobit_player/HIveCtrl/models/user_playlist_model.dart';
+import 'package:zerobit_player/hive_manager/adapters/scalable_setting_adapters.dart';
+import 'package:zerobit_player/hive_manager/adapters/user_playlist_adapter.dart';
+import 'package:zerobit_player/hive_manager/models/scalable_setting_cache_model.dart';
+import 'package:zerobit_player/hive_manager/models/setting_cache_model.dart';
+import 'package:zerobit_player/hive_manager/models/user_playlist_model.dart';
 import 'package:zerobit_player/components/play_bar.dart';
-import 'package:zerobit_player/field/audio_source.dart';
-import 'package:zerobit_player/getxController/audio_ctrl.dart';
-import 'package:zerobit_player/getxController/user_playlist_ctrl.dart';
-import 'package:zerobit_player/pages/album_list_page.dart';
-import 'package:zerobit_player/pages/album_view_page.dart';
-import 'package:zerobit_player/pages/artist_list_page.dart';
-import 'package:zerobit_player/pages/artist_view_page.dart';
-import 'package:zerobit_player/pages/folders_list_page.dart';
-import 'package:zerobit_player/pages/folders_view_page.dart';
+import 'package:zerobit_player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
+import 'package:zerobit_player/pages/album_details_page.dart';
+import 'package:zerobit_player/pages/album_preview_page.dart';
+import 'package:zerobit_player/pages/artist_details_page.dart';
+import 'package:zerobit_player/pages/artist_preview_page.dart';
+import 'package:zerobit_player/pages/folders_details_page.dart';
+import 'package:zerobit_player/pages/folders_preview_page.dart';
 import 'package:zerobit_player/pages/local_music_page.dart';
-import 'package:zerobit_player/pages/lrc_view.dart';
-import 'package:zerobit_player/pages/playlist_page.dart';
+import 'package:zerobit_player/pages/play_page.dart';
+import 'package:zerobit_player/pages/playlist_details_page.dart';
 import 'package:zerobit_player/pages/setting_page.dart';
-import 'package:zerobit_player/pages/user_playlists_page.dart';
+import 'package:zerobit_player/pages/playlists_preview_page.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
 import 'package:zerobit_player/src/rust/frb_generated.dart';
-import 'package:zerobit_player/tools/func_extension.dart';
-import 'package:zerobit_player/tools/sync_cache.dart';
+import 'package:zerobit_player/tools/func/func_extension.dart';
+import 'package:zerobit_player/tools/func/sync_cache.dart';
 import 'package:zerobit_player/components/window_ctrl_bar.dart';
 import 'package:get/get.dart';
-
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:zerobit_player/tray.dart';
-import 'HIveCtrl/adapters/setting_cache_adapter.dart';
-import 'HIveCtrl/models/music_cache_model.dart';
+import 'hive_manager/adapters/setting_cache_adapter.dart';
+import 'hive_manager/models/music_cache_model.dart';
 import 'components/get_snack_bar.dart';
 import 'desktop_lyrics_sever.dart';
 import 'field/app_routes.dart';
-
-import 'package:zerobit_player/custom_widgets/custom_widget.dart';
-
+import 'package:zerobit_player/custom_widgets/index.dart';
 import 'package:window_manager/window_manager.dart';
-
 import 'package:hive_ce_flutter/hive_flutter.dart';
-import 'HIveCtrl/hive_boxes.dart';
-
-import 'HIveCtrl/adapters/music_cache_adapter.dart';
-import 'field/operate_area.dart';
-import 'getxController/desktop_lyrics_setting_ctrl.dart';
-import 'getxController/lyric_ctrl.dart';
-import 'getxController/music_cache_ctrl.dart';
-import 'getxController/setting_ctrl.dart';
-
-import 'getxController/window_ctrl.dart';
+import 'hive_manager/hive_boxes.dart';
+import 'hive_manager/adapters/music_cache_adapter.dart';
+import 'controller/desktop_lyrics_setting_ctrl.dart';
+import 'controller/lyric_ctrl.dart';
+import 'controller/music_cache_ctrl.dart';
+import 'controller/setting_ctrl.dart';
+import 'controller/window_ctrl.dart';
 import 'logger.dart';
 import 'theme_manager.dart';
 
@@ -343,12 +334,17 @@ class _SlideTransition extends CustomTransition {
   ) {
     return SlideTransition(
       position: Tween<Offset>(
-        begin: Offset(0.0, 0.1),
+        begin: SidebarNavState.instance.beginOffset,
         end: Offset.zero,
       ).animate(
         CurvedAnimation(parent: animation, curve: Curves.fastOutSlowIn),
       ),
-      child: child,
+      child: FadeTransition(
+        opacity: Tween<double>(begin: 0.3, end: 1.0).animate(
+          CurvedAnimation(parent: animation, curve: Curves.fastOutSlowIn),
+        ),
+        child: child,
+      ),
     );
   }
 }
@@ -369,41 +365,70 @@ class MainFrame extends StatelessWidget {
             settingController.themeMode.value == 'dark'
                 ? ThemeMode.dark
                 : ThemeMode.light,
-        transitionDuration: 200.ms,
+        transitionDuration: 500.ms,
         customTransition: _SlideTransition(),
         debugShowCheckedModeBanner: false,
         initialRoute: AppRoutes.base,
         getPages: [
-          GetPage(name: AppRoutes.base, page: () => const HomePage()),
-          GetPage(name: AppRoutes.home, page: () => const LocalMusic()),
-          GetPage(name: AppRoutes.setting, page: () => const Setting()),
           GetPage(
-            name: AppRoutes.userPlayList,
-            page: () => const UserPlayList(),
-          ),
-          GetPage(name: AppRoutes.playList, page: () => const PlayList()),
-          GetPage(
-            name: AppRoutes.artistView,
-            page: () => const ArtistViewPage(),
-          ),
-          GetPage(
-            name: AppRoutes.artistList,
-            page: () => const ArtistListPage(),
-          ),
-          GetPage(name: AppRoutes.albumView, page: () => const AlbumViewPage()),
-          GetPage(name: AppRoutes.albumList, page: () => const AlbumListPage()),
-          GetPage(
-            name: AppRoutes.foldersView,
-            page: () => const FoldersViewPage(),
-          ),
-          GetPage(
-            name: AppRoutes.foldersList,
-            page: () => const FoldersListPage(),
-          ),
-          GetPage(
-            name: AppRoutes.lrcView,
+            name: AppRoutes.base,
+            page: () => const HomePage(),
             maintainState: false,
-            page: () => const LrcView(),
+          ),
+          GetPage(
+            name: AppRoutes.home,
+            page: () => const LocalMusicPage(),
+            maintainState: false,
+          ),
+          GetPage(
+            name: AppRoutes.setting,
+            page: () => const SettingPage(),
+            maintainState: false,
+          ),
+          GetPage(
+            name: AppRoutes.playListPreview,
+            page: () => const PlayListPreviewPage(),
+            maintainState: false,
+          ),
+          GetPage(
+            name: AppRoutes.playListDetails,
+            page: () => const PlayListDetailsPage(),
+            maintainState: false,
+          ),
+          GetPage(
+            name: AppRoutes.artistPreview,
+            page: () => const ArtistPreviewPage(),
+            maintainState: false,
+          ),
+          GetPage(
+            name: AppRoutes.artistDetails,
+            page: () => const ArtistDetailsPage(),
+            maintainState: false,
+          ),
+          GetPage(
+            name: AppRoutes.albumPreview,
+            page: () => const AlbumPreviewPage(),
+            maintainState: false,
+          ),
+          GetPage(
+            name: AppRoutes.albumDetails,
+            page: () => const AlbumDetailsPage(),
+            maintainState: false,
+          ),
+          GetPage(
+            name: AppRoutes.foldersPreview,
+            page: () => const FoldersPreviewPage(),
+            maintainState: false,
+          ),
+          GetPage(
+            name: AppRoutes.foldersDetails,
+            page: () => const FoldersDetailsPage(),
+            maintainState: false,
+          ),
+          GetPage(
+            name: AppRoutes.playPage,
+            maintainState: false,
+            page: () => const PlayPage(),
             transition: Transition.fade,
             curve: Curves.fastOutSlowIn,
             transitionDuration: 300.ms,
@@ -432,27 +457,27 @@ class HomePage extends StatelessWidget {
   Widget _getNamedPage({required String name}) {
     switch (name) {
       case AppRoutes.home:
-        return const LocalMusic();
-      case AppRoutes.userPlayList:
-        return const UserPlayList();
+        return const LocalMusicPage();
+      case AppRoutes.playListPreview:
+        return const PlayListPreviewPage();
       case AppRoutes.setting:
-        return const Setting();
-      case AppRoutes.playList:
-        return const PlayList();
-      case AppRoutes.artistView:
-        return const ArtistViewPage();
-      case AppRoutes.artistList:
-        return const ArtistListPage();
-      case AppRoutes.albumView:
-        return const AlbumViewPage();
-      case AppRoutes.albumList:
-        return const AlbumListPage();
-      case AppRoutes.foldersView:
-        return const FoldersViewPage();
-      case AppRoutes.foldersList:
-        return const FoldersListPage();
+        return const SettingPage();
+      case AppRoutes.playListDetails:
+        return const PlayListDetailsPage();
+      case AppRoutes.artistPreview:
+        return const ArtistPreviewPage();
+      case AppRoutes.artistDetails:
+        return const ArtistDetailsPage();
+      case AppRoutes.albumPreview:
+        return const AlbumPreviewPage();
+      case AppRoutes.albumDetails:
+        return const AlbumDetailsPage();
+      case AppRoutes.foldersPreview:
+        return const FoldersPreviewPage();
+      case AppRoutes.foldersDetails:
+        return const FoldersDetailsPage();
     }
-    return const LocalMusic();
+    return const LocalMusicPage();
   }
 
   @override
@@ -486,22 +511,22 @@ class HomePage extends StatelessWidget {
                         CustomNavigationBtn(
                           label: '艺术家',
                           icon: PhosphorIconsLight.userFocus,
-                          localIndex: AppRoutes.artistViewOrder,
+                          localIndex: AppRoutes.artistPreviewOrder,
                         ),
                         CustomNavigationBtn(
                           label: '专辑',
                           icon: PhosphorIconsLight.vinylRecord,
-                          localIndex: AppRoutes.albumViewOrder,
+                          localIndex: AppRoutes.albumPreviewOrder,
                         ),
                         CustomNavigationBtn(
                           label: '歌单',
                           icon: PhosphorIconsLight.playlist,
-                          localIndex: AppRoutes.userPlayListOrder,
+                          localIndex: AppRoutes.playListPreviewOrder,
                         ),
                         CustomNavigationBtn(
                           label: '文件夹',
                           icon: PhosphorIconsLight.folders,
-                          localIndex: AppRoutes.foldersViewOrder,
+                          localIndex: AppRoutes.foldersPreviewOrder,
                         ),
                         CustomNavigationBtn(
                           label: '设置',
@@ -516,8 +541,10 @@ class HomePage extends StatelessWidget {
                         observers: [
                           NestedObserver(
                             onRoutePopped: (name) {
-                              currentNavigationIndex.value =
-                                  AppRoutes.orderMap[name] ?? 0;
+                              SidebarNavState
+                                  .instance
+                                  .currentNavigationIndex
+                                  .value = AppRoutes.orderMap_[name] ?? 0;
                             },
                           ),
                         ],

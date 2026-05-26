@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'getxController/setting_ctrl.dart';
+import 'controller/setting_ctrl.dart';
 
 class ThemeService extends GetxService {
   final SettingController _settingController = Get.find<SettingController>();

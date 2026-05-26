@@ -8,13 +8,13 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:zerobit_player/components/spring_list_view.dart';
 import 'package:zerobit_player/theme_manager.dart';
-import 'package:zerobit_player/tools/func_extension.dart';
-import '../tools/general_style.dart';
+import 'package:zerobit_player/tools/func/func_extension.dart';
+import 'package:zerobit_player/tools/func/general_style.dart';
 
-import '../getxController/audio_ctrl.dart';
-import '../getxController/lyric_ctrl.dart';
-import '../getxController/setting_ctrl.dart';
-import '../tools/lrcTool/lyric_model.dart';
+import 'package:zerobit_player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/controller/lyric_ctrl.dart';
+import 'package:zerobit_player/controller/setting_ctrl.dart';
+import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import 'audio_ctrl_btn.dart';
 
 const double _audioCtrlBarHeight = 96;

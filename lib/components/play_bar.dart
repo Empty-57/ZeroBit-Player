@@ -3,12 +3,12 @@ import 'package:get/get.dart';
 import 'package:text_scroll/text_scroll.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/field/app_routes.dart';
-import 'package:zerobit_player/tools/format_time.dart';
-import 'package:zerobit_player/tools/general_style.dart';
+import 'package:zerobit_player/tools/func/format_time.dart';
+import 'package:zerobit_player/tools/func/general_style.dart';
 
-import '../getxController/audio_ctrl.dart';
-import '../tools/diamond_silder_thumb.dart';
-import '../tools/rect_value_indicator.dart';
+import 'package:zerobit_player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/custom_widgets/diamond_silder_thumb.dart';
+import 'package:zerobit_player/custom_widgets/rect_value_indicator.dart';
 import 'audio_ctrl_btn.dart';
 
 const double _barWidth = 700;
@@ -197,7 +197,7 @@ class PlayBar extends GetView<AudioController> {
         const _ProgressBar(),
         // 交互层
         RepaintBoundary(child: TextButton(
-          onPressed: () => Get.toNamed(AppRoutes.lrcView),
+          onPressed: () => Get.toNamed(AppRoutes.playPage),
           onHover: (v) => _isBarHover.value=v,
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 12),

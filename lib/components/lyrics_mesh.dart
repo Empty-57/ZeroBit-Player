@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mesh_gradient/mesh_gradient.dart';
 import 'package:get/get.dart';
-import '../getxController/audio_ctrl.dart';
+import 'package:zerobit_player/controller/audio_ctrl.dart';
 
 class LyricsMesh extends GetView<AudioController> {
   const LyricsMesh({super.key});

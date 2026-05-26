@@ -1,29 +1,25 @@
 import 'dart:io';
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:zerobit_player/HIveCtrl/models/music_cache_model.dart';
+import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
-import 'package:zerobit_player/tools/func_extension.dart';
-
-import '../custom_widgets/custom_button.dart';
-import '../custom_widgets/custom_drop_menu.dart';
-import '../field/audio_source.dart';
-import '../getxController/audio_ctrl.dart';
-import '../getxController/music_cache_ctrl.dart';
-import '../getxController/setting_ctrl.dart';
-import '../tools/audio_ctrl_mixin.dart';
-import '../tools/general_style.dart';
-import '../field/tag_suffix.dart';
+import 'package:zerobit_player/tools/func/func_extension.dart';
+import 'package:zerobit_player/custom_widgets/custom_button.dart';
+import 'package:zerobit_player/custom_widgets/custom_drop_menu.dart';
+import 'package:zerobit_player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/controller/music_cache_ctrl.dart';
+import 'package:zerobit_player/controller/setting_ctrl.dart';
+import 'package:zerobit_player/controller/details_page_base_ctrl.dart';
+import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/field/tag_suffix.dart';
 import 'edit_embedded_lyrics_dialog.dart';
 import 'edit_metadata_dialog.dart';
 import 'floating_button.dart';
 import 'get_snack_bar.dart';
 import 'music_list_tool.dart';
-import '../field/sort_type.dart';
+import 'package:zerobit_player/field/sort_type.dart';
 
 const double _itemHeight = 64.0;
 const double _headCoverSize = 240;
@@ -39,18 +35,18 @@ const _borderRadius = BorderRadius.all(Radius.circular(4));
 
 class _MusicMenuController {
   final menuController = MenuController();
-  final Rxn<Offset> menuPosition = Rxn<Offset>();
-  final Rxn<MusicCache> currentMetadata = Rxn<MusicCache>();
-  final RxInt currentIndex = (-1).obs;
+  Offset? menuPosition;
+  MusicCache? currentMetadata;
+  int currentIndex = -1;
 
   void openMenu({
     required Offset overlayOffset,
     required MusicCache metadata,
     required int index,
   }) {
-    menuPosition.value = overlayOffset;
-    currentMetadata.value = metadata;
-    currentIndex.value = index;
+    menuPosition = overlayOffset;
+    currentMetadata = metadata;
+    currentIndex = index;
     menuController.open(position: Offset.zero);
   }
 
@@ -134,7 +130,7 @@ List<Widget> _genMenuItems({
     buildMenuBtn(
       fn:
           () => Get.toNamed(
-            AppRoutes.albumList,
+            AppRoutes.albumDetails,
             arguments: {
               'pathList': cacheCtrl.albumItemsDict[albumWithLetter],
               'title': album,
@@ -150,7 +146,7 @@ List<Widget> _genMenuItems({
       buildMenuBtn(
         fn:
             () => Get.toNamed(
-              AppRoutes.artistList,
+              AppRoutes.artistDetails,
               arguments: {
                 'pathList': cacheCtrl.artistItemsDict[artistFirstWithLetter],
                 'title': artistFirst,
@@ -180,7 +176,7 @@ List<Widget> _genMenuItems({
                 onPressed: () {
                   menuController.close();
                   Get.toNamed(
-                    AppRoutes.artistList,
+                    AppRoutes.artistDetails,
                     arguments: {
                       'pathList':
                           cacheCtrl
@@ -240,7 +236,7 @@ class AudioGenPages extends StatefulWidget {
   final String title;
   final String operateArea;
   final String audioSource;
-  final AudioControllerGenClass controller;
+  final DetailsPageBaseController controller;
   final Color? backgroundColor;
 
   const AudioGenPages({
@@ -267,8 +263,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   late final AudioController _audioController = Get.find<AudioController>();
   late final MusicCacheController _musicCacheController =
       Get.find<MusicCacheController>();
-  late final _MusicMenuController _musicMenuCtrl =
-      _MusicMenuController(); // maybe Get.put()
+  late final _MusicMenuController _musicMenuCtrl = _MusicMenuController();
 
   late TextStyle _titleStyle;
   late TextStyle _highLightTitleStyle;
@@ -307,9 +302,6 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     _scrollControllerList.dispose();
     _scrollControllerGrid.dispose();
 
-    _musicMenuCtrl.menuPosition.close();
-    _musicMenuCtrl.currentMetadata.close();
-    _musicMenuCtrl.currentIndex.close();
     super.dispose();
   }
 
@@ -643,8 +635,8 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       controller: _musicMenuCtrl.menuController,
       consumeOutsideTaps: true,
       overlayBuilder: (context, info) {
-        final currentMetadata = _musicMenuCtrl.currentMetadata.value;
-        final position = _musicMenuCtrl.menuPosition.value;
+        final currentMetadata = _musicMenuCtrl.currentMetadata;
+        final position = _musicMenuCtrl.menuPosition;
         if (currentMetadata == null || position == null) {
           return const SizedBox.shrink();
         }
@@ -687,7 +679,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
                   menuController: _musicMenuCtrl.menuController,
                   metadata: currentMetadata,
                   userKey: widget.audioSource,
-                  index: _musicMenuCtrl.currentIndex.value,
+                  index: _musicMenuCtrl.currentIndex,
                   renderMaybeDel: widget.operateArea == OperateArea.playList,
                   operateArea: widget.operateArea,
                   ctrl: _audioController,
@@ -700,55 +692,56 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       },
       child: Stack(
         children: [
-          Obx(
-            () =>
-                _settingController.viewModeMap[widget.operateArea]!
-                    ? ListView.builder(
-                      controller: _scrollControllerList,
-                      itemCount: widget.controller.items.length,
-                      itemExtent: _itemHeight,
-                      cacheExtent: _itemHeight * 2,
-                      padding: const EdgeInsets.only(bottom: _itemHeight * 2),
-                      addRepaintBoundaries: true,
-                      addAutomaticKeepAlives: false,
-                      addSemanticIndexes: false,
-                      itemBuilder:
-                          (context, index) => _buildMusicTile(
-                            context,
-                            index,
-                            _titleStyle,
-                            _highLightTitleStyle,
-                            _subStyle,
-                            _highLightSubStyle,
-                          ),
-                    )
-                    : GridView.builder(
-                      controller: _scrollControllerGrid,
-                      itemCount: widget.controller.items.length,
-                      cacheExtent: _itemHeight * 2,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount:
-                            context.width < resViewThresholds ? 3 : 4,
-                        mainAxisSpacing: 4.0,
-                        crossAxisSpacing: 8.0,
-                        childAspectRatio: 1.0,
-                        mainAxisExtent: _itemHeight,
+          Obx(() {
+            final viewMode = _settingController.viewModeMap[widget.operateArea];
+            return viewMode!
+                ? ListView.builder(
+                  controller: _scrollControllerList,
+                  itemCount: widget.controller.items.length,
+                  itemExtent: _itemHeight,
+                  cacheExtent: _itemHeight * 2,
+                  padding: const EdgeInsets.only(bottom: _itemHeight * 2),
+                  addRepaintBoundaries: true,
+                  addAutomaticKeepAlives: false,
+                  addSemanticIndexes: false,
+                  itemBuilder:
+                      (context, index) => _buildMusicTile(
+                        context,
+                        index,
+                        _titleStyle,
+                        _highLightTitleStyle,
+                        _subStyle,
+                        _highLightSubStyle,
+                        viewMode,
                       ),
-                      padding: const EdgeInsets.only(bottom: _itemHeight * 2),
-                      addRepaintBoundaries: true,
-                      addAutomaticKeepAlives: false,
-                      addSemanticIndexes: false,
-                      itemBuilder:
-                          (context, index) => _buildMusicTile(
-                            context,
-                            index,
-                            _titleStyle,
-                            _highLightTitleStyle,
-                            _subStyle,
-                            _highLightSubStyle,
-                          ),
-                    ),
-          ),
+                )
+                : GridView.builder(
+                  controller: _scrollControllerGrid,
+                  itemCount: widget.controller.items.length,
+                  cacheExtent: _itemHeight * 2,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: context.width < resViewThresholds ? 3 : 4,
+                    mainAxisSpacing: 4.0,
+                    crossAxisSpacing: 8.0,
+                    childAspectRatio: 1.0,
+                    mainAxisExtent: _itemHeight,
+                  ),
+                  padding: const EdgeInsets.only(bottom: _itemHeight * 2),
+                  addRepaintBoundaries: true,
+                  addAutomaticKeepAlives: false,
+                  addSemanticIndexes: false,
+                  itemBuilder:
+                      (context, index) => _buildMusicTile(
+                        context,
+                        index,
+                        _titleStyle,
+                        _highLightTitleStyle,
+                        _subStyle,
+                        _highLightSubStyle,
+                        viewMode,
+                      ),
+                );
+          }),
           FloatingButton(
             scrollControllerList: _scrollControllerList,
             scrollControllerGrid: _scrollControllerGrid,
@@ -766,6 +759,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     TextStyle highLightTitleStyle,
     TextStyle subStyle,
     TextStyle highLightSubStyle,
+    bool viewMode,
   ) {
     final metadata = widget.controller.items[index];
     return GestureDetector(
@@ -790,7 +784,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         operateArea: widget.operateArea,
         isMulSelect: _isMulSelect,
         selectedList: _selectedList,
-        viewMode: _settingController.viewModeMap[widget.operateArea] ?? true,
+        viewMode: viewMode,
         baseBontroller: widget.controller,
       ),
     );

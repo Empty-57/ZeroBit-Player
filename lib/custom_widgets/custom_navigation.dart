@@ -2,14 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:zerobit_player/tools/func_extension.dart';
-import 'package:zerobit_player/tools/general_style.dart';
+import 'package:zerobit_player/tools/func/func_extension.dart';
+import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:get/get.dart';
 
-import '../field/app_routes.dart';
-import '../getxController/audio_ctrl.dart';
+import 'package:zerobit_player/field/app_routes.dart';
+import 'package:zerobit_player/controller/audio_ctrl.dart';
 
-final currentNavigationIndex = 0.obs;
+class SidebarNavState {
+  SidebarNavState._();
+  static final instance = SidebarNavState._();
+
+  Offset beginOffset = const Offset(0.1, 0.1);
+  final currentNavigationIndex = 0.obs;
+}
 
 int _oldIndex = 0;
 
@@ -41,16 +47,23 @@ class CustomNavigationBtn extends GetView<AudioController> {
 
   @override
   Widget build(BuildContext context) {
+    final backgroundColor = Theme.of(context).colorScheme.secondaryContainer;
     return SizedBox(
       width: _navigationBtnWidth,
       height: _navigationBtnHeight,
-      child: Obx(
-        () => TextButton(
+      child: Obx(() {
+        final index = SidebarNavState.instance.currentNavigationIndex.value;
+        return TextButton(
           onPressed:
-              currentNavigationIndex.value != localIndex
+              index != localIndex
                   ? () {
-                    _oldIndex = currentNavigationIndex.value;
-                    currentNavigationIndex.value = localIndex;
+                    _oldIndex = index;
+                    SidebarNavState.instance.beginOffset =
+                        _oldIndex >= localIndex
+                            ? const Offset(0.1, 0.1)
+                            : const Offset(-0.1, -0.1);
+                    SidebarNavState.instance.currentNavigationIndex.value =
+                        localIndex;
                     Get.toNamed(_mainRoutes[localIndex], id: 1);
                   }
                   : null,
@@ -59,13 +72,9 @@ class CustomNavigationBtn extends GetView<AudioController> {
               borderRadius: BorderRadius.circular(4),
             ),
             backgroundColor:
-                currentNavigationIndex.value == localIndex
-                    ? Theme.of(
-                      context,
-                    ).colorScheme.secondaryContainer.withValues(alpha: 1)
-                    : Theme.of(
-                      context,
-                    ).colorScheme.secondaryContainer.withValues(alpha: 0),
+                index == localIndex
+                    ? backgroundColor.withValues(alpha: 1)
+                    : backgroundColor.withValues(alpha: 0),
             padding: const EdgeInsets.only(
               left: 12,
               right: 0,
@@ -123,7 +132,7 @@ class CustomNavigationBtn extends GetView<AudioController> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(2),
                       color:
-                          currentNavigationIndex.value == localIndex
+                          index == localIndex
                               ? Theme.of(
                                 context,
                               ).colorScheme.primary.withValues(alpha: 0.8)
@@ -132,9 +141,7 @@ class CustomNavigationBtn extends GetView<AudioController> {
                   )
                   .animate()
                   .moveX(duration: 0.ms, end: 8)
-                  .animate(
-                    target: currentNavigationIndex.value == localIndex ? 1 : 0,
-                  )
+                  .animate(target: index == localIndex ? 1 : 0)
                   .fade(duration: 500.ms)
                   .moveY(
                     duration: 300.ms,
@@ -147,8 +154,8 @@ class CustomNavigationBtn extends GetView<AudioController> {
                   ),
             ],
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 }

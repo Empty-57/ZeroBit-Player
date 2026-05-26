@@ -6,8 +6,8 @@ import 'package:path/path.dart' as p;
 import 'package:zerobit_player/tools/lrcTool/parse_lyrics.dart';
 
 import '../../src/rust/api/music_tag_tool.dart';
-import '../krc_decryptor.dart';
-import '../qrc_decryptor.dart';
+import 'krc_decryptor.dart';
+import 'qrc_decryptor.dart';
 import 'krc_extract_decode.dart';
 import 'lyric_model.dart';
 

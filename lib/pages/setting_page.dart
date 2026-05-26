@@ -11,11 +11,11 @@ import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:zerobit_player/src/rust/api/get_fonts.dart';
-import '../components/get_snack_bar.dart';
-import '../getxController/desktop_lyrics_setting_ctrl.dart';
-import '../getxController/music_cache_ctrl.dart';
-import '../tools/general_style.dart';
-import '../getxController/setting_ctrl.dart';
+import 'package:zerobit_player/components/get_snack_bar.dart';
+import 'package:zerobit_player/controller/desktop_lyrics_setting_ctrl.dart';
+import 'package:zerobit_player/controller/music_cache_ctrl.dart';
+import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/controller/setting_ctrl.dart';
 
 const double btnW = 108;
 final SettingController _settingController = Get.find<SettingController>();
@@ -1242,8 +1242,8 @@ class _DesktopLyricsStrokeColor extends StatelessWidget {
   }
 }
 
-class Setting extends StatelessWidget {
-  const Setting({super.key});
+class SettingPage extends StatelessWidget {
+  const SettingPage({super.key});
 
   void _getFonts() async {
     if (_fontsList.isEmpty) {

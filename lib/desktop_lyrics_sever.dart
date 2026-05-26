@@ -9,10 +9,10 @@ import 'package:web_socket_channel/status.dart' as status;
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import 'package:zerobit_player/tools/websocket_model.dart';
 
-import 'getxController/audio_ctrl.dart';
-import 'getxController/desktop_lyrics_setting_ctrl.dart';
-import 'getxController/lyric_ctrl.dart';
-import 'getxController/setting_ctrl.dart';
+import 'controller/audio_ctrl.dart';
+import 'controller/desktop_lyrics_setting_ctrl.dart';
+import 'controller/lyric_ctrl.dart';
+import 'controller/setting_ctrl.dart';
 
 class DesktopLyricsSever extends GetxController {
   final LyricController _lyricController = Get.find<LyricController>();

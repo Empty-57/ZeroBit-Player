@@ -1,11 +1,11 @@
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
-import 'package:zerobit_player/HIveCtrl/models/music_cache_model.dart';
-import '../components/music_list_tool.dart';
-import '../field/app_routes.dart';
-import '../tools/general_style.dart';
 import 'package:get/get.dart';
+import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
+import 'package:zerobit_player/components/music_list_tool.dart';
+import 'package:zerobit_player/field/app_routes.dart';
+import 'package:zerobit_player/tools/func/general_style.dart';
 
 // 内容项宽高
 const double _itemHeight = 230.0;
@@ -77,7 +77,7 @@ class SortedListView extends StatefulWidget {
 class _SortedListViewState extends State<SortedListView> {
   // 以首字母为键、以 GlobalKey 为值的映射，用于定位滚动
   final Map<String, GlobalKey> _sectionKeys = {};
- late final ScrollController _scrollController;
+  late final ScrollController _scrollController;
 
   List<_SectionItem> _sections = [];
   Map<String, MusicCache> _itemMap = {};
@@ -86,12 +86,13 @@ class _SortedListViewState extends State<SortedListView> {
   late TextStyle _titleStyle;
   late TextStyle _subStyle;
   late WidgetStateProperty<Color?> _foregroundColorHover;
-late Color _itemBackgroundColor;
+  late Color _itemBackgroundColor;
 
   @override
   void initState() {
     super.initState();
-    final initialOffset = widget.rwScrollOffset(route: widget.toRoute, rw: true) ?? 0.0;
+    final initialOffset =
+        widget.rwScrollOffset(route: widget.toRoute, rw: true) ?? 0.0;
     _scrollController = ScrollController(initialScrollOffset: initialOffset);
     _processData();
   }
@@ -104,17 +105,18 @@ late Color _itemBackgroundColor;
     _titleStyle = generalTextStyle(ctx: context, size: 'md');
     _subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
     _itemBackgroundColor = Theme.of(context).colorScheme.surfaceContainer;
-  _foregroundColorHover = WidgetStateProperty.resolveWith<Color>((states) {
-    return states.contains(WidgetState.hovered)
-        ? Theme.of(context).colorScheme.primary
-        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8);
-  });
+    _foregroundColorHover = WidgetStateProperty.resolveWith<Color>((states) {
+      return states.contains(WidgetState.hovered)
+          ? Theme.of(context).colorScheme.primary
+          : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8);
+    });
   }
 
-   @override
+  @override
   void didUpdateWidget(covariant SortedListView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.sortedDict != widget.sortedDict || oldWidget.items != widget.items) {
+    if (oldWidget.sortedDict != widget.sortedDict ||
+        oldWidget.items != widget.items) {
       _processData();
     }
   }
@@ -177,10 +179,9 @@ late Color _itemBackgroundColor;
 
   @override
   Widget build(BuildContext context) {
-
     // 根据路由判断视图类型
     final viewType =
-        widget.toRoute == AppRoutes.albumList
+        widget.toRoute == AppRoutes.albumDetails
             ? _ViewType.album
             : _ViewType.artist;
 
@@ -229,9 +230,9 @@ late Color _itemBackgroundColor;
           ),
         ),
         Text(
-            widget.subTitle,
-            style: generalTextStyle(ctx: context, size: 'md'),
-          ),
+          widget.subTitle,
+          style: generalTextStyle(ctx: context, size: 'md'),
+        ),
       ],
     );
   }

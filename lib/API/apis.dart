@@ -4,11 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:get/get.dart' hide Response;
 
-import '../getxController/setting_ctrl.dart';
-import '../tools/krc_decryptor.dart';
-import '../tools/lrcTool/krc_extract_decode.dart';
-import '../tools/lrcTool/lyric_model.dart';
-import '../tools/qrc_decryptor.dart';
+import 'package:zerobit_player/controller/setting_ctrl.dart';
+import 'package:zerobit_player/tools/lrcTool/krc_decryptor.dart';
+import 'package:zerobit_player/tools/lrcTool/krc_extract_decode.dart';
+import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
+import 'package:zerobit_player/tools/lrcTool/qrc_decryptor.dart';
 
 const _neSearchUrl = "https://music.163.com/api/cloudsearch/pc";
 const _neLrcUrl = "https://music.163.com/api/song/lyric";

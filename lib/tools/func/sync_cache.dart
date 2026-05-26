@@ -1,0 +1,139 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
+import 'package:path/path.dart' as p;
+
+import 'package:zerobit_player/hive_manager/hive_box.dart';
+import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
+import 'package:zerobit_player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/controller/music_cache_ctrl.dart';
+import 'package:zerobit_player/controller/setting_ctrl.dart';
+import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
+
+const Set<String> supportedExts = {
+  '.aac',
+  '.ape',
+  '.aiff',
+  '.aif',
+  '.flac',
+  '.mp3',
+  '.mp4',
+  '.m4a',
+  '.m4b',
+  '.m4p',
+  '.m4v',
+  '.mpc',
+  '.opus',
+  '.ogg',
+  '.oga',
+  '.spx',
+  '.wav',
+  '.wv',
+};
+
+Future<Set<String>> scanAudioPaths(
+  List<String> folders,
+  SettingController setCtrl,
+) async {
+  final Set<String> paths = {};
+  bool removedFolders = false;
+  for (final dirPath in [...folders]) {
+    final directory = Directory(dirPath);
+    if (!await directory.exists()) {
+      setCtrl.folders.remove(dirPath); // 清除不可访问的路径
+      removedFolders = true;
+      continue;
+    }
+    await for (final entity in directory.list(
+      recursive: true,
+      followLinks: false,
+    )) {
+      if (entity is File &&
+          supportedExts.contains(p.extension(entity.path).toLowerCase())) {
+        paths.add(entity.path);
+      }
+    }
+  }
+  if (removedFolders) {
+    await setCtrl.putCache();
+  }
+  return paths;
+}
+
+Future<Map<String, MusicCache>> _fetchMetadataBatch(
+  Set<String> newPaths,
+  MusicCacheController ctrl,
+) async {
+  final futures = newPaths.map((path) async {
+    try {
+      final meta = await getMetadata(path: path);
+      ctrl.currentScanAudio.value = meta.title;
+      final hashPath = md5.convert(utf8.encode(path)).toString();
+      return MapEntry(
+        hashPath,
+        MusicCache(
+          artist: meta.artist,
+          album: meta.album,
+          trackNumber: meta.trackNumber,
+          title: meta.title,
+          genre: meta.genre,
+          duration: meta.duration,
+          bitrate: meta.bitrate,
+          sampleRate: meta.sampleRate,
+          bitDepth: meta.bitDepth,
+          channels: meta.channels,
+          path: meta.path,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Metadata error for $path: \$e');
+      return null;
+    }
+  });
+
+  final entries = await Future.wait(futures);
+  return Map.fromEntries(entries.whereType<MapEntry<String, MusicCache>>());
+}
+
+/// 同步本地音乐缓存
+Future<void> syncCache() async {
+  final settingCtrl = Get.find<SettingController>();
+  final musicCacheCtrl = Get.find<MusicCacheController>();
+  final audioCtrl = Get.find<AudioController>();
+  final musicBox = HiveBox.musicCacheBox;
+
+  final scannedPaths = await scanAudioPaths(settingCtrl.folders, settingCtrl);
+
+  final existingKeys =
+      musicBox
+          .getAll()
+          .map((v) => v.path)
+          .whereType<String>()
+          .where((k) => supportedExts.contains(p.extension(k).toLowerCase()))
+          .toSet(); //清除不是音频格式的路径，防止路径被污染
+
+  final newPaths = scannedPaths.difference(existingKeys);
+  final removedPaths =
+      existingKeys
+          .difference(scannedPaths)
+          .map((v) => md5.convert(utf8.encode(v)).toString())
+          .toList();
+
+  if (removedPaths.isNotEmpty) {
+    await musicBox.delAll(keyList: removedPaths);
+  }
+
+  if (newPaths.isNotEmpty) {
+    final tagBuffer = await _fetchMetadataBatch(newPaths, musicCacheCtrl);
+    await musicBox.putAll(data: tagBuffer);
+  }
+
+  musicCacheCtrl.currentScanAudio.value = '';
+  musicCacheCtrl.items.clear();
+  musicCacheCtrl.loadData();
+
+  audioCtrl.playListCacheItems.value=[...musicCacheCtrl.items];
+  audioCtrl.syncCurrentIndex();
+}

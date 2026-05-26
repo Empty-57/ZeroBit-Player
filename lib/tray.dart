@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:get/get.dart';
 import 'package:tray_manager/tray_manager.dart';
-import 'package:zerobit_player/getxController/audio_ctrl.dart';
-import 'package:zerobit_player/getxController/setting_ctrl.dart';
+import 'package:zerobit_player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/controller/setting_ctrl.dart';
 
 import 'desktop_lyrics_sever.dart';
 

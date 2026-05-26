@@ -4,14 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/field/operate_area.dart';
-import 'package:zerobit_player/getxController/audio_ctrl.dart';
-import 'package:zerobit_player/getxController/setting_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
-import 'package:zerobit_player/tools/audio_ctrl_mixin.dart';
-import 'package:zerobit_player/tools/func_extension.dart';
-import '../HIveCtrl/models/music_cache_model.dart';
-import '../field/audio_source.dart';
-import '../tools/format_time.dart';
+import 'package:zerobit_player/controller/details_page_base_ctrl.dart';
+import 'package:zerobit_player/tools/func/func_extension.dart';
+import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
+import 'package:zerobit_player/tools/func/format_time.dart';
 
 const double _itemSpacing = 16.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
@@ -27,7 +24,7 @@ class MusicTile extends StatelessWidget {
   final RxBool isMulSelect;
   final RxList<MusicCache> selectedList;
   final bool viewMode;
-  final AudioControllerGenClass baseBontroller;
+  final DetailsPageBaseController baseBontroller;
 
   const MusicTile({
     super.key,

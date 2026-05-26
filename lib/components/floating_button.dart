@@ -3,13 +3,13 @@ import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../field/operate_area.dart';
-import '../getxController/album_list_crl.dart';
-import '../getxController/artist_list_ctrl.dart';
-import '../getxController/audio_ctrl.dart';
-import '../getxController/folders_list_ctrl.dart';
-import '../getxController/music_cache_ctrl.dart';
-import '../getxController/play_list_ctrl.dart';
-import '../tools/general_style.dart';
+import 'package:zerobit_player/controller/album_details_ctrl.dart';
+import 'package:zerobit_player/controller/artist_details_ctrl.dart';
+import 'package:zerobit_player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/controller/folders_details_ctrl.dart';
+import 'package:zerobit_player/controller/music_cache_ctrl.dart';
+import 'package:zerobit_player/controller/playlist_details_ctrl.dart';
+import '../tools/func/general_style.dart';
 
 const double _bottom = 96;
 const double _radius = 6;
@@ -111,19 +111,19 @@ class _FloatingButtonState extends State<FloatingButton> {
           (m) => m.path == currentPath,
         );
       case OperateArea.playList:
-        return PlayListController.audioListItems.indexWhere(
+        return PlayListDetailsController.audioListItems.indexWhere(
           (m) => m.path == currentPath,
         );
       case OperateArea.artistList:
-        return ArtistListController.audioListItems.indexWhere(
+        return ArtistDetailsController.audioListItems.indexWhere(
           (m) => m.path == currentPath,
         );
       case OperateArea.albumList:
-        return AlbumListController.audioListItems.indexWhere(
+        return AlbumDetailsController.audioListItems.indexWhere(
           (m) => m.path == currentPath,
         );
       case OperateArea.foldersList:
-        return FoldersListController.audioListItems.indexWhere(
+        return FoldersDetailsController.audioListItems.indexWhere(
           (m) => m.path == currentPath,
         );
       default:
