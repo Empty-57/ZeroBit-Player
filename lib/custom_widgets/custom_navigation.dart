@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
-import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:get/get.dart';
 

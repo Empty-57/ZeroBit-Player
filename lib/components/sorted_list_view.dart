@@ -424,7 +424,6 @@ class _SortedListViewState extends State<SortedListView> {
 
   /// 导航到详情页 传入路径列表和标题
   void _navigateTo(_ContentItem item) {
-    final a = OperateArea.allMusic;
     Get.toNamed(
       AppRoutes.details,
       arguments: {
