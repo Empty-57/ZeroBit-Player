@@ -16,6 +16,7 @@ class LocalMusicPage extends GetView<MusicCacheController> {
       title: "音乐",
       operateArea: OperateArea.allMusic,
       audioSource: AudioSource.allMusic,
+      userKey: '',
       controller: c,
     );
   }

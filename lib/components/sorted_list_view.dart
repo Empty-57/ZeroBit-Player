@@ -7,6 +7,8 @@ import 'package:zerobit_player/components/music_list_tool.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 
+import '../field/operate_area.dart';
+
 // 内容项宽高
 const double _itemHeight = 230.0;
 const double _itemWidth = 180.0;
@@ -422,9 +424,17 @@ class _SortedListViewState extends State<SortedListView> {
 
   /// 导航到详情页 传入路径列表和标题
   void _navigateTo(_ContentItem item) {
+    final a = OperateArea.allMusic;
     Get.toNamed(
-      widget.toRoute,
-      arguments: {'pathList': item.paths, 'title': item.title},
+      AppRoutes.details,
+      arguments: {
+        'pathList': item.paths,
+        'title': item.title,
+        'operateArea':
+            widget.toRoute == AppRoutes.albumDetails
+                ? OperateArea.albumDetails
+                : OperateArea.artistDetails,
+      },
       id: 1,
     );
   }

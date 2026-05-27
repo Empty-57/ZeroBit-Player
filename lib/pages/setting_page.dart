@@ -17,6 +17,8 @@ import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 
+import '../field/shared_preferences_key.dart';
+
 const double btnW = 108;
 final SettingController _settingController = Get.find<SettingController>();
 
@@ -1162,7 +1164,7 @@ class _SetHotKeyToggleDialog extends StatelessWidget {
     return _createHotKeyItem(
       context,
       myHotkey: _settingController.hotKeyToggle,
-      prefKey: SettingController.toggleHidString,
+      prefKey: SharedPreferencesKey.toggleHidString,
       fn: (h) async {
         // final hotKey_=HotKey(key: h.key,modifiers: h.modifiers,scope: _settingController.hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp);// 因库原因无法使用
         _settingController.hotKeyToggle.value = h;
@@ -1180,7 +1182,7 @@ class _SetHotKeyNextDialog extends StatelessWidget {
     return _createHotKeyItem(
       context,
       myHotkey: _settingController.hotKeyNext,
-      prefKey: SettingController.nextHidString,
+      prefKey: SharedPreferencesKey.nextHidString,
       fn: (h) async {
         // final hotKey_=HotKey(key: h.key,modifiers: h.modifiers,scope: _settingController.hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp);// 因库原因无法使用
         _settingController.hotKeyNext.value = h;
@@ -1198,7 +1200,7 @@ class _SetHotKeyPreviousDialog extends StatelessWidget {
     return _createHotKeyItem(
       context,
       myHotkey: _settingController.hotKeyPrevious,
-      prefKey: SettingController.previousHidString,
+      prefKey: SharedPreferencesKey.previousHidString,
       fn: (h) async {
         // final hotKey_=HotKey(key: h.key,modifiers: h.modifiers,scope: _settingController.hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp);// 因库原因无法使用
         _settingController.hotKeyPrevious.value = h;
@@ -1216,7 +1218,7 @@ class _SetHotKeyFullScreenDialog extends StatelessWidget {
     return _createHotKeyItem(
       context,
       myHotkey: _settingController.hotKeyFullScreen,
-      prefKey: SettingController.fullScreenHidString,
+      prefKey: SharedPreferencesKey.fullScreenHidString,
       fn: (h) async {
         // final hotKey_=HotKey(key: h.key,modifiers: h.modifiers,scope: _settingController.hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp);// 因库原因无法使用
         _settingController.hotKeyFullScreen.value = h;

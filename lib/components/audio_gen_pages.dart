@@ -2,18 +2,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
+import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/custom_widgets/custom_drop_menu.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
-import 'package:zerobit_player/controller/details_page_base_ctrl.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
-import 'package:zerobit_player/field/tag_suffix.dart';
 import 'edit_embedded_lyrics_dialog.dart';
 import 'edit_metadata_dialog.dart';
 import 'floating_button.dart';
@@ -65,6 +65,7 @@ List<Widget> _genMenuItems({
   required int index,
   required String operateArea,
   required AudioController ctrl,
+  required UserPlayListController playListCtrl,
   required MusicCacheController cacheCtrl,
   bool renderMaybeDel = false,
 }) {
@@ -130,10 +131,11 @@ List<Widget> _genMenuItems({
     buildMenuBtn(
       fn:
           () => Get.toNamed(
-            AppRoutes.albumDetails,
+            AppRoutes.details,
             arguments: {
               'pathList': cacheCtrl.albumItemsDict[albumWithLetter],
               'title': album,
+              'operateArea': OperateArea.albumDetails,
             },
             id: 1,
           ),
@@ -146,10 +148,11 @@ List<Widget> _genMenuItems({
       buildMenuBtn(
         fn:
             () => Get.toNamed(
-              AppRoutes.artistDetails,
+              AppRoutes.details,
               arguments: {
                 'pathList': cacheCtrl.artistItemsDict[artistFirstWithLetter],
                 'title': artistFirst,
+                'operateArea': OperateArea.artistDetails,
               },
               id: 1,
             ),
@@ -176,12 +179,13 @@ List<Widget> _genMenuItems({
                 onPressed: () {
                   menuController.close();
                   Get.toNamed(
-                    AppRoutes.artistDetails,
+                    AppRoutes.details,
                     arguments: {
                       'pathList':
                           cacheCtrl
                               .artistItemsDict[cacheCtrl.getLetter(str: v) + v],
                       'title': v,
+                      'operateArea': OperateArea.artistDetails,
                     },
                     id: 1,
                   );
@@ -203,13 +207,13 @@ List<Widget> _genMenuItems({
       menuStyle: const MenuStyle(alignment: Alignment.topRight),
       leadingIcon: Icon(PhosphorIconsLight.plus, size: getIconSize(size: 'md')),
       menuChildren:
-          ctrl.allUserKey.map((v) {
+          playListCtrl.allUserKey.map((v) {
             return MenuItemButton(
               onPressed: () {
                 menuController.close();
-                ctrl.addToAudioList(metadata: metadata, userKey: v);
+                playListCtrl.addToAudioList(metadata: metadata, userKey: v);
               },
-              child: Center(child: Text(v.split(TagSuffix.playList)[0])),
+              child: Center(child: Text(v.split('_')[0])),
             );
           }).toList(),
       child: const Text('添加到歌单'),
@@ -224,7 +228,11 @@ List<Widget> _genMenuItems({
     if (renderMaybeDel) ...[
       divider,
       buildMenuBtn(
-        fn: () => ctrl.audioRemove(userKey: userKey, metadata: metadata),
+        fn: () {
+          if (userKey.isNotEmpty) {
+            playListCtrl.audioRemove(userKey: userKey, metadata: metadata);
+          }
+        },
         icon: PhosphorIconsLight.trash,
         label: "删除",
       ),
@@ -236,7 +244,8 @@ class AudioGenPages extends StatefulWidget {
   final String title;
   final String operateArea;
   final String audioSource;
-  final DetailsPageBaseController controller;
+  final DetailsPageControllerBase controller;
+  final String userKey;
   final Color? backgroundColor;
 
   const AudioGenPages({
@@ -245,6 +254,7 @@ class AudioGenPages extends StatefulWidget {
     required this.operateArea,
     required this.audioSource,
     required this.controller,
+    required this.userKey,
     this.backgroundColor,
   });
 
@@ -264,6 +274,8 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   late final MusicCacheController _musicCacheController =
       Get.find<MusicCacheController>();
   late final _MusicMenuController _musicMenuCtrl = _MusicMenuController();
+  late final UserPlayListController _userPlayListController =
+      Get.find<UserPlayListController>();
 
   late TextStyle _titleStyle;
   late TextStyle _highLightTitleStyle;
@@ -337,7 +349,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       spacing: 16,
       children: <Widget>[
         if (widget.operateArea != OperateArea.allMusic &&
-            widget.operateArea != OperateArea.foldersList)
+            widget.operateArea != OperateArea.foldersDetails)
           _buildHeaderCover(),
         Expanded(
           child: Column(
@@ -476,14 +488,16 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       key: const ValueKey('multi_select_actions'),
       spacing: 8,
       children: [
-        if (widget.operateArea == OperateArea.playList)
+        if (widget.operateArea == OperateArea.playListDetails)
           CustomBtn(
             fn: () {
-              _audioController.audioRemoveAll(
-                userKey: widget.audioSource,
-                removeList: [..._selectedList],
-              );
-              _selectedList.clear();
+              if (widget.userKey.isNotEmpty) {
+                _userPlayListController.audioRemoveAll(
+                  userKey: widget.userKey,
+                  removeList: [..._selectedList],
+                );
+                _selectedList.clear();
+              }
             },
             icon: PhosphorIconsLight.trash,
             btnHeight: btnHeight,
@@ -537,17 +551,17 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         SettingController.sortType[SortType.title],
         PhosphorIconsRegular.textT,
       ],
-      if (widget.operateArea != OperateArea.artistList)
+      if (widget.operateArea != OperateArea.artistDetails)
         SortType.artist: [
           SettingController.sortType[SortType.artist],
           PhosphorIconsRegular.userFocus,
         ],
-      if (widget.operateArea != OperateArea.albumList)
+      if (widget.operateArea != OperateArea.albumDetails)
         SortType.album: [
           SettingController.sortType[SortType.album],
           PhosphorIconsRegular.vinylRecord,
         ],
-      if (widget.operateArea == OperateArea.albumList)
+      if (widget.operateArea == OperateArea.albumDetails)
         SortType.trackNumber: [
           SettingController.sortType[SortType.trackNumber],
           PhosphorIconsRegular.hash,
@@ -571,7 +585,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       fn: (entry) {
         _settingController.sortMap[widget.operateArea] = entry.key;
         _settingController.putCache();
-        widget.controller.itemReSort(type: entry.key);
+        widget.controller.itemReSort(operateArea: widget.operateArea);
         _audioController.syncCurrentIndex();
       },
       label:
@@ -593,25 +607,25 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     return MenuAnchor(
       controller: _playListMenuController,
       menuChildren:
-          _audioController.allUserKey.map((v) {
+          _userPlayListController.allUserKey.map((v) {
             return CustomBtn(
               fn: () {
                 _playListMenuController.close();
-                _audioController.addAllToAudioList(
+                _userPlayListController.addAllToAudioList(
                   selectedList: [..._selectedList],
                   userKey: v,
                 );
               },
               btnWidth: 160,
               btnHeight: btnHeight,
-              label: v.split(TagSuffix.playList)[0],
+              label: v.split('_')[0],
               mainAxisAlignment: MainAxisAlignment.center,
               backgroundColor: Colors.transparent,
             );
           }).toList(),
       child: CustomBtn(
         fn: () {
-          if (_audioController.allUserKey.isEmpty) {
+          if (_userPlayListController.allUserKey.isEmpty) {
             showSnackBar(title: "WARNING", msg: "未创建歌单！");
             return;
           }
@@ -643,7 +657,8 @@ class _AudioGenPagesState extends State<AudioGenPages> {
 
         double left = position.dx + 16;
         double top = position.dy;
-        final itemCount = widget.operateArea == OperateArea.playList ? 8 : 7;
+        final itemCount =
+            widget.operateArea == OperateArea.playListDetails ? 8 : 7;
         if (top + _menuBtnHeight * (itemCount + 1.5) > Get.height) {
           top = top - _menuBtnHeight * itemCount;
         }
@@ -678,11 +693,13 @@ class _AudioGenPagesState extends State<AudioGenPages> {
                   context: context,
                   menuController: _musicMenuCtrl.menuController,
                   metadata: currentMetadata,
-                  userKey: widget.audioSource,
+                  userKey: widget.userKey,
                   index: _musicMenuCtrl.currentIndex,
-                  renderMaybeDel: widget.operateArea == OperateArea.playList,
+                  renderMaybeDel:
+                      widget.operateArea == OperateArea.playListDetails,
                   operateArea: widget.operateArea,
                   ctrl: _audioController,
+                  playListCtrl: _userPlayListController,
                   cacheCtrl: _musicCacheController,
                 ),
               ),

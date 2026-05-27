@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
+import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:get/get.dart';
 
@@ -10,11 +12,8 @@ import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 
 class SidebarNavState {
-  SidebarNavState._();
-  static final instance = SidebarNavState._();
-
-  Offset beginOffset = const Offset(0.1, 0.1);
-  final currentNavigationIndex = 0.obs;
+  static Offset beginOffset = const Offset(0.1, 0.1);
+  static final currentNavigationIndex = 0.obs;
 }
 
 int _oldIndex = 0;
@@ -52,18 +51,16 @@ class CustomNavigationBtn extends GetView<AudioController> {
       width: _navigationBtnWidth,
       height: _navigationBtnHeight,
       child: Obx(() {
-        final index = SidebarNavState.instance.currentNavigationIndex.value;
+        final index = SidebarNavState.currentNavigationIndex.value;
         return TextButton(
           onPressed:
               index != localIndex
                   ? () {
                     _oldIndex = index;
-                    SidebarNavState.instance.beginOffset =
+                    SidebarNavState.beginOffset =
                         _oldIndex >= localIndex
                             ? const Offset(0.1, 0.1)
                             : const Offset(-0.1, -0.1);
-                    SidebarNavState.instance.currentNavigationIndex.value =
-                        localIndex;
                     Get.toNamed(_mainRoutes[localIndex], id: 1);
                   }
                   : null,

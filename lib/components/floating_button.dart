@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
+import '../controller/details_page_ctrl.dart';
 import '../field/operate_area.dart';
-import 'package:zerobit_player/controller/album_details_ctrl.dart';
-import 'package:zerobit_player/controller/artist_details_ctrl.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
-import 'package:zerobit_player/controller/folders_details_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
-import 'package:zerobit_player/controller/playlist_details_ctrl.dart';
 import '../tools/func/general_style.dart';
 
 const double _bottom = 96;
@@ -110,23 +107,12 @@ class _FloatingButtonState extends State<FloatingButton> {
         return _musicCacheController.items.indexWhere(
           (m) => m.path == currentPath,
         );
-      case OperateArea.playList:
-        return PlayListDetailsController.audioListItems.indexWhere(
-          (m) => m.path == currentPath,
-        );
-      case OperateArea.artistList:
-        return ArtistDetailsController.audioListItems.indexWhere(
-          (m) => m.path == currentPath,
-        );
-      case OperateArea.albumList:
-        return AlbumDetailsController.audioListItems.indexWhere(
-          (m) => m.path == currentPath,
-        );
-      case OperateArea.foldersList:
-        return FoldersDetailsController.audioListItems.indexWhere(
-          (m) => m.path == currentPath,
-        );
       default:
+        if (Get.isRegistered<DetailsPageController>()) {
+          return Get.find<DetailsPageController>().items.indexWhere(
+            (v) => v.path == currentPath,
+          );
+        }
         return -1;
     }
   }
@@ -158,7 +144,7 @@ class _FloatingButtonState extends State<FloatingButton> {
     // 这个值应该与 AudioGenPages 中的头部高度保持一致
     final double headerOffset =
         (widget.operateArea == OperateArea.allMusic ||
-                widget.operateArea == OperateArea.foldersList)
+                widget.operateArea == OperateArea.foldersDetails)
             ? 280
             : 384;
     final double middleOffset = (screenSize.height - headerOffset) / 2;

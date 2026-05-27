@@ -48,10 +48,9 @@ class DesktopLyricsSever extends GetxController {
 
   @override
   void onClose() async {
-    if (_stateWorker != null) {
-      _stateWorker!.dispose();
-      _stateWorker = null;
-    }
+    _stateWorker?.dispose();
+    _lineWorker?.dispose();
+    _ms20Worker?.dispose();
 
     await close();
     super.onClose();
@@ -343,16 +342,9 @@ class DesktopLyricsSever extends GetxController {
   Future<void> close() async {
     try {
       sendCmd(cmdType: SeverCmdType.shutdown, cmdData: null);
-
-      if (_lineWorker != null) {
-        _lineWorker!.dispose();
-        _lineWorker = null;
-      }
-
-      if (_ms20Worker != null) {
-        _ms20Worker!.dispose();
-        _ms20Worker = null;
-      }
+      _lineWorker?.dispose();
+      _ms20Worker?.dispose();
+      _stateWorker?.dispose();
 
       if (_listen != null) {
         await _listen!.cancel();

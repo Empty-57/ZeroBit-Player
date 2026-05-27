@@ -5,13 +5,14 @@ import 'package:pinyin/pinyin.dart';
 import 'package:zerobit_player/hive_manager/hive_box.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:get/get.dart';
-import 'package:zerobit_player/controller/setting_ctrl.dart';
-import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
-import 'package:zerobit_player/controller/details_page_base_ctrl.dart';
 
-class MusicCacheController extends GetxController with DetailsPageBaseController {
+import '../field/operate_area.dart';
+import '../tools/details_ctrl_mixin.dart';
+
+class MusicCacheController extends GetxController
+    with DetailsPageControllerBase {
   @override
   final items = <MusicCache>[].obs;
 
@@ -26,7 +27,6 @@ class MusicCacheController extends GetxController with DetailsPageBaseController
   double _albumViewScrollOffset = 0.0;
 
   final _musicCacheBox = HiveBox.musicCacheBox;
-  final SettingController _settingController = Get.find<SettingController>();
 
   final currentScanAudio = ''.obs;
   final searchText = ''.obs;
@@ -34,29 +34,32 @@ class MusicCacheController extends GetxController with DetailsPageBaseController
 
   static final _alphaRegex = RegExp(r'[A-Z]');
 
+  // 用于通知  DetailsPageBaseController 进行数据更改
+  final songUpdatedSignal = Rx<MusicCache?>(null);
+
   void _search({
-  required List<MusicCache> searchResult,
-  required List<MusicCache> items,
-  required String searchText,
-}) {
-  final query = searchText.trim();
-  searchResult.clear();
-  if (query.isEmpty) {
-    return;
+    required List<MusicCache> searchResult,
+    required List<MusicCache> items,
+    required String searchText,
+  }) {
+    final query = searchText.trim();
+    searchResult.clear();
+    if (query.isEmpty) {
+      return;
+    }
+    final escaped = RegExp.escape(query);
+    final regex = RegExp(escaped, caseSensitive: false);
+
+    searchResult
+      ..clear()
+      ..addAll(
+        items.where((v) {
+          final fields = [v.title, v.artist, v.album];
+
+          return fields.any((value) => regex.hasMatch(value));
+        }),
+      );
   }
-  final escaped = RegExp.escape(query);
-  final regex = RegExp(escaped, caseSensitive: false);
-
-  searchResult
-    ..clear()
-    ..addAll(
-      items.where((v) {
-        final fields = [v.title, v.artist, v.album];
-
-        return fields.any((value) => regex.hasMatch(value));
-      }),
-    );
-}
 
   @override
   void onInit() {
@@ -72,7 +75,7 @@ class MusicCacheController extends GetxController with DetailsPageBaseController
 
   void loadData() {
     items.value = _musicCacheBox.getAll();
-    itemReSort(type: _settingController.sortMap[OperateArea.allMusic]);
+    itemReSort(operateArea: OperateArea.allMusic);
     _groupItems();
   }
 
@@ -182,6 +185,7 @@ class MusicCacheController extends GetxController with DetailsPageBaseController
 
     _groupItems(); // 数据修改后重新分组
 
+    songUpdatedSignal.value = newCache;
     return newCache;
   }
 }

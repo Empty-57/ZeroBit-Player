@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
-import 'package:zerobit_player/controller/details_page_base_ctrl.dart';
+import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
@@ -24,7 +24,7 @@ class MusicTile extends StatelessWidget {
   final RxBool isMulSelect;
   final RxList<MusicCache> selectedList;
   final bool viewMode;
-  final DetailsPageBaseController baseBontroller;
+  final DetailsPageControllerBase baseBontroller;
 
   const MusicTile({
     super.key,
@@ -80,7 +80,7 @@ class MusicTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           spacing: _itemSpacing,
           children: [
-            if (operateArea == OperateArea.albumList)
+            if (operateArea == OperateArea.albumDetails)
               Text(
                 metadata.trackNumber.toString().padLeft(2, '0'),
                 style: subTextStyle,

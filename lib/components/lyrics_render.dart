@@ -555,14 +555,13 @@ class _LyricsRenderState extends State<LyricsRender> {
   final AudioController _audioController = Get.find<AudioController>();
   final SettingController _settingController = Get.find<SettingController>();
   final LyricController _lyricController = Get.find<LyricController>();
-  final ThemeService _themeService = Get.find<ThemeService>();
   final _isHover = false.obs;
   late _LyricsStyle lrcStylePackage;
 
   @override
   void initState() {
     super.initState();
-    lrcStylePackage = _LyricsStyle(_settingController, _themeService);
+    lrcStylePackage = _LyricsStyle(_settingController, ThemeService.instance);
     // 首次进入页面时，跳转到当前行
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -597,94 +596,98 @@ class _LyricsRenderState extends State<LyricsRender> {
               behavior: ScrollConfiguration.of(
                 context,
               ).copyWith(scrollbars: false),
-              child: GetBuilder<AudioController>(id: GetBuilderId.lyricRender,builder: (c){
-                // 将 style 定义在Obx内以接收样式更改信号
-                final lyricsStyle = lrcStylePackage.lyricStyle;
-                final tsLyricStyle = lrcStylePackage.tsLyricStyle;
-                final romaLyricStyle = lrcStylePackage.romaLyricStyle;
-                final strutStyle = lrcStylePackage.strutStyle;
-                final interludeLyricStyle = lrcStylePackage.interludeLyricStyle;
-                final hoverColor = lrcStylePackage.hoverColor;
-                mixColor = lrcStylePackage.mixColor;
+              child: GetBuilder<AudioController>(
+                id: GetBuilderId.lyricRender,
+                builder: (c) {
+                  // 将 style 定义在Obx内以接收样式更改信号
+                  final lyricsStyle = lrcStylePackage.lyricStyle;
+                  final tsLyricStyle = lrcStylePackage.tsLyricStyle;
+                  final romaLyricStyle = lrcStylePackage.romaLyricStyle;
+                  final strutStyle = lrcStylePackage.strutStyle;
+                  final interludeLyricStyle =
+                      lrcStylePackage.interludeLyricStyle;
+                  final hoverColor = lrcStylePackage.hoverColor;
+                  mixColor = lrcStylePackage.mixColor;
 
-                final useSpringscroll =
-                    _settingController.useSpringScroll.value;
-                debugPrint("LyricRenderReBuild");
-                if (!c.showLyricRender) {
-                  return Center(
-                    child: Text(
-                      "无歌词",
-                      style: lyricsStyle.copyWith(
-                        color: lyricsStyle.color?.withValues(
-                          alpha: _highLightAlpha,
+                  final useSpringscroll =
+                      _settingController.useSpringScroll.value;
+                  debugPrint("LyricRenderReBuild");
+                  if (!c.showLyricRender) {
+                    return Center(
+                      child: Text(
+                        "无歌词",
+                        style: lyricsStyle.copyWith(
+                          color: lyricsStyle.color?.withValues(
+                            alpha: _highLightAlpha,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                }
-
-                Widget creatLyricItem(index) {
-                  if ((c.currentlyricType == LyricFormat.lrc &&
-                          c.lineTextList[index].isEmpty &&
-                          c.translateList[index].isEmpty) ||
-                      index == -1) {
-                    return const SizedBox.shrink();
+                    );
                   }
-                  return _StaggeredLyricItem(
-                    key: ValueKey(index),
-                    index: index,
-                    lyricController: _lyricController,
-                    audioController: _audioController,
-                    settingController: _settingController,
-                    lrcType: c.currentlyricType,
-                    lineText: c.lineTextList[index],
-                    translateText: c.translateList[index],
-                    romaText: c.romaList[index],
-                    startTime: c.startTime[index],
-                    lyricStyle: lyricsStyle,
-                    tsLyricStyle: tsLyricStyle,
-                    romaLyricStyle: romaLyricStyle,
-                    interludeLyricStyle: interludeLyricStyle,
-                    strutStyle: strutStyle,
-                    hoverColor: hoverColor,
-                    dynamicPadding: dynamicPadding,
-                  );
-                }
 
-                return useSpringscroll
-                    ? SpringListView(
-                      lineDuration: c.lineDurationList,
-                      length: c.lineTextList.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        return creatLyricItem(index);
-                      },
-                    )
-                    : Focus(
-                      canRequestFocus: false,
-                      descendantsAreFocusable: false,
-                      child: ScrollablePositionedList.builder(
-                        itemCount: c.lineTextList.length,
-                        initialScrollIndex: 0,
-                        initialAlignment: 0.4,
-                        itemScrollController:
-                            _lyricController.lrcViewScrollController,
-                        minCacheExtent: 48.0,
-                        addAutomaticKeepAlives: false,
-                        addSemanticIndexes: false,
-                        addRepaintBoundaries: true,
-                        padding: EdgeInsets.symmetric(
-                          vertical:
-                              (context.height -
-                                  _audioCtrlBarHeight -
-                                  _controllerBarHeight) /
-                              2,
-                        ),
+                  Widget creatLyricItem(index) {
+                    if ((c.currentlyricType == LyricFormat.lrc &&
+                            c.lineTextList[index].isEmpty &&
+                            c.translateList[index].isEmpty) ||
+                        index == -1) {
+                      return const SizedBox.shrink();
+                    }
+                    return _StaggeredLyricItem(
+                      key: ValueKey(index),
+                      index: index,
+                      lyricController: _lyricController,
+                      audioController: _audioController,
+                      settingController: _settingController,
+                      lrcType: c.currentlyricType,
+                      lineText: c.lineTextList[index],
+                      translateText: c.translateList[index],
+                      romaText: c.romaList[index],
+                      startTime: c.startTime[index],
+                      lyricStyle: lyricsStyle,
+                      tsLyricStyle: tsLyricStyle,
+                      romaLyricStyle: romaLyricStyle,
+                      interludeLyricStyle: interludeLyricStyle,
+                      strutStyle: strutStyle,
+                      hoverColor: hoverColor,
+                      dynamicPadding: dynamicPadding,
+                    );
+                  }
+
+                  return useSpringscroll
+                      ? SpringListView(
+                        lineDuration: c.lineDurationList,
+                        length: c.lineTextList.length,
                         itemBuilder: (BuildContext context, int index) {
                           return creatLyricItem(index);
                         },
-                      ),
-                    );
-              }),
+                      )
+                      : Focus(
+                        canRequestFocus: false,
+                        descendantsAreFocusable: false,
+                        child: ScrollablePositionedList.builder(
+                          itemCount: c.lineTextList.length,
+                          initialScrollIndex: 0,
+                          initialAlignment: 0.4,
+                          itemScrollController:
+                              _lyricController.lrcViewScrollController,
+                          minCacheExtent: 48.0,
+                          addAutomaticKeepAlives: false,
+                          addSemanticIndexes: false,
+                          addRepaintBoundaries: true,
+                          padding: EdgeInsets.symmetric(
+                            vertical:
+                                (context.height -
+                                    _audioCtrlBarHeight -
+                                    _controllerBarHeight) /
+                                2,
+                          ),
+                          itemBuilder: (BuildContext context, int index) {
+                            return creatLyricItem(index);
+                          },
+                        ),
+                      );
+                },
+              ),
             ),
 
             Positioned(
@@ -890,8 +893,7 @@ class _StaggeredLyricItem extends StatelessWidget {
       );
 
       final bool useBlur = settingController.useBlur.value;
-      final int diff =
-          (currentLineIndex - index).abs(); // 视距
+      final int diff = (currentLineIndex - index).abs(); // 视距
 
       // 是否需要挂载 ImageFiltered (当前行保持挂载防动画中断，其余行在视距内挂载)
       final bool applyFilter = useBlur && (isCurrent || diff <= 10);
@@ -901,7 +903,8 @@ class _StaggeredLyricItem extends StatelessWidget {
       if (applyFilter) {
         // 首行和当前行模糊度为 0，其余行未滚动时根据距离取 1~4
         final double targetSigma =
-            isCurrent || (index <= 0 && currentLineIndex <= 0) ||
+            isCurrent ||
+                    (index <= 0 && currentLineIndex <= 0) ||
                     isPointerScrolling
                 ? 0.0
                 : diff.clamp(0, 4).toDouble();

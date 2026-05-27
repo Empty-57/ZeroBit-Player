@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/controller/window_ctrl.dart';
 import 'package:zerobit_player/theme_manager.dart';
-import 'package:zerobit_player/field/tag_suffix.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
@@ -23,6 +23,8 @@ class _SearchDialog extends StatelessWidget {
   const _SearchDialog({required this.ctrl, required this.cacheCtrl});
   @override
   Widget build(BuildContext context) {
+    final UserPlayListController userPlayListController =
+        Get.find<UserPlayListController>();
     final titleStyle = generalTextStyle(ctx: context, size: 'md');
     final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
     return _ControllerButton(
@@ -129,23 +131,24 @@ class _SearchDialog extends StatelessWidget {
                                       ),
                                       MenuAnchor(
                                         menuChildren:
-                                            ctrl.allUserKey.map((v) {
-                                              return MenuItemButton(
-                                                onPressed: () {
-                                                  ctrl.addToAudioList(
-                                                    metadata: items,
-                                                    userKey: v,
+                                            userPlayListController.allUserKey
+                                                .map((v) {
+                                                  return MenuItemButton(
+                                                    onPressed: () {
+                                                      userPlayListController
+                                                          .addToAudioList(
+                                                            metadata: items,
+                                                            userKey: v,
+                                                          );
+                                                    },
+                                                    child: Center(
+                                                      child: Text(
+                                                        v.split('_')[0],
+                                                      ),
+                                                    ),
                                                   );
-                                                },
-                                                child: Center(
-                                                  child: Text(
-                                                    v.split(
-                                                      TagSuffix.playList,
-                                                    )[0],
-                                                  ),
-                                                ),
-                                              );
-                                            }).toList(),
+                                                })
+                                                .toList(),
                                         controller: menuController,
                                         consumeOutsideTap: true,
                                         style: MenuStyle(
@@ -157,7 +160,9 @@ class _SearchDialog extends StatelessWidget {
                                           icon: PhosphorIconsLight.plus,
                                           tooltip: '添加到歌单',
                                           fn: () {
-                                            if (ctrl.allUserKey.isEmpty) {
+                                            if (userPlayListController
+                                                .allUserKey
+                                                .isEmpty) {
                                               showSnackBar(
                                                 title: "WARNING",
                                                 msg: "还未创建任何歌单",
@@ -197,7 +202,7 @@ class _SearchDialog extends StatelessWidget {
   }
 }
 
-class _ControllerButton extends GetView<ThemeService> {
+class _ControllerButton extends StatelessWidget {
   final IconData icon;
   final Color? hoverColor;
   final VoidCallback fn;
@@ -218,7 +223,7 @@ class _ControllerButton extends GetView<ThemeService> {
       icon: Icon(icon),
       color:
           onlyDarkMode
-              ? controller.darkTheme.colorScheme.onSurface
+              ? ThemeService.instance.darkTheme.colorScheme.onSurface
               : Theme.of(context).colorScheme.onSurface,
       tooltip: tooltip,
       iconSize: getIconSize(size: 'lg'),
@@ -260,7 +265,6 @@ class WindowControllerBar extends GetView<MyWindowListener> {
     final MusicCacheController musicCacheController =
         Get.find<MusicCacheController>();
     final SettingController settingController = Get.find<SettingController>();
-    final ThemeService themeService = Get.find<ThemeService>();
 
     return Container(
       height: _controllerBarHeight,
@@ -336,7 +340,7 @@ class WindowControllerBar extends GetView<MyWindowListener> {
                       settingController.themeMode.value == 'dark'
                           ? PhosphorIconsLight.moon
                           : PhosphorIconsLight.sun,
-                  fn: themeService.setThemeMode,
+                  fn: ThemeService.instance.setThemeMode,
                   tooltip:
                       settingController.themeMode.value == 'dark'
                           ? "暗色主题"

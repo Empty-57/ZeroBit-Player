@@ -5,17 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
-import 'package:zerobit_player/field/operate_area.dart';
 
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
-import 'package:zerobit_player/controller/album_details_ctrl.dart';
-import 'package:zerobit_player/controller/artist_details_ctrl.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
-import 'package:zerobit_player/controller/folders_details_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
-import 'package:zerobit_player/controller/playlist_details_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
@@ -249,8 +244,11 @@ class _MetadataEditorState extends State<_MetadataEditor> {
         ),
       );
 
-      // 同步到其他列表
-      _syncToControllers(newCache);
+      // 同步到播放列表
+      _audioController.audioListSyncMetadata(
+        path: widget.metadata.path,
+        newCache: newCache,
+      );
 
       // 安全关闭弹窗
       if (mounted) Navigator.pop(context, 'actions');
@@ -259,39 +257,6 @@ class _MetadataEditorState extends State<_MetadataEditor> {
       _showError('保存失败，请重试');
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  void _syncToControllers(MusicCache newCache) {
-    switch (widget.operateArea) {
-      case OperateArea.playList:
-        PlayListDetailsController.audioListSyncMetadata(
-          index: widget.index,
-          newCache: newCache,
-        );
-        break;
-      case OperateArea.artistList:
-        ArtistDetailsController.audioListSyncMetadata(
-          index: widget.index,
-          newCache: newCache,
-        );
-        break;
-      case OperateArea.albumList:
-        AlbumDetailsController.audioListSyncMetadata(
-          index: widget.index,
-          newCache: newCache,
-        );
-        break;
-      case OperateArea.foldersList:
-        FoldersDetailsController.audioListSyncMetadata(
-          index: widget.index,
-          newCache: newCache,
-        );
-        break;
-    }
-    _audioController.audioListSyncMetadata(
-      path: widget.metadata.path,
-      newCache: newCache,
-    );
   }
 
   void _showError(String message) {

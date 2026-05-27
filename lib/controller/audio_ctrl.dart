@@ -5,22 +5,17 @@ import 'package:get/get.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:tray_manager/tray_manager.dart';
-import 'package:zerobit_player/hive_manager/models/user_playlist_model.dart';
 import 'package:zerobit_player/components/get_snack_bar.dart';
-import 'package:zerobit_player/controller/playlist_details_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
-import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
 import 'package:zerobit_player/tools/lrcTool/get_lyrics.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import 'package:zerobit_player/API/apis.dart';
-import 'package:zerobit_player/hive_manager/hive_box.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/components/spring_list_view.dart';
 import 'package:zerobit_player/field/audio_source.dart';
-import 'package:zerobit_player/field/tag_suffix.dart';
 import 'music_cache_ctrl.dart';
 
 enum AudioState { stop, playing, pause, ended }
@@ -58,17 +53,10 @@ class AudioController extends GetxController {
   final MusicCacheController _musicCacheController =
       Get.find<MusicCacheController>();
 
-  final UserPlayListController _userPlayListController =
-      Get.find<UserPlayListController>();
-
-  final _userPlayListCacheBox = HiveBox.userPlayListCacheBox;
-
   late final RxList<MusicCache> playListCacheItems =
       [..._musicCacheController.items].obs;
 
   MusicCache? _hasNextAudioMetadata;
-
-  List get allUserKey => _userPlayListCacheBox.getKeyAll();
 
   final currentCover = kTransparentImage.obs;
   final currentSmallCover = kTransparentImage.obs;
@@ -159,7 +147,7 @@ class AudioController extends GetxController {
       _settingController.lastAudioInfo[SettingController.lastAudioMetadataKey] =
           currentMetadata.value;
       await _settingController.putScalableCache();
-      await _loadLyrics(currentMetadata.value.path);
+      await loadLyrics(currentMetadata.value.path);
     });
   }
 
@@ -196,8 +184,10 @@ class AudioController extends GetxController {
     }
   }
 
-  Future<void> _loadLyrics(String path) async {
-    currentLyrics.value = await getParsedLyric(filePath: path);
+  Future<void> loadLyrics(String path, {bool changed = false}) async {
+    if (!changed) {
+      currentLyrics.value = await getParsedLyric(filePath: path);
+    }
     if (Get.isRegistered<SpringListView>()) {
       _springController.clearState();
     }
@@ -383,11 +373,8 @@ class AudioController extends GetxController {
       if (reTryCount > 4) {
         return;
       }
-      await setVolume(vol: 0.0);
-      await audioPlay(metadata: prevMetadata);
-      await audioPause();
-      await setVolume(vol: _settingController.volume.value);
       reTryCount++;
+      await audioPlay(metadata: prevMetadata);
     }
   }
 
@@ -612,178 +599,6 @@ class AudioController extends GetxController {
     _hasNextAudioMetadata = metadata;
   }
 
-  /// 用于向自定义歌单添加所选的音频
-  void addToAudioList({
-    required MusicCache metadata,
-    required String userKey,
-  }) async {
-    if (!allUserKey.contains(userKey)) {
-      return;
-    }
-    List<String> newList = _userPlayListCacheBox.get(key: userKey)!.pathList;
-    if (newList.contains(metadata.path)) {
-      showSnackBar(
-        title: "WARNING",
-        msg:
-            "歌单 ${userKey.split(TagSuffix.playList)[0]} 存在重复歌曲 ${metadata.title} ！",
-        duration: Duration(milliseconds: 1500),
-      );
-      return;
-    }
-    newList.add(metadata.path);
-    await _userPlayListCacheBox.put(
-      data: UserPlayListCache(pathList: newList, userKey: userKey),
-      key: userKey,
-    );
-
-    if (currentAudioSource == userKey) {
-      if (!playListCacheItems.any((v) => v.path == metadata.path)) {
-        playListCacheItems.add(metadata);
-        syncCurrentIndex();
-      }
-    }
-
-    _userPlayListController.initHive();
-
-    showSnackBar(
-      title: "OK",
-      msg: "已将 ${metadata.title} 添加到歌单 ${userKey.split(TagSuffix.playList)[0]}",
-      duration: Duration(milliseconds: 1500),
-    );
-  }
-
-  /// 用于向自定义歌单添加所选的所有音频
-  /// 用于向自定义歌单添加所选的所有音频
-  void addAllToAudioList({
-    required List<MusicCache> selectedList,
-    required String userKey,
-  }) async {
-    if (!allUserKey.contains(userKey)) return;
-
-    if (selectedList.isEmpty) {
-      showSnackBar(
-        title: "WARNING",
-        msg: "未选择音频！",
-        duration: const Duration(milliseconds: 1500),
-      );
-      return;
-    }
-
-    final targetList = _userPlayListCacheBox.get(key: userKey)!;
-    final existingPathSet = targetList.pathList.toSet();
-
-    selectedList.removeWhere((v) => existingPathSet.contains(v.path));
-
-    if (selectedList.isEmpty) {
-      showSnackBar(
-        title: "WARNING",
-        msg: "重复添加！歌曲均已存在于歌单中。",
-        duration: const Duration(milliseconds: 1500),
-      );
-      return;
-    }
-
-    final addedCount = selectedList.length;
-
-    targetList.pathList.addAll(selectedList.map((v) => v.path));
-    await _userPlayListCacheBox.put(data: targetList, key: userKey);
-
-    final currentPlaySet = playListCacheItems.map((v) => v.path).toSet();
-    selectedList.removeWhere((v) => currentPlaySet.contains(v.path));
-
-    if (currentAudioSource == userKey) {
-      playListCacheItems.addAll(selectedList);
-      syncCurrentIndex();
-    }
-
-    _userPlayListController.initHive();
-
-    showSnackBar(
-      title: "OK",
-      msg: "已将去重后的 $addedCount 首歌添加到歌单 ${userKey.split(TagSuffix.playList)[0]}",
-      duration: const Duration(milliseconds: 1500),
-    );
-  }
-
-  /// 用于从自定义歌单删除所选的音频
-  Future<void> audioRemove({
-    required String userKey,
-    required MusicCache metadata,
-  }) async {
-    switch (userKey) {
-      case AudioSource.allMusic:
-        await _musicCacheController.remove(metadata: metadata);
-        break;
-    }
-
-    if (allUserKey.contains(userKey)) {
-      final List<String> newList =
-          _userPlayListCacheBox.get(key: userKey)!.pathList;
-      newList.remove(metadata.path);
-
-      PlayListDetailsController.audioListItems.removeWhere(
-        (v) => v.path == metadata.path,
-      );
-      _userPlayListCacheBox.put(
-        data: UserPlayListCache(pathList: newList, userKey: userKey),
-        key: userKey,
-      );
-
-      if (currentAudioSource == userKey) {
-        playListCacheItems.remove(metadata);
-        syncCurrentIndex();
-      }
-
-      showSnackBar(
-        title: "OK",
-        msg:
-            "已将 ${metadata.title} 从歌单 ${userKey.split(TagSuffix.playList)[0]}删除！",
-        duration: Duration(milliseconds: 1500),
-      );
-    }
-  }
-
-  /// 用于从自定义歌单删除所有所选的音频
-  void audioRemoveAll({
-    required String userKey,
-    required List<MusicCache> removeList,
-  }) async {
-    if (!allUserKey.contains(userKey)) {
-      return;
-    }
-
-    if (removeList.isEmpty || !allUserKey.contains(userKey)) {
-      showSnackBar(
-        title: "WARNING",
-        msg: "未选择音频！",
-        duration: Duration(milliseconds: 1500),
-      );
-      return;
-    }
-
-    final removePathSet = removeList.map((v) => v.path).toSet();
-    final targetList = _userPlayListCacheBox.get(key: userKey)!;
-
-    targetList.pathList.removeWhere((path) => removePathSet.contains(path));
-    await _userPlayListCacheBox.put(data: targetList, key: userKey);
-
-    if (currentAudioSource == userKey) {
-      playListCacheItems.removeWhere((v) => removePathSet.contains(v.path));
-      syncCurrentIndex();
-    }
-
-    PlayListDetailsController.audioListItems.removeWhere(
-      (v) => removePathSet.contains(v.path),
-    );
-
-    showSnackBar(
-      title: "OK",
-      msg:
-          "已将去重后的 ${removeList.length} 首歌从歌单 ${userKey.split(TagSuffix.playList)[0]}删除！",
-      duration: Duration(milliseconds: 1500),
-    );
-  }
-
   /// 用于同步元数据更改
   Future<void> audioListSyncMetadata({
     required String path,
@@ -792,7 +607,10 @@ class AudioController extends GetxController {
     if (playListCacheItems.isEmpty || path != currentMetadata.value.path) {
       return;
     }
-    audioSetPositon(pos: currentMs100.value);
+    if (currentState.value == AudioState.playing) {
+      audioSetPositon(pos: currentMs100.value);
+    }
+
     playListCacheItems[playListCacheItems.indexWhere((v) => v.path == path)] =
         newCache;
     currentMetadata.value = newCache;

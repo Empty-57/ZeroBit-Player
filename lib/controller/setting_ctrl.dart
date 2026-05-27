@@ -16,6 +16,7 @@ import 'package:zerobit_player/field/scalable_config_keys.dart';
 import 'package:zerobit_player/field/sort_type.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/tools/func/sync_cache.dart';
+import '../field/shared_preferences_key.dart';
 import 'audio_ctrl.dart';
 
 class SettingController extends GetxController {
@@ -106,17 +107,17 @@ class SettingController extends GetxController {
 
   static const _defaultSortMap = {
     OperateArea.allMusic: SortType.title,
-    OperateArea.playList: SortType.title,
-    OperateArea.artistList: SortType.title,
-    OperateArea.albumList: SortType.title,
-    OperateArea.foldersList: SortType.title,
+    OperateArea.playListDetails: SortType.title,
+    OperateArea.artistDetails: SortType.title,
+    OperateArea.albumDetails: SortType.title,
+    OperateArea.foldersDetails: SortType.title,
   };
   static const _defaultViewModeMap = {
     OperateArea.allMusic: true, //列表/表格
-    OperateArea.playList: true,
-    OperateArea.artistList: true,
-    OperateArea.albumList: true,
-    OperateArea.foldersList: true,
+    OperateArea.playListDetails: true,
+    OperateArea.artistDetails: true,
+    OperateArea.albumDetails: true,
+    OperateArea.foldersDetails: true,
   };
 
   static const Map<int, String> sortType = {
@@ -175,11 +176,6 @@ class SettingController extends GetxController {
   List<int> modifierNextHidList = [];
   List<int> modifierPreviousHidList = [];
   List<int> modifierFullScreenHidList = [];
-
-  static const toggleHidString = 'toggleHidString';
-  static const nextHidString = 'nextHidString';
-  static const previousHidString = 'previousHidString';
-  static const fullScreenHidString = 'fullScreenHidString';
 
   int hotKeyToggleHid = PhysicalKeyboardKey.space.usbHidUsage;
   int hotKeyNextHid = PhysicalKeyboardKey.arrowRight.usbHidUsage;
@@ -277,31 +273,48 @@ class SettingController extends GetxController {
   Future<void> _initPrefs() async {
     prefs = await SharedPreferences.getInstance();
 
-    showTranslate.value = prefs?.getBool('showTranslate') ?? true;
-    showRoma.value = prefs?.getBool('showRoma') ?? false;
-    hotKeyScope.value = prefs?.getBool('hotKeyScope') ?? false;
-    useMesh.value = prefs?.getBool('useMesh') ?? false;
-    useExclusiveMode.value = prefs?.getBool('useExclusiveMode') ?? false;
-    useSpringScroll.value = prefs?.getBool("useSpringScroll") ?? false;
-    close2Tray.value = prefs?.getBool("close2Tray") ?? false;
+    showTranslate.value =
+        prefs?.getBool(SharedPreferencesKey.showTranslate) ?? true;
+    showRoma.value = prefs?.getBool(SharedPreferencesKey.showRoma) ?? false;
+    hotKeyScope.value =
+        prefs?.getBool(SharedPreferencesKey.hotKeyScope) ?? false;
+    useMesh.value = prefs?.getBool(SharedPreferencesKey.useMesh) ?? false;
+    useExclusiveMode.value =
+        prefs?.getBool(SharedPreferencesKey.useExclusiveMode) ?? false;
+    useSpringScroll.value =
+        prefs?.getBool(SharedPreferencesKey.useSpringScroll) ?? false;
+    close2Tray.value = prefs?.getBool(SharedPreferencesKey.close2Tray) ?? false;
 
     // 提取快捷键解析逻辑，消除冗余
-    _loadKeyConfig(toggleHidString, hotKeyToggleHid, (hid, modifiers) {
+    _loadKeyConfig(SharedPreferencesKey.toggleHidString, hotKeyToggleHid, (
+      hid,
+      modifiers,
+    ) {
       hotKeyToggleHid = hid;
       modifierToggleHidList = modifiers;
     });
-    _loadKeyConfig(nextHidString, hotKeyNextHid, (hid, modifiers) {
+    _loadKeyConfig(SharedPreferencesKey.nextHidString, hotKeyNextHid, (
+      hid,
+      modifiers,
+    ) {
       hotKeyNextHid = hid;
       modifierNextHidList = modifiers;
     });
-    _loadKeyConfig(previousHidString, hotKeyPreviousHid, (hid, modifiers) {
+    _loadKeyConfig(SharedPreferencesKey.previousHidString, hotKeyPreviousHid, (
+      hid,
+      modifiers,
+    ) {
       hotKeyPreviousHid = hid;
       modifierPreviousHidList = modifiers;
     });
-    _loadKeyConfig(fullScreenHidString, hotKeyFullScreenHid, (hid, modifiers) {
-      hotKeyFullScreenHid = hid;
-      modifierFullScreenHidList = modifiers;
-    });
+    _loadKeyConfig(
+      SharedPreferencesKey.fullScreenHidString,
+      hotKeyFullScreenHid,
+      (hid, modifiers) {
+        hotKeyFullScreenHid = hid;
+        modifierFullScreenHidList = modifiers;
+      },
+    );
   }
 
   /// 辅助方法：解析存入的快捷键配置
@@ -429,16 +442,26 @@ class SettingController extends GetxController {
     prefs?.setBool(key, rxBool.value);
   }
 
-  void setShowTranslate() => _setBoolPref('showTranslate', showTranslate);
-  void setShowRoma() => _setBoolPref('showRoma', showRoma);
-  void setHotKeyScope({required bool scope}) =>
-      _setBoolPref('hotKeyScope', hotKeyScope, overrideValue: scope);
+  void setShowTranslate() =>
+      _setBoolPref(SharedPreferencesKey.showTranslate, showTranslate);
+  void setShowRoma() => _setBoolPref(SharedPreferencesKey.showRoma, showRoma);
+  void setHotKeyScope({required bool scope}) => _setBoolPref(
+    SharedPreferencesKey.hotKeyScope,
+    hotKeyScope,
+    overrideValue: scope,
+  );
   void setUseMesh({required bool show}) =>
-      _setBoolPref('useMesh', useMesh, overrideValue: show);
-  void setSpringScroll({required bool use}) =>
-      _setBoolPref('useSpringScroll', useSpringScroll, overrideValue: use);
-  void setClose2Tray({required bool use}) =>
-      _setBoolPref('close2Tray', close2Tray, overrideValue: use);
+      _setBoolPref(SharedPreferencesKey.useMesh, useMesh, overrideValue: show);
+  void setSpringScroll({required bool use}) => _setBoolPref(
+    SharedPreferencesKey.useSpringScroll,
+    useSpringScroll,
+    overrideValue: use,
+  );
+  void setClose2Tray({required bool use}) => _setBoolPref(
+    SharedPreferencesKey.close2Tray,
+    close2Tray,
+    overrideValue: use,
+  );
 
   /// 提取 HotKey 的主键和修饰键 (HID)
   (int, List<int>) _extractHid(HotKey key) {
@@ -480,10 +503,19 @@ class SettingController extends GetxController {
     );
 
     // 如果不是当前正在修改的快捷键，且签名相同，则说明冲突
-    if (actionType != toggleHidString && newSig == toggleSig) return true;
-    if (actionType != nextHidString && newSig == nextSig) return true;
-    if (actionType != previousHidString && newSig == prevSig) return true;
-    if (actionType != fullScreenHidString && newSig == fullScreenSig) {
+    if (actionType != SharedPreferencesKey.toggleHidString &&
+        newSig == toggleSig) {
+      return true;
+    }
+    if (actionType != SharedPreferencesKey.nextHidString && newSig == nextSig) {
+      return true;
+    }
+    if (actionType != SharedPreferencesKey.previousHidString &&
+        newSig == prevSig) {
+      return true;
+    }
+    if (actionType != SharedPreferencesKey.fullScreenHidString &&
+        newSig == fullScreenSig) {
       return true;
     }
 
@@ -514,25 +546,25 @@ class SettingController extends GetxController {
   }
 
   void setToggleHid({required HotKey key}) => _saveHotKeyPref(
-    toggleHidString,
+    SharedPreferencesKey.toggleHidString,
     modifierToggleHidList,
     key,
     (hid) => hotKeyToggleHid = hid,
   );
   void setNextHid({required HotKey key}) => _saveHotKeyPref(
-    nextHidString,
+    SharedPreferencesKey.nextHidString,
     modifierNextHidList,
     key,
     (hid) => hotKeyNextHid = hid,
   );
   void setPreviousHid({required HotKey key}) => _saveHotKeyPref(
-    previousHidString,
+    SharedPreferencesKey.previousHidString,
     modifierPreviousHidList,
     key,
     (hid) => hotKeyPreviousHid = hid,
   );
   void setFullScreenHid({required HotKey key}) => _saveHotKeyPref(
-    fullScreenHidString,
+    SharedPreferencesKey.fullScreenHidString,
     modifierFullScreenHidList,
     key,
     (hid) => hotKeyFullScreenHid = hid,

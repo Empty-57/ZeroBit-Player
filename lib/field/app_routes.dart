@@ -1,4 +1,5 @@
 abstract class AppRoutes {
+  static const root = '/';
   static const base = '/base';
   static const home = '/home';
   static const setting = '/setting';
@@ -14,6 +15,8 @@ abstract class AppRoutes {
 
   static const foldersPreview = '/foldersPreview';
   static const foldersDetails = '/foldersDetails';
+
+  static const details = '/details';
 
   static const playPage = '/playPage';
 
@@ -33,6 +36,8 @@ abstract class AppRoutes {
 
   static const settingOrder = 5;
 
+  static const detailsOrder = 0;
+
   static const Map<String, int> orderMap = {
     home: homeOrder,
 
@@ -48,6 +53,7 @@ abstract class AppRoutes {
   };
 
   static const Map<String, int> orderMap_ = {
+    root: homeOrder,
     home: homeOrder,
 
     artistPreview: artistPreviewOrder,
@@ -61,6 +67,8 @@ abstract class AppRoutes {
 
     foldersPreview: foldersPreviewOrder,
     foldersDetails: foldersDetailsOrder,
+
+    details: detailsOrder,
 
     setting: settingOrder,
   };

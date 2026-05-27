@@ -49,13 +49,12 @@ class BlurWithCoverBackground extends StatelessWidget {
   );
 
   SettingController get _settingController => Get.find<SettingController>();
-  ThemeService get _themeService => Get.find<ThemeService>();
 
   @override
   Widget build(BuildContext context) {
     final backgroundColor =
         onlyDarkMode
-            ? _themeService.darkTheme.colorScheme.surface
+            ? ThemeService.instance.darkTheme.colorScheme.surface
             : Theme.of(context).colorScheme.surface;
     return Stack(
       children: [

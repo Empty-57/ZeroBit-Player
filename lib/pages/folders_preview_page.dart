@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
+import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/func/sync_cache.dart';
 
@@ -80,8 +81,12 @@ class FoldersPreviewPage extends GetView<SettingController> {
                   return TextButton(
                     onPressed: () {
                       Get.toNamed(
-                        AppRoutes.foldersDetails,
-                        arguments: {'pathList': pathList, 'title': folder},
+                        AppRoutes.details,
+                        arguments: {
+                          'pathList': pathList,
+                          'title': folder,
+                          'operateArea': OperateArea.foldersDetails,
+                        },
                         id: 1,
                       );
                     },

@@ -6,7 +6,8 @@ import 'package:zerobit_player/field/app_routes.dart';
 
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
-import 'package:zerobit_player/field/tag_suffix.dart';
+
+import '../field/operate_area.dart';
 
 const double _itemHeight = 64.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
@@ -182,11 +183,20 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
       cacheExtent: _itemHeight * 1,
       itemBuilder: (context, index) {
         final item = controller.items[index];
-        final displayName = item.userKey.split(TagSuffix.playList)[0];
+        final displayName = item.userKey.split('_')[0];
 
         return TextButton(
           onPressed:
-              () => Get.toNamed(AppRoutes.playListDetails, arguments: item, id: 1),
+              () => Get.toNamed(
+                AppRoutes.details,
+                arguments: {
+                  'title': displayName,
+                  'pathList': item.pathList,
+                  'operateArea': OperateArea.playListDetails,
+                  'userKey': item.userKey,
+                },
+                id: 1,
+              ),
           style: TextButton.styleFrom(
             shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
           ),

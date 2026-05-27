@@ -1,18 +1,15 @@
-import 'dart:io';
 import 'dart:math';
-import 'package:flutter/foundation.dart';
-import 'package:transparent_image/transparent_image.dart';
-import 'package:zerobit_player/controller/audio_ctrl.dart';
-import 'package:zerobit_player/API/apis.dart';
-import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
-import 'package:get/get.dart';
 
-import 'package:zerobit_player/components/get_snack_bar.dart';
-import 'package:zerobit_player/controller/music_cache_ctrl.dart';
-import 'package:zerobit_player/controller/setting_ctrl.dart';
-import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
-import '../tools/func/get_sort_type.dart';
+import 'package:get/get.dart';
+import 'package:transparent_image/transparent_image.dart';
+import '../components/get_snack_bar.dart';
+import '../controller/audio_ctrl.dart';
+import '../controller/setting_ctrl.dart';
+import '../hive_manager/models/music_cache_model.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:zerobit_player/field/sort_type.dart';
+import 'func/get_sort_type.dart';
 
 const int _audioLimit = 400;
 
@@ -78,14 +75,11 @@ List<MusicCache> _sortPairs2((List<MusicCache>, int, bool) args) {
   return pairs.map((p) => p).toList();
 }
 
-mixin DetailsPageBaseController {
-  MusicCacheController get _musicCacheController =>
-      Get.find<MusicCacheController>();
+mixin DetailsPageControllerBase {
+  RxList<MusicCache> get items;
+  Rx<Uint8List> get headCover => kTransparentImage.obs;
   final SettingController _settingController = Get.find<SettingController>();
   AudioController get audioController => Get.find<AudioController>();
-  RxList<MusicCache> get items; // 也许可以去除Rx
-
-  Rx<Uint8List> get headCover => kTransparentImage.obs;
 
   void play(String audioSource, {MusicCache? metadata}) {
     final audioCtrl = audioController;
@@ -114,7 +108,9 @@ mixin DetailsPageBaseController {
     audioCtrl.audioPlay(metadata: metadataToPlay);
   }
 
-  void itemReSort({required int type}) async {
+  void itemReSort({required String operateArea}) async {
+    final int type = _settingController.sortMap[operateArea] ?? SortType.title;
+
     if (type == SortType.editTime || type == SortType.createTime) {
       items.value = await _sortFilesByTime(
         items,
@@ -162,54 +158,6 @@ mixin DetailsPageBaseController {
   }
 
   void itemReverse() {
-    items.value=items.reversed.toList();
-  }
-
-  Future<void> loadDetailsData(
-    List<String> pathList,
-    String operateArea, {
-    bool loadCover = true,
-  }) async {
-    final pathSet = pathList.toSet();
-    items.value =
-        _musicCacheController.items
-            .where((v) => pathSet.contains(v.path))
-            .toList();
-
-    itemReSort(type: _settingController.sortMap[operateArea]);
-    if (loadCover) {
-      _loadCover();
-    }
-  }
-
-  Future<void> _loadCover() async {
-    if (items.isEmpty) return;
-    try {
-      final firstItem = items.first;
-      final title = firstItem.title;
-      final artist = firstItem.artist;
-      final artistText =
-          (artist.isNotEmpty && artist != 'UNKNOWN') ? ' - $artist' : '';
-
-      final cover = await getCover(path: firstItem.path, sizeFlag: 1);
-      if (cover != null && cover.isNotEmpty) {
-        headCover.value = cover;
-        return;
-      }
-
-      final coverDataNet = await saveCoverByText(
-        text: '$title$artistText',
-        songPath: firstItem.path,
-        saveCover: false,
-      );
-
-      if (coverDataNet != null && coverDataNet.isNotEmpty) {
-        headCover.value = Uint8List.fromList(coverDataNet);
-      } else {
-        headCover.value = kTransparentImage;
-      }
-    } catch (e) {
-      headCover.value = kTransparentImage;
-    }
+    items.value = items.reversed.toList();
   }
 }

@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 
 import 'controller/setting_ctrl.dart';
 
-class ThemeService extends GetxService {
+class ThemeService {
+  ThemeService._();
+  static final instance = ThemeService._();
   final SettingController _settingController = Get.find<SettingController>();
 
   final _contrastLevel = 0.0;

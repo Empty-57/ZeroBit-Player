@@ -9,6 +9,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/adapters/scalable_setting_adapters.dart';
 import 'package:zerobit_player/hive_manager/adapters/user_playlist_adapter.dart';
 import 'package:zerobit_player/hive_manager/models/scalable_setting_cache_model.dart';
@@ -17,17 +18,14 @@ import 'package:zerobit_player/hive_manager/models/user_playlist_model.dart';
 import 'package:zerobit_player/components/play_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
-import 'package:zerobit_player/pages/album_details_page.dart';
 import 'package:zerobit_player/pages/album_preview_page.dart';
-import 'package:zerobit_player/pages/artist_details_page.dart';
 import 'package:zerobit_player/pages/artist_preview_page.dart';
-import 'package:zerobit_player/pages/folders_details_page.dart';
 import 'package:zerobit_player/pages/folders_preview_page.dart';
 import 'package:zerobit_player/pages/local_music_page.dart';
 import 'package:zerobit_player/pages/play_page.dart';
-import 'package:zerobit_player/pages/playlist_details_page.dart';
 import 'package:zerobit_player/pages/setting_page.dart';
 import 'package:zerobit_player/pages/playlists_preview_page.dart';
+import 'package:zerobit_player/pages/uni_details_page.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
 import 'package:zerobit_player/src/rust/frb_generated.dart';
@@ -174,12 +172,11 @@ void main() async {
   await openSafeBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
   await openSafeBox<ScalableSettingCache>(HiveBoxes.scalableSettingCacheBox);
 
-  Get.put(UserPlayListController());
   Get.put(SettingController());
   Get.put(MusicCacheController());
   Get.put(AudioController());
+  Get.put(UserPlayListController());
   Get.put(LyricController());
-  Get.put(ThemeService());
   Get.put(DesktopLyricsSever());
   Get.put(DesktopLyricsSettingController());
   Get.put(Tray());
@@ -322,7 +319,7 @@ void main() async {
   }
 }
 
-class _SlideTransition extends CustomTransition {
+class _DiagonalSlideTransition extends CustomTransition {
   @override
   Widget buildTransition(
     BuildContext context,
@@ -334,7 +331,7 @@ class _SlideTransition extends CustomTransition {
   ) {
     return SlideTransition(
       position: Tween<Offset>(
-        begin: SidebarNavState.instance.beginOffset,
+        begin: SidebarNavState.beginOffset,
         end: Offset.zero,
       ).animate(
         CurvedAnimation(parent: animation, curve: Curves.fastOutSlowIn),
@@ -354,7 +351,7 @@ class MainFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeService themeService = Get.find<ThemeService>();
+    final ThemeService themeService = ThemeService.instance;
     final SettingController settingController = Get.find<SettingController>();
     return Obx(
       () => GetMaterialApp(
@@ -366,7 +363,7 @@ class MainFrame extends StatelessWidget {
                 ? ThemeMode.dark
                 : ThemeMode.light,
         transitionDuration: 500.ms,
-        customTransition: _SlideTransition(),
+        customTransition: _DiagonalSlideTransition(),
         debugShowCheckedModeBanner: false,
         initialRoute: AppRoutes.base,
         getPages: [
@@ -391,18 +388,8 @@ class MainFrame extends StatelessWidget {
             maintainState: false,
           ),
           GetPage(
-            name: AppRoutes.playListDetails,
-            page: () => const PlayListDetailsPage(),
-            maintainState: false,
-          ),
-          GetPage(
             name: AppRoutes.artistPreview,
             page: () => const ArtistPreviewPage(),
-            maintainState: false,
-          ),
-          GetPage(
-            name: AppRoutes.artistDetails,
-            page: () => const ArtistDetailsPage(),
             maintainState: false,
           ),
           GetPage(
@@ -411,24 +398,20 @@ class MainFrame extends StatelessWidget {
             maintainState: false,
           ),
           GetPage(
-            name: AppRoutes.albumDetails,
-            page: () => const AlbumDetailsPage(),
-            maintainState: false,
-          ),
-          GetPage(
             name: AppRoutes.foldersPreview,
             page: () => const FoldersPreviewPage(),
             maintainState: false,
           ),
+
           GetPage(
-            name: AppRoutes.foldersDetails,
-            page: () => const FoldersDetailsPage(),
+            name: AppRoutes.details,
+            page: () => const UniDetailsPage(),
             maintainState: false,
           ),
           GetPage(
             name: AppRoutes.playPage,
-            maintainState: false,
             page: () => const PlayPage(),
+            maintainState: false,
             transition: Transition.fade,
             curve: Curves.fastOutSlowIn,
             transitionDuration: 300.ms,
@@ -440,14 +423,30 @@ class MainFrame extends StatelessWidget {
 }
 
 class NestedObserver extends NavigatorObserver {
-  final void Function(String? routeName) onRoutePopped;
+  final void Function(String? routeName) onRouteChanged;
 
-  NestedObserver({required this.onRoutePopped});
+  NestedObserver({required this.onRouteChanged});
+
+  String? _getName(Route? route) {
+    final args = route?.settings.arguments as Map<String, dynamic>? ?? {};
+    String? name;
+    name = route?.settings.name;
+    if (args['operateArea'] != null) {
+      name = OperateArea.nameMap[args['operateArea']];
+    }
+    return name;
+  }
 
   @override
   void didPop(Route route, Route? previousRoute) {
     super.didPop(route, previousRoute);
-    onRoutePopped(previousRoute?.settings.name);
+    onRouteChanged(_getName(previousRoute));
+  }
+
+  @override
+  void didPush(Route route, Route? previousRoute) {
+    super.didPush(route, previousRoute);
+    onRouteChanged(_getName(route));
   }
 }
 
@@ -462,20 +461,14 @@ class HomePage extends StatelessWidget {
         return const PlayListPreviewPage();
       case AppRoutes.setting:
         return const SettingPage();
-      case AppRoutes.playListDetails:
-        return const PlayListDetailsPage();
       case AppRoutes.artistPreview:
         return const ArtistPreviewPage();
-      case AppRoutes.artistDetails:
-        return const ArtistDetailsPage();
       case AppRoutes.albumPreview:
         return const AlbumPreviewPage();
-      case AppRoutes.albumDetails:
-        return const AlbumDetailsPage();
       case AppRoutes.foldersPreview:
         return const FoldersPreviewPage();
-      case AppRoutes.foldersDetails:
-        return const FoldersDetailsPage();
+      case AppRoutes.details:
+        return const UniDetailsPage();
     }
     return const LocalMusicPage();
   }
@@ -540,11 +533,14 @@ class HomePage extends StatelessWidget {
                       child: Navigator(
                         observers: [
                           NestedObserver(
-                            onRoutePopped: (name) {
-                              SidebarNavState
-                                  .instance
-                                  .currentNavigationIndex
-                                  .value = AppRoutes.orderMap_[name] ?? 0;
+                            onRouteChanged: (name) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (AppRoutes.orderMap_[name]
+                                    case final index?) {
+                                  SidebarNavState.currentNavigationIndex.value =
+                                      index;
+                                }
+                              });
                             },
                           ),
                         ],

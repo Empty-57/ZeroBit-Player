@@ -11,6 +11,7 @@ import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/components/blur_background.dart';
 import 'package:zerobit_player/components/lyrics_render.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
+import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
@@ -21,7 +22,6 @@ import 'package:zerobit_player/components/window_ctrl_bar.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/desktop_lyrics_sever.dart';
 import 'package:zerobit_player/field/app_routes.dart';
-import 'package:zerobit_player/field/tag_suffix.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/theme_manager.dart';
@@ -29,6 +29,8 @@ import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/lrcTool/parse_lyrics.dart';
 import 'package:zerobit_player/custom_widgets/rect_value_indicator.dart';
 import 'dart:async';
+
+import '../controller/user_playlist_ctrl.dart';
 
 const double _ctrlBtnMinSize = 40.0;
 const double _thumbRadius = 10.0;
@@ -251,6 +253,7 @@ class _SearchResultItem extends StatelessWidget {
             type: type,
           );
         }
+        audioController.loadLyrics('', changed: true);
         audioController.update([GetBuilderId.lyricRender]);
 
         if (settingController.autoDownloadLrc.value) {
@@ -502,12 +505,15 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
 class PlayPage extends StatelessWidget {
   const PlayPage({super.key});
 
-  ThemeService get _themeService => Get.find<ThemeService>();
+  ThemeService get _themeService => ThemeService.instance;
   DesktopLyricsSever get _desktopLyricsSever => Get.find<DesktopLyricsSever>();
   AudioController get _audioController => Get.find<AudioController>();
   SettingController get _settingController => Get.find<SettingController>();
   MusicCacheController get _musicCacheController =>
       Get.find<MusicCacheController>();
+
+  UserPlayListController get _userPlayListController =>
+      Get.find<UserPlayListController>();
 
   Widget _buildScrollText(String text, TextStyle textStyle) {
     return TextScroll(
@@ -1182,11 +1188,12 @@ class PlayPage extends StatelessWidget {
           fn: () {
             Get.back();
             Get.toNamed(
-              AppRoutes.albumDetails,
+              AppRoutes.details,
               arguments: {
                 'pathList':
                     musicCacheController.albumItemsDict[albumWithLetter],
                 'title': album,
+                'operateArea': OperateArea.albumDetails,
               },
               id: 1,
             );
@@ -1206,12 +1213,13 @@ class PlayPage extends StatelessWidget {
             fn: () {
               Get.back();
               Get.toNamed(
-                AppRoutes.artistDetails,
+                AppRoutes.details,
                 arguments: {
                   'pathList':
                       musicCacheController
                           .artistItemsDict[artistFirstWithLetter],
                   'title': artistFirst,
+                  'operateArea': OperateArea.artistDetails,
                 },
                 id: 1,
               );
@@ -1230,7 +1238,7 @@ class PlayPage extends StatelessWidget {
                     onPressed: () {
                       Get.back();
                       Get.toNamed(
-                        AppRoutes.artistDetails,
+                        AppRoutes.details,
                         arguments: {
                           'pathList':
                               musicCacheController
@@ -1238,6 +1246,7 @@ class PlayPage extends StatelessWidget {
                                       .getLetter(str: v) +
                                   v],
                           'title': v,
+                          'operateArea': OperateArea.artistDetails,
                         },
                         id: 1,
                       );
@@ -1255,15 +1264,15 @@ class PlayPage extends StatelessWidget {
         text: '添加到歌单',
         darkColorScheme: darkColorScheme,
         menuChildren:
-            _audioController.allUserKey.map((v) {
+            _userPlayListController.allUserKey.map((v) {
               return MenuItemButton(
                 onPressed: () {
-                  _audioController.addToAudioList(
+                  _userPlayListController.addToAudioList(
                     metadata: currentMetadata.value,
                     userKey: v,
                   );
                 },
-                child: Center(child: Text(v.split(TagSuffix.playList)[0])),
+                child: Center(child: Text(v.split('_')[0])),
               );
             }).toList(),
       ),
