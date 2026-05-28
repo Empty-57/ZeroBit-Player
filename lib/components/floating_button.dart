@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-
-import '../controller/details_page_ctrl.dart';
 import '../field/operate_area.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
-import 'package:zerobit_player/controller/music_cache_ctrl.dart';
+import '../tools/details_ctrl_mixin.dart';
 import '../tools/func/general_style.dart';
 
 const double _bottom = 96;
@@ -52,12 +50,14 @@ class FloatingButton extends StatefulWidget {
   final ScrollController scrollControllerList;
   final ScrollController scrollControllerGrid;
   final String operateArea;
+  final DetailsPageControllerBase controller;
 
   const FloatingButton({
     super.key,
     required this.scrollControllerList,
     required this.scrollControllerGrid,
     required this.operateArea,
+    required this.controller,
   });
 
   @override
@@ -65,21 +65,12 @@ class FloatingButton extends StatefulWidget {
 }
 
 class _FloatingButtonState extends State<FloatingButton> {
-  final MusicCacheController _musicCacheController =
-      Get.find<MusicCacheController>();
   final AudioController _audioController = Get.find<AudioController>();
   late final Worker _jumpWorker;
 
   @override
   void initState() {
     super.initState();
-    // 首次进入页面时，跳转到当前行
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _jumpToCurrent(useAnimate: false);
-      }
-    });
-
     _jumpWorker = ever(_audioController.currentPath, (_) {
       _jumpToCurrent(useAnimate: false, scrollOnVisible: false);
     });
@@ -101,20 +92,7 @@ class _FloatingButtonState extends State<FloatingButton> {
   int _getCurrentPlayingIndex() {
     final currentPath = _audioController.currentPath.value;
     if (currentPath.isEmpty) return -1;
-
-    switch (widget.operateArea) {
-      case OperateArea.allMusic:
-        return _musicCacheController.items.indexWhere(
-          (m) => m.path == currentPath,
-        );
-      default:
-        if (Get.isRegistered<DetailsPageController>()) {
-          return Get.find<DetailsPageController>().items.indexWhere(
-            (v) => v.path == currentPath,
-          );
-        }
-        return -1;
-    }
+    return widget.controller.items.indexWhere((m) => m.path == currentPath);
   }
 
   void _scrollTo(ScrollController ctrl, double to, [bool useAnimate = true]) {

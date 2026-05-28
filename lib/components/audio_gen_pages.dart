@@ -763,6 +763,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
             scrollControllerList: _scrollControllerList,
             scrollControllerGrid: _scrollControllerGrid,
             operateArea: widget.operateArea,
+            controller: widget.controller,
           ),
         ],
       ),
