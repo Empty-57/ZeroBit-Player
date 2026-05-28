@@ -8,7 +8,6 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `dummy_wasapi_proc`
 
-// ignore: camel_case_types
 class BASS_WASAPI_INFO {
   final int initflags;
   final int freq;

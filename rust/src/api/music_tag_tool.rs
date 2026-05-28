@@ -5,30 +5,31 @@ use lofty::file::{TaggedFile, TaggedFileExt};
 use lofty::picture::{MimeType, Picture, PictureType};
 use lofty::prelude::{Accessor, AudioFile, ItemKey, TagExt};
 use lofty::probe::Probe;
+use lofty::read_from_path;
 use lofty::tag::{Tag, TagItem};
 use std::borrow::Cow;
 use std::fs;
+use std::fs::File;
 use std::io::Cursor;
 use std::io::ErrorKind as IoErrorKind;
 use std::path::Path;
 use std::time::Duration;
-use lofty::read_from_path;
 use windows::core::HSTRING;
 use windows::Storage::StorageFile;
 
 fn get_duration_with_win(path: impl AsRef<Path>) -> Result<f32, windows::core::Error> {
     let path_str = path.as_ref().to_str().unwrap_or("");
     let hstring_path = HSTRING::from(path_str);
-    
+
     let storage_file = StorageFile::GetFileFromPathAsync(&hstring_path)?.get()?;
-    
+
     let music_properties = storage_file
         .Properties()?
         .GetMusicPropertiesAsync()?
         .get()?;
-    
-    let duration : Duration = music_properties.Duration()?.into();
-    let duration:f32  =duration.as_secs_f32();
+
+    let duration: Duration = music_properties.Duration()?.into();
+    let duration: f32 = duration.as_secs_f32();
 
     Ok(duration)
 }
@@ -49,19 +50,21 @@ pub struct AudioMetadata {
     pub duration: f32,
     pub bitrate: Option<u32>,
     pub sample_rate: Option<u32>,
-    pub bit_depth:u8,
-    pub channels:u8,
+    pub bit_depth: u8,
+    pub channels: u8,
     pub path: String,
 }
 
-fn handle_get_eof_error(
-    err: LoftyError,
-    path: &Path,
-    options: ParseOptions,
-) -> Option<TaggedFile> {
+fn handle_get_eof_error(err: LoftyError, path: &Path, options: ParseOptions) -> Option<TaggedFile> {
     match err.kind() {
         LoftyErrorKind::Io(inner) if inner.kind() == IoErrorKind::UnexpectedEof => {
-            Probe::open(path).ok()?.options(options).read().ok()
+            let mut file = File::open(path).ok()?;
+            Probe::new(&mut file)
+                .options(options)
+                .guess_file_type()
+                .ok()?
+                .read()
+                .ok()
         }
         _ => {
             println!("Error Get Cover: {:?}", err.kind());
@@ -86,8 +89,8 @@ impl AudioMetadata {
             duration: 0.0,
             bitrate: Some(0),
             sample_rate: Some(0),
-            bit_depth:16,
-            channels:1,
+            bit_depth: 16,
+            channels: 1,
             path: path_.to_string_lossy().to_string(),
         }
     }
@@ -104,7 +107,7 @@ impl AudioMetadata {
             permissions.set_readonly(false);
             fs::set_permissions(path, permissions).expect("File permissions cannot be modified");
         }
-        
+
         let mut tagged_file = match Probe::open(path_) {
             Ok(v) => match v
                 .options(
@@ -116,13 +119,13 @@ impl AudioMetadata {
                 )
                 .guess_file_type()
             {
-                Ok(f) => match f.read() { 
+                Ok(f) => match f.read() {
                     Ok(v) => v,
                     Err(err) => {
                         println!("{}: {:?}", err_msg, err.kind());
-                    return None;
+                        return None;
                     }
-                } ,
+                },
                 Err(err) => {
                     println!("{}: {:?}", err_msg, err.kind());
                     return None;
@@ -152,14 +155,22 @@ impl AudioMetadata {
 
     fn render_tags(path: String) -> Self {
         let path_ = Path::new(&path);
-        let options=ParseOptions::new()
-                        .parsing_mode(ParsingMode::Relaxed)
-                        .read_cover_art(false)
-                        .read_properties(true)
-                        .read_tags(true);
-        let tagged_file = match Probe::open(path_) {
-            Ok(v) => match v.options(options).read()
-            {
+        let options = ParseOptions::new()
+            .parsing_mode(ParsingMode::Relaxed)
+            .read_cover_art(false)
+            .read_properties(true)
+            .read_tags(true);
+
+        let mut file = match File::open(path_) {
+            Ok(f) => f,
+            Err(err) => {
+                println!("Error opening file: {:?}", err.kind());
+                return Self::new(path);
+            }
+        };
+
+        let tagged_file = match Probe::new(&mut file).options(options).guess_file_type() {
+            Ok(v) => match v.read() {
                 Ok(f) => f,
                 Err(err) => {
                     println!("Error reading file: {:?}", err.kind());
@@ -167,18 +178,18 @@ impl AudioMetadata {
                 }
             },
             Err(err) => {
-                println!("Error reading TaggedFile: {:?}", err.kind());
+                println!("Error guessing/reading TaggedFile: {:?}", err.kind());
                 return Self::new(path);
             }
         };
 
         let properties = tagged_file.properties();
-        
+
         let primary_duration = properties.duration();
-        
-        let duration: f32 = if primary_duration == Duration::ZERO { 
-            get_duration_with_win(path_).unwrap_or(0.0) 
-        } else { 
+
+        let duration: f32 = if primary_duration == Duration::ZERO {
+            get_duration_with_win(path_).unwrap_or(0.0)
+        } else {
             primary_duration.as_secs_f32()
         };
 
@@ -193,7 +204,7 @@ impl AudioMetadata {
                 artist_strs.join("/")
             };
 
-            let track_number=tag.track().unwrap_or(0);
+            let track_number = tag.track().unwrap_or(0);
 
             return AudioMetadata {
                 title: tag
@@ -226,7 +237,7 @@ impl AudioMetadata {
                 .to_string(),
             artist: "UNKNOWN".to_string(),
             album: "UNKNOWN".to_string(),
-            track_number:0,
+            track_number: 0,
             genre: "UNKNOWN".to_string(),
             duration,
             bitrate: properties.audio_bitrate(),
@@ -245,13 +256,20 @@ impl AudioMetadata {
             .read_cover_art(true)
             .read_properties(false)
             .read_tags(true);
-        let tagged_file = match Probe::open(path_) {
-            Ok(v) => match v.options(options).read() {
+
+        let mut file = match File::open(path_) {
+            Ok(f) => f,
+            Err(_) => return None,
+        };
+
+        let tagged_file = match Probe::new(&mut file).options(options).guess_file_type() {
+            Ok(v) => match v.read() {
                 Ok(f) => f,
                 Err(err) => handle_get_eof_error(err, path_, options)?,
             },
-            Err(err) => handle_get_eof_error(err, path_, options)?,
+            Err(err) => handle_get_eof_error(err.into(), path_, options)?,
         };
+
         if let Some(tag) = tagged_file
             .primary_tag()
             .or_else(|| tagged_file.first_tag())
@@ -277,7 +295,8 @@ impl AudioMetadata {
             if let Some(genre) = data.genre {
                 tag.set_genre(genre);
             }
-            tag.save_to_path(path, WriteOptions::default()).unwrap_or_else(|e|println!("ERROR: Save Metadata ERR! | {:?}",e));
+            tag.save_to_path(path, WriteOptions::default())
+                .unwrap_or_else(|e| println!("ERROR: Save Metadata ERR! | {:?}", e));
         }
     }
 
@@ -309,20 +328,29 @@ impl AudioMetadata {
                     output_bytes,
                 ),
             );
-            tag.save_to_path(path, WriteOptions::default()).unwrap_or_else(|e|println!("ERROR: Save Cover ERR! | {:?}",e));
+            tag.save_to_path(path, WriteOptions::default())
+                .unwrap_or_else(|e| println!("ERROR: Save Cover ERR! | {:?}", e));
         }
     }
 
     fn get_embedded_lyric(path: String) -> Option<String> {
         let path_ = Path::new(&path);
-        let options=ParseOptions::new()
-                        .parsing_mode(ParsingMode::Relaxed)
-                        .read_cover_art(false)
-                        .read_properties(false)
-                        .read_tags(true);
-        let tagged_file = match Probe::open(path_) {
-            Ok(v) => match v.options(options).read()
-            {
+        let options = ParseOptions::new()
+            .parsing_mode(ParsingMode::Relaxed)
+            .read_cover_art(false)
+            .read_properties(false)
+            .read_tags(true);
+
+        let mut file = match File::open(path_) {
+            Ok(f) => f,
+            Err(err) => {
+                println!("Error opening file for lyric: {:?}", err.kind());
+                return None;
+            }
+        };
+
+        let tagged_file = match Probe::new(&mut file).options(options).guess_file_type() {
+            Ok(v) => match v.read() {
                 Ok(f) => f,
                 Err(err) => {
                     println!("Error reading file: {:?}", err.kind());
@@ -339,23 +367,23 @@ impl AudioMetadata {
             .primary_tag()
             .or_else(|| tagged_file.first_tag())
         {
-            let lyric_items= tag.get_items(&ItemKey::Lyrics).collect::<Vec<&TagItem>>();
+            let lyric_items = tag.get_items(&ItemKey::Lyrics).collect::<Vec<&TagItem>>();
             for item in lyric_items {
-                if let Some(lyric) = item.value().text(){
+                if let Some(lyric) = item.value().text() {
                     return Some(lyric.to_string());
                 }
             }
         }
         None
     }
-    
-    fn edit_embedded_lyric(path: String, lyric: String){
+
+    fn edit_embedded_lyric(path: String, lyric: String) {
         if let Some(mut tag) = Self::get_tag(&path, "Error Edit Lyric") {
-            tag.insert_text(ItemKey::Lyrics,lyric);
-            tag.save_to_path(path, WriteOptions::default()).unwrap_or_else(|e|println!("ERROR: Save Lyrics ERR! | {:?}",e));
+            tag.insert_text(ItemKey::Lyrics, lyric);
+            tag.save_to_path(path, WriteOptions::default())
+                .unwrap_or_else(|e| println!("ERROR: Save Lyrics ERR! | {:?}", e));
         }
     }
-    
 }
 
 #[flutter_rust_bridge::frb]
@@ -412,7 +440,11 @@ pub fn edit_cover(path: String, src: Vec<u8>) {
 }
 
 #[flutter_rust_bridge::frb]
-pub fn get_embedded_lyric(path: String) -> Option<String> { AudioMetadata::get_embedded_lyric(path) }
+pub fn get_embedded_lyric(path: String) -> Option<String> {
+    AudioMetadata::get_embedded_lyric(path)
+}
 
 #[flutter_rust_bridge::frb]
-pub fn edit_embedded_lyric(path: String, lyric: String) {AudioMetadata::edit_embedded_lyric(path, lyric)}
+pub fn edit_embedded_lyric(path: String, lyric: String) {
+    AudioMetadata::edit_embedded_lyric(path, lyric)
+}
