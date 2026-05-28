@@ -34,7 +34,7 @@ class _ProgressBar extends GetView<AudioController> {
 
   @override
   Widget build(BuildContext context) {
-    final c=controller;
+    final c = controller;
     final progressColor = Theme.of(
       context,
     ).colorScheme.secondaryContainer.withValues(alpha: 0.8);
@@ -112,52 +112,55 @@ class PlayBar extends GetView<AudioController> {
         child: ClipRRect(
           borderRadius: _coverBorderRadius,
           child: Column(
-              children: [
-                _buildSlider(context, audioCtrlWidget),
-                _buildPlayBarBody(context, audioCtrlWidget),
-              ],
-            ),
+            children: [
+              _buildSlider(context, audioCtrlWidget),
+              _buildPlayBarBody(context, audioCtrlWidget),
+            ],
+          ),
         ),
       );
     });
   }
-// 构建 Slider 部分
+
+  // 构建 Slider 部分
   Widget _buildSlider(BuildContext context, AudioCtrlWidget audioCtrlWidget) {
-    return RepaintBoundary(child: Material(
-      color: Colors.transparent,
-      child: SliderTheme(
-        data: SliderTheme.of(context).copyWith(
-          trackHeight: 1,
-          showValueIndicator: ShowValueIndicator.always,
-          thumbShape: const DiamondSliderThumbShape(
-            horizontalDiagonal: 8,
-            verticalDiagonal: 16,
+    return RepaintBoundary(
+      child: Material(
+        color: Colors.transparent,
+        child: SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 1,
+            showValueIndicator: ShowValueIndicator.always,
+            thumbShape: const DiamondSliderThumbShape(
+              horizontalDiagonal: 8,
+              verticalDiagonal: 16,
+            ),
+            activeTrackColor: Colors.transparent,
+            thumbColor: Theme.of(context).colorScheme.primary,
+            inactiveTrackColor: Colors.transparent,
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
+            valueIndicatorShape: const RectangularValueIndicatorShape(
+              width: 48,
+              height: 28,
+              radius: 4,
+            ),
+            valueIndicatorTextStyle: generalTextStyle(
+              ctx: context,
+              size: 'sm',
+              color: Theme.of(context).colorScheme.onPrimary,
+            ),
+            mouseCursor: WidgetStateProperty.all(
+              SystemMouseCursors.resizeLeftRight,
+            ),
           ),
-          activeTrackColor: Colors.transparent,
-          thumbColor: Theme.of(context).colorScheme.primary,
-          inactiveTrackColor: Colors.transparent,
-          overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
-          valueIndicatorShape: const RectangularValueIndicatorShape(
-            width: 48,
-            height: 28,
-            radius: 4,
+          child: Container(
+            width: _barWidth + 16,
+            padding: const EdgeInsets.symmetric(horizontal: 0),
+            child: audioCtrlWidget.seekSlide,
           ),
-          valueIndicatorTextStyle: generalTextStyle(
-            ctx: context,
-            size: 'sm',
-            color: Theme.of(context).colorScheme.onPrimary,
-          ),
-          mouseCursor: WidgetStateProperty.all(
-            SystemMouseCursors.resizeLeftRight,
-          ),
-        ),
-        child: Container(
-          width: _barWidth + 16,
-          padding: const EdgeInsets.symmetric(horizontal: 0),
-          child: audioCtrlWidget.seekSlide,
         ),
       ),
-    ),);
+    );
   }
 
   // 构建播放条主体部分
@@ -171,7 +174,7 @@ class PlayBar extends GetView<AudioController> {
       color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
     );
 
-    final c=controller;
+    final c = controller;
 
     return Stack(
       children: [
@@ -196,28 +199,30 @@ class PlayBar extends GetView<AudioController> {
         // 进度条
         const _ProgressBar(),
         // 交互层
-        RepaintBoundary(child: TextButton(
-          onPressed: () => Get.toNamed(AppRoutes.playPage),
-          onHover: (v) => _isBarHover.value=v,
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            fixedSize: const Size(_barWidth, _barHeight),
-            backgroundColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(_radius),
+        RepaintBoundary(
+          child: TextButton(
+            onPressed: () => Get.toNamed(AppRoutes.playPage),
+            onHover: (v) => _isBarHover.value = v,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              fixedSize: const Size(_barWidth, _barHeight),
+              backgroundColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(_radius),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              spacing: 8,
+              children: [
+                _buildCoverAndInfo(context, timeTextStyle),
+                _buildControlButtons(audioCtrlWidget),
+                audioCtrlWidget.toggle,
+                _buildTimeDisplay(c, timeTextStyle),
+              ],
             ),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            spacing: 8,
-            children: [
-              _buildCoverAndInfo(context,timeTextStyle),
-              _buildControlButtons(audioCtrlWidget),
-              audioCtrlWidget.toggle,
-              _buildTimeDisplay(c,timeTextStyle),
-            ],
-          ),
-        ),),
+        ),
       ],
     );
   }
@@ -238,7 +243,7 @@ class PlayBar extends GetView<AudioController> {
   }
 
   // 构建封面和歌曲信息
-  Widget _buildCoverAndInfo(BuildContext context,TextStyle timeTextStyle) {
+  Widget _buildCoverAndInfo(BuildContext context, TextStyle timeTextStyle) {
     final titleStyle = generalTextStyle(
       ctx: context,
       size: 'md',
@@ -254,17 +259,15 @@ class PlayBar extends GetView<AudioController> {
               tag: 'playingCover',
               child: ClipRRect(
                 borderRadius: _coverBorderRadius,
-                child: FadeInImage(
-                  placeholder: MemoryImage(kTransparentImage),
-                  image: ResizeImage(
-                    MemoryImage(controller.currentSmallCover.value),
-                    width: _coverRenderSize,
-                    height: _coverRenderSize,
-                  ),
+                child: Image.memory(
+                  controller.currentSmallCover.value,
+                  key: ValueKey(controller.currentSmallCover.value.hashCode),
+                  cacheWidth: _coverRenderSize,
+                  cacheHeight: _coverRenderSize,
                   height: _coverSize,
                   width: _coverSize,
                   fit: BoxFit.cover,
-                  fadeInDuration: const Duration(milliseconds: 200),
+                  gaplessPlayback: true,
                 ),
               ),
             ),
@@ -317,52 +320,51 @@ class PlayBar extends GetView<AudioController> {
 
   // 构建可显隐的控制按钮
   Widget _buildControlButtons(AudioCtrlWidget audioCtrlWidget) {
-    return Obx(()=>AnimatedOpacity(
-      opacity: _isBarHover.value ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 200),
-      // 即使透明，也不让它接收点击事件
-      child: IgnorePointer(
-        ignoring: !_isBarHover.value,
-        child: Row(
-          children: [
-            audioCtrlWidget.volumeSet,
-            audioCtrlWidget.skipBack,
-            audioCtrlWidget.skipForward,
-            audioCtrlWidget.changeMode,
-          ],
+    return Obx(
+      () => AnimatedOpacity(
+        opacity: _isBarHover.value ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 200),
+        // 即使透明，也不让它接收点击事件
+        child: IgnorePointer(
+          ignoring: !_isBarHover.value,
+          child: Row(
+            children: [
+              audioCtrlWidget.volumeSet,
+              audioCtrlWidget.skipBack,
+              audioCtrlWidget.skipForward,
+              audioCtrlWidget.changeMode,
+            ],
+          ),
         ),
       ),
-    ));
+    );
   }
 
   // 构建时间显示
   Widget _buildTimeDisplay(AudioController c, TextStyle timeTextStyle) {
-  // 用最长的可能字符串测量宽度
-  final maxText = "00:00 / 00:00";
-  final tp = TextPainter(
-    text: TextSpan(text: maxText, style: timeTextStyle),
-    textDirection: TextDirection.ltr,
-  )..layout();
-  final maxWidth = tp.width + 4; // 留出余量防止误差
+    // 用最长的可能字符串测量宽度
+    final maxText = "00:00 / 00:00";
+    final tp = TextPainter(
+      text: TextSpan(text: maxText, style: timeTextStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final maxWidth = tp.width + 4; // 留出余量防止误差
 
-  return SizedBox(
-    height: _barHeight / 2,
-    width: maxWidth,
-    child: RepaintBoundary(
-      child: Center(
-        child: Obx(() {
-          final duration = c.currentDuration.value > 0
-              ? formatTime(totalSeconds: c.currentDuration.value)
-              : "--:--";
-          final currentSec = formatTime(totalSeconds: c.currentSec.value);
-          return Text(
-            "$currentSec / $duration",
-            style: timeTextStyle,
-          );
-        }),
+    return SizedBox(
+      height: _barHeight / 2,
+      width: maxWidth,
+      child: RepaintBoundary(
+        child: Center(
+          child: Obx(() {
+            final duration =
+                c.currentDuration.value > 0
+                    ? formatTime(totalSeconds: c.currentDuration.value)
+                    : "--:--";
+            final currentSec = formatTime(totalSeconds: c.currentSec.value);
+            return Text("$currentSec / $duration", style: timeTextStyle);
+          }),
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
-}
-
