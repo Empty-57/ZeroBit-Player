@@ -37,7 +37,7 @@ class SpringController extends GetxController {
 
   void nextLyric(int nextIndex) async {
     // 如果还没超过一首歌曲的长度，且当前没有被锁定
-    if (nextIndex < _totalLength - 1) {
+    if (nextIndex < _totalLength) {
       final nextBoxKey = getBoxKey(nextIndex);
       double deltaY = 60.0;
 
