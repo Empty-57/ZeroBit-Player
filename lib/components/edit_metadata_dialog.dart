@@ -14,6 +14,7 @@ import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
+import '../tools/cover_lru_cache.dart';
 import 'get_snack_bar.dart';
 
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
@@ -219,14 +220,7 @@ class _MetadataEditorState extends State<_MetadataEditor> {
 
         if (coverBytes != null) {
           await editCover(path: widget.metadata.path, src: coverBytes);
-
-          // 清除旧的封面缓存
-          final cacheIndex = _musicCacheController.items.indexWhere(
-            (m) => m.path == widget.metadata.path,
-          );
-          if (cacheIndex != -1) {
-            _musicCacheController.items[cacheIndex].src = null;
-          }
+          CoverLRUCache.put(widget.metadata.path, coverBytes);
         }
       }
 

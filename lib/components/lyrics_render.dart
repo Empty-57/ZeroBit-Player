@@ -57,9 +57,10 @@ const double _lrcScale = 1.1;
 
 class _LyricsStyle {
   final SettingController _settingsController;
-  final ThemeService _themeService;
 
-  _LyricsStyle(this._settingsController, this._themeService);
+  _LyricsStyle(this._settingsController);
+
+  final _themeService = ThemeService.instance;
 
   // 提取基础参数，避免重复访问 Rx 变量的 .value
   double get _baseSize => _settingsController.lrcFontSize.value.toDouble();
@@ -561,7 +562,7 @@ class _LyricsRenderState extends State<LyricsRender> {
   @override
   void initState() {
     super.initState();
-    lrcStylePackage = _LyricsStyle(_settingController, ThemeService.instance);
+    lrcStylePackage = _LyricsStyle(_settingController);
     // 首次进入页面时，跳转到当前行
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {

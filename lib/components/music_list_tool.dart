@@ -10,6 +10,8 @@ import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 
+import '../tools/cover_lru_cache.dart';
+
 const double _itemSpacing = 16.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 
@@ -152,35 +154,39 @@ class AsyncCover extends StatefulWidget {
 class _AsyncCoverState extends State<AsyncCover> {
   Future<Uint8List?>? _coverFuture;
 
-  // 记录上一次渲染的图片内存地址，用于对比外部是否发生了修改
-  Uint8List? _lastSrc;
-
   @override
   void initState() {
     super.initState();
-    _lastSrc = widget.music.src;
-    if (_lastSrc == null) {
-      _coverFuture = _loadCoverAndSave();
-    }
+    _triggerLoad();
   }
 
   @override
   void didUpdateWidget(AsyncCover oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.music.src != _lastSrc) {
-      setState(() {
-        // 判断数据是否发生更改
-        _lastSrc = widget.music.src;
-        if (_lastSrc == null) {
-          _coverFuture = _loadCoverAndSave();
-        } else {
-          _coverFuture = null;
-        }
-      });
+    if (widget.music.path != oldWidget.music.path ||
+        !identical(widget.music, oldWidget.music)) {
+      _triggerLoad();
     }
   }
 
+  void _triggerLoad() {
+    final cachedData = CoverLRUCache.get(widget.music.path);
+    if (cachedData != null) {
+      setState(() {
+        _coverFuture = Future.value(cachedData);
+      });
+      return;
+    }
+
+    setState(() {
+      _coverFuture = _loadCoverAndSave();
+    });
+  }
+
   Future<Uint8List?> _loadCoverAndSave() async {
+    await Future.delayed(const Duration(milliseconds: 100)); //防抖
+    if (!mounted) return null;
+
     Uint8List? finalData;
     final coverData = await getCover(path: widget.music.path, sizeFlag: 0);
 
@@ -202,8 +208,7 @@ class _AsyncCoverState extends State<AsyncCover> {
     }
 
     if (finalData != null && mounted) {
-      widget.music.src = finalData;
-      _lastSrc = finalData; // 同步记录，防止 didUpdateWidget 误判
+      CoverLRUCache.put(widget.music.path, finalData);
     }
 
     return finalData;
@@ -217,7 +222,7 @@ class _AsyncCoverState extends State<AsyncCover> {
       borderRadius: _coverBorderRadius,
       child: Image.memory(
         imageBytes,
-        key: ValueKey(imageBytes), // 只要图片数据变了，就重建
+        key: ValueKey(imageBytes.hashCode),
         width: widget.size,
         height: widget.size,
         fit: BoxFit.cover,
@@ -230,10 +235,6 @@ class _AsyncCoverState extends State<AsyncCover> {
 
   @override
   Widget build(BuildContext context) {
-    if (_lastSrc != null) {
-      return _renderCover(_lastSrc!);
-    }
-
     return FutureBuilder<Uint8List?>(
       future: _coverFuture,
       builder: (context, snapshot) {
@@ -245,7 +246,7 @@ class _AsyncCoverState extends State<AsyncCover> {
           height: widget.size,
           width: widget.size,
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            color: const Color(0x1A808080),
             borderRadius: _coverBorderRadius,
           ),
         );

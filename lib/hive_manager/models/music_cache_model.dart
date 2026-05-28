@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 class MusicCache {
   final String title;
   final String artist;
@@ -13,8 +11,6 @@ class MusicCache {
   final int channels;
   final String path;
 
-  Uint8List? src;
-
   MusicCache({
     required this.title,
     required this.artist,
@@ -27,6 +23,5 @@ class MusicCache {
     required this.bitDepth,
     required this.channels,
     required this.path,
-    this.src,
   });
 }

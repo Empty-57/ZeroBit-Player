@@ -147,7 +147,6 @@ class SettingController extends GetxController {
       bitDepth: 16,
       channels: 1,
       path: '',
-      src: null,
     ),
   };
 

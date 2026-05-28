@@ -16,6 +16,7 @@ import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/components/spring_list_view.dart';
 import 'package:zerobit_player/field/audio_source.dart';
+import '../tools/cover_lru_cache.dart';
 import 'music_cache_ctrl.dart';
 
 enum AudioState { stop, playing, pause, ended }
@@ -42,7 +43,6 @@ class AudioController extends GetxController {
         bitDepth: 16,
         channels: 1,
         path: '',
-        src: null,
       ).obs;
 
   final currentDuration = 0.0.obs;
@@ -239,30 +239,26 @@ class AudioController extends GetxController {
             ? ' - ${metadata.artist}'
             : '';
 
-    final coverData = await getCover(path: currentPath.value, sizeFlag: 1);
-
-    if (coverData != null && coverData.isNotEmpty) {
-      currentCover.value = coverData;
+    if (await getCover(path: currentPath.value, sizeFlag: 1) case final src?
+        when src.isNotEmpty) {
+      currentCover.value = src;
     } else {
-      final coverDataNet = await saveCoverByText(
-        text: title + artist,
-        songPath: metadata.path,
-        saveCover: false,
-      );
-
-      if (coverDataNet != null && coverDataNet.isNotEmpty) {
-        currentCover.value = Uint8List.fromList(coverDataNet);
+      if (await saveCoverByText(
+            text: title + artist,
+            songPath: metadata.path,
+            saveCover: false,
+          )
+          case final netSrc? when netSrc.isNotEmpty) {
+        currentCover.value = Uint8List.fromList(netSrc);
       } else {
         currentCover.value = kTransparentImage;
       }
     }
 
-    currentSmallCover.value = metadata.src ?? kTransparentImage;
-    if (metadata.src == null || metadata.src!.isEmpty) {
-      currentSmallCover.value =
-          await getCover(path: currentPath.value, sizeFlag: 0) ??
-          kTransparentImage;
-    }
+    currentSmallCover.value =
+        CoverLRUCache.get(currentPath.value) ??
+        await getCover(path: currentPath.value, sizeFlag: 0) ??
+        kTransparentImage;
 
     await windowManager.setTitle(title + artist);
     try {
@@ -299,7 +295,7 @@ class AudioController extends GetxController {
       return;
     }
     final src =
-        currentMetadata.value.src ??
+        CoverLRUCache.get(currentPath.value) ??
         await getCover(path: currentMetadata.value.path, sizeFlag: 0) ??
         kTransparentImage;
     final PaletteGenerator generator = await PaletteGenerator.fromImageProvider(
