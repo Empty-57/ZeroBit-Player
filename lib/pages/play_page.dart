@@ -1122,6 +1122,7 @@ class PlayPage extends StatelessWidget {
   }
 
   List<Widget> _getMenuItem(
+      MenuController menuController,
     ColorScheme darkColorScheme,
     Rx<MusicCache> currentMetadata,
   ) {
@@ -1186,6 +1187,7 @@ class PlayPage extends StatelessWidget {
             musicCacheController.getLetter(str: album) + album;
         return _createMenuBtn(
           fn: () {
+            menuController.close();
             Get.back();
             Get.toNamed(
               AppRoutes.details,
@@ -1211,6 +1213,7 @@ class PlayPage extends StatelessWidget {
         if (artistList.length == 1) {
           return _createMenuBtn(
             fn: () {
+              menuController.close();
               Get.back();
               Get.toNamed(
                 AppRoutes.details,
@@ -1236,6 +1239,7 @@ class PlayPage extends StatelessWidget {
                 artistList.map((v) {
                   return MenuItemButton(
                     onPressed: () {
+                      menuController.close();
                       Get.back();
                       Get.toNamed(
                         AppRoutes.details,
@@ -1399,6 +1403,7 @@ class PlayPage extends StatelessWidget {
                             ),
                           ),
                           menuChildren: _getMenuItem(
+                            menuController,
                             darkColorScheme,
                             _audioController.currentMetadata,
                           ),
