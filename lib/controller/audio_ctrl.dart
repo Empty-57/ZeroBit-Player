@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
@@ -159,8 +161,6 @@ class AudioController extends GetxController {
               as MusicCache;
       if (playListCacheItems.isEmpty || lastMetadata.path.isEmpty) return;
 
-      currentMetadata.value = lastMetadata;
-      currentPath.value = lastMetadata.path;
       await setVolume(vol: 0.0);
       await audioPlay(metadata: lastMetadata);
       await audioPause();
@@ -222,9 +222,6 @@ class AudioController extends GetxController {
       return;
     }
     _isSyncing = true;
-    if (_settingController.dynamicThemeColor.value) {
-      await _setThemeColor4Cover();
-    }
 
     try {
       currentDuration.value = await getLen();
@@ -239,6 +236,7 @@ class AudioController extends GetxController {
             ? ' - ${metadata.artist}'
             : '';
 
+    final oldCover = currentCover.value;
     if (await getCover(path: currentPath.value, sizeFlag: 1) case final src?
         when src.isNotEmpty) {
       currentCover.value = src;
@@ -254,11 +252,16 @@ class AudioController extends GetxController {
         currentCover.value = kTransparentImage;
       }
     }
+    PaintingBinding.instance.imageCache.evict(MemoryImage(oldCover));
 
     currentSmallCover.value =
         CoverLRUCache.get(currentPath.value) ??
         await getCover(path: currentPath.value, sizeFlag: 0) ??
         kTransparentImage;
+
+    if (_settingController.dynamicThemeColor.value) {
+      await _setThemeColor4Cover();
+    }
 
     await windowManager.setTitle(title + artist);
     try {
@@ -298,10 +301,15 @@ class AudioController extends GetxController {
         CoverLRUCache.get(currentPath.value) ??
         await getCover(path: currentMetadata.value.path, sizeFlag: 0) ??
         kTransparentImage;
+
+    final imageProvider = MemoryImage(src);
+
     final PaletteGenerator generator = await PaletteGenerator.fromImageProvider(
-      MemoryImage(src),
+      imageProvider,
       size: Size(120, 120),
     );
+
+    PaintingBinding.instance.imageCache.evict(imageProvider);
 
     if (generator.paletteColors.length >= 4) {
       coverPalette.value = generator.paletteColors
@@ -309,12 +317,14 @@ class AudioController extends GetxController {
           .toList()
           .sublist(0, 4);
     } else {
-      coverPalette.addAll([
+      coverPalette.value = generator.paletteColors
+          .map((v) => v.color)
+          .toList()..addAll([
         Colors.red,
         Colors.yellow,
         Colors.blue,
         Colors.green,
-      ]);
+      ].sublist(0,4-generator.paletteColors.length));
     }
 
     if (generator.vibrantColor != null) {

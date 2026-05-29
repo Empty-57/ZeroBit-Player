@@ -797,10 +797,14 @@ class _StaggeredLyricItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final int currentLineIndex = lyricController.currentLineIndex.value;
-      final lrcAlignment = settingController.lrcAlignment.value;
       final isCurrent = index == currentLineIndex;
       final bool isPrevLine = (currentLineIndex - index == 1);
       final isPointerScrolling = lyricController.isPointerScroll.value;
+
+      final lrcAlignment = settingController.lrcAlignment.value;
+      final showRoma = settingController.showRoma.value;
+      final showTranslate = settingController.showTranslate.value;
+      final useBlur = settingController.useBlur.value;
 
       final lrcPadding = EdgeInsets.only(
         top: 16,
@@ -866,7 +870,7 @@ class _StaggeredLyricItem extends StatelessWidget {
               lrcAlignmentIndex: lrcAlignment,
             ),
 
-          if (romaText.isNotEmpty && settingController.showRoma.value)
+          if (romaText.isNotEmpty && showRoma)
             _LrcLyricWidget(
               text: romaText,
               style: romaLyricStyle,
@@ -875,7 +879,7 @@ class _StaggeredLyricItem extends StatelessWidget {
               highLightAlpha: _currentAlpha,
             ),
 
-          if (translateText.isNotEmpty && settingController.showTranslate.value)
+          if (translateText.isNotEmpty && showTranslate)
             _LrcLyricWidget(
               text: translateText,
               style: tsLyricStyle,
@@ -893,7 +897,6 @@ class _StaggeredLyricItem extends StatelessWidget {
         ],
       );
 
-      final bool useBlur = settingController.useBlur.value;
       final int diff = (currentLineIndex - index).abs(); // 视距
 
       // 是否需要挂载 ImageFiltered (当前行保持挂载防动画中断，其余行在视距内挂载)
