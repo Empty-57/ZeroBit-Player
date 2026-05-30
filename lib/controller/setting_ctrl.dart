@@ -27,9 +27,9 @@ class SettingController extends GetxController {
   final themeColor = 0xff27272a.obs;
   final dynamicThemeColor = true.obs;
   final fontFamily = "Microsoft YaHei Light".obs;
-  final useBlur = false.obs;
+  final useBlur = true.obs;
   final useMesh = true.obs;
-  final useSpringScroll = false.obs;
+  final useSpringScroll = true.obs;
   final close2Tray = false.obs;
   final showTranslate = true.obs;
   final showRoma = false.obs;
@@ -277,11 +277,11 @@ class SettingController extends GetxController {
     showRoma.value = prefs?.getBool(SharedPreferencesKey.showRoma) ?? false;
     hotKeyScope.value =
         prefs?.getBool(SharedPreferencesKey.hotKeyScope) ?? false;
-    useMesh.value = prefs?.getBool(SharedPreferencesKey.useMesh) ?? false;
+    useMesh.value = prefs?.getBool(SharedPreferencesKey.useMesh) ?? true;
     useExclusiveMode.value =
         prefs?.getBool(SharedPreferencesKey.useExclusiveMode) ?? false;
     useSpringScroll.value =
-        prefs?.getBool(SharedPreferencesKey.useSpringScroll) ?? false;
+        prefs?.getBool(SharedPreferencesKey.useSpringScroll) ?? true;
     close2Tray.value = prefs?.getBool(SharedPreferencesKey.close2Tray) ?? false;
 
     // 提取快捷键解析逻辑，消除冗余
