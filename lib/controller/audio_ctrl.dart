@@ -236,7 +236,6 @@ class AudioController extends GetxController {
             ? ' - ${metadata.artist}'
             : '';
 
-    final oldCover = currentCover.value;
     if (await getCover(path: currentPath.value, sizeFlag: 1) case final src?
         when src.isNotEmpty) {
       currentCover.value = src;
@@ -252,7 +251,6 @@ class AudioController extends GetxController {
         currentCover.value = kTransparentImage;
       }
     }
-    PaintingBinding.instance.imageCache.evict(MemoryImage(oldCover));
 
     currentSmallCover.value =
         CoverLRUCache.get(currentPath.value) ??

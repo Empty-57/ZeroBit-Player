@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:get/get.dart';
@@ -17,7 +18,10 @@ class SpringController extends GetxController {
   final Map<int, GlobalKey> _sliverKeys = {};
   final Map<int, GlobalKey> _boxKeys = {};
 
-  final Rx<_JumpSignal> _jumpSignal = _JumpSignal(0, 0.0).obs;
+  final ValueNotifier<_JumpSignal> _jumpNotifier = ValueNotifier(
+    _JumpSignal(0, 0.0),
+  );
+
   static const double _anchorPercentage = 0.3;
 
   int _totalLength = 0;
@@ -61,10 +65,10 @@ class SpringController extends GetxController {
         _scrollController.jumpTo(0.0);
       }
 
-      _jumpSignal.value = _JumpSignal(
-        _jumpSignal.value.triggerId + 1,
+      _jumpNotifier.value = _JumpSignal(
+        _jumpNotifier.value.triggerId + 1,
         deltaY,
-      ); //发送滚动信号
+      );
     }
   }
 
@@ -82,6 +86,7 @@ class SpringController extends GetxController {
     _sliverKeys.clear();
     _boxKeys.clear();
     _scrollController.dispose();
+    _jumpNotifier.dispose();
     super.onClose();
   }
 }
@@ -240,7 +245,6 @@ class _SpringItemState extends State<_SpringItem>
     with SingleTickerProviderStateMixin {
   final SpringController controller = Get.find();
   late AnimationController _animController;
-  Worker? _worker;
 
   int _animTriggerId = 0;
 
@@ -251,10 +255,11 @@ class _SpringItemState extends State<_SpringItem>
     _animController = AnimationController.unbounded(vsync: this)
       ..value = 0.0; // 0.0 表示在原位
 
-    _worker = ever(controller._jumpSignal, (_JumpSignal signal) {
-      //监听滚动信号
-      _triggerAnimation(signal.deltaY);
-    });
+    controller._jumpNotifier.addListener(_onJumpSignal);
+  }
+
+  void _onJumpSignal() {
+    _triggerAnimation(controller._jumpNotifier.value.deltaY);
   }
 
   void _triggerAnimation(double deltaY) async {
@@ -326,7 +331,7 @@ class _SpringItemState extends State<_SpringItem>
 
   @override
   void dispose() {
-    _worker?.dispose();
+    controller._jumpNotifier.removeListener(_onJumpSignal);
     _animController.dispose();
     super.dispose();
   }
