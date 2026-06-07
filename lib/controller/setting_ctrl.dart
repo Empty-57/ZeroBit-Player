@@ -54,7 +54,7 @@ class SettingController extends GetxController {
   final useExclusiveMode = false.obs;
   final showSpectrogram = false.obs;
   final equalizerGains = List.generate(10, (_) => 0.0).toList().obs;
-  final useReplayGain=true.obs;
+  final useReplayGain=false.obs;
 
   static const minGain = -12.0;
   static const maxGain = 12.0;
