@@ -881,7 +881,6 @@ class _DesktopLrcFontSizeDropMenu extends StatelessWidget {
         context,
         '${_desktopLyricsSettingController.fontSize.value}',
         _getFontSizeList((i) {
-          _desktopLyricsSettingController.fontSize.value = i;
           _desktopLyricsSettingController.setFontSize(size: i);
           menuController.close();
         }),
@@ -902,7 +901,6 @@ class _DesktopLrcFontWeightDropMenu extends StatelessWidget {
         context,
         '${_desktopLyricsSettingController.fontWeight.value * 100 + 100}',
         _getFontWeightList((i) {
-          _desktopLyricsSettingController.fontWeight.value = i;
           _desktopLyricsSettingController.setFontWeight(weight: i);
           menuController.close();
         }),
@@ -931,7 +929,6 @@ class _DesktopLrcFontOpacityDropMenu extends StatelessWidget {
             value: _desktopLyricsSettingController.fontOpacity.value,
 
             onChanged: (v) {
-              _desktopLyricsSettingController.fontOpacity.value = v;
               _desktopLyricsSettingController.setFontOpacity(opacity: v);
             },
             onChangeEnd: (v) {
@@ -953,7 +950,6 @@ class _DesktopLyricsOverlayColorPicker extends StatelessWidget {
       context,
       _desktopLyricsSettingController.overlayColor.value,
       (color) {
-        _desktopLyricsSettingController.overlayColor.value = color;
         _desktopLyricsSettingController.setOverlayColor(color: color);
       },
       true,
@@ -970,7 +966,6 @@ class _DesktopLyricsUnderColorPicker extends StatelessWidget {
       context,
       _desktopLyricsSettingController.underColor.value,
       (color) {
-        _desktopLyricsSettingController.underColor.value = color;
         _desktopLyricsSettingController.setUnderColor(color: color);
       },
       true,
@@ -988,9 +983,8 @@ class _DesktopLyricsFontFamilyDialog extends StatelessWidget {
         context,
         _desktopLyricsSettingController.fontFamily.value,
         (index) {
-          _desktopLyricsSettingController.fontFamily.value = _fontsList[index];
           _desktopLyricsSettingController.setFontFamily(
-            family: _desktopLyricsSettingController.fontFamily.value,
+            family: _fontsList[index],
           );
         },
       ),
