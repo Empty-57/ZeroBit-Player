@@ -6,7 +6,7 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `edit_cover`, `edit_embedded_lyric`, `edit_tags`, `get_cover`, `get_duration_with_win`, `get_embedded_lyric`, `get_tag`, `handle_get_eof_error`, `new`, `render_tags`
+// These functions are ignored because they are not marked as `pub`: `edit_cover`, `edit_embedded_lyric`, `edit_tags`, `get_cover`, `get_duration_with_win`, `get_embedded_lyric`, `get_tag`, `handle_get_eof_error`, `new`, `parse_gain`, `parse_peak`, `render_tags`
 
 Future<AudioMetadata> getMetadata({required String path}) =>
     RustLib.instance.api.crateApiMusicTagToolGetMetadata(path: path);
@@ -43,6 +43,8 @@ class AudioMetadata {
   final int? sampleRate;
   final int bitDepth;
   final int channels;
+  final double trackGain;
+  final double trackPeak;
   final String path;
 
   const AudioMetadata({
@@ -56,6 +58,8 @@ class AudioMetadata {
     this.sampleRate,
     required this.bitDepth,
     required this.channels,
+    required this.trackGain,
+    required this.trackPeak,
     required this.path,
   });
 
@@ -71,6 +75,8 @@ class AudioMetadata {
       sampleRate.hashCode ^
       bitDepth.hashCode ^
       channels.hashCode ^
+      trackGain.hashCode ^
+      trackPeak.hashCode ^
       path.hashCode;
 
   @override
@@ -88,6 +94,8 @@ class AudioMetadata {
           sampleRate == other.sampleRate &&
           bitDepth == other.bitDepth &&
           channels == other.channels &&
+          trackGain == other.trackGain &&
+          trackPeak == other.trackPeak &&
           path == other.path;
 }
 

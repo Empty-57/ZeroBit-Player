@@ -44,6 +44,8 @@ class AudioController extends GetxController {
         sampleRate: null,
         bitDepth: 16,
         channels: 1,
+      trackGain: 0.0,
+      trackPeak: 1.0,
         path: '',
       ).obs;
 
@@ -357,7 +359,13 @@ class AudioController extends GetxController {
     final prevMetadata = currentMetadata.value;
     try {
       await smtcUpdateState(state: SMTCState.playing);
+
+      if(_settingController.useReplayGain.value){
+        await setReplayGain(gainDb: metadata.trackGain, peak: metadata.trackPeak);
+      }
       await playFile(path: metadata.path);
+
+
 
       if (currentSpeed.value != 1.0) {
         await setSpeed(speed: currentSpeed.value);

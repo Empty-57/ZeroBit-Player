@@ -54,6 +54,7 @@ class SettingController extends GetxController {
   final useExclusiveMode = false.obs;
   final showSpectrogram = false.obs;
   final equalizerGains = List.generate(10, (_) => 0.0).toList().obs;
+  final useReplayGain=true.obs;
 
   static const minGain = -12.0;
   static const maxGain = 12.0;
@@ -146,6 +147,8 @@ class SettingController extends GetxController {
       sampleRate: null,
       bitDepth: 16,
       channels: 1,
+      trackGain: 0.0,
+      trackPeak: 1.0,
       path: '',
     ),
   };
@@ -461,6 +464,15 @@ class SettingController extends GetxController {
     close2Tray,
     overrideValue: use,
   );
+
+  void setUseReplayGain({required bool use})async{
+    await setReplayGain(gainDb: 0.0, peak: 1.0);
+    _setBoolPref(
+    SharedPreferencesKey.useReplayGain,
+    useReplayGain,
+    overrideValue: use,
+  );
+}
 
   /// 提取 HotKey 的主键和修饰键 (HID)
   (int, List<int>) _extractHid(HotKey key) {

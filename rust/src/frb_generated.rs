@@ -37,7 +37,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.11.1";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1758117995;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1767361841;
 
 // Section: executor
 
@@ -826,6 +826,42 @@ fn wire__crate__api__bass__set_position_impl(
         },
     )
 }
+fn wire__crate__api__bass__set_replay_gain_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "set_replay_gain",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_gain_db = <f32>::sse_decode(&mut deserializer);
+            let api_peak = <f32>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok({
+                        crate::api::bass::set_replay_gain(api_gain_db, api_peak);
+                    })?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__bass__set_speed_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -1197,6 +1233,8 @@ impl SseDecode for crate::api::music_tag_tool::AudioMetadata {
         let mut var_sampleRate = <Option<u32>>::sse_decode(deserializer);
         let mut var_bitDepth = <u8>::sse_decode(deserializer);
         let mut var_channels = <u8>::sse_decode(deserializer);
+        let mut var_trackGain = <f32>::sse_decode(deserializer);
+        let mut var_trackPeak = <f32>::sse_decode(deserializer);
         let mut var_path = <String>::sse_decode(deserializer);
         return crate::api::music_tag_tool::AudioMetadata {
             title: var_title,
@@ -1209,6 +1247,8 @@ impl SseDecode for crate::api::music_tag_tool::AudioMetadata {
             sample_rate: var_sampleRate,
             bit_depth: var_bitDepth,
             channels: var_channels,
+            track_gain: var_trackGain,
+            track_peak: var_trackPeak,
             path: var_path,
         };
     }
@@ -1476,15 +1516,16 @@ fn pde_ffi_dispatcher_primary_impl(
         21 => wire__crate__api__bass__resume_impl(port, ptr, rust_vec_len, data_len),
         22 => wire__crate__api__bass__set_eq_params_impl(port, ptr, rust_vec_len, data_len),
         23 => wire__crate__api__bass__set_position_impl(port, ptr, rust_vec_len, data_len),
-        24 => wire__crate__api__bass__set_speed_impl(port, ptr, rust_vec_len, data_len),
-        25 => wire__crate__api__bass__set_volume_impl(port, ptr, rust_vec_len, data_len),
-        26 => wire__crate__api__smtc__smtc_clear_impl(port, ptr, rust_vec_len, data_len),
-        27 => wire__crate__api__smtc__smtc_control_events_impl(port, ptr, rust_vec_len, data_len),
-        28 => wire__crate__api__smtc__smtc_update_metadata_impl(port, ptr, rust_vec_len, data_len),
-        29 => wire__crate__api__smtc__smtc_update_state_impl(port, ptr, rust_vec_len, data_len),
-        30 => wire__crate__api__bass__stop_impl(port, ptr, rust_vec_len, data_len),
-        31 => wire__crate__api__bass__switch_exclusive_mode_impl(port, ptr, rust_vec_len, data_len),
-        32 => wire__crate__api__bass__toggle_impl(port, ptr, rust_vec_len, data_len),
+        24 => wire__crate__api__bass__set_replay_gain_impl(port, ptr, rust_vec_len, data_len),
+        25 => wire__crate__api__bass__set_speed_impl(port, ptr, rust_vec_len, data_len),
+        26 => wire__crate__api__bass__set_volume_impl(port, ptr, rust_vec_len, data_len),
+        27 => wire__crate__api__smtc__smtc_clear_impl(port, ptr, rust_vec_len, data_len),
+        28 => wire__crate__api__smtc__smtc_control_events_impl(port, ptr, rust_vec_len, data_len),
+        29 => wire__crate__api__smtc__smtc_update_metadata_impl(port, ptr, rust_vec_len, data_len),
+        30 => wire__crate__api__smtc__smtc_update_state_impl(port, ptr, rust_vec_len, data_len),
+        31 => wire__crate__api__bass__stop_impl(port, ptr, rust_vec_len, data_len),
+        32 => wire__crate__api__bass__switch_exclusive_mode_impl(port, ptr, rust_vec_len, data_len),
+        33 => wire__crate__api__bass__toggle_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1517,6 +1558,8 @@ impl flutter_rust_bridge::IntoDart for crate::api::music_tag_tool::AudioMetadata
             self.sample_rate.into_into_dart().into_dart(),
             self.bit_depth.into_into_dart().into_dart(),
             self.channels.into_into_dart().into_dart(),
+            self.track_gain.into_into_dart().into_dart(),
+            self.track_peak.into_into_dart().into_dart(),
             self.path.into_into_dart().into_dart(),
         ]
         .into_dart()
@@ -1698,6 +1741,8 @@ impl SseEncode for crate::api::music_tag_tool::AudioMetadata {
         <Option<u32>>::sse_encode(self.sample_rate, serializer);
         <u8>::sse_encode(self.bit_depth, serializer);
         <u8>::sse_encode(self.channels, serializer);
+        <f32>::sse_encode(self.track_gain, serializer);
+        <f32>::sse_encode(self.track_peak, serializer);
         <String>::sse_encode(self.path, serializer);
     }
 }

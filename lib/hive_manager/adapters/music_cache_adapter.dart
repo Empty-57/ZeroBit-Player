@@ -19,6 +19,8 @@ class MusicCacheAdapter extends TypeAdapter<MusicCache> {
       sampleRate: reader.read(),
       bitDepth: reader.readUint32(),
       channels: reader.readUint32(),
+      trackGain: reader.readDouble(),
+      trackPeak: reader.readDouble(),
       path: reader.readString(),
     );
   }
@@ -35,6 +37,8 @@ class MusicCacheAdapter extends TypeAdapter<MusicCache> {
     writer.write(obj.sampleRate);
     writer.writeUint32(obj.bitDepth);
     writer.writeUint32(obj.channels);
+    writer.writeDouble(obj.trackGain);
+    writer.writeDouble(obj.trackPeak);
     writer.writeString(obj.path);
   }
 }

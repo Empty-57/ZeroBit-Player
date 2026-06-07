@@ -69,7 +69,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => 1758117995;
+  int get rustContentHash => 1767361841;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -140,6 +140,11 @@ abstract class RustLibApi extends BaseApi {
   });
 
   Future<void> crateApiBassSetPosition({required double pos});
+
+  Future<void> crateApiBassSetReplayGain({
+    required double gainDb,
+    required double peak,
+  });
 
   Future<void> crateApiBassSetSpeed({required double speed});
 
@@ -844,6 +849,40 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "set_position", argNames: ["pos"]);
 
   @override
+  Future<void> crateApiBassSetReplayGain({
+    required double gainDb,
+    required double peak,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_f_32(gainDb, serializer);
+          sse_encode_f_32(peak, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 24,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiBassSetReplayGainConstMeta,
+        argValues: [gainDb, peak],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiBassSetReplayGainConstMeta => const TaskConstMeta(
+    debugName: "set_replay_gain",
+    argNames: ["gainDb", "peak"],
+  );
+
+  @override
   Future<void> crateApiBassSetSpeed({required double speed}) {
     return handler.executeNormal(
       NormalTask(
@@ -853,7 +892,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 24,
+            funcId: 25,
             port: port_,
           );
         },
@@ -881,7 +920,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 25,
+            funcId: 26,
             port: port_,
           );
         },
@@ -908,7 +947,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 26,
+            funcId: 27,
             port: port_,
           );
         },
@@ -938,7 +977,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 27,
+              funcId: 28,
               port: port_,
             );
           },
@@ -976,7 +1015,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 28,
+            funcId: 29,
             port: port_,
           );
         },
@@ -1007,7 +1046,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 29,
+            funcId: 30,
             port: port_,
           );
         },
@@ -1034,7 +1073,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 30,
+            funcId: 31,
             port: port_,
           );
         },
@@ -1062,7 +1101,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 31,
+            funcId: 32,
             port: port_,
           );
         },
@@ -1092,7 +1131,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 32,
+            funcId: 33,
             port: port_,
           );
         },
@@ -1146,8 +1185,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AudioMetadata dco_decode_audio_metadata(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 11)
-      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    if (arr.length != 13)
+      throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
     return AudioMetadata(
       title: dco_decode_String(arr[0]),
       artist: dco_decode_String(arr[1]),
@@ -1159,7 +1198,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       sampleRate: dco_decode_opt_box_autoadd_u_32(arr[7]),
       bitDepth: dco_decode_u_8(arr[8]),
       channels: dco_decode_u_8(arr[9]),
-      path: dco_decode_String(arr[10]),
+      trackGain: dco_decode_f_32(arr[10]),
+      trackPeak: dco_decode_f_32(arr[11]),
+      path: dco_decode_String(arr[12]),
     );
   }
 
@@ -1373,6 +1414,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_sampleRate = sse_decode_opt_box_autoadd_u_32(deserializer);
     var var_bitDepth = sse_decode_u_8(deserializer);
     var var_channels = sse_decode_u_8(deserializer);
+    var var_trackGain = sse_decode_f_32(deserializer);
+    var var_trackPeak = sse_decode_f_32(deserializer);
     var var_path = sse_decode_String(deserializer);
     return AudioMetadata(
       title: var_title,
@@ -1385,6 +1428,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       sampleRate: var_sampleRate,
       bitDepth: var_bitDepth,
       channels: var_channels,
+      trackGain: var_trackGain,
+      trackPeak: var_trackPeak,
       path: var_path,
     );
   }
@@ -1667,6 +1712,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_box_autoadd_u_32(self.sampleRate, serializer);
     sse_encode_u_8(self.bitDepth, serializer);
     sse_encode_u_8(self.channels, serializer);
+    sse_encode_f_32(self.trackGain, serializer);
+    sse_encode_f_32(self.trackPeak, serializer);
     sse_encode_String(self.path, serializer);
   }
 

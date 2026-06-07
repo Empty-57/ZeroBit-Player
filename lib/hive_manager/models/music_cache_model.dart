@@ -9,6 +9,8 @@ class MusicCache {
   final int? sampleRate;
   final int bitDepth;
   final int channels;
+  final double trackGain;
+  final double trackPeak;
   final String path;
 
   MusicCache({
@@ -22,6 +24,8 @@ class MusicCache {
     required this.sampleRate,
     required this.bitDepth,
     required this.channels,
+    required this.trackGain,
+    required this.trackPeak,
     required this.path,
   });
 }

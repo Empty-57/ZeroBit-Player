@@ -74,6 +74,7 @@ const WASAPI_BUFFER: f32 = 0.05;
 
 static TARGET_VOLUME: Mutex<f32> = Mutex::new(1.0);
 static TARGET_SPEED: Mutex<f32> = Mutex::new(1.0);
+static REPLAYGAIN_SCALE: Mutex<f32> = Mutex::new(1.0);
 
 const FADE_DURATION: u32 = 500;
 
@@ -385,8 +386,28 @@ impl BassApi {
             let err_code = unsafe { (self.error_get_code)() };
             Err(get_err_info(err_code).unwrap())
         } else {
-            Ok(vol)
+             let rg_scale = *REPLAYGAIN_SCALE.lock().unwrap();
+            if rg_scale > 0.0 {
+                Ok((vol / rg_scale).clamp(0.0, 1.0))
+            } else {
+                Ok(0.0)
+            }
         }
+    }
+
+    fn apply_volume(&mut self) -> Result<(), String> {
+        if self.stream_handle == 0 {
+            return Ok(());
+        }
+        let user_vol = *TARGET_VOLUME.lock().unwrap();
+        let rg_scale = *REPLAYGAIN_SCALE.lock().unwrap();
+
+        let final_vol = (user_vol * rg_scale).clamp(0.0, 1.0);
+
+        let ok = unsafe {
+            (self.set_attr)(self.stream_handle, BASS_ATTRIB_VOL, final_vol) //BASS_ATTRIB_VOL:2
+        };
+        self.or_err_(ok)
     }
 
     fn listen_progress(&self) {
@@ -414,13 +435,7 @@ impl BassApi {
     fn set_volume(&mut self, mut vol: f32) -> Result<(), String> {
         vol = vol.clamp(0.0, 1.0);
         *TARGET_VOLUME.lock().unwrap() = vol;
-        let ok = unsafe {
-            if self.stream_handle == 0 {
-                return Ok(());
-            }
-            (self.set_attr)(self.stream_handle, BASS_ATTRIB_VOL, vol) //BASS_ATTRIB_VOL:2
-        };
-        self.or_err_(ok)
+        self.apply_volume()
     }
 
     fn fade_in(&mut self) -> Result<(), String> {
@@ -432,11 +447,14 @@ impl BassApi {
             (self.set_attr)(self.stream_handle, BASS_ATTRIB_VOL, 0.0) //BASS_ATTRIB_VOL:2
         };
         self.or_err_(ok)?;
+        let user_vol = *TARGET_VOLUME.lock().unwrap();
+        let rg_scale = *REPLAYGAIN_SCALE.lock().unwrap();
+        let target_vol = (user_vol * rg_scale).clamp(0.0, 1.0);
         unsafe {
             let result = (self.slide_attr)(
                 self.stream_handle,
                 BASS_ATTRIB_VOL,
-                *TARGET_VOLUME.lock().unwrap(),
+                target_vol,
                 FADE_DURATION,
             );
             self.or_err_(result)
@@ -497,7 +515,7 @@ impl BassApi {
 
     fn play_file(&mut self, path: String) -> Result<(), String> {
         self.create_stream(path.clone())?;
-        self.path = Some(path);
+        self.apply_volume()?;
         self.resume()
     }
 
@@ -986,6 +1004,13 @@ pub fn get_volume() -> Result<f32, String> {
 #[flutter_rust_bridge::frb]
 pub fn set_volume(vol: f32) -> Result<(), String> {
     BASS_API.lock().unwrap().as_mut().unwrap().set_volume(vol)
+}
+
+#[flutter_rust_bridge::frb]
+pub fn set_replay_gain(gain_db: f32, peak: f32) {
+    let scale=10.0f32.powf(gain_db / 20.0);
+    let scale = scale.min(0.98 / peak);
+    *REPLAYGAIN_SCALE.lock().unwrap() = scale;
 }
 
 #[flutter_rust_bridge::frb]

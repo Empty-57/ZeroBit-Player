@@ -84,6 +84,8 @@ Future<Map<String, MusicCache>> _fetchMetadataBatch(
           sampleRate: meta.sampleRate,
           bitDepth: meta.bitDepth,
           channels: meta.channels,
+          trackGain: meta.trackGain,
+          trackPeak: meta.trackPeak,
           path: meta.path,
         ),
       );

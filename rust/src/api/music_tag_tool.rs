@@ -5,7 +5,6 @@ use lofty::file::{TaggedFile, TaggedFileExt};
 use lofty::picture::{MimeType, Picture, PictureType};
 use lofty::prelude::{Accessor, AudioFile, ItemKey, TagExt};
 use lofty::probe::Probe;
-use lofty::read_from_path;
 use lofty::tag::{Tag, TagItem};
 use std::borrow::Cow;
 use std::fs;
@@ -52,6 +51,8 @@ pub struct AudioMetadata {
     pub sample_rate: Option<u32>,
     pub bit_depth: u8,
     pub channels: u8,
+    pub track_gain: f32,
+    pub track_peak: f32,
     pub path: String,
 }
 
@@ -73,6 +74,20 @@ fn handle_get_eof_error(err: LoftyError, path: &Path, options: ParseOptions) -> 
     }
 }
 
+fn parse_gain(s: &str) -> f32 {
+    let clean = s
+        .replace(" dB", "")
+        .replace("db", "")
+        .replace("DB", "")
+        .trim()
+        .to_string();
+    clean.parse::<f32>().unwrap_or(0.0)
+}
+
+fn parse_peak(s: &str) -> f32 {
+    s.trim().parse::<f32>().unwrap_or(1.0)
+}
+
 impl AudioMetadata {
     fn new(path: String) -> Self {
         let path_ = Path::new(&path);
@@ -91,6 +106,8 @@ impl AudioMetadata {
             sample_rate: Some(0),
             bit_depth: 16,
             channels: 1,
+            track_gain: 0.0,
+            track_peak: 1.0,
             path: path_.to_string_lossy().to_string(),
         }
     }
@@ -206,6 +223,26 @@ impl AudioMetadata {
 
             let track_number = tag.track().unwrap_or(0);
 
+            let track_gain = tag
+                .get_string(&ItemKey::ReplayGainTrackGain)
+                .map(parse_gain)
+                .filter(|&g| g != 0.0)
+                .or_else(|| {
+                    tag.get_string(&ItemKey::ReplayGainAlbumGain)
+                        .map(parse_gain)
+                })
+                .unwrap_or(0.0);
+
+            let track_peak = tag
+                .get_string(&ItemKey::ReplayGainTrackPeak)
+                .map(parse_peak)
+                .filter(|&p| p != 1.0)
+                .or_else(|| {
+                    tag.get_string(&ItemKey::ReplayGainAlbumPeak)
+                        .map(parse_peak)
+                })
+                .unwrap_or(1.0);
+
             return AudioMetadata {
                 title: tag
                     .title()
@@ -225,6 +262,8 @@ impl AudioMetadata {
                 sample_rate: properties.sample_rate(),
                 bit_depth: properties.bit_depth().unwrap_or(16),
                 channels: properties.channels().unwrap_or(1),
+                track_gain,
+                track_peak,
                 path: path_.to_string_lossy().to_string(),
             };
         }
@@ -244,6 +283,8 @@ impl AudioMetadata {
             sample_rate: properties.sample_rate(),
             bit_depth: properties.bit_depth().unwrap_or(16),
             channels: properties.channels().unwrap_or(1),
+            track_gain: 0.0,
+            track_peak: 1.0,
             path: path_.to_string_lossy().to_string(),
         }
     }

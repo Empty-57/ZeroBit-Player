@@ -174,6 +174,8 @@ class MusicCacheController extends GetxController
       sampleRate: oldCache.sampleRate,
       bitDepth: oldCache.bitDepth,
       channels: oldCache.channels,
+      trackGain: oldCache.trackGain,
+      trackPeak: oldCache.trackPeak,
       path: oldCache.path,
     );
 

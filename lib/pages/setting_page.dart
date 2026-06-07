@@ -1367,6 +1367,22 @@ class SettingPage extends StatelessWidget {
                     context: context,
                   ),
 
+                  Tooltip(
+                    message: '需要音频有ReplayGain标签才能生效',
+                    child: _createSetItem(
+                    text: '启用音量平衡',
+                    child: _createSwitchBtn(
+                      value: _settingController.useReplayGain,
+                      trackColor: switchTrackColor,
+                      context: context,
+                      fn: (bool value) {
+                        _settingController.setUseReplayGain(use: value);
+                      },
+                    ),
+                    context: context,
+                  ),
+                  ),
+
                   _createSetItem(
                     text: '关闭窗口后在后台运行',
                     child: _createSwitchBtn(

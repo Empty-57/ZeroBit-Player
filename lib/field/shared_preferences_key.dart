@@ -10,4 +10,5 @@ abstract class SharedPreferencesKey {
   static const useExclusiveMode = 'useExclusiveMode';
   static const useSpringScroll = 'useSpringScroll';
   static const close2Tray = 'close2Tray';
+  static const useReplayGain = 'useReplayGain';
 }
