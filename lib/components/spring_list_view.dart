@@ -22,7 +22,7 @@ class SpringController extends GetxController {
     _JumpSignal(0, 0.0),
   );
 
-  static const double _anchorPercentage = 0.3;
+  static const double _anchorPercentage = 0.4;
 
   int _totalLength = 0;
 
