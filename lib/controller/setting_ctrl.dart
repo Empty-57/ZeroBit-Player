@@ -36,13 +36,13 @@ class SettingController extends GetxController {
 
   // 歌词状态
   final lrcAlignment = 0.obs;
-  final lrcFontSize = 24.obs;
+  final lrcFontSize = 32.obs; // 24-48
   final lrcFontWeight = 5.obs; // 0-8 w100-w900
   final autoDownloadLrc = true.obs;
   final showDesktopLyrics = false.obs;
 
   static const int lrcFontSizeMax = 48;
-  static const int lrcFontSizeMin = 16;
+  static const int lrcFontSizeMin = 24;
   static const int lrcFontWeightMax = 8;
   static const int lrcFontWeightMin = 0;
   static const Map<int, String> lrcAlignmentMap = {0: '左对齐', 1: '居中', 2: '右对齐'};

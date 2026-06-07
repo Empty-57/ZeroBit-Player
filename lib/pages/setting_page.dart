@@ -585,11 +585,12 @@ class _FontFamilyDialog extends StatelessWidget {
   }
 }
 
-List<CustomBtn<dynamic>> _getFontSizeList(void Function(int) fn) {
-  return List.generate(
-    SettingController.lrcFontSizeMax + 1 - SettingController.lrcFontSizeMin,
-    (index) => index + SettingController.lrcFontSizeMin,
-  ).map((i) {
+List<CustomBtn<dynamic>> _getFontSizeList(
+  void Function(int) fn, {
+  int min = SettingController.lrcFontSizeMin,
+  int max = SettingController.lrcFontSizeMax,
+}) {
+  return List.generate(max + 1 - min, (index) => index + min).map((i) {
     return CustomBtn(
       fn: () => fn(i),
       btnWidth: btnW,
@@ -880,10 +881,14 @@ class _DesktopLrcFontSizeDropMenu extends StatelessWidget {
         menuController,
         context,
         '${_desktopLyricsSettingController.fontSize.value}',
-        _getFontSizeList((i) {
-          _desktopLyricsSettingController.setFontSize(size: i);
-          menuController.close();
-        }),
+        _getFontSizeList(
+          (i) {
+            _desktopLyricsSettingController.setFontSize(size: i);
+            menuController.close();
+          },
+          max: DesktopLyricsSettingController.fontSizeMax,
+          min: DesktopLyricsSettingController.fontSizeMin,
+        ),
       ),
     );
   }
