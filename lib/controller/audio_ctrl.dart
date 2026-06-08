@@ -190,7 +190,7 @@ class AudioController extends GetxController {
     if (!changed) {
       currentLyrics.value = await getParsedLyric(filePath: path);
     }
-    if (Get.isRegistered<SpringListView>()) {
+    if (Get.isRegistered<SpringListController>()) {
       _springController.clearState();
     }
 
