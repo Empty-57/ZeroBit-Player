@@ -515,6 +515,7 @@ impl BassApi {
 
     fn play_file(&mut self, path: String) -> Result<(), String> {
         self.create_stream(path.clone())?;
+        self.path = Some(path);
         self.apply_volume()?;
         self.resume()
     }
