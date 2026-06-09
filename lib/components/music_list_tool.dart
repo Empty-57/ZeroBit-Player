@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zerobit_player/API/apis.dart';
@@ -141,6 +142,7 @@ class MusicTile extends StatelessWidget {
 
 const double _coverSize = 48.0;
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
+final double  _dpr = PlatformDispatcher.instance.views.first.devicePixelRatio;
 
 class AsyncCover extends StatefulWidget {
   final MusicCache music;
@@ -153,10 +155,12 @@ class AsyncCover extends StatefulWidget {
 
 class _AsyncCoverState extends State<AsyncCover> {
   Future<Uint8List?>? _coverFuture;
+  late final int _cacheResolution;
 
   @override
   void initState() {
     super.initState();
+    _cacheResolution = (widget.size * _dpr).round();
     _triggerLoad();
   }
 
@@ -215,8 +219,6 @@ class _AsyncCoverState extends State<AsyncCover> {
   }
 
   Widget _renderCover(Uint8List imageBytes) {
-    final dpr = MediaQuery.devicePixelRatioOf(context);
-    final cacheResolution = (widget.size * dpr).round();
 
     return ClipRRect(
       borderRadius: _coverBorderRadius,
@@ -226,8 +228,8 @@ class _AsyncCoverState extends State<AsyncCover> {
         width: widget.size,
         height: widget.size,
         fit: BoxFit.cover,
-        cacheWidth: cacheResolution,
-        cacheHeight: cacheResolution,
+        cacheWidth: _cacheResolution,
+        cacheHeight: _cacheResolution,
         gaplessPlayback: true,
       ),
     );
