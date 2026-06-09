@@ -341,6 +341,8 @@ class _SpringItemState extends State<_SpringItem>
 
   int _animTriggerId = 0;
 
+  Timer? _delayTimer;
+
   @override
   void initState() {
     super.initState();
@@ -355,7 +357,7 @@ class _SpringItemState extends State<_SpringItem>
     _triggerAnimation(controller._jumpNotifier.value.deltaY);
   }
 
-  void _triggerAnimation(double deltaY) async {
+  void _triggerAnimation(double deltaY) {
     if (!mounted) return;
 
     final int relativeIndex =
@@ -380,51 +382,59 @@ class _SpringItemState extends State<_SpringItem>
     // 动画准备阶段：瞬间将元素偏移到 deltaY 的位置
     _animController.value = deltaY;
 
-    if (mounted && currentTriggerId == _animTriggerId) {
-      // 动态计算刚度 (决定运动快慢)
-      // 弹簧振子的周期公式 T=2*pi*sqrt(m/k)
-      // m: 质量 ,k: 刚度 ,T: duration
-      double stiffness = 200.0 / (controller._duration * controller._duration);
-      stiffness = stiffness.clamp(100.0, 200.0);
-
-      // 动态计算弹性,duration越大越有弹性
-      double durationProgress = (controller._duration /
-              SpringListController._durationMax)
-          .clamp(0.0, 1.0);
-      double springRatio = 1.0 - (0.3 * durationProgress); // 区间 [0.7,1.0]
-
-      final springDesc = SpringDescription.withDampingRatio(
-        mass: 1.0,
-        stiffness: stiffness,
-        ratio: springRatio,
-      );
-
-      // 加入容差，防止像素抖动
-      final tolerance = Tolerance(
-        distance: 0.5, // 离目标位置还有 0.5 逻辑像素时，直接掐断动画设为0
-        velocity: 0.1, // 速度极慢时停止
-      );
-      // 创建弹簧物理仿真 (从当前的 deltaY 运动到 0，初始速度为 0)
-      final simulation = SpringSimulation(
-        springDesc,
-        deltaY,
-        0.0,
-        0.0,
-        tolerance: tolerance,
-      );
-
-      if (delayMs > 0) {
-        await Future.delayed(Duration(milliseconds: delayMs)); //延时启动动画
-      }
-
-      // 使用物理仿真驱动动画控制器
-      _animController.animateWith(simulation);
+    _delayTimer?.cancel();
+    if (delayMs > 0) {
+      _delayTimer = Timer(Duration(milliseconds: delayMs), () {
+        if (mounted && currentTriggerId == _animTriggerId) {
+          _startSimulation(deltaY);
+        }
+      });
+    } else {
+      _startSimulation(deltaY);
     }
+  }
+
+  void _startSimulation(double deltaY) {
+    // 动态计算刚度 (决定运动快慢)
+    // 弹簧振子的周期公式 T=2*pi*sqrt(m/k)
+    // m: 质量 ,k: 刚度 ,T: duration
+    double stiffness = 200.0 / (controller._duration * controller._duration);
+    stiffness = stiffness.clamp(100.0, 200.0);
+
+    // 动态计算弹性,duration越大越有弹性
+    double durationProgress = (controller._duration /
+            SpringListController._durationMax)
+        .clamp(0.0, 1.0);
+    double springRatio = 1.0 - (0.3 * durationProgress); // 区间 [0.7,1.0
+
+    final springDesc = SpringDescription.withDampingRatio(
+      mass: 1.0,
+      stiffness: stiffness,
+      ratio: springRatio,
+    );
+
+    // 加入容差，防止像素抖动
+    final tolerance = Tolerance(
+      distance: 0.5, // 离目标位置还有 0.5 逻辑像素时，直接掐断动画设为0
+      velocity: 0.1, // 速度极慢时停止
+    );
+    // 创建弹簧物理仿真 (从当前的 deltaY 运动到 0，初始速度为 0)
+    final simulation = SpringSimulation(
+      springDesc,
+      deltaY,
+      0.0,
+      0.0,
+      tolerance: tolerance,
+    );
+
+    // 使用物理仿真驱动动画控制器
+    _animController.animateWith(simulation);
   }
 
   @override
   void dispose() {
     controller._jumpNotifier.removeListener(_onJumpSignal);
+    _delayTimer?.cancel();
     _animController.dispose();
     super.dispose();
   }
