@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
@@ -528,6 +529,8 @@ class _KaraOkLyricWidget extends StatelessWidget {
                 );
               }
 
+              // return _SyllableFloatWidget(isFloating: isFloating,duration: isFloating ? floatingDuration : 600,delay: isFloating ? floatingDelay : 0,child: wordWidget,);
+
               // 微动特效
               return wordWidget
                   .animate(target: isFloating ? 1.0 : 0.0)
@@ -588,6 +591,9 @@ class _LyricsRenderState extends State<LyricsRender> {
     Color? mixColor = lrcStylePackage.mixColor;
 
     final dynamicPadding = context.width / 2 * (1 - 1 / _lrcScale);
+
+    // 路由外部更改的值
+    final useSpringscroll = _settingController.useSpringScroll.value;
     return MouseRegion(
       onEnter: (_) => _isHover.value = true,
       onExit: (_) => _isHover.value = false,
@@ -616,8 +622,6 @@ class _LyricsRenderState extends State<LyricsRender> {
                   final hoverColor = lrcStylePackage.hoverColor;
                   mixColor = lrcStylePackage.mixColor;
 
-                  final useSpringscroll =
-                      _settingController.useSpringScroll.value;
                   debugPrint("LyricRenderReBuild");
                   if (!c.showLyricRender) {
                     return Center(
@@ -631,6 +635,32 @@ class _LyricsRenderState extends State<LyricsRender> {
                       ),
                     );
                   }
+                  final lrcAlignment = _settingController.lrcAlignment.value;
+                  final showRoma = _settingController.showRoma.value;
+                  final showTranslate = _settingController.showTranslate.value;
+
+                  final lrcPadding = EdgeInsets.only(
+                    top: 16,
+                    bottom: 16,
+                    left:
+                        lrcAlignment == 2
+                            ? dynamicPadding
+                            : lrcAlignment == 1
+                            ? dynamicPadding / 2
+                            : 16,
+                    right:
+                        lrcAlignment == 0
+                            ? dynamicPadding
+                            : lrcAlignment == 1
+                            ? dynamicPadding / 2
+                            : 16,
+                  );
+                  final textAlign =
+                      lrcAlignment == 0
+                          ? TextAlign.left
+                          : lrcAlignment == 1
+                          ? TextAlign.center
+                          : TextAlign.right;
 
                   Widget creatLyricItem(index) {
                     if ((c.currentlyricType == LyricFormat.lrc &&
@@ -656,7 +686,11 @@ class _LyricsRenderState extends State<LyricsRender> {
                       interludeLyricStyle: interludeLyricStyle,
                       strutStyle: strutStyle,
                       hoverColor: hoverColor,
-                      dynamicPadding: dynamicPadding,
+                      lrcAlignment: lrcAlignment,
+                      lrcPadding: lrcPadding,
+                      textAlign: textAlign,
+                      showTranslate: showTranslate,
+                      showRoma: showRoma,
                     );
                   }
 
@@ -717,6 +751,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                         color: mixColor,
                         fn: () {
                           _settingController.setShowTranslate();
+                          _audioController.update([GetBuilderId.lyricRender]);
                           if (Get.isRegistered<SpringListController>()) {
                             Get.find<SpringListController>()
                                 .cachedScreenHeight = 0.0; // 重置缓存
@@ -733,6 +768,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                         color: mixColor,
                         fn: () {
                           _settingController.setShowRoma();
+                          _audioController.update([GetBuilderId.lyricRender]);
                           if (Get.isRegistered<SpringListController>()) {
                             Get.find<SpringListController>()
                                 .cachedScreenHeight = 0.0; // 重置缓存
@@ -765,13 +801,18 @@ class _StaggeredLyricItem extends StatelessWidget {
   final String romaText;
   final double startTime;
 
+  final int lrcAlignment;
+  final TextAlign textAlign;
+  final EdgeInsets lrcPadding;
+  final bool showTranslate;
+  final bool showRoma;
+
   final TextStyle lyricStyle;
   final TextStyle tsLyricStyle;
   final TextStyle romaLyricStyle;
   final TextStyle interludeLyricStyle;
   final StrutStyle strutStyle;
   final Color? hoverColor;
-  final double dynamicPadding;
 
   const _StaggeredLyricItem({
     super.key,
@@ -790,20 +831,35 @@ class _StaggeredLyricItem extends StatelessWidget {
     required this.interludeLyricStyle,
     required this.strutStyle,
     required this.hoverColor,
-    required this.dynamicPadding,
+    required this.lrcAlignment,
+    required this.lrcPadding,
+    required this.textAlign,
+    required this.showTranslate,
+    required this.showRoma,
   });
 
-  Widget _creatScaleWidget({
+  Widget _createAnimatedScaleWidget({
     required Widget child,
     required bool isCurrent,
-    required int lrcAlignmentIndex,
   }) {
     return AnimatedScale(
       scale: isCurrent ? _lrcScale : 1.0,
       duration: const Duration(milliseconds: 600),
       curve: Curves.easeOutCubic,
-      alignment: _lrcScaleAlignment[lrcAlignmentIndex],
+      alignment: _lrcScaleAlignment[lrcAlignment],
       child: child,
+    );
+  }
+
+  Widget _createAnimatedSizeWidget({
+    required Widget child,
+    required bool show,
+  }) {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      alignment: _lrcScaleAlignment[lrcAlignment],
+      child: show ? child : const SizedBox.shrink(),
     );
   }
 
@@ -819,38 +875,11 @@ class _StaggeredLyricItem extends StatelessWidget {
 
       final isPointerScrolling = lyricController.isPointerScroll.value;
       if (!renderWidget && useSpring && !isPointerScrolling) {
-        return const SizedBox.shrink();
+        return const SizedBox.shrink(); // 存疑
       }
 
       final isCurrent = index == currentLineIndex;
       final bool isPrevLine = (currentLineIndex - index == 1);
-
-      final lrcAlignment = settingController.lrcAlignment.value;
-      final showRoma = settingController.showRoma.value;
-      final showTranslate = settingController.showTranslate.value;
-
-      final lrcPadding = EdgeInsets.only(
-        top: 16,
-        bottom: 16,
-        left:
-            lrcAlignment == 2
-                ? dynamicPadding
-                : lrcAlignment == 1
-                ? dynamicPadding / 2
-                : 16,
-        right:
-            lrcAlignment == 0
-                ? dynamicPadding
-                : lrcAlignment == 1
-                ? dynamicPadding / 2
-                : 16,
-      );
-      final textAlign =
-          lrcAlignment == 0
-              ? TextAlign.left
-              : lrcAlignment == 1
-              ? TextAlign.center
-              : TextAlign.right;
 
       final content = Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -865,7 +894,7 @@ class _StaggeredLyricItem extends StatelessWidget {
               isCurrent: currentLineIndex < 0,
             ),
           if (lrcType == LyricFormat.lrc)
-            _creatScaleWidget(
+            _createAnimatedScaleWidget(
               child: _LrcLyricWidget(
                 text: lineText as String,
                 style: lyricStyle,
@@ -873,10 +902,9 @@ class _StaggeredLyricItem extends StatelessWidget {
                 textAlign: textAlign,
               ),
               isCurrent: isCurrent,
-              lrcAlignmentIndex: lrcAlignment,
             )
           else
-            _creatScaleWidget(
+            _createAnimatedScaleWidget(
               child: RepaintBoundary(
                 child: _KaraOkLyricWidget(
                   text: lineText as List<WordEntry>,
@@ -890,26 +918,30 @@ class _StaggeredLyricItem extends StatelessWidget {
                 ),
               ),
               isCurrent: isCurrent,
-              lrcAlignmentIndex: lrcAlignment,
             ),
 
-          if (romaText.isNotEmpty && showRoma)
-            _LrcLyricWidget(
+          _createAnimatedSizeWidget(
+            show: romaText.isNotEmpty && showRoma,
+            child: _LrcLyricWidget(
               text: romaText,
               style: romaLyricStyle,
               isCurrent: isCurrent,
               textAlign: textAlign,
               highLightAlpha: _currentAlpha,
             ),
+          ),
 
-          if (translateText.isNotEmpty && showTranslate)
-            _LrcLyricWidget(
+          _createAnimatedSizeWidget(
+            show: translateText.isNotEmpty && showTranslate,
+            child: _LrcLyricWidget(
               text: translateText,
               style: tsLyricStyle,
               isCurrent: isCurrent,
               textAlign: textAlign,
               highLightAlpha: _currentAlpha,
             ),
+          ),
+
           _InterludeWidget(
             lyricController: lyricController,
             lrcAlignment: lrcAlignment,

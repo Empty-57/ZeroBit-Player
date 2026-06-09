@@ -368,8 +368,6 @@ class AudioController extends GetxController {
       }
       await playFile(path: metadata.path);
 
-
-
       if (currentSpeed.value != 1.0) {
         await setSpeed(speed: currentSpeed.value);
       }
@@ -500,6 +498,7 @@ class AudioController extends GetxController {
     _settingController.lrcAlignment.value =
         (_settingController.lrcAlignment.value + 1) % 3;
     _settingController.putCache();
+    update([GetBuilderId.lyricRender]);
   }
 
   void _pickNextRandomIndex() {
