@@ -142,7 +142,7 @@ class MusicTile extends StatelessWidget {
 
 const double _coverSize = 48.0;
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
-final double  _dpr = PlatformDispatcher.instance.views.first.devicePixelRatio;
+final double _dpr = PlatformDispatcher.instance.views.first.devicePixelRatio;
 
 class AsyncCover extends StatefulWidget {
   final MusicCache music;
@@ -219,7 +219,6 @@ class _AsyncCoverState extends State<AsyncCover> {
   }
 
   Widget _renderCover(Uint8List imageBytes) {
-
     return ClipRRect(
       borderRadius: _coverBorderRadius,
       child: Image.memory(
