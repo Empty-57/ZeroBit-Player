@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:zerobit_player/field/audio_source.dart';
-import 'package:zerobit_player/controller/music_cache_ctrl.dart';
-import 'package:zerobit_player/field/operate_area.dart';
 import 'package:get/get.dart';
+import 'package:zerobit_player/controller/music_cache_ctrl.dart';
+import 'package:zerobit_player/field/audio_source.dart';
+import 'package:zerobit_player/field/operate_area.dart';
 
 import '../components/audio_gen_pages.dart';
 

@@ -1,12 +1,10 @@
 import 'package:get/get.dart';
+import 'package:zerobit_player/components/get_snack_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/field/operate_area.dart';
-import 'package:zerobit_player/hive_manager/models/user_playlist_model.dart';
-import 'package:zerobit_player/components/get_snack_bar.dart';
-
 import 'package:zerobit_player/hive_manager/hive_box.dart';
-
-import '../hive_manager/models/music_cache_model.dart';
+import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
+import 'package:zerobit_player/hive_manager/models/user_playlist_model.dart';
 
 class UserPlayListController extends GetxController {
   final items = <UserPlayListCache>[].obs;

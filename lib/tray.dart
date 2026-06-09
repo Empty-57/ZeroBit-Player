@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:get/get.dart';
 import 'package:tray_manager/tray_manager.dart';

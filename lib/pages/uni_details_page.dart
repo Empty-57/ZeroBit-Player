@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import 'package:zerobit_player/components/audio_gen_pages.dart';
 import 'package:zerobit_player/components/blur_background.dart';
 import 'package:zerobit_player/controller/details_page_ctrl.dart';
-import 'package:zerobit_player/components/audio_gen_pages.dart';
 
 import '../field/operate_area.dart';
 

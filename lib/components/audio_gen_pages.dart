@@ -1,26 +1,28 @@
 import 'dart:io';
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
-import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
-import 'package:zerobit_player/field/app_routes.dart';
-import 'package:zerobit_player/field/operate_area.dart';
-import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
-import 'package:zerobit_player/tools/func/func_extension.dart';
-import 'package:zerobit_player/custom_widgets/custom_button.dart';
-import 'package:zerobit_player/custom_widgets/custom_drop_menu.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
+import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
+import 'package:zerobit_player/custom_widgets/custom_button.dart';
+import 'package:zerobit_player/custom_widgets/custom_drop_menu.dart';
+import 'package:zerobit_player/field/app_routes.dart';
+import 'package:zerobit_player/field/operate_area.dart';
+import 'package:zerobit_player/field/sort_type.dart';
+import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
+import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
+import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
+
 import 'edit_embedded_lyrics_dialog.dart';
 import 'edit_metadata_dialog.dart';
 import 'floating_button.dart';
 import 'get_snack_bar.dart';
 import 'music_list_tool.dart';
-import 'package:zerobit_player/field/sort_type.dart';
 
 const double _itemHeight = 64.0;
 const double _headCoverSize = 240;

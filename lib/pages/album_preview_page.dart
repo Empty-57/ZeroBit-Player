@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:zerobit_player/components/sorted_list_view.dart';
-
-import 'package:zerobit_player/field/app_routes.dart';
-import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:get/get.dart';
+import 'package:zerobit_player/components/sorted_list_view.dart';
+import 'package:zerobit_player/controller/music_cache_ctrl.dart';
+import 'package:zerobit_player/field/app_routes.dart';
 
 class AlbumPreviewPage extends GetView<MusicCacheController> {
   const AlbumPreviewPage({super.key});

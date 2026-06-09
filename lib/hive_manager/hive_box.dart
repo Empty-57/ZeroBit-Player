@@ -1,11 +1,11 @@
+import 'package:hive_ce/hive.dart';
 import 'package:zerobit_player/hive_manager/models/scalable_setting_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/setting_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/user_playlist_model.dart';
-import 'hive_crud.dart';
-import 'models/music_cache_model.dart';
-import 'package:hive_ce/hive.dart';
 
 import 'hive_boxes.dart';
+import 'hive_crud.dart';
+import 'models/music_cache_model.dart';
 
 abstract class HiveBox{
   static final musicCacheBox=StorageCRUD(cacheBox: Hive.box<MusicCache>(HiveBoxes.musicCacheBox));

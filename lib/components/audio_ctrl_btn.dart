@@ -1,19 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:zerobit_player/tools/func/func_extension.dart';
-
-import 'package:zerobit_player/tools/func/general_style.dart';
-
-import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
-import 'package:get/get.dart';
-
-import 'package:zerobit_player/src/rust/api/bass.dart';
+import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/custom_widgets/diamond_silder_thumb.dart';
+import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
+import 'package:zerobit_player/tools/func/func_extension.dart';
+import 'package:zerobit_player/tools/func/general_style.dart';
 
 const double _radius = 6;
 final _isSeekBarDragging = false.obs;

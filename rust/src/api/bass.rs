@@ -1,6 +1,5 @@
 use crate::api::bass::bass_errs::{
-    get_err_info, BASS_ERROR_ALREADY, BASS_ERROR_BUSY, BASS_ERROR_HANDLE, BASS_ERROR_INIT,
-    BASS_ERROR_UNKNOWN,
+    get_err_info, BASS_ERROR_BUSY, BASS_ERROR_HANDLE,
 };
 use crate::api::bass::bass_flags::*;
 use crate::api::bass::bass_func::*;
@@ -10,7 +9,7 @@ use crate::frb_generated::StreamSink;
 use core::ffi::{c_uint, c_void};
 use libloading::{Library, Symbol};
 use once_cell::sync::{Lazy, OnceCell};
-use std::ffi::{c_double, OsStr};
+use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
 use std::ptr::null_mut;
 use std::sync::atomic::{AtomicBool, Ordering};

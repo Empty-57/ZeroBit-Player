@@ -3,13 +3,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:text_scroll/text_scroll.dart';
+import 'package:zerobit_player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/custom_widgets/diamond_silder_thumb.dart';
+import 'package:zerobit_player/custom_widgets/rect_value_indicator.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 
-import 'package:zerobit_player/controller/audio_ctrl.dart';
-import 'package:zerobit_player/custom_widgets/diamond_silder_thumb.dart';
-import 'package:zerobit_player/custom_widgets/rect_value_indicator.dart';
 import 'audio_ctrl_btn.dart';
 
 const double _barWidth = 700;

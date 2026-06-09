@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 
@@ -9,27 +10,26 @@ import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:text_scroll/text_scroll.dart';
 import 'package:zerobit_player/API/apis.dart';
+import 'package:zerobit_player/components/audio_ctrl_btn.dart';
 import 'package:zerobit_player/components/blur_background.dart';
 import 'package:zerobit_player/components/lyrics_render.dart';
+import 'package:zerobit_player/components/window_ctrl_bar.dart';
+import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
+import 'package:zerobit_player/controller/setting_ctrl.dart';
+import 'package:zerobit_player/custom_widgets/custom_button.dart';
+import 'package:zerobit_player/custom_widgets/rect_value_indicator.dart';
+import 'package:zerobit_player/desktop_lyrics_sever.dart';
+import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
+import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
+import 'package:zerobit_player/theme_manager.dart';
+import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
-import 'package:zerobit_player/tools/lrcTool/save_lyric.dart';
-import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
-import 'package:zerobit_player/components/audio_ctrl_btn.dart';
-import 'package:zerobit_player/components/window_ctrl_bar.dart';
-import 'package:zerobit_player/custom_widgets/custom_button.dart';
-import 'package:zerobit_player/desktop_lyrics_sever.dart';
-import 'package:zerobit_player/field/app_routes.dart';
-import 'package:zerobit_player/controller/audio_ctrl.dart';
-import 'package:zerobit_player/controller/setting_ctrl.dart';
-import 'package:zerobit_player/theme_manager.dart';
-import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/lrcTool/parse_lyrics.dart';
-import 'package:zerobit_player/custom_widgets/rect_value_indicator.dart';
-import 'dart:async';
+import 'package:zerobit_player/tools/lrcTool/save_lyric.dart';
 
 import '../controller/user_playlist_ctrl.dart';
 

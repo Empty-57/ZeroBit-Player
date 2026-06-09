@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:get/get.dart';
-
+import 'package:zerobit_player/components/get_snack_bar.dart';
+import 'package:zerobit_player/controller/window_ctrl.dart';
+import 'package:zerobit_player/field/operate_area.dart';
+import 'package:zerobit_player/field/scalable_config_keys.dart';
+import 'package:zerobit_player/field/shared_preferences_key.dart';
+import 'package:zerobit_player/field/sort_type.dart';
+import 'package:zerobit_player/hive_manager/hive_box.dart';
+import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/scalable_setting_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/setting_cache_model.dart';
-import 'package:zerobit_player/hive_manager/hive_box.dart';
-import 'package:zerobit_player/field/operate_area.dart';
-import 'package:zerobit_player/controller/window_ctrl.dart';
-
-import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
-import 'package:zerobit_player/components/get_snack_bar.dart';
-import 'package:zerobit_player/field/scalable_config_keys.dart';
-import 'package:zerobit_player/field/sort_type.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/tools/func/sync_cache.dart';
-import '../field/shared_preferences_key.dart';
+
 import 'audio_ctrl.dart';
 
 class SettingController extends GetxController {

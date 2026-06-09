@@ -1,13 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/API/apis.dart';
+import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
-import 'package:get/get.dart';
-import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
-import '../tools/details_ctrl_mixin.dart';
+import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 
 class DetailsPageController extends GetxController
     with DetailsPageControllerBase {

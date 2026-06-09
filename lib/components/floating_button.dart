@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import '../field/operate_area.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
-import '../tools/details_ctrl_mixin.dart';
-import '../tools/func/general_style.dart';
+import 'package:zerobit_player/field/operate_area.dart';
+import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
+import 'package:zerobit_player/tools/func/general_style.dart';
 
 const double _bottom = 96;
 const double _radius = 6;

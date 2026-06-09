@@ -1,10 +1,10 @@
 import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:get/get.dart' hide Response;
-
 import 'package:zerobit_player/controller/setting_ctrl.dart';
+import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/tools/lrcTool/krc_decryptor.dart';
 import 'package:zerobit_player/tools/lrcTool/krc_extract_decode.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
@@ -180,7 +180,8 @@ Future<Get4NetLrcModel?> _qmGetLrc({required int id}) async {
 
   if (encryptedOriginal != null && encryptedOriginal.isNotEmpty) {
     if (!encryptedOriginal.trimLeft().startsWith('<?xml') &&
-        !encryptedOriginal.trimLeft().startsWith('<Qrc')&&!encryptedOriginal.contains('[00:')) {
+        !encryptedOriginal.trimLeft().startsWith('<Qrc') &&
+        !encryptedOriginal.contains('[00:')) {
       // 只要以以上俩字符串开头或包含时间戳就代表已解压
       try {
         qrcDecrypted = await qrcDecrypt(

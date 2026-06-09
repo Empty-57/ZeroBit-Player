@@ -1,8 +1,7 @@
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zerobit_player/desktop_lyrics_sever.dart';
 import 'package:zerobit_player/tools/websocket_model.dart';
-
-import '../desktop_lyrics_sever.dart';
 
 class DesktopLyricsSettingController extends GetxController {
   final DesktopLyricsSever _desktopLyricsSever = Get.find<DesktopLyricsSever>();

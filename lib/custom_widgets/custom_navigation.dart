@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:zerobit_player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
-import 'package:get/get.dart';
-
-import 'package:zerobit_player/field/app_routes.dart';
-import 'package:zerobit_player/controller/audio_ctrl.dart';
 
 class SidebarNavState {
   static Offset beginOffset = const Offset(0.1, 0.1);

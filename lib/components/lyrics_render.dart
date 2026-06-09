@@ -8,14 +8,14 @@ import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:zerobit_player/components/spring_list_view.dart';
-import 'package:zerobit_player/theme_manager.dart';
-import 'package:zerobit_player/tools/func/func_extension.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
-
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/lyric_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
+import 'package:zerobit_player/theme_manager.dart';
+import 'package:zerobit_player/tools/func/func_extension.dart';
+import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
+
 import 'audio_ctrl_btn.dart';
 
 const double _audioCtrlBarHeight = 96;
@@ -529,7 +529,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
                 );
               }
 
-              // return _SyllableFloatWidget(isFloating: isFloating,duration: isFloating ? floatingDuration : 600,delay: isFloating ? floatingDelay : 0,child: wordWidget,);
+              //  return _SyllableFloatWidget(isFloating: isFloating,duration: isFloating ? floatingDuration : 600,delay: isFloating ? floatingDelay : 0,child: wordWidget,);
 
               // 微动特效
               return wordWidget
@@ -552,6 +552,89 @@ class _KaraOkLyricWidget extends StatelessWidget {
             }).toList(),
       );
     });
+  }
+}
+
+class _SyllableFloatWidget extends StatefulWidget {
+  final bool isFloating;
+  final double duration;
+  final double delay;
+  final Widget child;
+
+  const _SyllableFloatWidget({
+    required this.isFloating,
+    required this.duration,
+    required this.delay,
+    required this.child,
+  });
+
+  @override
+  State<_SyllableFloatWidget> createState() => _SyllableFloatWidgetState();
+}
+
+class _SyllableFloatWidgetState extends State<_SyllableFloatWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  Timer? _delayTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this);
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    _updateAnimation();
+  }
+
+  @override
+  void didUpdateWidget(_SyllableFloatWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isFloating != widget.isFloating ||
+        oldWidget.duration != widget.duration ||
+        oldWidget.delay != widget.delay) {
+      _updateAnimation();
+    }
+  }
+
+  void _updateAnimation() {
+    _delayTimer?.cancel();
+    if (widget.isFloating) {
+      _controller.duration = Duration(milliseconds: widget.duration.round());
+      if (widget.delay > 0) {
+        _delayTimer = Timer(Duration(milliseconds: widget.delay.round()), () {
+          if (mounted) _controller.forward();
+        });
+      } else {
+        _controller.forward();
+      }
+    } else {
+      _controller.duration = const Duration(milliseconds: 600);
+      _controller.reverse();
+    }
+  }
+
+  @override
+  void dispose() {
+    _delayTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        final double offset = ui.lerpDouble(0.0, _floatingY, _animation.value)!;
+        if (offset == 0.0) return child!;
+        return Transform.translate(
+          offset: Offset(0, offset),
+          filterQuality: FilterQuality.low,
+          child: child,
+        );
+      },
+      child: widget.child,
+    );
   }
 }
 

@@ -1,5 +1,6 @@
-import 'dart:io';
 import 'dart:convert';
+import 'dart:io';
+
 import 'package:fl_charset/fl_charset.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:path/path.dart' as p;
@@ -7,9 +8,9 @@ import 'package:zerobit_player/tools/lrcTool/parse_lyrics.dart';
 
 import '../../src/rust/api/music_tag_tool.dart';
 import 'krc_decryptor.dart';
-import 'qrc_decryptor.dart';
 import 'krc_extract_decode.dart';
 import 'lyric_model.dart';
+import 'qrc_decryptor.dart';
 
 /// 支持的歌词扩展名
 const List<String> _lyricExts = [

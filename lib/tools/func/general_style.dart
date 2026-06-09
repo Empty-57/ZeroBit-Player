@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 
 final SettingController _settingController = Get.find<SettingController>();

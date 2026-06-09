@@ -5,16 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
-
 import 'package:zerobit_player/API/apis.dart';
-import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
-import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
+import 'package:zerobit_player/custom_widgets/custom_button.dart';
+import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
+import 'package:zerobit_player/tools/cover_lru_cache.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
-import '../tools/cover_lru_cache.dart';
+
 import 'get_snack_bar.dart';
 
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));

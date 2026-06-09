@@ -6,6 +6,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:zerobit_player/components/spring_list_view.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
+
 import 'audio_ctrl.dart';
 
 class LyricController extends GetxController {

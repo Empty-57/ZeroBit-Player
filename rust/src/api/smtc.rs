@@ -1,7 +1,7 @@
 use crate::frb_generated::StreamSink;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
-use windows::core::{HSTRING};
+use windows::core::HSTRING;
 use windows::Foundation::TypedEventHandler;
 use windows::Media::Playback::MediaPlayer;
 use windows::Media::{

@@ -5,17 +5,18 @@ import 'package:get/get.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:tray_manager/tray_manager.dart';
+import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/components/get_snack_bar.dart';
+import 'package:zerobit_player/components/spring_list_view.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
+import 'package:zerobit_player/field/audio_source.dart';
+import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
 import 'package:zerobit_player/tools/lrcTool/get_lyrics.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
-import 'package:zerobit_player/API/apis.dart';
-import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
-import 'package:zerobit_player/components/spring_list_view.dart';
-import 'package:zerobit_player/field/audio_source.dart';
+
 import '../tools/cover_lru_cache.dart';
 import 'music_cache_ctrl.dart';
 

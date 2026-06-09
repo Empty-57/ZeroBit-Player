@@ -1,6 +1,6 @@
-import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:zerobit_player/hive_manager/hive_types.dart';
+import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 
 class MusicCacheAdapter extends TypeAdapter<MusicCache> {
   @override

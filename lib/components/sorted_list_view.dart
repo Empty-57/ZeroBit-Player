@@ -2,12 +2,11 @@ import 'dart:collection';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/components/music_list_tool.dart';
 import 'package:zerobit_player/field/app_routes.dart';
+import 'package:zerobit_player/field/operate_area.dart';
+import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
-
-import '../field/operate_area.dart';
 
 // 内容项宽高
 const double _itemHeight = 230.0;

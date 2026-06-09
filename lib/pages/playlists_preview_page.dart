@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/field/app_routes.dart';
-
-import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 
 import '../field/operate_area.dart';

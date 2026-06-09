@@ -1,5 +1,5 @@
-import 'package:zerobit_player/hive_manager/models/setting_cache_model.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:zerobit_player/hive_manager/models/setting_cache_model.dart';
 
 import '../hive_types.dart';
 

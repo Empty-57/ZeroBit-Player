@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:zerobit_player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/controller/music_cache_ctrl.dart';
+import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/controller/window_ctrl.dart';
 import 'package:zerobit_player/theme_manager.dart';
-import 'package:zerobit_player/controller/audio_ctrl.dart';
-import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
-import 'package:zerobit_player/controller/setting_ctrl.dart';
+
 import 'get_snack_bar.dart';
 
 const double _controllerBarHeight = 48;

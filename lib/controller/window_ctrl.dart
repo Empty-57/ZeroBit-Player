@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
+import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/desktop_lyrics_sever.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
-import 'package:window_manager/window_manager.dart';
 
 class MyWindowListener extends GetxController with WindowListener {
   final isMaximized = false.obs;

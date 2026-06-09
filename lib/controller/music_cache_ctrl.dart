@@ -1,15 +1,15 @@
 import 'dart:collection';
 import 'dart:convert';
+
 import 'package:crypto/crypto.dart';
+import 'package:get/get.dart';
 import 'package:pinyin/pinyin.dart';
+import 'package:zerobit_player/field/app_routes.dart';
+import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/hive_box.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
-import 'package:get/get.dart';
-import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
-
-import '../field/operate_area.dart';
-import '../tools/details_ctrl_mixin.dart';
+import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 
 class MusicCacheController extends GetxController
     with DetailsPageControllerBase {

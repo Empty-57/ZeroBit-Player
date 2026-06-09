@@ -1,6 +1,6 @@
 import 'package:pinyin/pinyin.dart';
-import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/field/sort_type.dart';
+import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 
 String _getLetter({required String str}) {
   if (str.isEmpty) {
