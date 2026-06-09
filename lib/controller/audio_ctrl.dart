@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
@@ -44,8 +42,8 @@ class AudioController extends GetxController {
         sampleRate: null,
         bitDepth: 16,
         channels: 1,
-      trackGain: 0.0,
-      trackPeak: 1.0,
+        trackGain: 0.0,
+        trackPeak: 1.0,
         path: '',
       ).obs;
 
@@ -101,7 +99,8 @@ class AudioController extends GetxController {
 
   String currentAudioSource = AudioSource.allMusic;
 
-  SpringController get _springController => Get.find<SpringController>();
+  SpringListController get _springController =>
+      Get.find<SpringListController>();
 
   /// 获取音频FFT数据
   void getAudioFFt() async {
@@ -151,6 +150,9 @@ class AudioController extends GetxController {
       _settingController.lastAudioInfo[SettingController.lastAudioMetadataKey] =
           currentMetadata.value;
       await _settingController.putScalableCache();
+      if (Get.isRegistered<SpringListController>()) {
+        _springController.clearState();
+      }
       await loadLyrics(currentMetadata.value.path);
     });
   }
@@ -189,9 +191,6 @@ class AudioController extends GetxController {
   Future<void> loadLyrics(String path, {bool changed = false}) async {
     if (!changed) {
       currentLyrics.value = await getParsedLyric(filePath: path);
-    }
-    if (Get.isRegistered<SpringListController>()) {
-      _springController.clearState();
     }
 
     final parsedLrc = currentLyrics.value?.parsedLrc;
@@ -317,14 +316,15 @@ class AudioController extends GetxController {
           .toList()
           .sublist(0, 4);
     } else {
-      coverPalette.value = generator.paletteColors
-          .map((v) => v.color)
-          .toList()..addAll([
-        Colors.red,
-        Colors.yellow,
-        Colors.blue,
-        Colors.green,
-      ].sublist(0,4-generator.paletteColors.length));
+      coverPalette.value =
+          generator.paletteColors.map((v) => v.color).toList()..addAll(
+            [
+              Colors.red,
+              Colors.yellow,
+              Colors.blue,
+              Colors.green,
+            ].sublist(0, 4 - generator.paletteColors.length),
+          );
     }
 
     if (generator.vibrantColor != null) {
@@ -360,8 +360,11 @@ class AudioController extends GetxController {
     try {
       await smtcUpdateState(state: SMTCState.playing);
 
-      if(_settingController.useReplayGain.value){
-        await setReplayGain(gainDb: metadata.trackGain, peak: metadata.trackPeak);
+      if (_settingController.useReplayGain.value) {
+        await setReplayGain(
+          gainDb: metadata.trackGain,
+          peak: metadata.trackPeak,
+        );
       }
       await playFile(path: metadata.path);
 
