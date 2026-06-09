@@ -1,7 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:text_scroll/text_scroll.dart';
-import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
@@ -23,11 +24,11 @@ const double _resViewThresholds = 1100;
 const double _radius = 6;
 
 const double _coverSize = 48.0;
+final double _dpr = PlatformDispatcher.instance.views.first.devicePixelRatio;
 
 const double _ctrlBtnMinSize = 40.0;
 
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
-const int _coverRenderSize = 150;
 
 class _ProgressBar extends GetView<AudioController> {
   const _ProgressBar();
@@ -250,6 +251,8 @@ class PlayBar extends GetView<AudioController> {
       color: Theme.of(context).colorScheme.primary,
     );
 
+    final cacheResolution = (_coverSize * _dpr).round();
+
     return Expanded(
       child: Row(
         spacing: 8,
@@ -262,8 +265,8 @@ class PlayBar extends GetView<AudioController> {
                 child: Image.memory(
                   controller.currentSmallCover.value,
                   key: ValueKey(controller.currentSmallCover.value.hashCode),
-                  cacheWidth: _coverRenderSize,
-                  cacheHeight: _coverRenderSize,
+                  cacheWidth: cacheResolution,
+                  cacheHeight: cacheResolution,
                   height: _coverSize,
                   width: _coverSize,
                   fit: BoxFit.cover,
