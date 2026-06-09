@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -24,7 +25,6 @@ import 'package:zerobit_player/field/sort_type.dart';
 const double _itemHeight = 64.0;
 const double _headCoverSize = 240;
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
-const int _coverBigRenderSize = 800;
 const double btnHeight = 42;
 const double btnWidth = 42;
 const double resViewThresholds = 1100;
@@ -32,6 +32,7 @@ const double _menuBtnWidth = 180;
 const double _menuBtnHeight = 48;
 const double _menuBtnRadius = 0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
+final double _dpr = PlatformDispatcher.instance.views.first.devicePixelRatio;
 
 class _MusicMenuController {
   final menuController = MenuController();
@@ -383,6 +384,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   }
 
   Widget _buildHeaderCover() {
+    final cacheResolution = (_headCoverSize * _dpr).round();
     return ClipRRect(
       borderRadius: _coverBorderRadius,
       child: Obx(() {
@@ -393,8 +395,8 @@ class _AudioGenPagesState extends State<AudioGenPages> {
           child: Image.memory(
             widget.controller.headCover.value,
             key: ValueKey(widget.controller.headCover.value.hashCode),
-            cacheWidth: _coverBigRenderSize,
-            cacheHeight: _coverBigRenderSize,
+            cacheWidth: cacheResolution,
+            cacheHeight: cacheResolution,
             height: _headCoverSize,
             width: _headCoverSize,
             fit: BoxFit.cover,

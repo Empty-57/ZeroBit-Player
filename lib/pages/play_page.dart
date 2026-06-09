@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -36,7 +37,6 @@ const double _ctrlBtnMinSize = 40.0;
 const double _thumbRadius = 10.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 const double _audioCtrlBarHeight = 96;
-const int _coverRenderSize = 800;
 const double _spectrogramHeight = 100.0;
 const double _spectrogramWidthFactor = 0.94;
 const double _spectrogramWidthFactorDiff = (1 - _spectrogramWidthFactor) / 2;
@@ -501,6 +501,8 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
   }
 }
 
+final double _dpr = PlatformDispatcher.instance.views.first.devicePixelRatio;
+
 // --- 主视图 ---
 class PlayPage extends StatelessWidget {
   const PlayPage({super.key});
@@ -536,6 +538,7 @@ class PlayPage extends StatelessWidget {
     TextStyle titleStyle,
     TextStyle subTitleStyle,
   ) {
+    final cacheResolution = (coverSize * _dpr).round();
     return SizedBox(
       width: ctx.width / 2,
       child: Column(
@@ -582,8 +585,8 @@ class PlayPage extends StatelessWidget {
                         child: Image.memory(
                           cover,
                           key: ValueKey(cover.hashCode),
-                          cacheWidth: _coverRenderSize,
-                          cacheHeight: _coverRenderSize,
+                          cacheWidth: cacheResolution,
+                          cacheHeight: cacheResolution,
                           height: coverSize,
                           width: coverSize,
                           fit: BoxFit.cover,
@@ -1122,7 +1125,7 @@ class PlayPage extends StatelessWidget {
   }
 
   List<Widget> _getMenuItem(
-      MenuController menuController,
+    MenuController menuController,
     ColorScheme darkColorScheme,
     Rx<MusicCache> currentMetadata,
   ) {
