@@ -71,7 +71,7 @@ flutter_rust_bridge_codegen generate --watch
 ## 特性
 - 支持自定义歌单
 - 支持读写（部分）元数据
-- 支持读取内嵌歌词（部分）
+- 支持读写（部分）内嵌歌词
 - 支持读取本地歌词文件
 - 支持多种音频格式
 - 支持均衡器功能
@@ -84,6 +84,7 @@ flutter_rust_bridge_codegen generate --watch
 - 支持音频可视化
 - 支持桌面歌词
 - 支持WASAPI独占模式
+- 支持音量平衡
 - 支持自定义快捷键
 - 支持后台播放
 
@@ -102,10 +103,13 @@ flutter_rust_bridge_codegen generate --watch
 - spx
 - wav
 - wv
+- dff
+- dsf
 
 ## 支持的歌词格式
 - qrc
 - yrc
+- krc
 - 逐行lrc 
 - 逐字Lrc
 - 增强型Lrc
@@ -156,7 +160,7 @@ flutter_rust_bridge_codegen generate --watch
 [00:24.21]ちょっと魔がさしたんだ / 我是有点鬼迷心窍了     / 前面将会作为原文 / 后面将会作为翻译
 ```
 
-若使用了[LDDC](https://github.com/chenmozhijin/LDDC)来匹配本地歌词并且将歌词文件保存到歌曲同目录时，仍然会优先使用 `.qrc` `.yrc` 格式的歌词文件作为原文，请先删除上述两种格式的文件以使用[LDDC](https://github.com/chenmozhijin/LDDC)歌词
+若使用了[LDDC](https://github.com/chenmozhijin/LDDC)来匹配本地歌词并且将歌词文件保存到歌曲同目录时，仍然会优先使用 `.qrc` `.krc` `.yrc` 格式的歌词文件作为原文，请先删除上述两种格式的文件以使用[LDDC](https://github.com/chenmozhijin/LDDC)歌词
 
 使用[LDDC](https://github.com/chenmozhijin/LDDC)来匹配本地歌词时，可以选择将歌词 `保存到歌曲标签` ，也可以选择将歌词文件 `保存到歌曲文件夹` ，歌词文件名请选择 `与歌曲文件名相同` 
 
@@ -176,11 +180,11 @@ flutter_rust_bridge_codegen generate --watch
 ![show](screenshot/10.png)
 
 ## 提交BUG或者PR
-- 若提交BUG，请创建一个新的 issue，尽可能说明复现步骤并提供截图。
+- 若提交BUG，请创建一个新的 issue，尽可能说明复现步骤并提供截图和日志，日志文件位于软件根目录下的 `logs` 目录下。
 - 若提交PR，请检查代码是否有潜在隐患并尽量做一些优化。
 
 ## 注意
-若软件发生了严重错误，可尝试到目录 `C:\Users\<用户名>\Documents` 下删除所有 `.hive` 以及同名的 `.lock` 的后缀的配置文件
+若软件发生了严重错误，可尝试到目录 `C:\Users\<用户名>\Documents\zerobit_config` 下删除所有 `.hive` 以及同名的 `.lock` 的后缀的配置文件
 
 1.4.3以后的版本，配置文件的位置从 `C:\Users\<用户名>\Documents` 移动到 `C:\Users\<用户名>\Documents\zerobit_config` 
 
