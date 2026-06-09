@@ -31,6 +31,8 @@ const Set<String> supportedExts = {
   '.spx',
   '.wav',
   '.wv',
+  '.dff',
+  '.dsf',
 };
 
 Future<Set<String>> scanAudioPaths(
