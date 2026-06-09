@@ -13,18 +13,20 @@ class LyricController extends GetxController {
   final lrcViewScrollController = ItemScrollController();
   final isPointerScroll = false.obs;
   final AudioController _audioController = Get.find<AudioController>();
-  SpringController get _springConntroller => Get.find<SpringController>();
+  SpringListController get _springConntroller =>
+      Get.find<SpringListController>();
   final SettingController _settingController = Get.find<SettingController>();
 
+  final ValueNotifier<int> currentIndexNotifier = ValueNotifier<int>(-1);
   final currentLineIndex = (-1).obs;
   final currentWordIndex = (0).obs;
 
-  final wordProgress = 0.0.obs;
+  final ValueNotifier<double> wordProgress = ValueNotifier<double>(0.0);
   double _wordProgressIncrement = 0;
 
   final showInterlude = false.obs;
 
-  final interludeProcess = 0.0.obs;
+  final ValueNotifier<double> interludeProcess = ValueNotifier<double>(0.0);
 
   double _interval = 0; // 歌词行间隔值
 
@@ -37,6 +39,8 @@ class LyricController extends GetxController {
   static const int _intervalThreshold = 4; // 间奏阈值, 超过此秒数则为间奏
   static const double _loopTime = 0.02;
 
+  int visibleItemCount = 10;
+
   List<WordEntry>? _currentLine; // 当前行信息
 
   Timer? _debounceTimer; // 防抖计时器
@@ -47,7 +51,9 @@ class LyricController extends GetxController {
   @override
   void onClose() {
     _msWorker.dispose();
-
+    currentIndexNotifier.dispose();
+    wordProgress.dispose();
+    interludeProcess.dispose();
     _debounceTimer?.cancel();
     _delayTimer?.cancel();
     _currentLine = null;
@@ -167,7 +173,13 @@ class LyricController extends GetxController {
       if (newLineIndex != currentLineIndex.value) {
         _interval = 0;
         wordProgress.value = 0;
+
+        if (Get.isRegistered<SpringListController>()) {
+          visibleItemCount =
+              newLineIndex <= 0 ? 20 : _springConntroller.getVisibleItemCount();
+        }
         currentLineIndex.value = newLineIndex;
+        currentIndexNotifier.value = newLineIndex;
         _updateLyricsInfo(updateLineOnly: true);
         if (!isPointerScroll.value) {
           if (_settingController.useSpringScroll.value) {
@@ -217,7 +229,7 @@ class LyricController extends GetxController {
   }
 
   void springScrollToCenter() {
-    if (Get.isRegistered<SpringController>()) {
+    if (Get.isRegistered<SpringListController>()) {
       _springConntroller.nextLyric(currentLineIndex.value);
     }
   }

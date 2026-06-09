@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:get/get.dart';
@@ -9,7 +10,7 @@ class _JumpSignal {
   _JumpSignal(this.triggerId, this.deltaY);
 }
 
-class SpringController extends GetxController {
+class SpringListController extends GetxController {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _scrollAreaKey = GlobalKey();
 
@@ -34,13 +35,97 @@ class SpringController extends GetxController {
 
   GlobalKey getSliverKey(int index) =>
       _sliverKeys.putIfAbsent(index, () => GlobalKey());
-  GlobalKey getBoxKey(int index) => _boxKeys.putIfAbsent(
-    index,
-    () => GlobalKey(),
-  ); // 每次center更新的时候，此方法会被重新循环调用
+  GlobalKey getBoxKey(int index) =>
+      _boxKeys.putIfAbsent(index, () => GlobalKey());
+
+  static const int _defaultVisibleItemCount = 10;
+  int _visibleItemCount = _defaultVisibleItemCount;
+
+  int? _cachedVisibleItemCount;
+  double cachedScreenHeight = 0.0;
+
+  int getVisibleItemCount() {
+    final scrollBox = _scrollAreaKey.currentContext?.findRenderObject();
+    if (scrollBox is! RenderBox ||
+        !scrollBox.hasSize ||
+        scrollBox.size.height <= 0 ||
+        _totalLength <= 0) {
+      return _defaultVisibleItemCount;
+    }
+
+    final double currentHeight = scrollBox.size.height;
+
+    // 窗口高度不变且缓存不为空则使用缓存的值
+    if (_cachedVisibleItemCount != null &&
+        cachedScreenHeight == currentHeight) {
+      _visibleItemCount = _cachedVisibleItemCount!;
+      debugPrint('visibleLine> $_visibleItemCount | hitCache');
+      return _cachedVisibleItemCount!;
+    }
+
+    cachedScreenHeight = currentHeight;
+
+    double totalHeight = 0.0;
+    int measuredCount = 0;
+
+    // 只测量距当前行前后5行数据
+    final int currIndex = _currentIndex.value;
+    final int start = (currIndex - 5).clamp(0, _totalLength - 1);
+    final int end = (currIndex + 5).clamp(0, _totalLength - 1);
+
+    for (int i = start; i <= end; i++) {
+      final key = _boxKeys[i];
+      if (key == null) continue;
+
+      final renderObject = key.currentContext?.findRenderObject();
+      if (renderObject is RenderBox &&
+          renderObject.hasSize &&
+          renderObject.size.height.isFinite &&
+          renderObject.size.height > 0) {
+        totalHeight += renderObject.size.height;
+        measuredCount++;
+      }
+    }
+
+    // 降级方案
+    if (measuredCount == 0) {
+      for (final key in _boxKeys.values) {
+        final renderObject = key.currentContext?.findRenderObject();
+        if (renderObject is RenderBox &&
+            renderObject.hasSize &&
+            renderObject.size.height.isFinite &&
+            renderObject.size.height > 0) {
+          totalHeight += renderObject.size.height;
+          measuredCount++;
+          if (measuredCount >= _defaultVisibleItemCount) {
+            break; // 只测量_defaultVisibleItemCount次
+          }
+        }
+      }
+    }
+
+    if (measuredCount == 0) {
+      _cachedVisibleItemCount = _defaultVisibleItemCount;
+      _visibleItemCount = _defaultVisibleItemCount;
+      return _defaultVisibleItemCount;
+    }
+
+    final averageItemHeight = (totalHeight / measuredCount).clamp(
+      48.0,
+      double.infinity,
+    );
+
+    final visibleLineCount = (currentHeight / averageItemHeight).ceil();
+    final visibleItemCount = max((visibleLineCount ~/ 2) + 2, 5);
+
+    _cachedVisibleItemCount = visibleItemCount;
+    _visibleItemCount = visibleItemCount;
+
+    debugPrint('visibleLine> $_visibleItemCount | calc');
+    return visibleItemCount;
+  }
 
   void nextLyric(int nextIndex) async {
-    // 如果还没超过一首歌曲的长度，且当前没有被锁定
     if (nextIndex < _totalLength) {
       final nextBoxKey = getBoxKey(nextIndex);
       double deltaY = 60.0;
@@ -76,6 +161,8 @@ class SpringController extends GetxController {
     _sliverKeys.clear();
     _boxKeys.clear();
     _currentIndex.value = 0;
+    _cachedVisibleItemCount = null;
+    cachedScreenHeight = 0.0;
     if (_scrollController.hasClients) {
       _scrollController.jumpTo(0.0);
     }
@@ -85,6 +172,8 @@ class SpringController extends GetxController {
   void onClose() {
     _sliverKeys.clear();
     _boxKeys.clear();
+    _cachedVisibleItemCount = null;
+    cachedScreenHeight = 0.0;
     _scrollController.dispose();
     _jumpNotifier.dispose();
     super.onClose();
@@ -106,16 +195,23 @@ class SpringListView extends StatefulWidget {
 }
 
 class _SpringListViewState extends State<SpringListView> {
+  late final SpringListController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.put(SpringListController());
+  }
+
   @override
   void dispose() {
-    Get.delete<SpringController>();
+    Get.delete<SpringListController>();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(SpringController());
-    controller._totalLength = widget.length;
+    _controller._totalLength = widget.length;
 
     /// 为了防止即将离开可视区域的列表项的滚动动画无效的方案(视觉欺骗)
     /// 将可滚动区域向上下两个方向拉伸一定距离(至少大于deltaY的值) ,使列表项在滚动动画开始的时候还在Layout(布局)内
@@ -133,14 +229,14 @@ class _SpringListViewState extends State<SpringListView> {
           // 新 anchor算法: 原 anchor 距视窗顶部的位置(targetAnchorPixel)加上extraSpace后 占新视窗的百分比
           final double targetAnchorPixel =
               screenHeight *
-              SpringController._anchorPercentage; // 原 anchor 距离屏幕顶部的距离
+              SpringListController._anchorPercentage; // 原 anchor 距离屏幕顶部的距离
           final double newAnchorPercentage =
               (targetAnchorPixel + extraSpace) / newHeight;
 
           return SizedBox(
             // 将原有的 scrollAreaKey 从 CustomScrollView 移到代表真实屏幕尺寸的外层 SizedBox
             // 保证 deltaY 计算依然精准 (deltaY 不受拉伸影响)
-            key: controller._scrollAreaKey,
+            key: _controller._scrollAreaKey,
             width: constraints.maxWidth,
             height: screenHeight,
             child: ClipRect(
@@ -156,38 +252,35 @@ class _SpringListViewState extends State<SpringListView> {
                     left: 0,
                     right: 0,
                     child: Obx(() {
-                      if (controller._currentIndex.value <
-                              widget.lineDuration.length &&
-                          controller._currentIndex.value >= 0) {
+                      final currentIndex = _controller._currentIndex.value;
+                      if (currentIndex < widget.lineDuration.length &&
+                          currentIndex >= 0) {
                         // 原式: controller.delay = lineDuration[controller.currentIndex.value] *1000 / SpringController.durationMax *SpringController.delayMax
-                        controller._delay =
-                            (widget.lineDuration[controller
-                                        ._currentIndex
-                                        .value] *
-                                    50)
+                        _controller._delay =
+                            (widget.lineDuration[currentIndex] * 50)
                                 .clamp(
-                                  SpringController._delayMax * 0.2,
-                                  SpringController._delayMax,
+                                  SpringListController._delayMax * 0.2,
+                                  SpringListController._delayMax,
                                 )
                                 .toInt();
-                        controller._duration =
-                            widget.lineDuration[controller._currentIndex.value];
+                        _controller._duration =
+                            widget.lineDuration[currentIndex];
                       } else {
-                        controller._duration = SpringController._durationMax;
+                        _controller._duration =
+                            SpringListController._durationMax;
                       }
 
                       Key? centerKey;
-                      if (controller._totalLength > 0) {
-                        int effectiveIndex = controller._currentIndex.value
-                            .clamp(
-                              0, // 前奏时也为0
-                              controller._totalLength - 1,
-                            );
-                        centerKey = controller.getSliverKey(effectiveIndex);
+                      if (_controller._totalLength > 0) {
+                        int effectiveIndex = currentIndex.clamp(
+                          0, // 前奏时也为0
+                          _controller._totalLength - 1,
+                        );
+                        centerKey = _controller.getSliverKey(effectiveIndex);
                       }
 
                       return CustomScrollView(
-                        controller: controller._scrollController,
+                        controller: _controller._scrollController,
                         center: centerKey,
                         anchor: newAnchorPercentage, // 使用转换后的锚点比例
                         cacheExtent: 200.0,
@@ -200,10 +293,10 @@ class _SpringListViewState extends State<SpringListView> {
 
                           for (int i = 0; i < widget.length; i++)
                             SliverToBoxAdapter(
-                              key: controller.getSliverKey(i),
+                              key: _controller.getSliverKey(i),
                               child: _SpringItem(
                                 index: i,
-                                boxKey: controller.getBoxKey(i),
+                                boxKey: _controller.getBoxKey(i),
                                 child: widget.itemBuilder(context, i),
                               ),
                             ),
@@ -243,7 +336,7 @@ class _SpringItem extends StatefulWidget {
 
 class _SpringItemState extends State<_SpringItem>
     with SingleTickerProviderStateMixin {
-  final SpringController controller = Get.find();
+  final SpringListController controller = Get.find();
   late AnimationController _animController;
 
   int _animTriggerId = 0;
@@ -268,28 +361,24 @@ class _SpringItemState extends State<_SpringItem>
     final int relativeIndex =
         widget.index -
         controller._currentIndex.value +
-        SpringController._centerOffset; //计算相对索引
+        SpringListController._centerOffset; //计算相对索引
 
     final int relativeIndexAbs = relativeIndex.abs();
 
     // 在屏幕外的元素不执行动画，直接归位
-    if (relativeIndexAbs > 10) {
+    if (relativeIndexAbs > controller._visibleItemCount) {
       _animController.value = 0.0;
       return;
     }
 
     int delayMs =
-        relativeIndex < 0 && SpringController._centerOffset != 0
+        relativeIndex < 0 && SpringListController._centerOffset != 0
             ? 0
             : (relativeIndexAbs + 1) * controller._delay;
     final currentTriggerId = ++_animTriggerId;
 
     // 动画准备阶段：瞬间将元素偏移到 deltaY 的位置
     _animController.value = deltaY;
-
-    if (delayMs > 0) {
-      await Future.delayed(Duration(milliseconds: delayMs)); //延时启动动画
-    }
 
     if (mounted && currentTriggerId == _animTriggerId) {
       // 动态计算刚度 (决定运动快慢)
@@ -300,9 +389,9 @@ class _SpringItemState extends State<_SpringItem>
 
       // 动态计算弹性,duration越大越有弹性
       double durationProgress = (controller._duration /
-              SpringController._durationMax)
+              SpringListController._durationMax)
           .clamp(0.0, 1.0);
-      double springRatio = 1.0 - (0.3 * durationProgress); // 区间 [0.75,1.0]
+      double springRatio = 1.0 - (0.3 * durationProgress); // 区间 [0.7,1.0]
 
       final springDesc = SpringDescription.withDampingRatio(
         mass: 1.0,
@@ -323,6 +412,10 @@ class _SpringItemState extends State<_SpringItem>
         0.0,
         tolerance: tolerance,
       );
+
+      if (delayMs > 0) {
+        await Future.delayed(Duration(milliseconds: delayMs)); //延时启动动画
+      }
 
       // 使用物理仿真驱动动画控制器
       _animController.animateWith(simulation);
