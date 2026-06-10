@@ -745,7 +745,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                           ? TextAlign.center
                           : TextAlign.right;
 
-                  Widget creatLyricItem(index) {
+                  Widget creatLyricItem(int index) {
                     if ((c.currentlyricType == LyricFormat.lrc &&
                             c.lineTextList[index].isEmpty &&
                             c.translateList[index].isEmpty) ||
