@@ -1,8 +1,11 @@
+import 'dart:async';
+import 'dart:ui' as ui;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:get/get.dart';
-import 'package:palette_generator/palette_generator.dart';
+import 'package:material_color_utilities/material_color_utilities.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:zerobit_player/API/apis.dart';
@@ -14,10 +17,10 @@ import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
+import 'package:zerobit_player/tools/cover_lru_cache.dart';
 import 'package:zerobit_player/tools/lrcTool/get_lyrics.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
-import '../tools/cover_lru_cache.dart';
 import 'music_cache_ctrl.dart';
 
 enum AudioState { stop, playing, pause, ended }
@@ -81,7 +84,7 @@ class AudioController extends GetxController {
   final navigationIsExtend = true.obs;
 
   final coverPalette =
-      <Color>[Colors.red, Colors.yellow, Colors.blue, Colors.green].obs;
+      <Color>[Colors.black12, Colors.white24, Colors.white, Colors.grey].obs;
 
   int reTryCount = 0;
 
@@ -297,53 +300,78 @@ class AudioController extends GetxController {
     if (currentMetadata.value.path.isEmpty) {
       return;
     }
+
     final src =
         CoverLRUCache.get(currentPath.value) ??
         await getCover(path: currentMetadata.value.path, sizeFlag: 0) ??
         kTransparentImage;
 
-    final imageProvider = MemoryImage(src);
+    try {
+      // 裁剪为112*112大小
+      final ui.Codec codec = await ui.instantiateImageCodec(
+        src,
+        targetWidth: 112,
+        targetHeight: 112,
+      );
+      final ui.FrameInfo frameInfo = await codec.getNextFrame();
+      final ui.Image image = frameInfo.image;
 
-    final PaletteGenerator generator = await PaletteGenerator.fromImageProvider(
-      imageProvider,
-      size: Size(120, 120),
-    );
+      // 按RGBA格式转为字节数组
+      final ByteData? byteData = await image.toByteData(
+        format: ui.ImageByteFormat.rawRgba,
+      );
 
-    PaintingBinding.instance.imageCache.evict(imageProvider);
+      // 释放资源
+      image.dispose();
+      codec.dispose();
 
-    if (generator.paletteColors.length >= 4) {
-      coverPalette.value = generator.paletteColors
-          .map((v) => v.color)
-          .toList()
-          .sublist(0, 4);
-    } else {
-      coverPalette.value =
-          generator.paletteColors.map((v) => v.color).toList()..addAll(
-            [
-              Colors.red,
-              Colors.yellow,
-              Colors.blue,
-              Colors.green,
-            ].sublist(0, 4 - generator.paletteColors.length),
-          );
+      if (byteData == null) {
+        return;
+      }
+
+      // 将RGBA格式转为Material支持的ARGB格式
+      final Uint8List rgbaBytes = byteData.buffer.asUint8List();
+      final List<int> argbPixels = [];
+
+      for (int i = 0; i < rgbaBytes.length; i += 4) {
+        final int r = rgbaBytes[i];
+        final int g = rgbaBytes[i + 1];
+        final int b = rgbaBytes[i + 2];
+        final int a = rgbaBytes[i + 3];
+        // 合成 32 位 ARGB 整数
+        final int argb = (a << 24) | (r << 16) | (g << 8) | b;
+        argbPixels.add(argb);
+      }
+
+      // 量化，评分，把最合适的颜色排在前面
+      final quantizerResult = await QuantizerCelebi().quantize(argbPixels, 128);
+      final Map<int, int> colorToCount = quantizerResult.colorToCount;
+      final List<int> rankedColors = Score.score(colorToCount);
+
+      // 转换格式，填充并更新 coverPalette
+      final List<Color> extractedColors =
+          rankedColors.map((c) => Color(c)).toList();
+      if (extractedColors.length >= 4) {
+        coverPalette.value = extractedColors.sublist(0, 4);
+      } else {
+        coverPalette.value = List<Color>.from(extractedColors)..addAll(
+          [
+            Colors.black12,
+            Colors.white24,
+            Colors.white,
+            Colors.grey,
+          ].sublist(0, 4 - extractedColors.length),
+        );
+      }
+
+      if (coverPalette.isNotEmpty) {
+        // 第一个颜色即为主题色
+        _setThemeColor(color: coverPalette.first.toARGB32());
+      }
+    } catch (e) {
+      debugPrint("使用 material_color_utilities 提取封面主题色出错: $e");
+      _setThemeColor(color: 0xff27272a);
     }
-
-    if (generator.vibrantColor != null) {
-      _setThemeColor(color: generator.vibrantColor!.color.toARGB32());
-      return;
-    }
-
-    if (generator.mutedColor != null) {
-      _setThemeColor(color: generator.mutedColor!.color.toARGB32());
-      return;
-    }
-
-    if (generator.dominantColor != null) {
-      _setThemeColor(color: generator.dominantColor!.color.toARGB32());
-      return;
-    }
-
-    _setThemeColor(color: 0xff27272a);
   }
 
   /// 同步 `currentIndex`

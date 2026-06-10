@@ -21,184 +21,204 @@ const int _coverSmallRenderSize = 150;
 class _SearchDialog extends StatelessWidget {
   final AudioController ctrl;
   final MusicCacheController cacheCtrl;
+
   const _SearchDialog({required this.ctrl, required this.cacheCtrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return _ControllerButton(
+      icon: PhosphorIconsLight.magnifyingGlass,
+      fn: () {
+        showDialog(
+          barrierDismissible: true,
+          context: context,
+          builder: (BuildContext context) {
+            return _SearchDialogContent(ctrl: ctrl, cacheCtrl: cacheCtrl);
+          },
+        );
+      },
+      tooltip: "搜索",
+    );
+  }
+}
+
+class _SearchDialogContent extends StatefulWidget {
+  final AudioController ctrl;
+  final MusicCacheController cacheCtrl;
+
+  const _SearchDialogContent({required this.ctrl, required this.cacheCtrl});
+
+  @override
+  State<_SearchDialogContent> createState() => _SearchDialogContentState();
+}
+
+class _SearchDialogContentState extends State<_SearchDialogContent> {
+  late final TextEditingController _searchCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchCtrl = TextEditingController();
+    widget.cacheCtrl.searchResult.clear();
+    widget.cacheCtrl.searchText.value = '';
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final UserPlayListController userPlayListController =
         Get.find<UserPlayListController>();
     final titleStyle = generalTextStyle(ctx: context, size: 'md');
     final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-    return _ControllerButton(
-      icon: PhosphorIconsLight.magnifyingGlass,
-      fn: () {
-        cacheCtrl.searchResult.clear();
-        cacheCtrl.searchText.value = '';
-        final searchCtrl = TextEditingController();
-        showDialog(
-          barrierDismissible: true,
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text("搜索"),
-              titleTextStyle: generalTextStyle(
-                ctx: context,
-                size: 'xl',
-                weight: FontWeight.w600,
+
+    return AlertDialog(
+      title: const Text("搜索"),
+      titleTextStyle: generalTextStyle(
+        ctx: context,
+        size: 'xl',
+        weight: FontWeight.w600,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: _borderRadius),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      actionsAlignment: MainAxisAlignment.end,
+      actions: <Widget>[
+        SizedBox(
+          width: context.width / 2,
+          height: context.height / 2,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 8,
+            children: [
+              TextField(
+                autofocus: true,
+                controller: _searchCtrl,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: '搜索',
+                ),
+                onChanged: (String text) {
+                  widget.cacheCtrl.searchText.value = text;
+                },
               ),
-
-              shape: RoundedRectangleBorder(borderRadius: _borderRadius),
-              backgroundColor: Theme.of(context).colorScheme.surface,
-
-              actionsAlignment: MainAxisAlignment.end,
-              actions: <Widget>[
-                SizedBox(
-                  width: context.width / 2,
-                  height: context.height / 2,
-
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 8,
-                    children: [
-                      TextField(
-                        autofocus: true,
-                        controller: searchCtrl,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: '搜索',
-                        ),
-                        onChanged: (String text) {
-                          cacheCtrl.searchText.value = text;
+              Expanded(
+                flex: 1,
+                child: Obx(
+                  () => ListView.builder(
+                    itemCount: widget.cacheCtrl.searchResult.length,
+                    itemExtent: _itemHeight,
+                    cacheExtent: _itemHeight * 1,
+                    padding: EdgeInsets.only(bottom: _itemHeight * 2),
+                    itemBuilder: (context, index) {
+                      final items = widget.cacheCtrl.searchResult[index];
+                      final menuController = MenuController();
+                      return TextButton(
+                        onPressed: () {
+                          widget.ctrl.searchInsert(metadata: items);
                         },
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Obx(
-                          () => ListView.builder(
-                            itemCount: cacheCtrl.searchResult.length,
-                            itemExtent: _itemHeight,
-                            cacheExtent: _itemHeight * 1,
-                            padding: EdgeInsets.only(bottom: _itemHeight * 2),
-                            itemBuilder: (context, index) {
-                              final items = cacheCtrl.searchResult[index];
-                              final menuController = MenuController();
-                              return TextButton(
-                                onPressed: () {
-                                  ctrl.searchInsert(metadata: items);
-                                },
-                                style: TextButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: _borderRadius,
-                                  ),
-                                ),
-                                child: SizedBox.expand(
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              items.title,
-                                              style: titleStyle,
-                                              softWrap: true,
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
-                                            ),
-                                            Text(
-                                              "${items.artist} - ${items.album}",
-                                              style: subStyle,
-                                              softWrap: true,
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      _ControllerButton(
-                                        icon:
-                                            PhosphorIconsLight
-                                                .arrowBendDownRight,
-                                        tooltip: '添加到下一首',
-                                        fn: () {
-                                          ctrl.insertNext(metadata: items);
-                                        },
-                                      ),
-                                      MenuAnchor(
-                                        menuChildren:
-                                            userPlayListController.allUserKey
-                                                .map((v) {
-                                                  return MenuItemButton(
-                                                    onPressed: () {
-                                                      userPlayListController
-                                                          .addToAudioList(
-                                                            metadata: items,
-                                                            userKey: v,
-                                                          );
-                                                    },
-                                                    child: Center(
-                                                      child: Text(
-                                                        v.split('_')[0],
-                                                      ),
-                                                    ),
-                                                  );
-                                                })
-                                                .toList(),
-                                        controller: menuController,
-                                        consumeOutsideTap: true,
-                                        style: MenuStyle(
-                                          maximumSize: WidgetStatePropertyAll(
-                                            Size.fromHeight(context.height / 2),
-                                          ),
-                                        ),
-                                        child: _ControllerButton(
-                                          icon: PhosphorIconsLight.plus,
-                                          tooltip: '添加到歌单',
-                                          fn: () {
-                                            if (userPlayListController
-                                                .allUserKey
-                                                .isEmpty) {
-                                              showSnackBar(
-                                                title: "WARNING",
-                                                msg: "还未创建任何歌单",
-                                                duration: Duration(
-                                                  milliseconds: 1500,
-                                                ),
-                                              );
-                                              return;
-                                            }
-
-                                            if (menuController.isOpen) {
-                                              menuController.close();
-                                            } else {
-                                              menuController.open();
-                                            }
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
+                        style: TextButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: _borderRadius,
                           ),
                         ),
-                      ),
-                    ],
+                        child: SizedBox.expand(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      items.title,
+                                      style: titleStyle,
+                                      softWrap: true,
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                    Text(
+                                      "${items.artist} - ${items.album}",
+                                      style: subStyle,
+                                      softWrap: true,
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              _ControllerButton(
+                                icon: PhosphorIconsLight.arrowBendDownRight,
+                                tooltip: '添加到下一首',
+                                fn: () {
+                                  widget.ctrl.insertNext(metadata: items);
+                                },
+                              ),
+                              MenuAnchor(
+                                menuChildren:
+                                    userPlayListController.allUserKey.map((v) {
+                                      return MenuItemButton(
+                                        onPressed: () {
+                                          userPlayListController.addToAudioList(
+                                            metadata: items,
+                                            userKey: v,
+                                          );
+                                        },
+                                        child: Center(
+                                          child: Text(v.split('_')[0]),
+                                        ),
+                                      );
+                                    }).toList(),
+                                controller: menuController,
+                                consumeOutsideTap: true,
+                                style: MenuStyle(
+                                  maximumSize: WidgetStatePropertyAll(
+                                    Size.fromHeight(context.height / 2),
+                                  ),
+                                ),
+                                child: _ControllerButton(
+                                  icon: PhosphorIconsLight.plus,
+                                  tooltip: '添加到歌单',
+                                  fn: () {
+                                    if (userPlayListController
+                                        .allUserKey
+                                        .isEmpty) {
+                                      showSnackBar(
+                                        title: "WARNING",
+                                        msg: "还未创建任何歌单",
+                                        duration: const Duration(
+                                          milliseconds: 1500,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    if (menuController.isOpen) {
+                                      menuController.close();
+                                    } else {
+                                      menuController.open();
+                                    }
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
-              ],
-            );
-          },
-        );
-      },
-      tooltip: "搜索",
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

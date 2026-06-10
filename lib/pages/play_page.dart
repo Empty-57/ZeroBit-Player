@@ -8,7 +8,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:text_scroll/text_scroll.dart';
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/components/audio_ctrl_btn.dart';
 import 'package:zerobit_player/components/blur_background.dart';
@@ -17,8 +16,10 @@ import 'package:zerobit_player/components/window_ctrl_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
+import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/custom_widgets/rect_value_indicator.dart';
+import 'package:zerobit_player/custom_widgets/scroll_text.dart';
 import 'package:zerobit_player/desktop_lyrics_sever.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
@@ -30,8 +31,6 @@ import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import 'package:zerobit_player/tools/lrcTool/parse_lyrics.dart';
 import 'package:zerobit_player/tools/lrcTool/save_lyric.dart';
-
-import '../controller/user_playlist_ctrl.dart';
 
 const double _ctrlBtnMinSize = 40.0;
 const double _thumbRadius = 10.0;
@@ -504,8 +503,15 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
 final double _dpr = PlatformDispatcher.instance.views.first.devicePixelRatio;
 
 // --- 主视图 ---
-class PlayPage extends StatelessWidget {
+class PlayPage extends StatefulWidget {
   const PlayPage({super.key});
+
+  @override
+  State<PlayPage> createState() => _PlayPageState();
+}
+
+class _PlayPageState extends State<PlayPage> {
+  late final ScrollController _playQueueScrollController;
 
   ThemeService get _themeService => ThemeService.instance;
   DesktopLyricsSever get _desktopLyricsSever => Get.find<DesktopLyricsSever>();
@@ -513,22 +519,33 @@ class PlayPage extends StatelessWidget {
   SettingController get _settingController => Get.find<SettingController>();
   MusicCacheController get _musicCacheController =>
       Get.find<MusicCacheController>();
-
   UserPlayListController get _userPlayListController =>
       Get.find<UserPlayListController>();
 
-  Widget _buildScrollText(String text, TextStyle textStyle) {
-    return TextScroll(
-      text,
-      mode: TextScrollMode.bouncing,
-      fadeBorderSide: FadeBorderSide.both,
-      fadedBorder: true,
-      fadedBorderWidth: 0.05,
-      velocity: Velocity(pixelsPerSecond: Offset(50, 0)),
-      delayBefore: Duration(milliseconds: 500),
-      pauseBetween: Duration(milliseconds: 1000),
+  @override
+  void initState() {
+    super.initState();
+    _playQueueScrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _playQueueScrollController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildScrollText(
+    String text,
+    TextStyle textStyle,
+    StrutStyle strutStyle,
+  ) {
+    return ScrollText(
+      text: text,
       style: textStyle,
-      textAlign: TextAlign.left,
+      velocity: 50.0,
+      delayBefore: const Duration(milliseconds: 500),
+      pauseBetween: const Duration(milliseconds: 1000),
+      strutStyle: strutStyle,
     );
   }
 
@@ -539,6 +556,14 @@ class PlayPage extends StatelessWidget {
     TextStyle subTitleStyle,
   ) {
     final cacheResolution = (coverSize * _dpr).round();
+    final titleStrut = StrutStyle(
+      fontSize: titleStyle.fontSize,
+      forceStrutHeight: true,
+    );
+    final subTitleStrut = StrutStyle(
+      fontSize: subTitleStyle.fontSize,
+      forceStrutHeight: true,
+    );
     return SizedBox(
       width: ctx.width / 2,
       child: Column(
@@ -614,21 +639,27 @@ class PlayPage extends StatelessWidget {
                   spacing: 2,
                   children: [
                     _isHeadHover.value
-                        ? _buildScrollText(title, titleStyle)
+                        ? _buildScrollText(title, titleStyle, titleStrut)
                         : Text(
                           title,
                           style: titleStyle,
                           softWrap: false,
+                          strutStyle: titleStrut,
                           overflow: TextOverflow.fade,
                           maxLines: 1,
                           textAlign: TextAlign.left,
                         ),
                     _isHeadHover.value
-                        ? _buildScrollText(artistAndAlbum, subTitleStyle)
+                        ? _buildScrollText(
+                          artistAndAlbum,
+                          subTitleStyle,
+                          subTitleStrut,
+                        )
                         : Text(
                           artistAndAlbum,
                           style: subTitleStyle,
                           softWrap: false,
+                          strutStyle: subTitleStrut,
                           overflow: TextOverflow.fade,
                           maxLines: 1,
                           textAlign: TextAlign.left,
@@ -698,7 +729,6 @@ class PlayPage extends StatelessWidget {
     );
     final double itemHeight = 64;
     final playQueueController = MenuController();
-    final playQueueScrollController = ScrollController();
     return SizedBox(
       height: _audioCtrlBarHeight,
       child: Column(
@@ -854,7 +884,7 @@ class PlayPage extends StatelessWidget {
                                                 .length,
                                         itemExtent: itemHeight,
                                         cacheExtent: itemHeight * 1,
-                                        controller: playQueueScrollController,
+                                        controller: _playQueueScrollController,
                                         padding: EdgeInsets.only(
                                           bottom: itemHeight * 2,
                                         ),
@@ -927,16 +957,18 @@ class PlayPage extends StatelessWidget {
                           ],
                           onOpen: () {
                             SchedulerBinding.instance.addPostFrameCallback((_) {
-                              playQueueScrollController.jumpTo(
-                                (itemHeight *
-                                        _audioController.currentIndex.value)
-                                    .clamp(
-                                      0.0,
-                                      playQueueScrollController
-                                          .position
-                                          .maxScrollExtent,
-                                    ),
-                              );
+                              if (_playQueueScrollController.hasClients) {
+                                _playQueueScrollController.jumpTo(
+                                  (itemHeight *
+                                          _audioController.currentIndex.value)
+                                      .clamp(
+                                        0.0,
+                                        _playQueueScrollController
+                                            .position
+                                            .maxScrollExtent,
+                                      ),
+                                );
+                              }
                             });
                           },
                           style: MenuStyle(
@@ -945,9 +977,7 @@ class PlayPage extends StatelessWidget {
                                   .withValues(alpha: 0.8),
                             ),
                           ),
-
                           controller: playQueueController,
-
                           child: GenIconBtn(
                             tooltip: '播放列表',
                             icon: PhosphorIconsLight.queue,
@@ -1062,7 +1092,7 @@ class PlayPage extends StatelessWidget {
       height: 36,
       color: darkColorScheme.surfaceContainer.withValues(alpha: 0.3),
       child: Padding(
-        padding: EdgeInsetsGeometry.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           spacing: 4,
@@ -1083,7 +1113,6 @@ class PlayPage extends StatelessWidget {
               icon: PhosphorIconsLight.plus,
               fn: addFn.throttle(ms: 500),
             ),
-
             _createMenuIconBtn(
               toolTip: '减小',
               icon: PhosphorIconsLight.minus,
@@ -1101,7 +1130,7 @@ class PlayPage extends StatelessWidget {
     required List<Widget> menuChildren,
   }) {
     return SubmenuButton(
-      submenuIcon: WidgetStatePropertyAll(const SizedBox.shrink()),
+      submenuIcon: const WidgetStatePropertyAll(SizedBox.shrink()),
       style: ButtonStyle(
         padding: WidgetStateProperty.all(
           const EdgeInsets.symmetric(horizontal: 16),
@@ -1265,7 +1294,6 @@ class PlayPage extends StatelessWidget {
         }
         return const SizedBox.shrink();
       }),
-
       divider,
       _createdSubmenuBtn(
         text: '添加到歌单',
@@ -1528,7 +1556,6 @@ class PlayPage extends StatelessWidget {
                                   ),
                                 );
                               }),
-
                               // --- 频谱图 ---
                               Positioned(
                                 left: 0,

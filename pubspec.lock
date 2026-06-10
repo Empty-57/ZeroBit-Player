@@ -384,7 +384,7 @@ packages:
     source: hosted
     version: "4.9.0"
   leak_tracker:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: leak_tracker
       sha256: "6bb818ecbdffe216e81182c2f0714a2e62b593f4a4f13098713ff1685dfb6ab0"
@@ -495,14 +495,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "3.2.1"
-  palette_generator:
-    dependency: "direct main"
-    description:
-      name: palette_generator
-      sha256: "4420f7ccc3f0a4a906144e73f8b6267cd940b64f57a7262e95cb8cec3a8ae0ed"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.3.3+7"
   path:
     dependency: "direct main"
     description:
@@ -795,14 +787,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "0.7.4"
-  text_scroll:
-    dependency: "direct main"
-    description:
-      name: text_scroll
-      sha256: "164b49e6134fca874989213d4e7ba225e2c3f9e30d9e32f14d543b2fc55716a0"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.2.1"
   transparent_image:
     dependency: "direct main"
     description:

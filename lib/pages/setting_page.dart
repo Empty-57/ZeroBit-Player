@@ -338,8 +338,8 @@ Widget _getColorPicker(
   void Function(int color) fn, [
   bool enableAlpha = false,
 ]) {
-  final TextEditingController hexController = TextEditingController();
-  RxInt themeColor_ = initColor.obs;
+  final RxInt themeColor_ = initColor.obs;
+
   return Row(
     mainAxisAlignment: MainAxisAlignment.center,
     crossAxisAlignment: CrossAxisAlignment.center,
@@ -357,100 +357,20 @@ Widget _getColorPicker(
       ),
       CustomBtn(
         fn: () {
-          showDialog(
+          showDialog<String>(
             barrierDismissible: true,
             context: context,
             builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text('取色器'),
-                titleTextStyle: generalTextStyle(
-                  ctx: context,
-                  size: 'xl',
-                  weight: FontWeight.w600,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(4)),
-                ),
-                backgroundColor: Theme.of(context).colorScheme.surface,
-
-                actionsAlignment: MainAxisAlignment.end,
-                actions: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 16,
-                    children: [
-                      TextField(
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Hex RGB',
-                        ),
-                        controller: hexController,
-                        autofocus: true,
-                        inputFormatters: [
-                          UpperCaseTextFormatter(),
-                          FilteringTextInputFormatter.allow(
-                            RegExp(kValidHexPattern),
-                          ),
-                        ],
-                      ),
-
-                      ColorPicker(
-                        pickerAreaBorderRadius: BorderRadius.all(
-                          Radius.circular(4),
-                        ),
-                        pickerColor: Color(themeColor_.value),
-                        colorPickerWidth: 400,
-                        pickerAreaHeightPercent: 0.7,
-                        enableAlpha: enableAlpha,
-                        displayThumbColor: true,
-                        labelTypes: [],
-                        portraitOnly: true,
-                        hexInputBar: false,
-                        hexInputController: hexController,
-                        onColorChanged: (Color color) {
-                          themeColor_.value = color.toARGB32();
-                        },
-                      ),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        spacing: 8,
-                        children: [
-                          CustomBtn(
-                            fn: () {
-                              Navigator.pop(context, 'cancel');
-                            },
-                            backgroundColor: Colors.transparent,
-                            contentColor: Theme.of(context).colorScheme.primary,
-                            btnWidth: 72,
-                            btnHeight: 36,
-                            label: "取消",
-                          ),
-                          CustomBtn(
-                            fn: () {
-                              Navigator.pop(context, 'action');
-                              fn(themeColor_.value);
-                            },
-                            backgroundColor:
-                                Theme.of(context).colorScheme.primary,
-                            contentColor:
-                                Theme.of(context).colorScheme.onPrimary,
-                            overlayColor:
-                                Theme.of(context).colorScheme.surfaceContainer,
-                            btnWidth: 72,
-                            btnHeight: 36,
-                            label: "确定",
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
+              return _ColorPickerDialog(
+                themeColor: themeColor_,
+                enableAlpha: enableAlpha,
               );
             },
-          );
+          ).then((result) {
+            if (result == 'action') {
+              fn(themeColor_.value);
+            }
+          });
         },
         icon: PhosphorIconsLight.palette,
         label: '取色器',
@@ -463,6 +383,122 @@ Widget _getColorPicker(
       ),
     ],
   );
+}
+
+class _ColorPickerDialog extends StatefulWidget {
+  final RxInt themeColor;
+  final bool enableAlpha;
+
+  const _ColorPickerDialog({
+    required this.themeColor,
+    required this.enableAlpha,
+  });
+
+  @override
+  State<_ColorPickerDialog> createState() => _ColorPickerDialogState();
+}
+
+class _ColorPickerDialogState extends State<_ColorPickerDialog> {
+  late final TextEditingController _hexController;
+  late final int _initialColor;
+
+  @override
+  void initState() {
+    super.initState();
+    _hexController = TextEditingController();
+    _initialColor = widget.themeColor.value;
+  }
+
+  @override
+  void dispose() {
+    _hexController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('取色器'),
+      titleTextStyle: generalTextStyle(
+        ctx: context,
+        size: 'xl',
+        weight: FontWeight.w600,
+      ),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(4)),
+      ),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      actionsAlignment: MainAxisAlignment.end,
+      actions: [
+        Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 16,
+          children: [
+            TextField(
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Hex RGB',
+              ),
+              controller: _hexController,
+              autofocus: true,
+              inputFormatters: [
+                UpperCaseTextFormatter(),
+                FilteringTextInputFormatter.allow(RegExp(kValidHexPattern)),
+              ],
+            ),
+
+            ColorPicker(
+              pickerAreaBorderRadius: const BorderRadius.all(
+                Radius.circular(4),
+              ),
+              pickerColor: Color(widget.themeColor.value),
+              colorPickerWidth: 400,
+              pickerAreaHeightPercent: 0.7,
+              enableAlpha: widget.enableAlpha,
+              displayThumbColor: true,
+              labelTypes: [],
+              portraitOnly: true,
+              hexInputBar: false,
+              hexInputController: _hexController,
+              onColorChanged: (Color color) {
+                widget.themeColor.value = color.toARGB32();
+              },
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              spacing: 8,
+              children: [
+                CustomBtn(
+                  fn: () {
+                    widget.themeColor.value = _initialColor;
+                    Navigator.pop(context, 'cancel');
+                  },
+                  backgroundColor: Colors.transparent,
+                  contentColor: Theme.of(context).colorScheme.primary,
+                  btnWidth: 72,
+                  btnHeight: 36,
+                  label: "取消",
+                ),
+                CustomBtn(
+                  fn: () {
+                    Navigator.pop(context, 'action');
+                  },
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  contentColor: Theme.of(context).colorScheme.onPrimary,
+                  overlayColor: Theme.of(context).colorScheme.surfaceContainer,
+                  btnWidth: 72,
+                  btnHeight: 36,
+                  label: "确定",
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }
 
 class _ColorPicker extends StatelessWidget {
@@ -1370,17 +1406,17 @@ class SettingPage extends StatelessWidget {
                   Tooltip(
                     message: '需要音频有ReplayGain标签才能生效',
                     child: _createSetItem(
-                    text: '启用音量平衡（ReplayGain）',
-                    child: _createSwitchBtn(
-                      value: _settingController.useReplayGain,
-                      trackColor: switchTrackColor,
+                      text: '启用音量平衡（ReplayGain）',
+                      child: _createSwitchBtn(
+                        value: _settingController.useReplayGain,
+                        trackColor: switchTrackColor,
+                        context: context,
+                        fn: (bool value) {
+                          _settingController.setUseReplayGain(use: value);
+                        },
+                      ),
                       context: context,
-                      fn: (bool value) {
-                        _settingController.setUseReplayGain(use: value);
-                      },
                     ),
-                    context: context,
-                  ),
                   ),
 
                   _createSetItem(

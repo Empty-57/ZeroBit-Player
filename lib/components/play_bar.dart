@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:text_scroll/text_scroll.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/diamond_silder_thumb.dart';
 import 'package:zerobit_player/custom_widgets/rect_value_indicator.dart';
@@ -10,6 +9,7 @@ import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 
+import '../custom_widgets/scroll_text.dart';
 import 'audio_ctrl_btn.dart';
 
 const double _barWidth = 700;
@@ -228,18 +228,18 @@ class PlayBar extends GetView<AudioController> {
     );
   }
 
-  Widget _buildScrollText(String text, TextStyle textStyle) {
-    return TextScroll(
-      text,
-      mode: TextScrollMode.bouncing,
-      fadeBorderSide: FadeBorderSide.both,
-      fadedBorder: true,
-      fadedBorderWidth: 0.05,
-      velocity: Velocity(pixelsPerSecond: Offset(100, 0)),
-      delayBefore: Duration(milliseconds: 500),
-      pauseBetween: Duration(milliseconds: 1000),
+  Widget _buildScrollText(
+    String text,
+    TextStyle textStyle,
+    StrutStyle strutStyle,
+  ) {
+    return ScrollText(
+      text: text,
       style: textStyle,
-      textAlign: TextAlign.left,
+      velocity: 50.0,
+      delayBefore: const Duration(milliseconds: 500),
+      pauseBetween: const Duration(milliseconds: 1000),
+      strutStyle: strutStyle,
     );
   }
 
@@ -249,6 +249,15 @@ class PlayBar extends GetView<AudioController> {
       ctx: context,
       size: 'md',
       color: Theme.of(context).colorScheme.primary,
+    );
+
+    final titleStrut = StrutStyle(
+      fontSize: titleStyle.fontSize,
+      forceStrutHeight: true,
+    );
+    final subTitleStrut = StrutStyle(
+      fontSize: timeTextStyle.fontSize,
+      forceStrutHeight: true,
     );
 
     final cacheResolution = (_coverSize * _dpr).round();
@@ -287,11 +296,12 @@ class PlayBar extends GetView<AudioController> {
                           ? controller.currentMetadata.value.title
                           : "ZeroBit Player";
                   return _isBarHover.value
-                      ? _buildScrollText(title, titleStyle)
+                      ? _buildScrollText(title, titleStyle, titleStrut)
                       : Text(
                         title,
                         softWrap: false,
                         overflow: TextOverflow.fade,
+                        strutStyle: titleStrut,
                         maxLines: 1,
                         style: titleStyle,
                         textAlign: TextAlign.left,
@@ -303,11 +313,12 @@ class PlayBar extends GetView<AudioController> {
                           ? controller.currentMetadata.value.artist
                           : "39";
                   return _isBarHover.value
-                      ? _buildScrollText(artist, timeTextStyle)
+                      ? _buildScrollText(artist, timeTextStyle, subTitleStrut)
                       : Text(
                         artist,
                         softWrap: false,
                         overflow: TextOverflow.fade,
+                        strutStyle: subTitleStrut,
                         maxLines: 1,
                         style: timeTextStyle,
                         textAlign: TextAlign.left,
@@ -352,6 +363,7 @@ class PlayBar extends GetView<AudioController> {
       textDirection: TextDirection.ltr,
     )..layout();
     final maxWidth = tp.width + 4; // 留出余量防止误差
+    tp.dispose();
 
     return SizedBox(
       height: _barHeight / 2,
