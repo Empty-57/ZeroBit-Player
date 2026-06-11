@@ -184,7 +184,7 @@ class SpringListController extends GetxController {
 class SpringListView extends StatefulWidget {
   final int length;
   final List<double> lineDuration;
-  final Widget Function(BuildContext context, int index) itemBuilder;
+  final Widget Function(int index) itemBuilder;
   const SpringListView({
     super.key,
     required this.length,
@@ -298,7 +298,7 @@ class _SpringListViewState extends State<SpringListView> {
                               child: _SpringItem(
                                 index: i,
                                 boxKey: _controller.getBoxKey(i),
-                                child: widget.itemBuilder(context, i),
+                                child: widget.itemBuilder(i),
                               ),
                             ),
 
