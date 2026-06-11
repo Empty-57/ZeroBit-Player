@@ -460,7 +460,7 @@ pub fn get_cover(path: String, size_flag: u8) -> Option<Vec<u8>> {
 
         let mut output_bytes = Vec::new();
         image_data
-            .write_to(&mut Cursor::new(&mut output_bytes), ImageFormat::Png)
+            .write_to(&mut Cursor::new(&mut output_bytes), ImageFormat::Jpeg)
             .unwrap_or_else(|err| {
                 println!("Error resize cover: {}", err);
             });
