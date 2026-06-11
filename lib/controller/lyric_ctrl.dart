@@ -10,17 +10,16 @@ import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import 'audio_ctrl.dart';
 
 class LyricController extends GetxController {
-  final currentMs20 = 0.0.obs;
-  final lrcViewScrollController = ItemScrollController();
+  final ValueNotifier<double> currentMs20Notifier = ValueNotifier<double>(0.0);
+  ItemScrollController? lrcViewScrollController;
   final isPointerScroll = false.obs;
   final AudioController _audioController = Get.find<AudioController>();
   SpringListController get _springConntroller =>
       Get.find<SpringListController>();
   final SettingController _settingController = Get.find<SettingController>();
 
-  final ValueNotifier<int> currentIndexNotifier = ValueNotifier<int>(-1);
   final currentLineIndex = (-1).obs;
-  final currentWordIndex = (0).obs;
+  final ValueNotifier<int> currentWordIndexNotifier = ValueNotifier<int>(0);
 
   final ValueNotifier<double> wordProgress = ValueNotifier<double>(0.0);
   double _wordProgressIncrement = 0;
@@ -47,12 +46,11 @@ class LyricController extends GetxController {
   Timer? _debounceTimer; // 防抖计时器
   Timer? _delayTimer;
 
-  late final Worker _msWorker;
-
   @override
   void onClose() {
-    _msWorker.dispose();
-    currentIndexNotifier.dispose();
+    currentMs20Notifier.removeListener(_updateProgress);
+    currentMs20Notifier.dispose();
+    currentWordIndexNotifier.dispose();
     wordProgress.dispose();
     interludeProcess.dispose();
     _debounceTimer?.cancel();
@@ -92,7 +90,10 @@ class LyricController extends GetxController {
       final line = _currentLine;
       if (line == null) return;
 
-      final wordIndex = currentWordIndex.value.clamp(0, line.length - 1);
+      final wordIndex = currentWordIndexNotifier.value.clamp(
+        0,
+        line.length - 1,
+      );
       if (wordIndex >= line.length) return;
 
       final word = line[wordIndex];
@@ -105,7 +106,7 @@ class LyricController extends GetxController {
         return;
       }
 
-      final ms = currentMs20.value;
+      final ms = currentMs20Notifier.value;
 
       final diffTime = ms - word.start;
       _wordProgressIncrement =
@@ -139,7 +140,7 @@ class LyricController extends GetxController {
     }
 
     // 间奏
-    if (currentWordIndex.value != _wordsLen - 1) {
+    if (currentWordIndexNotifier.value != _wordsLen - 1) {
       showInterlude.value = false;
       return;
     }
@@ -161,59 +162,61 @@ class LyricController extends GetxController {
     if (show) interludeProcess.value += _loopTime / _interval; // 算法同词增量计算
   }
 
+  void _updateProgress() {
+    final newLineIndex = _findLrcPos(
+      time: currentMs20Notifier.value,
+      lyrics: _audioController.currentLyrics.value?.parsedLrc,
+      hint: currentLineIndex.value,
+    );
+    if (newLineIndex != currentLineIndex.value) {
+      _interval = 0;
+      wordProgress.value = 0;
+
+      if (Get.isRegistered<SpringListController>()) {
+        visibleItemCount =
+            newLineIndex <= 0 ? 20 : _springConntroller.getVisibleItemCount();
+      }
+      currentLineIndex.value = newLineIndex;
+      currentIndexNotifier.value = newLineIndex;
+      _updateLyricsInfo(updateLineOnly: true);
+      if (!isPointerScroll.value) {
+        if (_settingController.useSpringScroll.value) {
+          springScrollToCenter();
+        } else {
+          scrollToCenter();
+        }
+      }
+    }
+
+    if ((_audioController.currentLyrics.value?.type ?? LyricFormat.lrc) ==
+            LyricFormat.lrc ||
+        currentLineIndex.value < 0 ||
+        _currentLine == null) {
+      _updateInterludeState();
+      return;
+    }
+    final newWordIndex = _findLrcPos(
+      time: currentMs20Notifier.value,
+      lyrics: _currentLine,
+      hint: currentWordIndexNotifier.value,
+    );
+
+    if (newWordIndex != currentWordIndexNotifier.value) {
+      interludeProcess.value = 0;
+      wordProgress.value = 0;
+      currentWordIndexNotifier.value = newWordIndex;
+      _updateLyricsInfo(updateLineOnly: false);
+    }
+
+    wordProgress.value += _wordProgressIncrement;
+    _updateInterludeState();
+  }
+
   @override
   void onInit() {
     super.onInit();
     // 更新词进度
-    _msWorker = ever(currentMs20, (_) {
-      final newLineIndex = _findLrcPos(
-        time: currentMs20.value,
-        lyrics: _audioController.currentLyrics.value?.parsedLrc,
-        hint: currentLineIndex.value,
-      );
-      if (newLineIndex != currentLineIndex.value) {
-        _interval = 0;
-        wordProgress.value = 0;
-
-        if (Get.isRegistered<SpringListController>()) {
-          visibleItemCount =
-              newLineIndex <= 0 ? 20 : _springConntroller.getVisibleItemCount();
-        }
-        currentLineIndex.value = newLineIndex;
-        currentIndexNotifier.value = newLineIndex;
-        _updateLyricsInfo(updateLineOnly: true);
-        if (!isPointerScroll.value) {
-          if (_settingController.useSpringScroll.value) {
-            springScrollToCenter();
-          } else {
-            scrollToCenter();
-          }
-        }
-      }
-
-      if ((_audioController.currentLyrics.value?.type ?? LyricFormat.lrc) ==
-              LyricFormat.lrc ||
-          currentLineIndex.value < 0 ||
-          _currentLine == null) {
-        _updateInterludeState();
-        return;
-      }
-      final newWordIndex = _findLrcPos(
-        time: currentMs20.value,
-        lyrics: _currentLine,
-        hint: currentWordIndex.value,
-      );
-
-      if (newWordIndex != currentWordIndex.value) {
-        interludeProcess.value = 0;
-        wordProgress.value = 0;
-        currentWordIndex.value = newWordIndex;
-        _updateLyricsInfo(updateLineOnly: false);
-      }
-
-      wordProgress.value += _wordProgressIncrement;
-      _updateInterludeState();
-    });
+    currentMs20Notifier.addListener(_updateProgress);
   }
 
   void pointerScroll() {
@@ -241,11 +244,12 @@ class LyricController extends GetxController {
         springScrollToCenter();
       });
     } else {
-      if (!lrcViewScrollController.isAttached) {
+      if (lrcViewScrollController == null ||
+          !lrcViewScrollController!.isAttached) {
         return;
       }
       try {
-        lrcViewScrollController.scrollTo(
+        lrcViewScrollController!.scrollTo(
           index: currentLineIndex.value.clamp(
             0,
             (_audioController.currentLyrics.value?.parsedLrc?.length ?? 1) - 1,

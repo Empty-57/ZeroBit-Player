@@ -26,7 +26,6 @@ class DesktopLyricsSever extends GetxController {
   StreamSubscription? _listen;
 
   Worker? _lineWorker;
-  Worker? _ms20Worker;
   Worker? _stateWorker;
 
   DesktopLyricsSettingController get _desktopLyricsSettingController =>
@@ -49,10 +48,6 @@ class DesktopLyricsSever extends GetxController {
 
   @override
   void onClose() async {
-    _stateWorker?.dispose();
-    _lineWorker?.dispose();
-    _ms20Worker?.dispose();
-
     await close();
     super.onClose();
   }
@@ -88,7 +83,7 @@ class DesktopLyricsSever extends GetxController {
     if (lineIndex < 0 || lineIndex >= lyrics.length) {
       lineIndex = 0;
       nextLineIndex = 1;
-      _lyricController.currentWordIndex.value = 0;
+      _lyricController.currentWordIndexNotifier.value = 0;
       _lyricController.wordProgress.value = 0.0;
     }
 
@@ -154,29 +149,22 @@ class DesktopLyricsSever extends GetxController {
   }
 
   void _ms20WorkerFn() {
-    try {
-      final jsonData = jsonEncode(
-        LyricsIOModel.sendPosition(
-          _lyricController.currentWordIndex.value,
-          _lyricController.wordProgress.value,
-        ),
-      );
-      _add(jsonData);
-    } catch (_) {}
+    if ((_audioController.currentLyrics.value?.type ?? LyricFormat.lrc) !=
+        LyricFormat.lrc) {
+      try {
+        final jsonData = jsonEncode(
+          LyricsIOModel.sendPosition(
+            _lyricController.currentWordIndexNotifier.value,
+            _lyricController.wordProgress.value,
+          ),
+        );
+        _add(jsonData);
+      } catch (_) {}
+    }
   }
 
   void _startMs20Worker() {
-    _ms20Worker = ever(
-      _lyricController.currentMs20,
-      (_) {
-        _ms20WorkerFn();
-      },
-      condition:
-          () =>
-              (_audioController.currentLyrics.value?.type ?? LyricFormat.lrc) !=
-                  LyricFormat.lrc ||
-              _lyricController.currentLineIndex.value < 0,
-    );
+    _lyricController.currentMs20Notifier.addListener(_ms20WorkerFn);
   }
 
   void connect() async {
@@ -341,12 +329,11 @@ class DesktopLyricsSever extends GetxController {
   }
 
   Future<void> close() async {
+    _lineWorker?.dispose();
+    _lyricController.currentMs20Notifier.removeListener(_ms20WorkerFn);
+    _stateWorker?.dispose();
     try {
       sendCmd(cmdType: SeverCmdType.shutdown, cmdData: null);
-      _lineWorker?.dispose();
-      _ms20Worker?.dispose();
-      _stateWorker?.dispose();
-
       if (_listen != null) {
         await _listen!.cancel();
         _listen = null;
