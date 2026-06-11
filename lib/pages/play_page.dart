@@ -53,27 +53,33 @@ const double _menuBtnHeight = 48;
 const double _menuBtnRadius = 0;
 
 // --- 歌词搜索控制器 ---
-class _LrcSearchController extends GetxController {
+class _LrcSearchController {
   final AudioController _audioController = Get.find<AudioController>();
   final currentNetLrc = <SearchLrcModel?>[].obs;
   final currentNetLrcOffest = 0.obs;
   final searchText = "".obs;
   final isLoading = false.obs;
 
-  @override
-  void onInit() {
-    super.onInit();
+  late final Worker _debounceWorker;
+  late final Worker _everWorker;
+
+  void init() {
     searchText.value =
         "${_audioController.currentMetadata.value.title} - ${_audioController.currentMetadata.value.artist}";
 
-    debounce(searchText, (_) async {
+    _debounceWorker = debounce(searchText, (_) async {
       currentNetLrcOffest.value = 0;
       await search();
     }, time: const Duration(milliseconds: 500));
 
-    ever(currentNetLrcOffest, (_) async {
+    _everWorker = ever(currentNetLrcOffest, (_) async {
       await search();
     });
+  }
+
+  void close() {
+    _debounceWorker.dispose();
+    _everWorker.dispose();
   }
 
   Future<void> search() async {
@@ -336,9 +342,7 @@ class _NetLrcDialog extends StatefulWidget {
 }
 
 class _NetLrcDialogState extends State<_NetLrcDialog> {
-  final _LrcSearchController lrcSearchController = Get.put(
-    _LrcSearchController(),
-  );
+  late final _LrcSearchController lrcSearchController;
   final TextEditingController textEditingController = TextEditingController();
 
   late final AudioController _audioController = Get.find<AudioController>();
@@ -346,9 +350,15 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
       Get.find<SettingController>();
 
   @override
+  void initState() {
+    super.initState();
+    lrcSearchController = _LrcSearchController()..init();
+  }
+
+  @override
   void dispose() {
     textEditingController.dispose();
-    Get.delete<_LrcSearchController>();
+    lrcSearchController.close();
     super.dispose();
   }
 
@@ -512,6 +522,7 @@ class PlayPage extends StatefulWidget {
 
 class _PlayPageState extends State<PlayPage> {
   late final ScrollController _playQueueScrollController;
+  late final MenuController _menuController;
 
   ThemeService get _themeService => ThemeService.instance;
   DesktopLyricsSever get _desktopLyricsSever => Get.find<DesktopLyricsSever>();
@@ -526,6 +537,7 @@ class _PlayPageState extends State<PlayPage> {
   void initState() {
     super.initState();
     _playQueueScrollController = ScrollController();
+    _menuController = MenuController();
   }
 
   @override
@@ -1221,16 +1233,18 @@ class _PlayPageState extends State<PlayPage> {
           fn: () {
             menuController.close();
             Get.back();
-            Get.toNamed(
-              AppRoutes.details,
-              arguments: {
-                'pathList':
-                    musicCacheController.albumItemsDict[albumWithLetter],
-                'title': album,
-                'operateArea': OperateArea.albumDetails,
-              },
-              id: 1,
-            );
+            SchedulerBinding.instance.addPostFrameCallback((_) {
+              Get.toNamed(
+                AppRoutes.details,
+                arguments: {
+                  'pathList':
+                      musicCacheController.albumItemsDict[albumWithLetter],
+                  'title': album,
+                  'operateArea': OperateArea.albumDetails,
+                },
+                id: 1,
+              );
+            });
           },
           text: album,
           toolTip: '跳转到 "$album"',
@@ -1247,17 +1261,19 @@ class _PlayPageState extends State<PlayPage> {
             fn: () {
               menuController.close();
               Get.back();
-              Get.toNamed(
-                AppRoutes.details,
-                arguments: {
-                  'pathList':
-                      musicCacheController
-                          .artistItemsDict[artistFirstWithLetter],
-                  'title': artistFirst,
-                  'operateArea': OperateArea.artistDetails,
-                },
-                id: 1,
-              );
+              SchedulerBinding.instance.addPostFrameCallback((_) {
+                Get.toNamed(
+                  AppRoutes.details,
+                  arguments: {
+                    'pathList':
+                        musicCacheController
+                            .artistItemsDict[artistFirstWithLetter],
+                    'title': artistFirst,
+                    'operateArea': OperateArea.artistDetails,
+                  },
+                  id: 1,
+                );
+              });
             },
             text: artistFirst,
             toolTip: '跳转到 "$artistFirst"',
@@ -1273,19 +1289,21 @@ class _PlayPageState extends State<PlayPage> {
                     onPressed: () {
                       menuController.close();
                       Get.back();
-                      Get.toNamed(
-                        AppRoutes.details,
-                        arguments: {
-                          'pathList':
-                              musicCacheController
-                                  .artistItemsDict[musicCacheController
-                                      .getLetter(str: v) +
-                                  v],
-                          'title': v,
-                          'operateArea': OperateArea.artistDetails,
-                        },
-                        id: 1,
-                      );
+                      SchedulerBinding.instance.addPostFrameCallback((_) {
+                        Get.toNamed(
+                          AppRoutes.details,
+                          arguments: {
+                            'pathList':
+                                musicCacheController
+                                    .artistItemsDict[musicCacheController
+                                        .getLetter(str: v) +
+                                    v],
+                            'title': v,
+                            'operateArea': OperateArea.artistDetails,
+                          },
+                          id: 1,
+                        );
+                      });
                     },
                     child: Center(child: Text(v)),
                   );
@@ -1381,7 +1399,6 @@ class _PlayPageState extends State<PlayPage> {
         (context.width * _spectrogramWidthFactor) / spectrogramBarLength;
     final spectrogramPaddingWidth = context.width * _spectrogramWidthFactorDiff;
 
-    final menuController = MenuController();
     final settingController = _settingController;
 
     return Focus(
@@ -1416,16 +1433,16 @@ class _PlayPageState extends State<PlayPage> {
                       child: GestureDetector(
                         onTapDown:
                             (_) =>
-                                menuController.isOpen
-                                    ? menuController.close()
+                                _menuController.isOpen
+                                    ? _menuController.close()
                                     : null,
                         onSecondaryTapDown:
-                            (details) => menuController.open(
+                            (details) => _menuController.open(
                               position: details.localPosition,
                             ),
                         child: MenuAnchor(
                           consumeOutsideTap: true,
-                          controller: menuController,
+                          controller: _menuController,
                           style: MenuStyle(
                             backgroundColor: WidgetStatePropertyAll(
                               darkColorScheme.surfaceContainer.withValues(
@@ -1434,7 +1451,7 @@ class _PlayPageState extends State<PlayPage> {
                             ),
                           ),
                           menuChildren: _getMenuItem(
-                            menuController,
+                            _menuController,
                             darkColorScheme,
                             _audioController.currentMetadata,
                           ),
