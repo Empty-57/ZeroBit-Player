@@ -342,8 +342,8 @@ class _NetLrcDialog extends StatefulWidget {
 }
 
 class _NetLrcDialogState extends State<_NetLrcDialog> {
-  late final _LrcSearchController lrcSearchController;
-  final TextEditingController textEditingController = TextEditingController();
+  late final _LrcSearchController _lrcSearchController;
+  final TextEditingController _textEditingController = TextEditingController();
 
   late final AudioController _audioController = Get.find<AudioController>();
   late final SettingController _settingController =
@@ -352,21 +352,21 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
   @override
   void initState() {
     super.initState();
-    lrcSearchController = _LrcSearchController()..init();
+    _lrcSearchController = _LrcSearchController()..init();
   }
 
   @override
   void dispose() {
-    textEditingController.dispose();
-    lrcSearchController.close();
+    _textEditingController.dispose();
+    _lrcSearchController.close();
     super.dispose();
   }
 
   void _showLrcDialog() {
-    lrcSearchController.searchText.value =
+    _lrcSearchController.searchText.value =
         "${_audioController.currentMetadata.value.title} - ${_audioController.currentMetadata.value.artist}";
-    textEditingController.text = lrcSearchController.searchText.value;
-    lrcSearchController.search();
+    _textEditingController.text = _lrcSearchController.searchText.value;
+    _lrcSearchController.search();
     showDialog(
       barrierDismissible: true,
       context: context,
@@ -408,13 +408,13 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
               Expanded(
                 child: TextField(
                   autofocus: true,
-                  controller: textEditingController,
+                  controller: _textEditingController,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: '搜索歌词',
                   ),
                   onChanged:
-                      (text) => lrcSearchController.searchText.value = text,
+                      (text) => _lrcSearchController.searchText.value = text,
                 ),
               ),
               GenIconBtn(
@@ -424,8 +424,8 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
                 color: widget.color,
                 backgroundColor: bgColor,
                 fn: () {
-                  if (lrcSearchController.currentNetLrcOffest.value > 0) {
-                    lrcSearchController.currentNetLrcOffest.value--;
+                  if (_lrcSearchController.currentNetLrcOffest.value > 0) {
+                    _lrcSearchController.currentNetLrcOffest.value--;
                   }
                 },
               ),
@@ -435,7 +435,7 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
                 size: _ctrlBtnMinSize * 1.5,
                 color: widget.color,
                 backgroundColor: bgColor,
-                fn: () => lrcSearchController.currentNetLrcOffest.value++,
+                fn: () => _lrcSearchController.currentNetLrcOffest.value++,
               ),
             ],
           ),
@@ -447,7 +447,7 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
                   () => TextButton(
                     onPressed: () async {
                       _settingController.apiIndex.value = key;
-                      await lrcSearchController.search();
+                      await _lrcSearchController.search();
                     },
                     style: TextButton.styleFrom(
                       backgroundColor:
@@ -474,17 +474,17 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
           ),
           Expanded(
             child: Obx(() {
-              if (lrcSearchController.isLoading.value) {
+              if (_lrcSearchController.isLoading.value) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (lrcSearchController.currentNetLrc.isEmpty) {
+              if (_lrcSearchController.currentNetLrc.isEmpty) {
                 return const Center(child: Text("网络错误或没有找到歌词"));
               }
               return ListView.builder(
-                itemCount: lrcSearchController.currentNetLrc.length,
+                itemCount: _lrcSearchController.currentNetLrc.length,
                 itemBuilder: (context, index) {
                   return _SearchResultItem(
-                    lyricInfo: lrcSearchController.currentNetLrc[index]!,
+                    lyricInfo: _lrcSearchController.currentNetLrc[index]!,
                     textStyle: textStyle,
                     audioController: _audioController,
                     settingController: _settingController,
