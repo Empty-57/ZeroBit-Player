@@ -781,7 +781,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                       ? SpringListView(
                         lineDuration: c.lineDurationList,
                         length: c.lineTextList.length,
-                        itemBuilder: (BuildContext context, int index) {
+                        itemBuilder: (int index) {
                           return creatLyricItem(index);
                         },
                       )
