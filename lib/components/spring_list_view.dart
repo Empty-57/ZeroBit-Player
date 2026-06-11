@@ -450,10 +450,7 @@ class _SpringItemState extends State<_SpringItem>
           child: child,
         );
       },
-      child: Container(
-        key: widget.boxKey,
-        child: RepaintBoundary(child: widget.child),
-      ),
+      child: RepaintBoundary(key: widget.boxKey, child: widget.child),
     );
   }
 }
