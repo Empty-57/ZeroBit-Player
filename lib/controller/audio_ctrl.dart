@@ -213,78 +213,68 @@ class AudioController extends GetxController {
   }
 
   Future<void> _syncInfo() async {
-    if (_isSyncing) {
-      return;
-    }
-
+    if (_isSyncing) return;
+    _isSyncing = true;
     final metadata = currentMetadata.value;
-    if (metadata.path.isEmpty) {
-      await windowManager.setTitle('ZeroBit Player');
+    try {
       try {
-        await trayManager.setToolTip('ZeroBit Player');
+        currentDuration.value = await getLen();
+      } catch (_) {
+        currentDuration.value = 999;
+      }
+
+      final title = metadata.title;
+      final artist =
+          (metadata.artist.isNotEmpty && metadata.artist != 'UNKNOWN')
+              ? ' - ${metadata.artist}'
+              : '';
+
+      if (await getCover(path: currentPath.value, sizeFlag: 1) case final src?
+          when src.isNotEmpty) {
+        currentCover.value = src;
+      } else {
+        if (await saveCoverByText(
+              text: title + artist,
+              songPath: metadata.path,
+              saveCover: false,
+            )
+            case final netSrc? when netSrc.isNotEmpty) {
+          currentCover.value = Uint8List.fromList(netSrc);
+        } else {
+          currentCover.value = kTransparentImage;
+        }
+      }
+
+      currentSmallCover.value =
+          CoverLRUCache.get(currentPath.value) ??
+          await getCover(path: currentPath.value, sizeFlag: 0) ??
+          kTransparentImage;
+
+      if (_settingController.dynamicThemeColor.value) {
+        await _setThemeColor4Cover();
+      }
+
+      await windowManager.setTitle(title + artist);
+      try {
+        await trayManager.setToolTip(title + artist);
       } catch (_) {}
 
-      return;
-    }
-    _isSyncing = true;
-
-    try {
-      currentDuration.value = await getLen();
-    } catch (_) {
-      _isSyncing = false;
-      currentDuration.value = 999;
-    } // 防止读取的时间不准
-
-    final title = metadata.title;
-    final artist =
-        (metadata.artist.isNotEmpty && metadata.artist != 'UNKNOWN')
-            ? ' - ${metadata.artist}'
-            : '';
-
-    if (await getCover(path: currentPath.value, sizeFlag: 1) case final src?
-        when src.isNotEmpty) {
-      currentCover.value = src;
-    } else {
-      if (await saveCoverByText(
-            text: title + artist,
-            songPath: metadata.path,
-            saveCover: false,
-          )
-          case final netSrc? when netSrc.isNotEmpty) {
-        currentCover.value = Uint8List.fromList(netSrc);
-      } else {
-        currentCover.value = kTransparentImage;
+      try {
+        await smtcUpdateMetadata(
+          title: metadata.title,
+          artist: metadata.artist,
+          album: metadata.album,
+          coverSrc: currentCover.value,
+        );
+      } catch (_) {
+        await smtcClear();
+        await initSmtc();
       }
-    }
-
-    currentSmallCover.value =
-        CoverLRUCache.get(currentPath.value) ??
-        await getCover(path: currentPath.value, sizeFlag: 0) ??
-        kTransparentImage;
-
-    if (_settingController.dynamicThemeColor.value) {
-      await _setThemeColor4Cover();
-    }
-
-    await windowManager.setTitle(title + artist);
-    try {
-      await trayManager.setToolTip(title + artist);
-    } catch (_) {
+    } catch (e) {
+      debugPrint("syncErr: $e");
+    } finally {
       _isSyncing = false;
     }
-    try {
-      await smtcUpdateMetadata(
-        title: metadata.title,
-        artist: metadata.artist,
-        album: metadata.album,
-        coverSrc: currentCover.value,
-      );
-    } catch (_) {
-      await smtcClear();
-      await initSmtc();
-      _isSyncing = false;
-    }
-    _isSyncing = false;
   }
 
   void _setThemeColor({required int color}) {
