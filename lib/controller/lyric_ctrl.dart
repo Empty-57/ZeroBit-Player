@@ -177,7 +177,6 @@ class LyricController extends GetxController {
             newLineIndex <= 0 ? 20 : _springConntroller.getVisibleItemCount();
       }
       currentLineIndex.value = newLineIndex;
-      currentIndexNotifier.value = newLineIndex;
       _updateLyricsInfo(updateLineOnly: true);
       if (!isPointerScroll.value) {
         if (_settingController.useSpringScroll.value) {
