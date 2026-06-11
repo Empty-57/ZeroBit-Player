@@ -33,21 +33,6 @@ class BlurWithCoverBackground extends StatelessWidget {
     this.onlyDarkMode = false,
   });
 
-  Widget get _cover => Transform.scale(
-    scale: coverScale,
-    child: Obx(
-      () => SizedBox.expand(
-        child: Image.memory(
-          cover.value,
-          cacheWidth: _coverBigRenderSize,
-          cacheHeight: _coverBigRenderSize,
-          fit: BoxFit.cover,
-          gaplessPlayback: true,
-        ),
-      ),
-    ),
-  );
-
   SettingController get _settingController => Get.find<SettingController>();
 
   @override
@@ -64,47 +49,62 @@ class BlurWithCoverBackground extends StatelessWidget {
         ),
 
         RepaintBoundary(
-          child: Obx(
-            () =>
-                _settingController.useMesh.value && meshEnable
-                    ? LyricsMesh()
-                    : Opacity(
-                      opacity:
-                          _settingController.themeMode.value == 'dark'
-                              ? 0.9
-                              : 0.6,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(radius),
-                        ),
-                        child: ImageFiltered(
-                          imageFilter: ImageFilter.blur(
-                            sigmaX: sigma,
-                            sigmaY: sigma,
-                            tileMode: TileMode.clamp,
-                          ),
-                          child:
-                              useGradient
-                                  ? ShaderMask(
-                                    blendMode: BlendMode.modulate,
-                                    shaderCallback: (Rect bounds) {
-                                      return LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: <Color>[
-                                          Colors.white.withValues(alpha: 0.4),
-                                          Colors.transparent,
-                                        ],
-                                        tileMode: TileMode.clamp,
-                                      ).createShader(bounds);
-                                    },
-                                    child: _cover,
-                                  )
-                                  : _cover,
-                        ),
-                      ),
-                    ),
-          ),
+          child: Obx(() {
+            final bool useMesh = _settingController.useMesh.value && meshEnable;
+            final String themeMode = _settingController.themeMode.value;
+            final Uint8List coverBytes = cover.value;
+
+            if (useMesh) {
+              return LyricsMesh();
+            }
+
+            final rawCover = Transform.scale(
+              scale: coverScale,
+              child: SizedBox.expand(
+                child: Image.memory(
+                  coverBytes,
+                  cacheWidth: _coverBigRenderSize,
+                  cacheHeight: _coverBigRenderSize,
+                  fit: BoxFit.cover,
+                  gaplessPlayback: true,
+                ),
+              ),
+            );
+
+            return Opacity(
+              opacity: themeMode == 'dark' ? 0.9 : 0.6,
+              child: ClipRRect(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(radius),
+                ),
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(
+                    sigmaX: sigma,
+                    sigmaY: sigma,
+                    tileMode: TileMode.clamp,
+                  ),
+                  child:
+                      useGradient
+                          ? ShaderMask(
+                            blendMode: BlendMode.modulate,
+                            shaderCallback: (Rect bounds) {
+                              return LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: <Color>[
+                                  Colors.white.withValues(alpha: 0.4),
+                                  Colors.transparent,
+                                ],
+                                tileMode: TileMode.clamp,
+                              ).createShader(bounds);
+                            },
+                            child: rawCover,
+                          )
+                          : rawCover,
+                ),
+              ),
+            );
+          }),
         ),
 
         if (useMask)
