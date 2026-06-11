@@ -355,7 +355,7 @@ impl AudioMetadata {
 
             let mut output_bytes = Vec::new();
             image_data
-                .write_to(&mut Cursor::new(&mut output_bytes), ImageFormat::Png)
+                .write_to(&mut Cursor::new(&mut output_bytes), ImageFormat::Jpeg)
                 .unwrap_or_else(|err| {
                     println!("Error resize cover: {}", err);
                 });
@@ -364,7 +364,7 @@ impl AudioMetadata {
                 0,
                 Picture::new_unchecked(
                     PictureType::CoverFront,
-                    Some(MimeType::Png),
+                    Some(MimeType::Jpeg),
                     None,
                     output_bytes,
                 ),
