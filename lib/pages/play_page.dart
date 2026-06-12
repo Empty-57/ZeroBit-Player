@@ -1405,7 +1405,7 @@ class _PlayPageState extends State<PlayPage> {
       autofocus: true,
       onKeyEvent: _onKeyEvent,
       child: BlurWithCoverBackground(
-        cover: _audioController.currentCover,
+        cover: _audioController.currentSmallCover,
         useGradient: false,
         sigma: 256,
         useMask: true,
