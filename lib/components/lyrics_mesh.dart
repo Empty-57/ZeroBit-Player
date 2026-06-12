@@ -8,15 +8,9 @@ class LyricsMesh extends GetView<AudioController> {
 
   @override
   Widget build(BuildContext context) {
-    final c=controller;
-
     return Obx((){
-      List<Color> coverList=c.coverPalette;
-      if(coverList.length>=4){
-        coverList=coverList.sublist(0,4);
-      }
       return AnimatedMeshGradient(
-      colors: coverList,
+      colors: controller.coverPalette,
       options: AnimatedMeshGradientOptions(
         frequency: 5,
         amplitude:30,
