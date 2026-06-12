@@ -131,7 +131,7 @@ class PlayBar extends GetView<AudioController> {
         child: SliderTheme(
           data: SliderTheme.of(context).copyWith(
             trackHeight: 1,
-            showValueIndicator: ShowValueIndicator.always,
+            showValueIndicator: ShowValueIndicator.onDrag,
             thumbShape: const DiamondSliderThumbShape(
               horizontalDiagonal: 8,
               verticalDiagonal: 16,

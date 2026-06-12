@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/field/app_routes.dart';
@@ -177,25 +178,24 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
     final textStyle2 = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
 
     return ListView.builder(
+      scrollCacheExtent: const ScrollCacheExtent.pixels(_itemHeight * 1),
       itemCount: controller.items.length,
       itemExtent: _itemHeight,
-      cacheExtent: _itemHeight * 1,
       itemBuilder: (context, index) {
         final item = controller.items[index];
         final displayName = item.userKey.split('_')[0];
 
         return TextButton(
-          onPressed:
-              () => Get.toNamed(
-                AppRoutes.details,
-                arguments: {
-                  'title': displayName,
-                  'pathList': item.pathList,
-                  'operateArea': OperateArea.playListDetails,
-                  'userKey': item.userKey,
-                },
-                id: 1,
-              ),
+          onPressed: () => Get.toNamed(
+            AppRoutes.details,
+            arguments: {
+              'title': displayName,
+              'pathList': item.pathList,
+              'operateArea': OperateArea.playListDetails,
+              'userKey': item.userKey,
+            },
+            id: 1,
+          ),
           style: TextButton.styleFrom(
             shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
           ),

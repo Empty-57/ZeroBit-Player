@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 
 class _JumpSignal {
@@ -281,10 +282,9 @@ class _SpringListViewState extends State<SpringListView> {
                       }
 
                       return CustomScrollView(
-                        controller: _controller._scrollController,
+                        scrollCacheExtent: const ScrollCacheExtent.pixels(200.0), controller: _controller._scrollController,
                         center: centerKey,
-                        anchor: newAnchorPercentage, // 使用转换后的锚点比例
-                        cacheExtent: 200.0,
+                        anchor: newAnchorPercentage,
                         slivers: [
                           SliverToBoxAdapter(
                             child: SizedBox(

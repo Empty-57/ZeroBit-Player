@@ -3,11 +3,12 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/components/audio_ctrl_btn.dart';
 import 'package:zerobit_player/components/blur_background.dart';
@@ -96,8 +97,8 @@ class _LrcSearchController {
       currentNetLrc.removeWhere(
         (v) =>
             (v == null ||
-                v.lyric == null ||
-                (v.lyric!.lrc == null && v.lyric!.verbatimLrc == null)),
+            v.lyric == null ||
+            (v.lyric!.lrc == null && v.lyric!.verbatimLrc == null)),
       );
     } finally {
       isLoading.value = false;
@@ -162,10 +163,9 @@ class _GradientSliderTrackShape extends SliderTrackShape {
       baseRect.width,
       inH,
     );
-    final Paint inactivePaint =
-        Paint()
-          ..color = sliderTheme.inactiveTrackColor!
-          ..style = PaintingStyle.fill;
+    final Paint inactivePaint = Paint()
+      ..color = sliderTheme.inactiveTrackColor!
+      ..style = PaintingStyle.fill;
     canvas.drawRRect(
       RRect.fromRectAndRadius(inactiveRect, Radius.circular(inH / 2)),
       inactivePaint,
@@ -177,15 +177,14 @@ class _GradientSliderTrackShape extends SliderTrackShape {
       thumbCenter.dx,
       baseRect.bottom,
     );
-    final Paint activePaint =
-        Paint()
-          ..shader = LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [activeColor.withValues(alpha: 0.0), activeColor],
-            stops: [0.0, 0.1],
-          ).createShader(activeRect)
-          ..style = PaintingStyle.fill;
+    final Paint activePaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: [activeColor.withValues(alpha: 0.0), activeColor],
+        stops: [0.0, 0.1],
+      ).createShader(activeRect)
+      ..style = PaintingStyle.fill;
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         activeRect,
@@ -414,8 +413,8 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
                     border: OutlineInputBorder(),
                     labelText: '搜索歌词',
                   ),
-                  onChanged:
-                      (text) => _lrcSearchController.searchText.value = text,
+                  onChanged: (text) =>
+                      _lrcSearchController.searchText.value = text,
                 ),
               ),
               GenIconBtn(
@@ -451,22 +450,20 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
                       await _lrcSearchController.search();
                     },
                     style: TextButton.styleFrom(
-                      backgroundColor:
-                          _settingController.apiIndex.value == key
-                              ? Theme.of(context).colorScheme.primary
-                              : null,
+                      backgroundColor: _settingController.apiIndex.value == key
+                          ? Theme.of(context).colorScheme.primary
+                          : null,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
                       ),
                     ),
                     child: Text(
                       SettingController.apiMap[key] ?? 'QQ音乐',
-                      style:
-                          _settingController.apiIndex.value == key
-                              ? textStyle.copyWith(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                              )
-                              : textStyle,
+                      style: _settingController.apiIndex.value == key
+                          ? textStyle.copyWith(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            )
+                          : textStyle,
                     ),
                   ),
                 ),
@@ -614,17 +611,15 @@ class _CoverSide extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: _borderRadius,
                 child: GestureDetector(
-                  onTap:
-                      () =>
-                          _coverViewMode.value = (_coverViewMode.value + 1) % 3,
+                  onTap: () =>
+                      _coverViewMode.value = (_coverViewMode.value + 1) % 3,
                   child: Obx(() {
                     final mode = _coverViewMode.value;
-                    final tip =
-                        mode == 0
-                            ? '切换居中模式'
-                            : mode == 1
-                            ? '展开详情'
-                            : '切换歌词模式';
+                    final tip = mode == 0
+                        ? '切换居中模式'
+                        : mode == 1
+                        ? '展开详情'
+                        : '切换歌词模式';
                     final cover = audioController.currentCover.value;
                     return Tooltip(
                       message: tip,
@@ -632,9 +627,8 @@ class _CoverSide extends StatelessWidget {
                       verticalOffset: -coverSize / 2 - 32,
                       child: AnimatedSwitcher(
                         duration: 300.ms,
-                        transitionBuilder:
-                            (child, anim) =>
-                                FadeTransition(opacity: anim, child: child),
+                        transitionBuilder: (child, anim) =>
+                            FadeTransition(opacity: anim, child: child),
                         child: Image.memory(
                           cover,
                           key: ValueKey(cover.hashCode),
@@ -668,34 +662,34 @@ class _CoverSide extends StatelessWidget {
                   children: [
                     isHeadHover.value
                         ? _ScrollTextWidget(
-                          text: title,
-                          style: titleStyle,
-                          strutStyle: titleStrut,
-                        )
+                            text: title,
+                            style: titleStyle,
+                            strutStyle: titleStrut,
+                          )
                         : Text(
-                          title,
-                          style: titleStyle,
-                          softWrap: false,
-                          strutStyle: titleStrut,
-                          overflow: TextOverflow.fade,
-                          maxLines: 1,
-                          textAlign: TextAlign.left,
-                        ),
+                            title,
+                            style: titleStyle,
+                            softWrap: false,
+                            strutStyle: titleStrut,
+                            overflow: TextOverflow.fade,
+                            maxLines: 1,
+                            textAlign: TextAlign.left,
+                          ),
                     isHeadHover.value
                         ? _ScrollTextWidget(
-                          text: artistAndAlbum,
-                          style: subTitleStyle,
-                          strutStyle: subTitleStrut,
-                        )
+                            text: artistAndAlbum,
+                            style: subTitleStyle,
+                            strutStyle: subTitleStrut,
+                          )
                         : Text(
-                          artistAndAlbum,
-                          style: subTitleStyle,
-                          softWrap: false,
-                          strutStyle: subTitleStrut,
-                          overflow: TextOverflow.fade,
-                          maxLines: 1,
-                          textAlign: TextAlign.left,
-                        ),
+                            artistAndAlbum,
+                            style: subTitleStyle,
+                            softWrap: false,
+                            strutStyle: subTitleStrut,
+                            overflow: TextOverflow.fade,
+                            maxLines: 1,
+                            textAlign: TextAlign.left,
+                          ),
                   ],
                 );
               }),
@@ -737,8 +731,9 @@ class _PlayQueueItem extends StatelessWidget {
       child: SizedBox.expand(
         child: Obx(() {
           final isCurrent = audioController.currentPath.value == item.path;
-          final currentTitleStyle =
-              isCurrent ? highLightTitleStyle : titleStyle;
+          final currentTitleStyle = isCurrent
+              ? highLightTitleStyle
+              : titleStyle;
           final currentSubStyle = isCurrent ? highLightSubStyle : subStyle;
           return Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -830,7 +825,7 @@ class _ControlBar extends StatelessWidget {
                       activeColor: activeTrackCover,
                     ),
                     inactiveTrackColor: inactiveTrackCover,
-                    showValueIndicator: ShowValueIndicator.always,
+                    showValueIndicator: ShowValueIndicator.onDrag,
                     thumbShape: const RoundSliderThumbShape(
                       enabledThumbRadius: _thumbRadius,
                       elevation: 0,
@@ -967,9 +962,12 @@ class _ControlBar extends StatelessWidget {
                                         final itemsList =
                                             audioController.playListCacheItems;
                                         return ListView.builder(
+                                          scrollCacheExtent:
+                                              const ScrollCacheExtent.pixels(
+                                                itemHeight * 1,
+                                              ),
                                           itemCount: itemsList.length,
                                           itemExtent: itemHeight,
-                                          cacheExtent: itemHeight * 1,
                                           controller: playQueueScrollController,
                                           padding: const EdgeInsets.only(
                                             bottom: itemHeight * 2,
@@ -1035,10 +1033,9 @@ class _ControlBar extends StatelessWidget {
                           Obx(
                             () => GenIconBtn(
                               tooltip: '频谱图',
-                              icon:
-                                  settingController.showSpectrogram.value
-                                      ? PhosphorIconsFill.waveTriangle
-                                      : PhosphorIconsLight.waveTriangle,
+                              icon: settingController.showSpectrogram.value
+                                  ? PhosphorIconsFill.waveTriangle
+                                  : PhosphorIconsLight.waveTriangle,
                               size: _ctrlBtnMinSize,
                               color: mixColor,
                               fn: () {
@@ -1050,26 +1047,21 @@ class _ControlBar extends StatelessWidget {
                           Obx(
                             () => GenIconBtn(
                               tooltip: '桌面歌词',
-                              icon:
-                                  settingController.showDesktopLyrics.value
-                                      ? PhosphorIconsFill.creditCard
-                                      : PhosphorIconsLight.creditCard,
+                              icon: settingController.showDesktopLyrics.value
+                                  ? PhosphorIconsFill.creditCard
+                                  : PhosphorIconsLight.creditCard,
                               size: _ctrlBtnMinSize,
                               color: mixColor,
-                              fn:
-                                  () async {
-                                    settingController.showDesktopLyrics
-                                        .toggle();
-                                    await settingController.putScalableCache();
+                              fn: () async {
+                                settingController.showDesktopLyrics.toggle();
+                                await settingController.putScalableCache();
 
-                                    if (settingController
-                                        .showDesktopLyrics
-                                        .value) {
-                                      desktopLyricsSever.connect();
-                                    } else {
-                                      desktopLyricsSever.close();
-                                    }
-                                  }.throttle(),
+                                if (settingController.showDesktopLyrics.value) {
+                                  desktopLyricsSever.connect();
+                                } else {
+                                  desktopLyricsSever.close();
+                                }
+                              }.throttle(),
                             ),
                           ),
                         ],
@@ -1329,9 +1321,8 @@ class _PlayPageState extends State<PlayPage> {
                 Get.toNamed(
                   AppRoutes.details,
                   arguments: {
-                    'pathList':
-                        musicCacheController
-                            .artistItemsDict[artistFirstWithLetter],
+                    'pathList': musicCacheController
+                        .artistItemsDict[artistFirstWithLetter],
                     'title': artistFirst,
                     'operateArea': OperateArea.artistDetails,
                   },
@@ -1347,31 +1338,31 @@ class _PlayPageState extends State<PlayPage> {
           return _createdSubmenuBtn(
             text: '查看艺术家',
             darkColorScheme: darkColorScheme,
-            menuChildren:
-                artistList.map((v) {
-                  return MenuItemButton(
-                    onPressed: () {
-                      menuController.close();
-                      Get.back();
-                      SchedulerBinding.instance.addPostFrameCallback((_) {
-                        Get.toNamed(
-                          AppRoutes.details,
-                          arguments: {
-                            'pathList':
-                                musicCacheController
-                                    .artistItemsDict[musicCacheController
-                                        .getLetter(str: v) +
-                                    v],
-                            'title': v,
-                            'operateArea': OperateArea.artistDetails,
-                          },
-                          id: 1,
-                        );
-                      });
-                    },
-                    child: Center(child: Text(v)),
-                  );
-                }).toList(),
+            menuChildren: artistList.map((v) {
+              return MenuItemButton(
+                onPressed: () {
+                  menuController.close();
+                  Get.back();
+                  SchedulerBinding.instance.addPostFrameCallback((_) {
+                    Get.toNamed(
+                      AppRoutes.details,
+                      arguments: {
+                        'pathList':
+                            musicCacheController
+                                .artistItemsDict[musicCacheController.getLetter(
+                                  str: v,
+                                ) +
+                                v],
+                        'title': v,
+                        'operateArea': OperateArea.artistDetails,
+                      },
+                      id: 1,
+                    );
+                  });
+                },
+                child: Center(child: Text(v)),
+              );
+            }).toList(),
           );
         }
         return const SizedBox.shrink();
@@ -1380,18 +1371,17 @@ class _PlayPageState extends State<PlayPage> {
       _createdSubmenuBtn(
         text: '添加到歌单',
         darkColorScheme: darkColorScheme,
-        menuChildren:
-            _userPlayListController.allUserKey.map((v) {
-              return MenuItemButton(
-                onPressed: () {
-                  _userPlayListController.addToAudioList(
-                    metadata: currentMetadata.value,
-                    userKey: v,
-                  );
-                },
-                child: Center(child: Text(v.split('_')[0])),
+        menuChildren: _userPlayListController.allUserKey.map((v) {
+          return MenuItemButton(
+            onPressed: () {
+              _userPlayListController.addToAudioList(
+                metadata: currentMetadata.value,
+                userKey: v,
               );
-            }).toList(),
+            },
+            child: Center(child: Text(v.split('_')[0])),
+          );
+        }).toList(),
       ),
     ];
   }
@@ -1495,15 +1485,12 @@ class _PlayPageState extends State<PlayPage> {
                   children: [
                     Expanded(
                       child: GestureDetector(
-                        onTapDown:
-                            (_) =>
-                                _menuController.isOpen
-                                    ? _menuController.close()
-                                    : null,
-                        onSecondaryTapDown:
-                            (details) => _menuController.open(
-                              position: details.localPosition,
-                            ),
+                        onTapDown: (_) => _menuController.isOpen
+                            ? _menuController.close()
+                            : null,
+                        onSecondaryTapDown: (details) => _menuController.open(
+                          position: details.localPosition,
+                        ),
                         child: MenuAnchor(
                           consumeOutsideTap: true,
                           controller: _menuController,
@@ -1526,16 +1513,16 @@ class _PlayPageState extends State<PlayPage> {
                                 () => AnimatedPositioned(
                                   duration: 300.ms,
                                   curve: Curves.fastOutSlowIn,
-                                  right:
-                                      _coverViewMode.value == 0
-                                          ? 0
-                                          : (-halfWidth),
+                                  right: _coverViewMode.value == 0
+                                      ? 0
+                                      : (-halfWidth),
                                   width: halfWidth, // 水平约束
                                   top: 0, // 垂直约束
                                   bottom: 0, // 垂直约束
                                   child: AnimatedOpacity(
-                                    opacity:
-                                        _coverViewMode.value == 0 ? 1.0 : 0.0,
+                                    opacity: _coverViewMode.value == 0
+                                        ? 1.0
+                                        : 0.0,
                                     duration: 100.ms,
                                     child: const _LyricsSide(),
                                   ),
@@ -1546,13 +1533,11 @@ class _PlayPageState extends State<PlayPage> {
                                 () => AnimatedPositioned(
                                   duration: 300.ms,
                                   curve: Curves.fastOutSlowIn,
-                                  left:
-                                      _coverViewMode.value == 0
-                                          ? (halfWidth - coverSize) / 2
-                                          : _coverViewMode.value == 1
-                                          ? (context.width - coverSize) / 2
-                                          : halfWidth +
-                                              (halfWidth - coverSize) / 2,
+                                  left: _coverViewMode.value == 0
+                                      ? (halfWidth - coverSize) / 2
+                                      : _coverViewMode.value == 1
+                                      ? (context.width - coverSize) / 2
+                                      : halfWidth + (halfWidth - coverSize) / 2,
                                   width: coverSize,
                                   top: 0,
                                   bottom: 0,
@@ -1574,10 +1559,9 @@ class _PlayPageState extends State<PlayPage> {
                                 return AnimatedPositioned(
                                   duration: 300.ms,
                                   curve: Curves.fastOutSlowIn,
-                                  left:
-                                      _coverViewMode.value == 2
-                                          ? (halfWidth - 100) / 4
-                                          : (-halfWidth),
+                                  left: _coverViewMode.value == 2
+                                      ? (halfWidth - 100) / 4
+                                      : (-halfWidth),
                                   width: halfWidth - 100, // 水平约束
                                   top: 0, // 垂直约束
                                   bottom: 0, // 垂直约束
@@ -1721,6 +1705,7 @@ class _SpectrogramWidgetState extends State<_SpectrogramWidget>
 
   /// 防止 dispose 后异步回调仍然执行的保护标志
   bool _isDisposed = false;
+
   /// 定时从后端拉取 FFT 数据
   /// 不用 Ticker（每帧触发）是因为音频数据不需要和屏幕刷新率同步
   /// 视觉流畅度由 _animController 的插值保证，而非拉取频率
@@ -1787,10 +1772,9 @@ class _SpectrogramWidgetState extends State<_SpectrogramWidget>
   void _onAnimationTick() {
     if (_isDisposed || !mounted || _targetFFT.isEmpty) return;
     final double t = _animController.value;
-    final int len =
-        _currentFFT.length < _targetFFT.length
-            ? _currentFFT.length
-            : _targetFFT.length;
+    final int len = _currentFFT.length < _targetFFT.length
+        ? _currentFFT.length
+        : _targetFFT.length;
 
     if (_displayFFT.length != len) {
       _displayFFT = List<double>.filled(len, 0.0);

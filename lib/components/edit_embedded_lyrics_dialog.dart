@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
@@ -183,30 +183,29 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
             children: [
               const SizedBox(height: 8),
               Text("选择歌词格式", style: textStyle),
-              Wrap(
-                spacing: 4,
-                runSpacing: 8,
-                children:
-                    types.map((v) {
+              Obx(
+                () => RadioGroup<String>(
+                  groupValue: _selectedValue.value,
+                  onChanged: (String? value) {
+                    _selectedValue.value = value ?? LyricFormat.lrc;
+                    _lyricsMap['type'] = _selectedValue.value;
+                  },
+                  child: Wrap(
+                    spacing: 4,
+                    runSpacing: 8,
+                    children: types.map((v) {
                       return Row(
                         spacing: 2,
                         mainAxisAlignment: MainAxisAlignment.center,
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(v, style: textStyle),
-                          Obx(
-                            () => Radio<String>(
-                              value: v,
-                              groupValue: _selectedValue.value,
-                              onChanged: (String? value) {
-                                _selectedValue.value = value ?? LyricFormat.lrc;
-                                _lyricsMap['type'] = _selectedValue.value;
-                              },
-                            ),
-                          ),
+                          Radio<String>(value: v),
                         ],
                       );
                     }).toList(),
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
               Text("歌词原文", style: textStyle),
@@ -296,7 +295,7 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
                   );
                 }
 
-                if (mounted) {
+                if (context.mounted) {
                   Navigator.pop(context);
                   showSnackBar(
                     title: "OK",

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
@@ -110,9 +111,8 @@ class _SearchDialogContentState extends State<_SearchDialogContent> {
                 flex: 1,
                 child: Obx(
                   () => ListView.builder(
-                    itemCount: widget.cacheCtrl.searchResult.length,
+                    scrollCacheExtent: const ScrollCacheExtent.pixels(_itemHeight * 1), itemCount: widget.cacheCtrl.searchResult.length,
                     itemExtent: _itemHeight,
-                    cacheExtent: _itemHeight * 1,
                     padding: EdgeInsets.only(bottom: _itemHeight * 2),
                     itemBuilder: (context, index) {
                       final items = widget.cacheCtrl.searchResult[index];

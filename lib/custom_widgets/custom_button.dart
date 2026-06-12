@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 
 class CustomBtn<T> extends StatelessWidget {
-  final VoidCallback fn;
+  final VoidCallback? fn;
   final String? label;
   final T? labelSize;
   final IconData? icon;
@@ -47,9 +47,7 @@ class CustomBtn<T> extends StatelessWidget {
         width: btnWidth!,
         height: btnHeight!,
         child: TextButton(
-          onPressed: () {
-            fn();
-          },
+          onPressed: fn,
           style: TextButton.styleFrom(
             elevation: 0,
             shape: RoundedRectangleBorder(

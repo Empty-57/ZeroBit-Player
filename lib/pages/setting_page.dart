@@ -1,13 +1,14 @@
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:get/get.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zerobit_player/components/get_snack_bar.dart';
 import 'package:zerobit_player/controller/desktop_lyrics_setting_ctrl.dart';
@@ -122,9 +123,9 @@ class _FolderManagerDialog extends GetView<MusicCacheController> {
                         flex: 1,
                         child: Obx(() {
                           return ListView.builder(
+                            scrollCacheExtent: const ScrollCacheExtent.pixels(36 * 1),
                             itemCount: _settingController.folders.length,
                             itemExtent: 36,
-                            cacheExtent: 36 * 1,
                             itemBuilder: (context, index) {
                               return Row(
                                 mainAxisAlignment:
@@ -172,8 +173,8 @@ class _FolderManagerDialog extends GetView<MusicCacheController> {
                         () => Visibility(
                           visible:
                               musicCacheController.currentScanAudio.value == ''
-                                  ? false
-                                  : true,
+                              ? false
+                              : true,
                           child: Text(
                             '已扫描到：${musicCacheController.currentScanAudio.value}',
                             style: generalTextStyle(ctx: context, size: 'md'),
@@ -188,8 +189,8 @@ class _FolderManagerDialog extends GetView<MusicCacheController> {
                         () => Visibility(
                           visible:
                               musicCacheController.currentScanAudio.value == ''
-                                  ? true
-                                  : false,
+                              ? true
+                              : false,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             crossAxisAlignment: CrossAxisAlignment.center,
@@ -197,9 +198,9 @@ class _FolderManagerDialog extends GetView<MusicCacheController> {
                             children: [
                               CustomBtn(
                                 fn: () async {
-                                  String? selectedDirectory =
-                                      await FilePicker.platform
-                                          .getDirectoryPath();
+                                  String? selectedDirectory = await FilePicker
+                                      .platform
+                                      .getDirectoryPath();
                                   if (selectedDirectory != null &&
                                       !_settingController.folders.contains(
                                         selectedDirectory,
@@ -210,8 +211,9 @@ class _FolderManagerDialog extends GetView<MusicCacheController> {
                                   }
                                 },
                                 backgroundColor: Colors.transparent,
-                                contentColor:
-                                    Theme.of(context).colorScheme.primary,
+                                contentColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
                                 btnWidth: 72,
                                 btnHeight: 36,
                                 label: "添加",
@@ -223,8 +225,9 @@ class _FolderManagerDialog extends GetView<MusicCacheController> {
                                       foldersClone;
                                 },
                                 backgroundColor: Colors.transparent,
-                                contentColor:
-                                    Theme.of(context).colorScheme.primary,
+                                contentColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
                                 btnWidth: 72,
                                 btnHeight: 36,
                                 label: "取消",
@@ -241,14 +244,15 @@ class _FolderManagerDialog extends GetView<MusicCacheController> {
                                     Navigator.pop(context, 'actions');
                                   }
                                 },
-                                backgroundColor:
-                                    Theme.of(context).colorScheme.primary,
-                                contentColor:
-                                    Theme.of(context).colorScheme.onPrimary,
-                                overlayColor:
-                                    Theme.of(
-                                      context,
-                                    ).colorScheme.surfaceContainer,
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
+                                contentColor: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimary,
+                                overlayColor: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainer,
                                 btnWidth: 72,
                                 btnHeight: 36,
                                 label: "确定",
@@ -289,21 +293,20 @@ class _ApiDropMenu extends StatelessWidget {
     const double btnW = 148;
 
     final menuController = MenuController();
-    final apiMenuList =
-        SettingController.apiMap.entries.map((entry) {
-          return CustomBtn(
-            fn: () {
-              _settingController.apiIndex.value = entry.key;
-              _settingController.putCache(isSaveFolders: false);
-              menuController.close();
-            },
-            btnWidth: btnW,
-            btnHeight: _setBtnHeight,
-            label: entry.value,
-            mainAxisAlignment: MainAxisAlignment.center,
-            backgroundColor: Colors.transparent,
-          );
-        }).toList();
+    final apiMenuList = SettingController.apiMap.entries.map((entry) {
+      return CustomBtn(
+        fn: () {
+          _settingController.apiIndex.value = entry.key;
+          _settingController.putCache(isSaveFolders: false);
+          menuController.close();
+        },
+        btnWidth: btnW,
+        btnHeight: _setBtnHeight,
+        label: entry.value,
+        mainAxisAlignment: MainAxisAlignment.center,
+        backgroundColor: Colors.transparent,
+      );
+    }).toList();
 
     return MenuAnchor(
       menuChildren: apiMenuList,
@@ -556,9 +559,9 @@ Widget _getFontFamilyDialog(
                     Expanded(
                       flex: 1,
                       child: ListView.builder(
+                        scrollCacheExtent: const ScrollCacheExtent.pixels(36 * 1),
                         itemCount: _fontsList.length,
                         itemExtent: 36,
-                        cacheExtent: 36 * 1,
                         itemBuilder: (context, index) {
                           return TextButton(
                             onPressed: () {
@@ -758,18 +761,17 @@ class _CheckVersion extends StatelessWidget {
           if (response.data != null) {
             final Map<String, dynamic> jsonData = response.data;
 
-            final List<int> latestVer =
-                jsonData['tag_name']
-                    .toString()
-                    .replaceAll('v', '')
-                    .split('.')
-                    .map((v) => int.parse(v))
-                    .toList();
-            final List<int> localVer =
-                (await PackageInfo.fromPlatform()).version
-                    .split('.')
-                    .map((v) => int.parse(v))
-                    .toList();
+            final List<int> latestVer = jsonData['tag_name']
+                .toString()
+                .replaceAll('v', '')
+                .split('.')
+                .map((v) => int.parse(v))
+                .toList();
+            final List<int> localVer = (await PackageInfo.fromPlatform())
+                .version
+                .split('.')
+                .map((v) => int.parse(v))
+                .toList();
             if (latestVer[0] > localVer[0] ||
                 (latestVer[0] == localVer[0] && latestVer[1] > localVer[1]) ||
                 (latestVer[0] == localVer[0] &&
@@ -833,8 +835,9 @@ class _CheckVersion extends StatelessWidget {
                                       Navigator.pop(context, 'cancel');
                                     },
                                     backgroundColor: Colors.transparent,
-                                    contentColor:
-                                        Theme.of(context).colorScheme.primary,
+                                    contentColor: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                     btnWidth: 72,
                                     btnHeight: 36,
                                     label: "取消",
@@ -856,14 +859,15 @@ class _CheckVersion extends StatelessWidget {
                                         );
                                       }
                                     },
-                                    backgroundColor:
-                                        Theme.of(context).colorScheme.primary,
-                                    contentColor:
-                                        Theme.of(context).colorScheme.onPrimary,
-                                    overlayColor:
-                                        Theme.of(
-                                          context,
-                                        ).colorScheme.surfaceContainer,
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                    contentColor: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimary,
+                                    overlayColor: Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainer,
                                     btnWidth: 128,
                                     btnHeight: 36,
                                     icon: PhosphorIconsLight.arrowUpRight,
@@ -960,7 +964,7 @@ class _DesktopLrcFontOpacityDropMenu extends StatelessWidget {
       child: SliderTheme(
         data: SliderTheme.of(
           context,
-        ).copyWith(showValueIndicator: ShowValueIndicator.always),
+        ).copyWith(showValueIndicator: ShowValueIndicator.onDrag),
         child: Obx(
           () => Slider(
             min: 0.0,
@@ -1040,30 +1044,22 @@ class _DesktopLyricsAlignmentRadio extends StatelessWidget {
   Widget build(BuildContext context) {
     final alignment = [0, 1, 2, 3];
     return Material(
-      child: Wrap(
-        spacing: 8,
-        children:
-            alignment
+      child: Obx(
+        () => RadioGroup<int>(
+          groupValue: _desktopLyricsSettingController.lrcAlignment.value,
+          onChanged: (int? v) {
+            _desktopLyricsSettingController.setLrcAlignment(alignment: v ?? 1);
+          },
+          child: Wrap(
+            spacing: 8,
+            children: alignment
                 .map(
                   (v) => Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     spacing: 2,
                     children: [
-                      Obx(
-                        () => Radio<int>(
-                          value: v,
-                          groupValue:
-                              _desktopLyricsSettingController
-                                  .lrcAlignment
-                                  .value,
-                          onChanged: (int? value) {
-                            _desktopLyricsSettingController.setLrcAlignment(
-                              alignment: value ?? 1,
-                            );
-                          },
-                        ),
-                      ),
+                      Radio<int>(value: v),
                       Text(
                         DesktopLyricsSettingController.lrcAlignmentMap[v] ??
                             '左对齐',
@@ -1072,6 +1068,8 @@ class _DesktopLyricsAlignmentRadio extends StatelessWidget {
                   ),
                 )
                 .toList(),
+          ),
+        ),
       ),
     );
   }
@@ -1297,7 +1295,10 @@ class SettingPage extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
-        Text(text, style: generalTextStyle(ctx: context, size: 'lg')),
+        Text(
+          text,
+          style: generalTextStyle(ctx: context, size: 'lg'),
+        ),
         child,
       ],
     );
@@ -1488,23 +1489,23 @@ class SettingPage extends StatelessWidget {
                           final lyricStyle = generalTextStyle(
                             ctx: context,
                             size: _settingController.lrcFontSize.value,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSecondaryContainer.withValues(
-                              alpha:
-                                  _settingController.themeMode.value == 'dark'
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSecondaryContainer
+                                .withValues(
+                                  alpha:
+                                      _settingController.themeMode.value ==
+                                          'dark'
                                       ? 0.2
                                       : 0.3,
-                            ),
-                            weight:
-                                FontWeight.values[_settingController
-                                    .lrcFontWeight
-                                    .value],
+                                ),
+                            weight: FontWeight
+                                .values[_settingController.lrcFontWeight.value],
                           );
 
                           final strutStyle = StrutStyle(
-                            fontSize:
-                                _settingController.lrcFontSize.value.toDouble(),
+                            fontSize: _settingController.lrcFontSize.value
+                                .toDouble(),
                             forceStrutHeight: true,
                           );
 
@@ -1687,9 +1688,8 @@ class SettingPage extends StatelessWidget {
                   _createSetItem(
                     text: '竖排显示',
                     child: _createSwitchBtn(
-                      value:
-                          _desktopLyricsSettingController
-                              .useVerticalDisplayMode,
+                      value: _desktopLyricsSettingController
+                          .useVerticalDisplayMode,
                       trackColor: switchTrackColor,
                       context: context,
                       fn: (bool value) {

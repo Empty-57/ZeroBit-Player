@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:zerobit_player/components/music_list_tool.dart';
 import 'package:zerobit_player/field/app_routes.dart';
@@ -158,11 +159,10 @@ class _SortedListViewState extends State<SortedListView> {
     // 清理已失效的 section key，避免 Map 无限膨胀
     _sectionKeys.removeWhere((k, _) => !grouped.containsKey(k));
 
-    _sections =
-        grouped.entries.map((e) {
-          final sectionKey = _sectionKeys.putIfAbsent(e.key, () => GlobalKey());
-          return _SectionItem(letter: e.key, key: sectionKey, items: e.value);
-        }).toList();
+    _sections = grouped.entries.map((e) {
+      final sectionKey = _sectionKeys.putIfAbsent(e.key, () => GlobalKey());
+      return _SectionItem(letter: e.key, key: sectionKey, items: e.value);
+    }).toList();
   }
 
   // 根据首字母找到对应 GlobalKey 并滚动到该位置
@@ -181,10 +181,9 @@ class _SortedListViewState extends State<SortedListView> {
   @override
   Widget build(BuildContext context) {
     // 根据路由判断视图类型
-    final viewType =
-        widget.toRoute == AppRoutes.albumDetails
-            ? _ViewType.album
-            : _ViewType.artist;
+    final viewType = widget.toRoute == AppRoutes.albumDetails
+        ? _ViewType.album
+        : _ViewType.artist;
 
     return Container(
       padding: const EdgeInsets.only(left: 16, top: 32, right: 4, bottom: 16),
@@ -246,7 +245,10 @@ class _SortedListViewState extends State<SortedListView> {
   ) {
     if (sections.isEmpty) {
       return Center(
-        child: Text('无内容', style: generalTextStyle(ctx: context, size: '2xl')),
+        child: Text(
+          '无内容',
+          style: generalTextStyle(ctx: context, size: '2xl'),
+        ),
       );
     }
 
@@ -261,8 +263,8 @@ class _SortedListViewState extends State<SortedListView> {
         return false; // false = 继续冒泡
       },
       child: CustomScrollView(
+        scrollCacheExtent: ScrollCacheExtent.pixels(mainAxisExtent * 2),
         controller: _scrollController,
-        cacheExtent: mainAxisExtent * 2,
         slivers: [
           for (final section in sections) ...[
             // 首字母标题
@@ -316,10 +318,9 @@ class _SortedListViewState extends State<SortedListView> {
             // 封面区域 始终占据正方形空间，保证布局稳定
             AspectRatio(
               aspectRatio: 1,
-              child:
-                  item.coverMusic != null
-                      ? AsyncCover(music: item.coverMusic!, size: _coverSize)
-                      : const SizedBox.shrink(),
+              child: item.coverMusic != null
+                  ? AsyncCover(music: item.coverMusic!, size: _coverSize)
+                  : const SizedBox.shrink(),
             ),
             const SizedBox(height: 3),
             Padding(
@@ -363,10 +364,9 @@ class _SortedListViewState extends State<SortedListView> {
             // 封面区域 固定正方形
             SizedBox.square(
               dimension: coverSize,
-              child:
-                  item.coverMusic != null
-                      ? AsyncCover(music: item.coverMusic!, size: coverSize)
-                      : const SizedBox.shrink(),
+              child: item.coverMusic != null
+                  ? AsyncCover(music: item.coverMusic!, size: coverSize)
+                  : const SizedBox.shrink(),
             ),
             const SizedBox(width: 2),
             // 文字区域 占满剩余宽度，防止文字溢出
@@ -402,20 +402,19 @@ class _SortedListViewState extends State<SortedListView> {
         behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
         child: ListView(
           padding: const EdgeInsets.only(bottom: 64),
-          children:
-              widget.letterList.map((letter) {
-                return TextButton(
-                  onPressed: () => _scrollToLetter(letter),
-                  style: ButtonStyle(
-                    foregroundColor: foregroundColorHover,
-                    padding: const WidgetStatePropertyAll(EdgeInsets.zero),
-                    shape: const WidgetStatePropertyAll(
-                      RoundedRectangleBorder(borderRadius: _borderRadius),
-                    ),
-                  ),
-                  child: Text(letter, style: const TextStyle(fontSize: 11)),
-                );
-              }).toList(),
+          children: widget.letterList.map((letter) {
+            return TextButton(
+              onPressed: () => _scrollToLetter(letter),
+              style: ButtonStyle(
+                foregroundColor: foregroundColorHover,
+                padding: const WidgetStatePropertyAll(EdgeInsets.zero),
+                shape: const WidgetStatePropertyAll(
+                  RoundedRectangleBorder(borderRadius: _borderRadius),
+                ),
+              ),
+              child: Text(letter, style: const TextStyle(fontSize: 11)),
+            );
+          }).toList(),
         ),
       ),
     );
@@ -428,10 +427,9 @@ class _SortedListViewState extends State<SortedListView> {
       arguments: {
         'pathList': item.paths,
         'title': item.title,
-        'operateArea':
-            widget.toRoute == AppRoutes.albumDetails
-                ? OperateArea.albumDetails
-                : OperateArea.artistDetails,
+        'operateArea': widget.toRoute == AppRoutes.albumDetails
+            ? OperateArea.albumDetails
+            : OperateArea.artistDetails,
       },
       id: 1,
     );

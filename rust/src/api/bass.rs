@@ -1,6 +1,4 @@
-use crate::api::bass::bass_errs::{
-    get_err_info, BASS_ERROR_BUSY, BASS_ERROR_HANDLE,
-};
+use crate::api::bass::bass_errs::{get_err_info, BASS_ERROR_BUSY, BASS_ERROR_HANDLE};
 use crate::api::bass::bass_flags::*;
 use crate::api::bass::bass_func::*;
 use crate::api::bass::bassfx_func::*;
@@ -88,6 +86,8 @@ const PLUGIN_NAME: [&str; 8] = [
     "bassape.dll",
 ];
 
+const BASS_DLL_DIR: &str = "BASSDLL";
+
 const BASE_TICK: f32 = 20.0;
 
 const USER_STOPPED: u32 = 0;
@@ -123,15 +123,20 @@ fn notify_state(state: u32) {
     }
 }
 
-unsafe extern "C" fn on_end_sync(handle: c_uint, channel: c_uint, data: c_uint, user: *mut c_void) {
+unsafe extern "C" fn on_end_sync(
+    _handle: c_uint,
+    _channel: c_uint,
+    _data: c_uint,
+    _user: *mut c_void,
+) {
     notify_state(USER_ENDED);
 }
 
 fn calculate_dynamic_bandwidth_linear(f_center: f32) -> f32 {
     let min_freq = *F_CENTER.first().unwrap_or(&80.0);
     let max_freq = *F_CENTER.last().unwrap_or(&16000.0);
-    let min_bandwidth = 8.0; // 对应 max_freq
-    let max_bandwidth = 28.0; // 对应 min_freq
+    let min_bandwidth = 8.0;
+    let max_bandwidth = 28.0;
 
     let clamped_f_center = f_center.clamp(min_freq, max_freq);
 
@@ -149,23 +154,13 @@ fn calculate_dynamic_bandwidth_linear(f_center: f32) -> f32 {
 
 impl BassApi {
     fn load() -> Result<Self, String> {
-        let current_exe = env::current_exe().unwrap();
-        let bass_dll_dir = current_exe
+        let current_exe = env::current_exe().map_err(|e| e.to_string())?;
+        let parent = current_exe
             .parent()
-            .unwrap()
-            .join("BASSDLL")
-            .join("bass.dll");
-        let basswasapi_dll_dir = current_exe
-            .parent()
-            .unwrap()
-            .join("BASSDLL")
-            .join("basswasapi.dll");
-
-        let bassfx_dll_dir = current_exe
-            .parent()
-            .unwrap()
-            .join("BASSDLL")
-            .join("bass_fx.dll");
+            .ok_or_else(|| "Cannot get parent directory of EXE".to_string())?;
+        let bass_dll_dir = parent.join(BASS_DLL_DIR).join("bass.dll");
+        let basswasapi_dll_dir = parent.join(BASS_DLL_DIR).join("basswasapi.dll");
+        let bassfx_dll_dir = parent.join(BASS_DLL_DIR).join("bass_fx.dll");
 
         unsafe {
             let lib: &Library = BASS_LIB
@@ -178,107 +173,76 @@ impl BassApi {
                 .get_or_try_init(|| Library::new(&bassfx_dll_dir).map_err(|e| e.to_string()))?;
 
             let init = lib.get(b"BASS_Init\0").map_err(|e| e.to_string())?;
-
             let get_attr = lib
                 .get(b"BASS_ChannelGetAttribute\0")
                 .map_err(|e| e.to_string())?;
-
             let set_attr = lib
                 .get(b"BASS_ChannelSetAttribute\0")
                 .map_err(|e| e.to_string())?;
-
             let slide_attr = lib
                 .get(b"BASS_ChannelSlideAttribute\0")
                 .map_err(|e| e.to_string())?;
-
             let wasapi_get_info = wasapi_lib
                 .get(b"BASS_WASAPI_GetInfo\0")
                 .map_err(|e| e.to_string())?;
-
             let stream_create = lib
                 .get(b"BASS_StreamCreateFile\0")
                 .map_err(|e| e.to_string())?;
-
             let play = lib.get(b"BASS_ChannelPlay\0").map_err(|e| e.to_string())?;
-
             let pause = lib.get(b"BASS_ChannelPause\0").map_err(|e| e.to_string())?;
-
             let stop = lib.get(b"BASS_ChannelStop\0").map_err(|e| e.to_string())?;
-
             let chan_get_data = lib
                 .get(b"BASS_ChannelGetData\0")
                 .map_err(|e| e.to_string())?;
-
             let chan_free = lib.get(b"BASS_ChannelFree\0").map_err(|e| e.to_string())?;
-
             let get_len = lib
                 .get(b"BASS_ChannelGetLength\0")
                 .map_err(|e| e.to_string())?;
-
             let get_pos = lib
                 .get(b"BASS_ChannelGetPosition\0")
                 .map_err(|e| e.to_string())?;
-
             let set_pos = lib
                 .get(b"BASS_ChannelSetPosition\0")
                 .map_err(|e| e.to_string())?;
-
             let bytes2sec = lib
                 .get(b"BASS_ChannelBytes2Seconds\0")
                 .map_err(|e| e.to_string())?;
-
             let sec2bytes = lib
                 .get(b"BASS_ChannelSeconds2Bytes\0")
                 .map_err(|e| e.to_string())?;
-
             let is_active = lib
                 .get(b"BASS_ChannelIsActive\0")
                 .map_err(|e| e.to_string())?;
-
             let stream_free = lib.get(b"BASS_StreamFree\0").map_err(|e| e.to_string())?;
-
             let error_get_code = lib.get(b"BASS_ErrorGetCode\0").map_err(|e| e.to_string())?;
-
             let free = lib.get(b"BASS_Free\0").map_err(|e| e.to_string())?;
-
             let wasapi_init = wasapi_lib
                 .get(b"BASS_WASAPI_Init\0")
                 .map_err(|e| e.to_string())?;
-
             let wasapi_free = wasapi_lib
                 .get(b"BASS_WASAPI_Free\0")
                 .map_err(|e| e.to_string())?;
-
             let bass_start = lib.get(b"BASS_Start\0").map_err(|e| e.to_string())?;
-
             let wasapi_start = wasapi_lib
                 .get(b"BASS_WASAPI_Start\0")
                 .map_err(|e| e.to_string())?;
-
             let wasapi_stop = wasapi_lib
                 .get(b"BASS_WASAPI_Stop\0")
                 .map_err(|e| e.to_string())?;
-
             let wasapi_is_started = wasapi_lib
                 .get(b"BASS_WASAPI_IsStarted\0")
                 .map_err(|e| e.to_string())?;
-
             let wasapi_get_data = wasapi_lib
                 .get(b"BASS_WASAPI_GetData\0")
                 .map_err(|e| e.to_string())?;
-
             let plugin_load = lib.get(b"BASS_PluginLoad\0").map_err(|e| e.to_string())?;
-
             let bass_set_sync = lib
                 .get(b"BASS_ChannelSetSync\0")
                 .map_err(|e| e.to_string())?;
-
             let fx_tempo_create = fx_lib
                 .get(b"BASS_FX_TempoCreate\0")
                 .map_err(|e| e.to_string())?;
-
             let chan_set_fx = lib.get(b"BASS_ChannelSetFX\0").map_err(|e| e.to_string())?;
-
             let fx_set_params = lib
                 .get(b"BASS_FXSetParameters\0")
                 .map_err(|e| e.to_string())?;
@@ -332,9 +296,14 @@ impl BassApi {
         self.or_err_(result)?;
         let ok = unsafe { (self.wasapi_get_info)(&mut info) };
         self.or_err_(ok)?;
+
+        if let Ok(mut freq_lock) = FREQ.lock() {
+            *freq_lock = Some(info.freq);
+        }
+        if let Ok(mut chans_lock) = CHANS.lock() {
+            *chans_lock = Some(info.chans);
+        }
         unsafe {
-            *FREQ.lock().unwrap() = Some(info.freq);
-            *CHANS.lock().unwrap() = Some(info.chans);
             (self.wasapi_free)();
         }
         Ok(())
@@ -348,21 +317,20 @@ impl BassApi {
         unsafe {
             (self.wasapi_free)();
         };
-        let result = unsafe {
-            (self.init)(
-                1,
-                FREQ.lock().unwrap().unwrap_or(44100),
-                BASS_DEVICE_REINIT,
-                null_mut(),
-                null_mut(),
-            )
-        };
 
-        let current_exe = env::current_exe().unwrap();
+        let device_freq = FREQ.lock().map_err(|e| e.to_string())?.unwrap_or(44100);
+
+        let result =
+            unsafe { (self.init)(1, device_freq, BASS_DEVICE_REINIT, null_mut(), null_mut()) };
+
+        let current_exe = env::current_exe().map_err(|e| e.to_string())?;
+        let parent = current_exe
+            .parent()
+            .ok_or("Cannot get parent directory of EXE".to_string())?;
 
         unsafe {
             for i in PLUGIN_NAME {
-                let addons_path = current_exe.parent().unwrap().join("BASSDLL").join(i);
+                let addons_path = parent.join(BASS_DLL_DIR).join(i);
 
                 let path: Vec<u16> = OsStr::new(&addons_path)
                     .encode_wide()
@@ -383,9 +351,9 @@ impl BassApi {
             unsafe { (self.get_attr)(self.stream_handle, BASS_ATTRIB_VOL, &mut vol as *mut _) };
         if ok == 0 {
             let err_code = unsafe { (self.error_get_code)() };
-            Err(get_err_info(err_code).unwrap())
+            Err(get_err_info(err_code).unwrap_or_else(|| "Unknown BASS error".to_string()))
         } else {
-             let rg_scale = *REPLAYGAIN_SCALE.lock().unwrap();
+            let rg_scale = *REPLAYGAIN_SCALE.lock().map_err(|e| e.to_string())?;
             if rg_scale > 0.0 {
                 Ok((vol / rg_scale).clamp(0.0, 1.0))
             } else {
@@ -398,27 +366,35 @@ impl BassApi {
         if self.stream_handle == 0 {
             return Ok(());
         }
-        let user_vol = *TARGET_VOLUME.lock().unwrap();
-        let rg_scale = *REPLAYGAIN_SCALE.lock().unwrap();
+        let user_vol = *TARGET_VOLUME.lock().map_err(|e| e.to_string())?;
+        let rg_scale = *REPLAYGAIN_SCALE.lock().map_err(|e| e.to_string())?;
 
         let final_vol = (user_vol * rg_scale).clamp(0.0, 1.0);
 
-        let ok = unsafe {
-            (self.set_attr)(self.stream_handle, BASS_ATTRIB_VOL, final_vol) //BASS_ATTRIB_VOL:2
-        };
+        let ok = unsafe { (self.set_attr)(self.stream_handle, BASS_ATTRIB_VOL, final_vol) };
         self.or_err_(ok)
     }
 
     fn listen_progress(&self) {
-        // 停止旧线程
         PROGRESS_THREAD_RUNNING.store(false, Ordering::SeqCst);
         PROGRESS_THREAD_RUNNING.store(true, Ordering::SeqCst);
         thread::spawn(|| {
-            if let Some(sink) = PROGRESS_LISTEN.lock().unwrap().as_ref() {
-                while PROGRESS_THREAD_RUNNING.load(Ordering::SeqCst) {
-                    thread::sleep(Duration::from_millis(
-                        (BASE_TICK / *TARGET_SPEED.lock().unwrap()) as u64,
-                    ));
+            while PROGRESS_THREAD_RUNNING.load(Ordering::SeqCst) {
+                let speed = if let Ok(lock) = TARGET_SPEED.lock() {
+                    *lock
+                } else {
+                    1.0
+                };
+
+                thread::sleep(Duration::from_millis((BASE_TICK / speed) as u64));
+
+                let sink_opt = if let Ok(lock) = PROGRESS_LISTEN.lock() {
+                    lock.as_ref().map(|s| s.clone())
+                } else {
+                    None
+                };
+
+                if let Some(sink) = sink_opt {
                     if let Ok(mut api_lock) = BASS_API.lock() {
                         if let Some(api) = api_lock.as_mut() {
                             if api.stream_handle != 0 {
@@ -433,7 +409,10 @@ impl BassApi {
 
     fn set_volume(&mut self, mut vol: f32) -> Result<(), String> {
         vol = vol.clamp(0.0, 1.0);
-        *TARGET_VOLUME.lock().unwrap() = vol;
+        {
+            let mut vol_lock = TARGET_VOLUME.lock().map_err(|e| e.to_string())?;
+            *vol_lock = vol;
+        }
         self.apply_volume()
     }
 
@@ -443,12 +422,14 @@ impl BassApi {
                 return Ok(());
             }
             (self.slide_attr)(self.stream_handle, BASS_ATTRIB_VOL, -1.0, 0);
-            (self.set_attr)(self.stream_handle, BASS_ATTRIB_VOL, 0.0) //BASS_ATTRIB_VOL:2
+            (self.set_attr)(self.stream_handle, BASS_ATTRIB_VOL, 0.0)
         };
         self.or_err_(ok)?;
-        let user_vol = *TARGET_VOLUME.lock().unwrap();
-        let rg_scale = *REPLAYGAIN_SCALE.lock().unwrap();
+
+        let user_vol = *TARGET_VOLUME.lock().map_err(|e| e.to_string())?;
+        let rg_scale = *REPLAYGAIN_SCALE.lock().map_err(|e| e.to_string())?;
         let target_vol = (user_vol * rg_scale).clamp(0.0, 1.0);
+
         unsafe {
             let result = (self.slide_attr)(
                 self.stream_handle,
@@ -526,7 +507,7 @@ impl BassApi {
             }
             let mut eq_params = BASS_DX8_PARAMEQ::default();
             for (index, center_fre) in F_CENTER.into_iter().enumerate() {
-                let eq = (self.chan_set_fx)(self.stream_handle, BASS_FX_DX8_PARAMEQ, 0); // maybe replace self.stream_handle or set priority
+                let eq = (self.chan_set_fx)(self.stream_handle, BASS_FX_DX8_PARAMEQ, 0);
                 if eq == 0 {
                     let err_code = (self.error_get_code)();
                     println!(
@@ -540,7 +521,14 @@ impl BassApi {
                 }
                 eq_params.fCenter = center_fre;
                 eq_params.fBandwidth = calculate_dynamic_bandwidth_linear(center_fre);
-                eq_params.fGain = TARGET_FGAINS.lock().unwrap()[index];
+
+                let gain = if let Ok(lock) = TARGET_FGAINS.lock() {
+                    lock[index]
+                } else {
+                    0.0
+                };
+                eq_params.fGain = gain;
+
                 let params_ptr = &eq_params as *const BASS_DX8_PARAMEQ as *const c_void;
                 let ok = (self.fx_set_params)(eq, params_ptr);
                 if ok == 0 {
@@ -581,7 +569,14 @@ impl BassApi {
                 fGain: gain,
             };
             let params_ptr = &eq_params as *const BASS_DX8_PARAMEQ as *const c_void;
-            let ok = (self.fx_set_params)(EQ_HANDLES.lock().unwrap()[fre_center_index], params_ptr);
+
+            let handle = if let Ok(lock) = EQ_HANDLES.lock() {
+                lock[fre_center_index]
+            } else {
+                0
+            };
+
+            let ok = (self.fx_set_params)(handle, params_ptr);
             if ok == 0 {
                 let err_code = (self.error_get_code)();
                 println!(
@@ -698,7 +693,6 @@ impl BassApi {
 
         for v in &mut buffer {
             let percentage = if range > 0.0f32 {
-                // 避免除以零
                 ((*v - min_val) / range).clamp(0.0, 1.0)
             } else {
                 0.0
@@ -784,16 +778,22 @@ impl BassApi {
 
     fn set_speed(&mut self, mut speed: f32) {
         speed = speed.clamp(0.5, 2.0);
-        *TARGET_SPEED.lock().unwrap() = speed;
+        if let Ok(mut lock) = TARGET_SPEED.lock() {
+            *lock = speed;
+        }
         let ok = unsafe {
             if self.stream_handle == 0 {
-                *TARGET_SPEED.lock().unwrap() = 1.0;
+                if let Ok(mut lock) = TARGET_SPEED.lock() {
+                    *lock = 1.0;
+                }
                 return;
             }
             (self.set_attr)(self.stream_handle, BASS_ATTRIB_TEMPO, (speed - 1.0) * 100.0)
         };
         if ok == 0 {
-            *TARGET_SPEED.lock().unwrap() = 1.0;
+            if let Ok(mut lock) = TARGET_SPEED.lock() {
+                *lock = 1.0;
+            }
             let err_code = unsafe { (self.error_get_code)() };
             println!(
                 "{}",
@@ -926,109 +926,173 @@ impl Drop for BassApi {
 
 #[flutter_rust_bridge::frb]
 pub fn load_lib() -> Result<(), String> {
-    *BASS_API.lock().unwrap() = Some(BassApi::load()?);
+    let mut api_lock = BASS_API.lock().map_err(|e| format!("Lock error: {}", e))?;
+    *api_lock = Some(BassApi::load()?);
     Ok(())
 }
 
 #[flutter_rust_bridge::frb]
 pub fn init_bass() -> Result<(), String> {
-    BASS_API.lock().unwrap().as_mut().unwrap().bass_init()
+    let mut api_lock = BASS_API.lock().map_err(|e| format!("Lock error: {}", e))?;
+    let api = api_lock
+        .as_mut()
+        .ok_or_else(|| "BASS_API is None".to_string())?;
+    api.bass_init()
 }
 
 #[flutter_rust_bridge::frb]
 pub fn audio_event_stream(sink: StreamSink<u32>) {
-    *AUDIO_EVENT.lock().unwrap() = Some(sink);
+    if let Ok(mut lock) = AUDIO_EVENT.lock() {
+        *lock = Some(sink);
+    }
 }
 
 #[flutter_rust_bridge::frb]
 pub fn progress_listen(sink: StreamSink<f64>) {
-    *PROGRESS_LISTEN.lock().unwrap() = Some(sink);
-    BASS_API.lock().unwrap().as_ref().unwrap().listen_progress();
+    if let Ok(mut lock) = PROGRESS_LISTEN.lock() {
+        *lock = Some(sink);
+    }
+    if let Ok(api_lock) = BASS_API.lock() {
+        if let Some(api) = api_lock.as_ref() {
+            api.listen_progress();
+        }
+    }
 }
 
 #[flutter_rust_bridge::frb]
 pub fn switch_exclusive_mode(exclusive: bool) -> Result<(), String> {
-    BASS_API
-        .lock()
-        .unwrap()
+    let mut api_lock = BASS_API.lock().map_err(|e| format!("Lock error: {}", e))?;
+    let api = api_lock
         .as_mut()
-        .unwrap()
-        .switch_exclusive_mode(exclusive)
+        .ok_or_else(|| "BASS_API is None".to_string())?;
+    api.switch_exclusive_mode(exclusive)
 }
 
 #[flutter_rust_bridge::frb]
 pub fn play_file(path: String) -> Result<(), String> {
-    BASS_API.lock().unwrap().as_mut().unwrap().play_file(path)
+    let mut api_lock = BASS_API.lock().map_err(|e| format!("Lock error: {}", e))?;
+    let api = api_lock
+        .as_mut()
+        .ok_or_else(|| "BASS_API is None".to_string())?;
+    api.play_file(path)
 }
 
 #[flutter_rust_bridge::frb]
 pub fn resume() -> Result<(), String> {
-    BASS_API.lock().unwrap().as_mut().unwrap().resume()
+    let mut api_lock = BASS_API.lock().map_err(|e| format!("Lock error: {}", e))?;
+    let api = api_lock
+        .as_mut()
+        .ok_or_else(|| "BASS_API is None".to_string())?;
+    api.resume()
 }
 
 #[flutter_rust_bridge::frb]
 pub fn pause() -> Result<(), String> {
-    BASS_API.lock().unwrap().as_mut().unwrap().pause()
+    let mut api_lock = BASS_API.lock().map_err(|e| format!("Lock error: {}", e))?;
+    let api = api_lock
+        .as_mut()
+        .ok_or_else(|| "BASS_API is None".to_string())?;
+    api.pause()
 }
 
 #[flutter_rust_bridge::frb]
 pub fn stop() -> Result<(), String> {
-    BASS_API.lock().unwrap().as_mut().unwrap().stop()
+    let mut api_lock = BASS_API.lock().map_err(|e| format!("Lock error: {}", e))?;
+    let api = api_lock
+        .as_mut()
+        .ok_or_else(|| "BASS_API is None".to_string())?;
+    api.stop()
 }
 
 #[flutter_rust_bridge::frb]
 pub fn get_len() -> f64 {
-    BASS_API.lock().unwrap().as_mut().unwrap().get_len()
+    if let Ok(mut api_lock) = BASS_API.lock() {
+        if let Some(api) = api_lock.as_mut() {
+            return api.get_len();
+        }
+    }
+    0.0
 }
 
 #[flutter_rust_bridge::frb]
 pub fn get_position() -> f64 {
-    BASS_API.lock().unwrap().as_mut().unwrap().get_pos()
+    if let Ok(mut api_lock) = BASS_API.lock() {
+        if let Some(api) = api_lock.as_mut() {
+            return api.get_pos();
+        }
+    }
+    0.0
 }
 
 #[flutter_rust_bridge::frb]
 pub fn set_position(pos: f64) -> Result<(), String> {
-    BASS_API.lock().unwrap().as_mut().unwrap().set_pos(pos)
+    let mut api_lock = BASS_API.lock().map_err(|e| format!("Lock error: {}", e))?;
+    let api = api_lock
+        .as_mut()
+        .ok_or_else(|| "BASS_API is None".to_string())?;
+    api.set_pos(pos)
 }
 
 #[flutter_rust_bridge::frb]
 pub fn toggle() -> Result<(), String> {
-    BASS_API.lock().unwrap().as_mut().unwrap().toggle()
+    let mut api_lock = BASS_API.lock().map_err(|e| format!("Lock error: {}", e))?;
+    let api = api_lock
+        .as_mut()
+        .ok_or_else(|| "BASS_API is None".to_string())?;
+    api.toggle()
 }
 
 #[flutter_rust_bridge::frb]
 pub fn get_volume() -> Result<f32, String> {
-    BASS_API.lock().unwrap().as_ref().unwrap().get_volume()
+    let api_lock = BASS_API.lock().map_err(|e| format!("Lock error: {}", e))?;
+    let api = api_lock
+        .as_ref()
+        .ok_or_else(|| "BASS_API is None".to_string())?;
+    api.get_volume()
 }
 
 #[flutter_rust_bridge::frb]
 pub fn set_volume(vol: f32) -> Result<(), String> {
-    BASS_API.lock().unwrap().as_mut().unwrap().set_volume(vol)
+    let mut api_lock = BASS_API.lock().map_err(|e| format!("Lock error: {}", e))?;
+    let api = api_lock
+        .as_mut()
+        .ok_or_else(|| "BASS_API is None".to_string())?;
+    api.set_volume(vol)
 }
 
 #[flutter_rust_bridge::frb]
 pub fn set_replay_gain(gain_db: f32, peak: f32) {
-    let scale=10.0f32.powf(gain_db / 20.0);
+    let scale = 10.0f32.powf(gain_db / 20.0);
     let scale = scale.min(0.98 / peak);
-    *REPLAYGAIN_SCALE.lock().unwrap() = scale;
+    if let Ok(mut lock) = REPLAYGAIN_SCALE.lock() {
+        *lock = scale;
+    }
 }
 
 #[flutter_rust_bridge::frb]
 pub fn set_speed(speed: f32) {
-    BASS_API.lock().unwrap().as_mut().unwrap().set_speed(speed)
+    if let Ok(mut api_lock) = BASS_API.lock() {
+        if let Some(api) = api_lock.as_mut() {
+            api.set_speed(speed);
+        }
+    }
 }
 
 #[flutter_rust_bridge::frb]
 pub fn set_eq_params(fre_center_index: i32, gain: f32) {
-    BASS_API
-        .lock()
-        .unwrap()
-        .as_mut()
-        .unwrap()
-        .set_eq_params(fre_center_index, gain)
+    if let Ok(mut api_lock) = BASS_API.lock() {
+        if let Some(api) = api_lock.as_mut() {
+            api.set_eq_params(fre_center_index, gain);
+        }
+    }
 }
 
 #[flutter_rust_bridge::frb]
 pub fn get_chan_data() -> Option<Vec<f32>> {
-    BASS_API.lock().unwrap().as_mut().unwrap().chan_get_data()
+    if let Ok(mut api_lock) = BASS_API.lock() {
+        if let Some(api) = api_lock.as_mut() {
+            return api.chan_get_data();
+        }
+    }
+    None
 }

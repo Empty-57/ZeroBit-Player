@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
@@ -227,9 +228,8 @@ class CustomNavigation extends GetView<AudioController> {
                             flex: 1,
                             child: Obx(() {
                               return ListView.builder(
-                                itemCount: c.playListCacheItems.length,
+                                scrollCacheExtent: const ScrollCacheExtent.pixels(_itemHeight * 1), itemCount: c.playListCacheItems.length,
                                 itemExtent: _itemHeight,
-                                cacheExtent: _itemHeight * 1,
                                 controller: _playQueueScrollController,
                                 padding: const EdgeInsets.only(
                                   bottom: _itemHeight * 2,

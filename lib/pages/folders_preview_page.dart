@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';
@@ -67,9 +68,8 @@ class FoldersPreviewPage extends GetView<SettingController> {
             child: Obx(() {
               final folders = folderPathMap.keys.toList();
               return ListView.builder(
-                itemCount: settingController.folders.length,
+                scrollCacheExtent: const ScrollCacheExtent.pixels(_itemHeight * 1), itemCount: settingController.folders.length,
                 itemExtent: _itemHeight,
-                cacheExtent: _itemHeight * 1,
                 itemBuilder: (context, index) {
                   if (folders.isEmpty || index > folders.length - 1) {
                     return const SizedBox.shrink();

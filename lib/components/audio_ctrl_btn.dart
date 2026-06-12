@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
@@ -62,7 +62,7 @@ class GenIconBtn extends StatelessWidget {
 
 class _SeekSlideWidget extends StatefulWidget {
   final AudioController audioController;
-  const _SeekSlideWidget({super.key, required this.audioController});
+  const _SeekSlideWidget({required this.audioController});
 
   @override
   State<_SeekSlideWidget> createState() => _SeekSlideWidgetState();
