@@ -49,62 +49,63 @@ class BlurWithCoverBackground extends StatelessWidget {
         ),
 
         RepaintBoundary(
-          child: Obx(() {
+          child: () {
             final bool useMesh = _settingController.useMesh.value && meshEnable;
-            final String themeMode = _settingController.themeMode.value;
-            final Uint8List coverBytes = cover.value;
-
             if (useMesh) {
               return LyricsMesh();
             }
+            return Obx(() {
+              final String themeMode = _settingController.themeMode.value;
+              final Uint8List coverBytes = cover.value;
 
-            final rawCover = Transform.scale(
-              scale: coverScale,
-              child: SizedBox.expand(
-                child: Image.memory(
-                  coverBytes,
-                  cacheWidth: _coverBigRenderSize,
-                  cacheHeight: _coverBigRenderSize,
-                  fit: BoxFit.cover,
-                  gaplessPlayback: true,
-                ),
-              ),
-            );
-
-            return Opacity(
-              opacity: themeMode == 'dark' ? 0.9 : 0.6,
-              child: ClipRRect(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(radius),
-                ),
-                child: ImageFiltered(
-                  imageFilter: ImageFilter.blur(
-                    sigmaX: sigma,
-                    sigmaY: sigma,
-                    tileMode: TileMode.clamp,
+              final rawCover = Transform.scale(
+                scale: coverScale,
+                child: SizedBox.expand(
+                  child: Image.memory(
+                    coverBytes,
+                    cacheWidth: _coverBigRenderSize,
+                    cacheHeight: _coverBigRenderSize,
+                    fit: BoxFit.cover,
+                    gaplessPlayback: true,
                   ),
-                  child:
-                      useGradient
-                          ? ShaderMask(
-                            blendMode: BlendMode.modulate,
-                            shaderCallback: (Rect bounds) {
-                              return LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: <Color>[
-                                  Colors.white.withValues(alpha: 0.4),
-                                  Colors.transparent,
-                                ],
-                                tileMode: TileMode.clamp,
-                              ).createShader(bounds);
-                            },
-                            child: rawCover,
-                          )
-                          : rawCover,
                 ),
-              ),
-            );
-          }),
+              );
+
+              return Opacity(
+                opacity: themeMode == 'dark' ? 0.9 : 0.6,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(radius),
+                  ),
+                  child: ImageFiltered(
+                    imageFilter: ImageFilter.blur(
+                      sigmaX: sigma,
+                      sigmaY: sigma,
+                      tileMode: TileMode.clamp,
+                    ),
+                    child:
+                        useGradient
+                            ? ShaderMask(
+                              blendMode: BlendMode.modulate,
+                              shaderCallback: (Rect bounds) {
+                                return LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: <Color>[
+                                    Colors.white.withValues(alpha: 0.4),
+                                    Colors.transparent,
+                                  ],
+                                  tileMode: TileMode.clamp,
+                                ).createShader(bounds);
+                              },
+                              child: rawCover,
+                            )
+                            : rawCover,
+                  ),
+                ),
+              );
+            });
+          }(),
         ),
 
         if (useMask)
