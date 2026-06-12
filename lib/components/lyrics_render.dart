@@ -5,6 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
+import 'package:leak_tracker/leak_tracker.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:zerobit_player/components/spring_list_view.dart';
@@ -155,20 +156,36 @@ class _HighlightedWordState extends State<_HighlightedWord> {
     color: widget.style.color?.withValues(alpha: 1),
   );
 
+  // 提取基础颜色以备 shadow 计算使用
+  late final Color _baseColor;
+
+  // 预计算每个字的 scale 和 glowAlpha
+  // 同时构建两层的 children，避免遍历两次
+  late final List<Widget> _glowChildren = List.filled(
+    _charCount,
+    const SizedBox.shrink(),
+    growable: false,
+  );
+  late final List<Widget> _mainChildren = List.filled(
+    _charCount,
+    const SizedBox.shrink(),
+    growable: false,
+  );
+
   @override
   void initState() {
     super.initState();
     _initCachedValues();
   }
 
-  @override
-  void didUpdateWidget(_HighlightedWord old) {
-    super.didUpdateWidget(old);
-    // 只有超过阈值且 text 变化时才重算
-    if (old.text != widget.text && widget.duartion >= _rippleThreshold) {
-      _initCachedValues();
-    }
-  }
+  // @override
+  // void didUpdateWidget(_HighlightedWord old) {
+  //   super.didUpdateWidget(old);
+  //   // 只有超过阈值且 text 变化时才重算 （貌似无意义
+  //   if (old.text != widget.text && widget.duartion >= _rippleThreshold) {
+  //     _initCachedValues();
+  //   }
+  // }
 
   void _initCachedValues() {
     _charList = widget.text.split('');
@@ -185,6 +202,8 @@ class _HighlightedWordState extends State<_HighlightedWord> {
     _normalStyle = widget.style.copyWith(
       color: widget.style.color?.withValues(alpha: 1),
     );
+
+    _baseColor = widget.style.color ?? Colors.white;
   }
 
   Widget _shaderMaskWrap(Widget child) {
@@ -237,14 +256,6 @@ class _HighlightedWordState extends State<_HighlightedWord> {
       );
     }
 
-    // 预计算每个字的 scale 和 glowAlpha
-    // 同时构建两层的 children，避免遍历两次
-    final glowChildren = <Widget>[];
-    final mainChildren = <Widget>[];
-
-    // 提取基础颜色以备 shadow 计算使用
-    final baseColor = widget.style.color ?? Colors.white;
-
     for (int i = 0; i < _charCount; i++) {
       final char = _charList[i];
 
@@ -280,43 +291,37 @@ class _HighlightedWordState extends State<_HighlightedWord> {
 
       // glow 层：字符本身透明，只显示 shadow
       // glowAlpha 接近 0 时跳过 shadow 计算，用透明占位保持布局稳定
-      Widget glowWidget;
-      if (glowAlpha > 0.01) {
-        glowWidget = _transformScaleWrap(
-          Text(
-            char,
-            style: _transparentStyle.copyWith(
-              shadows: [
-                Shadow(
-                  color: baseColor.withValues(alpha: glowAlpha * 0.6),
-                  blurRadius: 4,
+      _glowChildren[i] =
+          glowAlpha > 0.01
+              ? _transformScaleWrap(
+                Text(
+                  char,
+                  style: _transparentStyle.copyWith(
+                    shadows: [
+                      Shadow(
+                        color: _baseColor.withValues(alpha: glowAlpha * 0.6),
+                        blurRadius: 4,
+                      ),
+                      Shadow(
+                        color: _baseColor.withValues(alpha: glowAlpha),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                  strutStyle: widget.strutStyle,
                 ),
-                Shadow(
-                  color: baseColor.withValues(alpha: glowAlpha),
-                  blurRadius: 8,
-                ),
-              ],
-            ),
-            strutStyle: widget.strutStyle,
-          ),
-          scale: scale,
-        );
-      } else {
-        glowWidget = Text(
-          char,
-          style: _transparentStyle,
-          strutStyle: widget.strutStyle,
-        );
-      }
-
-      glowChildren.add(glowWidget);
+                scale: scale,
+              )
+              : Text(
+                char,
+                style: _transparentStyle,
+                strutStyle: widget.strutStyle,
+              );
 
       // 主层：显示涟漪效果
-      mainChildren.add(
-        _transformScaleWrap(
-          Text(char, style: _normalStyle, strutStyle: widget.strutStyle),
-          scale: scale,
-        ),
+      _mainChildren[i] = _transformScaleWrap(
+        Text(char, style: _normalStyle, strutStyle: widget.strutStyle),
+        scale: scale,
       );
     }
 
@@ -326,14 +331,14 @@ class _HighlightedWordState extends State<_HighlightedWord> {
         // glow 层：辉光动画在 ShaderMask 外，Shadow 不受 dstIn 裁切
         Wrap(
           crossAxisAlignment: WrapCrossAlignment.end,
-          children: glowChildren,
+          children: _glowChildren,
         ),
 
         // 主层：ShaderMask + 缩放动画
         _shaderMaskWrap(
           Wrap(
             crossAxisAlignment: WrapCrossAlignment.end,
-            children: mainChildren,
+            children: _mainChildren,
           ),
         ),
       ],
@@ -391,7 +396,6 @@ class _KaraOkLyricWidget extends StatelessWidget {
   final TextStyle style;
   final bool isCurrent;
   final bool isPrevLine;
-  final int index;
   final int lrcAlignmentIndex;
   final LyricController lyricController;
   final StrutStyle strutStyle;
@@ -400,7 +404,6 @@ class _KaraOkLyricWidget extends StatelessWidget {
     required this.text,
     required this.style,
     required this.isCurrent,
-    required this.index,
     required this.lrcAlignmentIndex,
     required this.lyricController,
     required this.strutStyle,
@@ -424,219 +427,218 @@ class _KaraOkLyricWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!isCurrent && !isPrevLine) {
+      return _createTextWarp();
+    }
     final gradientColors = <Color>[
       style.color!.withValues(alpha: _highLightAlpha),
       style.color!.withValues(alpha: _highLightAlpha),
       style.color!.withValues(alpha: _currentAlpha),
     ];
-    if (!isCurrent && !isPrevLine) {
-      return _createTextWarp();
-    }
-    return Obx(() {
-      // 以下只会在“当前行”和“刚唱完的上一行”执行，保证了动画平滑且不被打断
-      final WrapAlignment alignment = _lrcWrapAlignment[lrcAlignmentIndex];
-      final int currWordIndex = lyricController.currentWordIndex.value;
+    final WrapAlignment alignment = _lrcWrapAlignment[lrcAlignmentIndex];
+    return ValueListenableBuilder<int>(
+      valueListenable: lyricController.currentWordIndexNotifier,
+      builder: (_, currentIndex, _) {
+        // 以下只会在“当前行”和“刚唱完的上一行”执行，保证了动画平滑且不被打断
+        return Wrap(
+          alignment: alignment,
+          crossAxisAlignment: WrapCrossAlignment.end,
+          children: List.generate(text.length, (wordIndex) {
+            final entry = text[wordIndex];
+            final word = entry.lyricWord;
+            final double dura = entry.duration;
 
-      return Wrap(
-        alignment: alignment,
-        crossAxisAlignment: WrapCrossAlignment.end,
-        children:
-            text.asMap().entries.map((entry) {
-              final int wordIndex = entry.key;
-              final word = entry.value.lyricWord;
-              final double dura = entry.value.duration;
+            final bool isFloating = isCurrent && wordIndex <= currentIndex;
 
-              final bool isFloating = isCurrent && wordIndex <= currWordIndex;
+            final floatingDuration = dura * (1000 * 1.8) + 50;
+            final floatingDelay = dura * (1000 * 0.2);
 
-              final floatingDuration = dura * (1000 * 1.8) + 50;
-              final floatingDelay = dura * (1000 * 0.2);
+            Widget wordWidget;
 
-              Widget wordWidget;
+            if (isCurrent && wordIndex == currentIndex) {
+              gradientColors[2] = style.color!.withValues(
+                alpha: wordIndex == 0 ? _currentAlpha - 0.15 : _currentAlpha,
+              ); // 视觉欺骗，防止颜色突变
 
-              if (isCurrent && wordIndex == currWordIndex) {
-                gradientColors[2] = style.color!.withValues(
-                  alpha: wordIndex == 0 ? _currentAlpha - 0.15 : _currentAlpha,
-                ); // 视觉欺骗，防止颜色突变
+              final translateGradientScale =
+                  dura >= 1.0 ? 3.0 : 2.0; // 动态改变渐变区宽度
+              double ripplesScaleMax = _ripplesScaleMin;
+              double glowAlphaMax = _glowAlphaMin;
 
-                final translateGradientScale =
-                    dura >= 1.0 ? 3.0 : 2.0; // 动态改变渐变区宽度
-                double ripplesScaleMax = _ripplesScaleMin;
-                double glowAlphaMax = _glowAlphaMin;
+              if (dura >= _rippleThreshold) {
+                // 将词的持续时间 dura 在 [_rippleThreshold, 3] 区间内归一化为 [0.0, 1.0] 的比例值
+                // 用于控制特效的最大值
+                final effectRatio = (((dura - _rippleThreshold) /
+                        (3 - _rippleThreshold))) // 最大观测长度 3s
+                    .clamp(0.0, 1.0);
 
-                if (dura >= _rippleThreshold) {
-                  // 将词的持续时间 dura 在 [_rippleThreshold, 3] 区间内归一化为 [0.0, 1.0] 的比例值
-                  // 用于控制特效的最大值
-                  final effectRatio = (((dura - _rippleThreshold) /
-                          (3 - _rippleThreshold))) // 最大观测长度 3s
-                      .clamp(0.0, 1.0);
-
-                  ripplesScaleMax += _ripplesScaleExtra * effectRatio;
-                  glowAlphaMax += _glowAlphaExtra * effectRatio;
-                }
-
-                // 正在唱的字
-                wordWidget = ValueListenableBuilder<double>(
-                  valueListenable: lyricController.wordProgress,
-                  builder: (context, progress, child) {
-                    return _HighlightedWord(
-                      text: word,
-                      progress: progress,
-                      style: style,
-                      strutStyle: strutStyle,
-                      gradientColors: gradientColors,
-                      duartion: dura,
-                      ripplesScaleMax: ripplesScaleMax,
-                      glowAlphaMax: glowAlphaMax,
-                      translateGradientScale: translateGradientScale,
-                    );
-                  },
-                );
-              } else {
-                // 目标颜色
-                Color targetColor;
-                Color beginColor;
-
-                if (isCurrent) {
-                  if (wordIndex < currWordIndex) {
-                    targetColor = style.color!.withValues(
-                      alpha: _highLightAlpha,
-                    );
-                    beginColor = targetColor; // 已经唱过的字，保持高亮
-                  } else {
-                    targetColor = style.color!.withValues(
-                      alpha: _currentAlpha,
-                    ); // 还没唱到的字，从暗色过渡到稍微高亮的颜色
-                    beginColor = style.color!.withValues(
-                      alpha: _notPlayedDarkAlpha,
-                    );
-                  }
-                } else {
-                  targetColor = style.color!; // 刚唱完的上一行，最终褪回普通颜色
-                  beginColor = style.color!.withValues(alpha: _highLightAlpha);
-                }
-
-                wordWidget = TweenAnimationBuilder<Color?>(
-                  duration: const Duration(milliseconds: 600),
-                  curve: Curves.easeInOut,
-                  tween: ColorTween(begin: beginColor, end: targetColor),
-                  builder: (_, color, __) {
-                    return Text(
-                      word,
-                      style: style.copyWith(color: color),
-                      strutStyle: strutStyle,
-                    );
-                  },
-                );
+                ripplesScaleMax += _ripplesScaleExtra * effectRatio;
+                glowAlphaMax += _glowAlphaExtra * effectRatio;
               }
 
-              //  return _SyllableFloatWidget(isFloating: isFloating,duration: isFloating ? floatingDuration : 600,delay: isFloating ? floatingDelay : 0,child: wordWidget,);
-
-              // 微动特效
-              return wordWidget
-                  .animate(target: isFloating ? 1.0 : 0.0)
-                  .custom(
-                    duration: isFloating ? floatingDuration.ms : 600.ms,
-                    delay: isFloating ? floatingDelay.ms : 0.ms,
-                    curve: isFloating ? Curves.easeInOut : Curves.easeInCubic,
-                    builder: (context, value, child) {
-                      return Transform.translate(
-                        offset: Offset(
-                          0,
-                          ui.lerpDouble(0.0, _floatingY, value)!,
-                        ),
-                        filterQuality: FilterQuality.low,
-                        child: child,
-                      );
-                    },
+              // 正在唱的字
+              wordWidget = ValueListenableBuilder<double>(
+                valueListenable: lyricController.wordProgress,
+                builder: (context, progress, child) {
+                  return _HighlightedWord(
+                    text: word,
+                    progress: progress,
+                    style: style,
+                    strutStyle: strutStyle,
+                    gradientColors: gradientColors,
+                    duartion: dura,
+                    ripplesScaleMax: ripplesScaleMax,
+                    glowAlphaMax: glowAlphaMax,
+                    translateGradientScale: translateGradientScale,
                   );
-            }).toList(),
-      );
-    });
-  }
-}
+                },
+              );
+            } else {
+              // 目标颜色
+              Color targetColor;
+              Color beginColor;
 
-class _SyllableFloatWidget extends StatefulWidget {
-  final bool isFloating;
-  final double duration;
-  final double delay;
-  final Widget child;
+              if (isCurrent) {
+                if (wordIndex < currentIndex) {
+                  targetColor = style.color!.withValues(alpha: _highLightAlpha);
+                  beginColor = targetColor; // 已经唱过的字，保持高亮
+                } else {
+                  targetColor = style.color!.withValues(
+                    alpha: _currentAlpha,
+                  ); // 还没唱到的字，从暗色过渡到稍微高亮的颜色
+                  beginColor = style.color!.withValues(
+                    alpha: _notPlayedDarkAlpha,
+                  );
+                }
+              } else {
+                targetColor = style.color!; // 刚唱完的上一行，最终褪回普通颜色
+                beginColor = style.color!.withValues(alpha: _highLightAlpha);
+              }
 
-  const _SyllableFloatWidget({
-    required this.isFloating,
-    required this.duration,
-    required this.delay,
-    required this.child,
-  });
+              wordWidget = TweenAnimationBuilder<Color?>(
+                key: ValueKey('word_$wordIndex'), // ???
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeInOut,
+                tween: ColorTween(begin: beginColor, end: targetColor),
+                builder: (_, color, __) {
+                  return Text(
+                    word,
+                    style: style.copyWith(color: color),
+                    strutStyle: strutStyle,
+                  );
+                },
+              );
+            }
 
-  @override
-  State<_SyllableFloatWidget> createState() => _SyllableFloatWidgetState();
-}
+            // return _SyllableFloatWidget(isFloating: isFloating,duration: isFloating ? floatingDuration : 600,delay: isFloating ? floatingDelay : 0,child: wordWidget,);
 
-class _SyllableFloatWidgetState extends State<_SyllableFloatWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-  Timer? _delayTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this);
-    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
-    _updateAnimation();
-  }
-
-  @override
-  void didUpdateWidget(_SyllableFloatWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.isFloating != widget.isFloating ||
-        oldWidget.duration != widget.duration ||
-        oldWidget.delay != widget.delay) {
-      _updateAnimation();
-    }
-  }
-
-  void _updateAnimation() {
-    _delayTimer?.cancel();
-    if (widget.isFloating) {
-      _controller.duration = Duration(milliseconds: widget.duration.round());
-      if (widget.delay > 0) {
-        _delayTimer = Timer(Duration(milliseconds: widget.delay.round()), () {
-          if (mounted) _controller.forward();
-        });
-      } else {
-        _controller.forward();
-      }
-    } else {
-      _controller.duration = const Duration(milliseconds: 600);
-      _controller.reverse();
-    }
-  }
-
-  @override
-  void dispose() {
-    _delayTimer?.cancel();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        final double offset = ui.lerpDouble(0.0, _floatingY, _animation.value)!;
-        if (offset == 0.0) return child!;
-        return Transform.translate(
-          offset: Offset(0, offset),
-          filterQuality: FilterQuality.low,
-          child: child,
+            // 微动特效 memLeak
+            return wordWidget;
+            // .animate(target: isFloating ? 1.0 : 0.0)
+            // .custom(
+            //   duration: isFloating ? floatingDuration.ms : 600.ms,
+            //   delay: isFloating ? floatingDelay.ms : 0.ms,
+            //   curve: isFloating ? Curves.easeInOut : Curves.easeInCubic,
+            //   builder: (context, value, child) {
+            //     return Transform.translate(
+            //       offset: Offset(
+            //         0,
+            //         ui.lerpDouble(0.0, _floatingY, value)!,
+            //       ),
+            //       filterQuality: FilterQuality.low,
+            //       child: child,
+            //     );
+            //   },
+            // );
+          }),
         );
       },
-      child: widget.child,
     );
   }
 }
+
+// class _SyllableFloatWidget extends StatefulWidget {
+//   final bool isFloating;
+//   final double duration;
+//   final double delay;
+//   final Widget child;
+//
+//   const _SyllableFloatWidget({
+//     required this.isFloating,
+//     required this.duration,
+//     required this.delay,
+//     required this.child,
+//   });
+//
+//   @override
+//   State<_SyllableFloatWidget> createState() => _SyllableFloatWidgetState();
+// }
+//
+// class _SyllableFloatWidgetState extends State<_SyllableFloatWidget>
+//     with SingleTickerProviderStateMixin {
+//   late AnimationController _controller;
+//   late Animation<double> _animation;
+//   Timer? _delayTimer;
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     _controller = AnimationController(vsync: this);
+//     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+//     _updateAnimation();
+//   }
+//
+//   @override
+//   void didUpdateWidget(_SyllableFloatWidget oldWidget) {
+//     super.didUpdateWidget(oldWidget);
+//     if (oldWidget.isFloating != widget.isFloating ||
+//         oldWidget.duration != widget.duration ||
+//         oldWidget.delay != widget.delay) {
+//       _updateAnimation();
+//     }
+//   }
+//
+//   void _updateAnimation() {
+//     _delayTimer?.cancel();
+//     if (widget.isFloating) {
+//       _controller.duration = Duration(milliseconds: widget.duration.round());
+//       if (widget.delay > 0) {
+//         _delayTimer = Timer(Duration(milliseconds: widget.delay.round()), () {
+//           if (mounted) _controller.forward();
+//         });
+//       } else {
+//         _controller.forward();
+//       }
+//     } else {
+//       _controller.duration = const Duration(milliseconds: 600);
+//       _controller.reverse();
+//     }
+//   }
+//
+//   @override
+//   void dispose() {
+//     _delayTimer?.cancel();
+//     _controller.dispose();
+//     super.dispose();
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return AnimatedBuilder(
+//       animation: _animation,
+//       builder: (context, child) {
+//         final double offset = ui.lerpDouble(0.0, _floatingY, _animation.value)!;
+//         if (offset == 0.0) return child!;
+//         return Transform.translate(
+//           offset: Offset(0, offset),
+//           filterQuality: FilterQuality.low,
+//           child: child,
+//         );
+//       },
+//       child: widget.child,
+//     );
+//   }
+// }
 
 class LyricsRender extends StatefulWidget {
   const LyricsRender({super.key});
@@ -656,6 +658,7 @@ class _LyricsRenderState extends State<LyricsRender> {
   void initState() {
     super.initState();
     // 首次进入页面时，跳转到当前行
+    _lyricController.lrcViewScrollController = ItemScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _lyricController.scrollToCenter();
@@ -665,6 +668,8 @@ class _LyricsRenderState extends State<LyricsRender> {
 
   @override
   void dispose() {
+    _lyricController.lrcViewScrollController = null;
+    _isHover.close();
     _blurFilterCache.clear();
     super.dispose();
   }
@@ -958,7 +963,7 @@ class _StaggeredLyricItem extends StatelessWidget {
 
       final isPointerScrolling = lyricController.isPointerScroll.value;
       if (!renderWidget && useSpring && !isPointerScrolling) {
-        return const SizedBox.shrink(); // 存疑
+        return const SizedBox.shrink();
       }
 
       final isCurrent = index == currentLineIndex;
@@ -988,17 +993,14 @@ class _StaggeredLyricItem extends StatelessWidget {
             )
           else
             _createAnimatedScaleWidget(
-              child: RepaintBoundary(
-                child: _KaraOkLyricWidget(
-                  text: lineText as List<WordEntry>,
-                  style: lyricStyle,
-                  isCurrent: isCurrent,
-                  isPrevLine: isPrevLine,
-                  index: index,
-                  lrcAlignmentIndex: lrcAlignment,
-                  lyricController: lyricController,
-                  strutStyle: strutStyle,
-                ),
+              child: _KaraOkLyricWidget(
+                text: lineText as List<WordEntry>,
+                style: lyricStyle,
+                isCurrent: isCurrent,
+                isPrevLine: isPrevLine,
+                lrcAlignmentIndex: lrcAlignment,
+                lyricController: lyricController,
+                strutStyle: strutStyle,
               ),
               isCurrent: isCurrent,
             ),
@@ -1089,6 +1091,89 @@ ui.ImageFilter _getBlurFilter(double sigma) {
   );
 }
 
+class _InterludeTransition extends StatefulWidget {
+  final Animation<double> animation;
+  final Alignment scaleAlignment;
+  final Widget child;
+
+  const _InterludeTransition({
+    required this.animation,
+    required this.scaleAlignment,
+    required this.child,
+  });
+
+  @override
+  State<_InterludeTransition> createState() => _InterludeTransitionState();
+}
+
+class _InterludeTransitionState extends State<_InterludeTransition> {
+  late CurvedAnimation _sizeAnimation;
+  late CurvedAnimation _fadeAnimation;
+  late CurvedAnimation _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _initAnimations();
+  }
+
+  @override
+  void didUpdateWidget(_InterludeTransition oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.animation != widget.animation) {
+      _disposeAnimations();
+      _initAnimations();
+    }
+  }
+
+  void _initAnimations() {
+    _sizeAnimation = CurvedAnimation(
+      parent: widget.animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: widget.animation,
+      curve: Curves.easeOut,
+      reverseCurve: Curves.easeIn,
+    );
+    _scaleAnimation = CurvedAnimation(
+      parent: widget.animation,
+      curve: Curves.easeOutBack,
+      reverseCurve: Curves.easeInBack,
+    );
+  }
+
+  void _disposeAnimations() {
+    _sizeAnimation.dispose();
+    _fadeAnimation.dispose();
+    _scaleAnimation.dispose();
+  }
+
+  @override
+  void dispose() {
+    _disposeAnimations();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizeTransition(
+      axis: Axis.vertical,
+      axisAlignment: 0.0,
+      sizeFactor: _sizeAnimation,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: ScaleTransition(
+          scale: _scaleAnimation,
+          alignment: widget.scaleAlignment,
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}
+
 class _InterludeWidget extends StatelessWidget {
   final LyricController lyricController;
   final int lrcAlignment;
@@ -1108,7 +1193,7 @@ class _InterludeWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color baseColor =
         interludeLyricStyle.color ?? const Color(0xFFFFFFFF);
-    final List<Color> cachedGradientColors = [
+    final List<Color> gradientColors = [
       baseColor.withValues(alpha: _highLightAlpha),
       baseColor.withValues(alpha: _highLightAlpha),
       baseColor,
@@ -1121,33 +1206,12 @@ class _InterludeWidget extends StatelessWidget {
       return AnimatedSwitcher(
         duration: const Duration(milliseconds: 500),
         transitionBuilder: (Widget child, Animation<double> animation) {
-          return SizeTransition(
-            axis: Axis.vertical,
-            axisAlignment: 0.0, // 从顶部开始撑开
-            sizeFactor: CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-              reverseCurve: Curves.easeInCubic,
-            ),
-            child: FadeTransition(
-              opacity: CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOut,
-                reverseCurve: Curves.easeIn,
-              ),
-              child: ScaleTransition(
-                scale: CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutBack,
-                  reverseCurve: Curves.easeInBack,
-                ),
-                alignment: _lrcScaleAlignment[lrcAlignment],
-                child: child,
-              ),
-            ),
+          return _InterludeTransition(
+            animation: animation,
+            scaleAlignment: _lrcScaleAlignment[lrcAlignment],
+            child: child,
           );
         },
-        // 使用 ValueKey 优化
         child:
             isVisible
                 ? Row(
@@ -1160,7 +1224,7 @@ class _InterludeWidget extends StatelessWidget {
                         lyricController: lyricController,
                         interludeLyricStyle: interludeLyricStyle,
                         strutStyle: strutStyle,
-                        gradientColors: cachedGradientColors,
+                        gradientColors: gradientColors,
                         lrcAlignment: lrcAlignment,
                       ),
                     ),
@@ -1194,6 +1258,7 @@ class _BreathingDots extends StatefulWidget {
 class _BreathingDotsState extends State<_BreathingDots>
     with SingleTickerProviderStateMixin {
   late AnimationController _animController;
+  late CurvedAnimation _curvedAnimation;
   late Animation<double> _scaleAnimation;
 
   @override
@@ -1204,13 +1269,20 @@ class _BreathingDotsState extends State<_BreathingDots>
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
 
-    _scaleAnimation = Tween<double>(begin: 1.0, end: _lrcScale).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
+    _curvedAnimation = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeInOut,
     );
+
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: _lrcScale,
+    ).animate(_curvedAnimation);
   }
 
   @override
   void dispose() {
+    _curvedAnimation.dispose();
     _animController.dispose();
     super.dispose();
   }

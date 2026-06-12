@@ -45,12 +45,13 @@ const _lrcAlignmentIcons = [
   PhosphorIconsLight.textAlignRight,
 ];
 final _isBarHover = false.obs;
-final _isHeadHover = false.obs;
 // 0: 默认（封面+歌词）, 1: 封面完全居中, 2: 封面+详情
 final _coverViewMode = 0.obs;
 const double _menuBtnWidth = 180;
 const double _menuBtnHeight = 48;
 const double _menuBtnRadius = 0;
+
+final double _dpr = PlatformDispatcher.instance.views.first.devicePixelRatio;
 
 // --- 歌词搜索控制器 ---
 class _LrcSearchController {
@@ -510,63 +511,77 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
   }
 }
 
-final double _dpr = PlatformDispatcher.instance.views.first.devicePixelRatio;
-
-// --- 主视图 ---
-class PlayPage extends StatefulWidget {
-  const PlayPage({super.key});
+class _LyricsSide extends StatelessWidget {
+  const _LyricsSide();
 
   @override
-  State<PlayPage> createState() => _PlayPageState();
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: ShaderMask(
+        shaderCallback: (rect) {
+          return const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              Colors.black,
+              Colors.black,
+              Colors.transparent,
+            ],
+            stops: [0.0, 0.2, 0.8, 1.0],
+          ).createShader(rect);
+        },
+        blendMode: BlendMode.dstIn,
+        child: SizedBox(
+          width: context.width / 2,
+          child: const Padding(
+            padding: EdgeInsets.only(right: 16),
+            child: LyricsRender(),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-class _PlayPageState extends State<PlayPage> {
-  late final ScrollController _playQueueScrollController;
-  late final MenuController _menuController;
-
-  ThemeService get _themeService => ThemeService.instance;
-  DesktopLyricsSever get _desktopLyricsSever => Get.find<DesktopLyricsSever>();
-  AudioController get _audioController => Get.find<AudioController>();
-  SettingController get _settingController => Get.find<SettingController>();
-  MusicCacheController get _musicCacheController =>
-      Get.find<MusicCacheController>();
-  UserPlayListController get _userPlayListController =>
-      Get.find<UserPlayListController>();
+class _ScrollTextWidget extends StatelessWidget {
+  final String text;
+  final TextStyle style;
+  final StrutStyle strutStyle;
+  const _ScrollTextWidget({
+    required this.text,
+    required this.style,
+    required this.strutStyle,
+  });
 
   @override
-  void initState() {
-    super.initState();
-    _playQueueScrollController = ScrollController();
-    _menuController = MenuController();
-  }
-
-  @override
-  void dispose() {
-    _playQueueScrollController.dispose();
-    super.dispose();
-  }
-
-  Widget _buildScrollText(
-    String text,
-    TextStyle textStyle,
-    StrutStyle strutStyle,
-  ) {
+  Widget build(BuildContext context) {
     return ScrollText(
       text: text,
-      style: textStyle,
+      style: style,
       velocity: 50.0,
       delayBefore: const Duration(milliseconds: 500),
       pauseBetween: const Duration(milliseconds: 1000),
       strutStyle: strutStyle,
     );
   }
+}
 
-  Widget _buildCoverSide(
-    BuildContext ctx,
-    double coverSize,
-    TextStyle titleStyle,
-    TextStyle subTitleStyle,
-  ) {
+class _CoverSide extends StatelessWidget {
+  final double coverSize;
+  final TextStyle titleStyle;
+  final TextStyle subTitleStyle;
+
+  const _CoverSide({
+    required this.coverSize,
+    required this.titleStyle,
+    required this.subTitleStyle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isHeadHover = false.obs;
+    final AudioController audioController = Get.find<AudioController>();
     final cacheResolution = (coverSize * _dpr).round();
     final titleStrut = StrutStyle(
       fontSize: titleStyle.fontSize,
@@ -576,8 +591,9 @@ class _PlayPageState extends State<PlayPage> {
       fontSize: subTitleStyle.fontSize,
       forceStrutHeight: true,
     );
+
     return SizedBox(
-      width: ctx.width / 2,
+      width: context.width / 2,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -609,7 +625,7 @@ class _PlayPageState extends State<PlayPage> {
                             : mode == 1
                             ? '展开详情'
                             : '切换歌词模式';
-                    final cover = _audioController.currentCover.value;
+                    final cover = audioController.currentCover.value;
                     return Tooltip(
                       message: tip,
                       mouseCursor: SystemMouseCursors.click,
@@ -640,18 +656,22 @@ class _PlayPageState extends State<PlayPage> {
             width: coverSize - 24,
             margin: const EdgeInsets.only(top: 24),
             child: MouseRegion(
-              onEnter: (_) => _isHeadHover.value = true,
-              onExit: (_) => _isHeadHover.value = false,
+              onEnter: (_) => isHeadHover.value = true,
+              onExit: (_) => isHeadHover.value = false,
               child: Obx(() {
-                final title = _audioController.currentMetadata.value.title;
+                final title = audioController.currentMetadata.value.title;
                 final artistAndAlbum =
-                    "${_audioController.currentMetadata.value.artist} - ${_audioController.currentMetadata.value.album}";
+                    "${audioController.currentMetadata.value.artist} - ${audioController.currentMetadata.value.album}";
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 2,
                   children: [
-                    _isHeadHover.value
-                        ? _buildScrollText(title, titleStyle, titleStrut)
+                    isHeadHover.value
+                        ? _ScrollTextWidget(
+                          text: title,
+                          style: titleStyle,
+                          strutStyle: titleStrut,
+                        )
                         : Text(
                           title,
                           style: titleStyle,
@@ -661,11 +681,11 @@ class _PlayPageState extends State<PlayPage> {
                           maxLines: 1,
                           textAlign: TextAlign.left,
                         ),
-                    _isHeadHover.value
-                        ? _buildScrollText(
-                          artistAndAlbum,
-                          subTitleStyle,
-                          subTitleStrut,
+                    isHeadHover.value
+                        ? _ScrollTextWidget(
+                          text: artistAndAlbum,
+                          style: subTitleStyle,
+                          strutStyle: subTitleStrut,
                         )
                         : Text(
                           artistAndAlbum,
@@ -685,48 +705,97 @@ class _PlayPageState extends State<PlayPage> {
       ),
     );
   }
+}
 
-  Widget _buildLyricsSide(BuildContext ctx) {
-    return RepaintBoundary(
-      child: ShaderMask(
-        shaderCallback: (rect) {
-          return const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.transparent,
-              Colors.black,
-              Colors.black,
-              Colors.transparent,
+class _PlayQueueItem extends StatelessWidget {
+  final MusicCache item;
+  final double itemHeight;
+  final TextStyle titleStyle;
+  final TextStyle highLightTitleStyle;
+  final TextStyle subStyle;
+  final TextStyle highLightSubStyle;
+
+  const _PlayQueueItem({
+    required this.item,
+    required this.itemHeight,
+    required this.titleStyle,
+    required this.highLightTitleStyle,
+    required this.subStyle,
+    required this.highLightSubStyle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final AudioController audioController = Get.find<AudioController>();
+    return TextButton(
+      onPressed: () async {
+        await audioController.audioPlay(metadata: item);
+      }.throttle(ms: 300),
+      style: TextButton.styleFrom(
+        shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
+      ),
+      child: SizedBox.expand(
+        child: Obx(() {
+          final isCurrent = audioController.currentPath.value == item.path;
+          final currentTitleStyle =
+              isCurrent ? highLightTitleStyle : titleStyle;
+          final currentSubStyle = isCurrent ? highLightSubStyle : subStyle;
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.title,
+                style: currentTitleStyle,
+                softWrap: true,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+              Text(
+                "${item.artist} - ${item.album}",
+                style: currentSubStyle,
+                softWrap: true,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
             ],
-            stops: [0.0, 0.2, 0.8, 1.0],
-          ).createShader(rect);
-        },
-        blendMode: BlendMode.dstIn,
-        child: SizedBox(
-          width: ctx.width / 2,
-          child: const Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: LyricsRender(),
-          ),
-        ),
+          );
+        }),
       ),
     );
   }
+}
 
-  Widget _buildControlBar(
-    BuildContext context,
-    Color? mixColor,
-    Color activeTrackCover,
-    Color inactiveTrackCover,
-    TextStyle timeCurrentStyle,
-    TextStyle timeTotalStyle,
-  ) {
+class _ControlBar extends StatelessWidget {
+  final Color? mixColor;
+  final Color activeTrackCover;
+  final Color inactiveTrackCover;
+  final TextStyle timeCurrentStyle;
+  final TextStyle timeTotalStyle;
+  final ScrollController playQueueScrollController;
+
+  const _ControlBar({
+    required this.mixColor,
+    required this.activeTrackCover,
+    required this.inactiveTrackCover,
+    required this.timeCurrentStyle,
+    required this.timeTotalStyle,
+    required this.playQueueScrollController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final AudioController audioController = Get.find<AudioController>();
+    final SettingController settingController = Get.find<SettingController>();
+    final DesktopLyricsSever desktopLyricsSever =
+        Get.find<DesktopLyricsSever>();
+
     final audioCtrlWidget = AudioCtrlWidget(
       context: context,
       size: _ctrlBtnMinSize,
       color: mixColor,
     );
+
     final titleStyle = generalTextStyle(ctx: context, size: 'md');
     final highLightTitleStyle = generalTextStyle(
       ctx: context,
@@ -739,320 +808,315 @@ class _PlayPageState extends State<PlayPage> {
       size: 'sm',
       color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
     );
-    final double itemHeight = 64;
+
+    const double itemHeight = 64;
     final playQueueController = MenuController();
-    return SizedBox(
-      height: _audioCtrlBarHeight,
-      child: Column(
-        children: [
-          RepaintBoundary(
-            child: Material(
-              color: Colors.transparent,
-              child: SliderTheme(
-                data: SliderTheme.of(context).copyWith(
-                  trackShape: _GradientSliderTrackShape(
-                    activeTrackHeight: 2,
-                    inactiveTrackHeight: 1,
-                    activeColor: activeTrackCover,
+
+    return MouseRegion(
+      onEnter: (_) => _isBarHover.value = true,
+      onExit: (_) => _isBarHover.value = false,
+      child: SizedBox(
+        height: _audioCtrlBarHeight,
+        child: Column(
+          children: [
+            RepaintBoundary(
+              child: Material(
+                color: Colors.transparent,
+                child: SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackShape: _GradientSliderTrackShape(
+                      activeTrackHeight: 2,
+                      inactiveTrackHeight: 1,
+                      activeColor: activeTrackCover,
+                    ),
+                    inactiveTrackColor: inactiveTrackCover,
+                    showValueIndicator: ShowValueIndicator.always,
+                    thumbShape: const RoundSliderThumbShape(
+                      enabledThumbRadius: _thumbRadius,
+                      elevation: 0,
+                      pressedElevation: 0,
+                    ),
+                    padding: EdgeInsets.zero,
+                    thumbColor: Colors.transparent,
+                    overlayColor: Colors.transparent,
+                    valueIndicatorShape: const RectangularValueIndicatorShape(
+                      width: 48,
+                      height: 28,
+                      radius: 4,
+                    ),
+                    valueIndicatorTextStyle: generalTextStyle(
+                      ctx: context,
+                      size: 'sm',
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                    mouseCursor: WidgetStateProperty.all(
+                      SystemMouseCursors.click,
+                    ),
                   ),
-                  inactiveTrackColor: inactiveTrackCover,
-                  showValueIndicator: ShowValueIndicator.always,
-                  thumbShape: const RoundSliderThumbShape(
-                    enabledThumbRadius: _thumbRadius,
-                    elevation: 0,
-                    pressedElevation: 0,
-                  ),
-                  padding: EdgeInsets.zero,
-                  thumbColor: Colors.transparent,
-                  overlayColor: Colors.transparent,
-                  valueIndicatorShape: const RectangularValueIndicatorShape(
-                    width: 48,
-                    height: 28,
-                    radius: 4,
-                  ),
-                  valueIndicatorTextStyle: generalTextStyle(
-                    ctx: context,
-                    size: 'sm',
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
-                  mouseCursor: WidgetStateProperty.all(
-                    SystemMouseCursors.click,
-                  ),
+                  child: audioCtrlWidget.seekSlide,
                 ),
-                child: audioCtrlWidget.seekSlide,
               ),
             ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(
-                left: 24,
-                right: 24,
-                bottom: _thumbRadius,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: context.width * 0.25,
-                    height: _audioCtrlBarHeight - 24, // 固定高度避免重新layout
-                    child: RepaintBoundary(
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  left: 24,
+                  right: 24,
+                  bottom: _thumbRadius,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: context.width * 0.25,
+                      height: _audioCtrlBarHeight - 24,
+                      child: RepaintBoundary(
+                        child: Obx(
+                          () => Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                formatTime(
+                                  totalSeconds:
+                                      audioController.currentSec.value,
+                                ),
+                                style: timeCurrentStyle,
+                              ),
+                              Text(
+                                formatTime(
+                                  totalSeconds:
+                                      audioController.currentDuration.value,
+                                ),
+                                style: timeTotalStyle,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
                       child: Obx(
-                        () => Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              formatTime(
-                                totalSeconds: _audioController.currentSec.value,
-                              ),
-                              style: timeCurrentStyle,
-                            ),
-                            Text(
-                              formatTime(
-                                totalSeconds:
-                                    _audioController.currentDuration.value,
-                              ),
-                              style: timeTotalStyle,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Obx(
-                      () => AnimatedOpacity(
-                        opacity: _isBarHover.value ? 1.0 : 0.0,
-                        duration: 150.ms,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          spacing: 16,
-                          children: [
-                            audioCtrlWidget.speedSet,
-                            audioCtrlWidget.volumeSet,
-                            audioCtrlWidget.skipBack,
-                            audioCtrlWidget.toggle,
-                            audioCtrlWidget.skipForward,
-                            audioCtrlWidget.changeMode,
-                            audioCtrlWidget.equalizerSet,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: context.width * 0.25,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      spacing: 8,
-                      children: [
-                        Obx(
-                          () => GenIconBtn(
-                            tooltip:
-                                SettingController
-                                    .lrcAlignmentMap[_settingController
-                                    .lrcAlignment
-                                    .value] ??
-                                '',
-                            icon:
-                                _lrcAlignmentIcons[_settingController
-                                    .lrcAlignment
-                                    .value],
-                            size: _ctrlBtnMinSize,
-                            color: mixColor,
-                            fn: () => _audioController.changeLrcAlignment(),
+                        () => AnimatedOpacity(
+                          opacity: _isBarHover.value ? 1.0 : 0.0,
+                          duration: 150.ms,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            spacing: 16,
+                            children: [
+                              audioCtrlWidget.speedSet,
+                              audioCtrlWidget.volumeSet,
+                              audioCtrlWidget.skipBack,
+                              audioCtrlWidget.toggle,
+                              audioCtrlWidget.skipForward,
+                              audioCtrlWidget.changeMode,
+                              audioCtrlWidget.equalizerSet,
+                            ],
                           ),
                         ),
-                        _NetLrcDialog(color: mixColor),
-                        MenuAnchor(
-                          consumeOutsideTap: true,
-                          menuChildren: [
-                            Container(
-                              height: Get.height - 200,
-                              width: Get.width / 2,
-                              color: Colors.transparent,
-                              padding: EdgeInsets.all(16),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                spacing: 8.0,
-                                children: [
-                                  Text(
-                                    "播放队列",
-                                    style: generalTextStyle(
-                                      ctx: context,
-                                      size: 'xl',
-                                      weight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    flex: 1,
-                                    child: Obx(() {
-                                      return ListView.builder(
-                                        itemCount:
-                                            _audioController
-                                                .playListCacheItems
-                                                .length,
-                                        itemExtent: itemHeight,
-                                        cacheExtent: itemHeight * 1,
-                                        controller: _playQueueScrollController,
-                                        padding: EdgeInsets.only(
-                                          bottom: itemHeight * 2,
-                                        ),
-                                        itemBuilder: (context, index) {
-                                          final items =
-                                              _audioController
-                                                  .playListCacheItems[index];
-                                          return TextButton(
-                                            onPressed: () async {
-                                              await _audioController.audioPlay(
-                                                metadata: items,
-                                              );
-                                            }.throttle(ms: 300),
-                                            style: TextButton.styleFrom(
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: _borderRadius,
-                                              ),
-                                            ),
-                                            child: SizedBox.expand(
-                                              child: Obx(() {
-                                                final subTextStyle =
-                                                    _audioController
-                                                                .currentPath
-                                                                .value !=
-                                                            items.path
-                                                        ? subStyle
-                                                        : highLightSubStyle;
-
-                                                final textStyle =
-                                                    _audioController
-                                                                .currentPath
-                                                                .value !=
-                                                            items.path
-                                                        ? titleStyle
-                                                        : highLightTitleStyle;
-                                                return Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      items.title,
-                                                      style: textStyle,
-                                                      softWrap: true,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      maxLines: 1,
-                                                    ),
-                                                    Text(
-                                                      "${items.artist} - ${items.album}",
-                                                      style: subTextStyle,
-                                                      softWrap: true,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      maxLines: 1,
-                                                    ),
-                                                  ],
-                                                );
-                                              }),
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    }),
-                                  ),
-                                ],
-                              ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: context.width * 0.25,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        spacing: 8,
+                        children: [
+                          Obx(
+                            () => GenIconBtn(
+                              tooltip:
+                                  SettingController
+                                      .lrcAlignmentMap[settingController
+                                      .lrcAlignment
+                                      .value] ??
+                                  '',
+                              icon:
+                                  _lrcAlignmentIcons[settingController
+                                      .lrcAlignment
+                                      .value],
+                              size: _ctrlBtnMinSize,
+                              color: mixColor,
+                              fn: () => audioController.changeLrcAlignment(),
                             ),
-                          ],
-                          onOpen: () {
-                            SchedulerBinding.instance.addPostFrameCallback((_) {
-                              if (_playQueueScrollController.hasClients) {
-                                _playQueueScrollController.jumpTo(
-                                  (itemHeight *
-                                          _audioController.currentIndex.value)
-                                      .clamp(
-                                        0.0,
-                                        _playQueueScrollController
-                                            .position
-                                            .maxScrollExtent,
+                          ),
+                          _NetLrcDialog(color: mixColor),
+                          MenuAnchor(
+                            consumeOutsideTap: true,
+                            menuChildren: [
+                              Container(
+                                height: Get.height - 200,
+                                width: Get.width / 2,
+                                color: Colors.transparent,
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  spacing: 8.0,
+                                  children: [
+                                    Text(
+                                      "播放队列",
+                                      style: generalTextStyle(
+                                        ctx: context,
+                                        size: 'xl',
+                                        weight: FontWeight.w600,
                                       ),
-                                );
-                              }
-                            });
-                          },
-                          style: MenuStyle(
-                            backgroundColor: WidgetStatePropertyAll(
-                              Theme.of(context).colorScheme.surfaceContainer
-                                  .withValues(alpha: 0.8),
+                                    ),
+                                    Expanded(
+                                      flex: 1,
+                                      child: Obx(() {
+                                        final itemsList =
+                                            audioController.playListCacheItems;
+                                        return ListView.builder(
+                                          itemCount: itemsList.length,
+                                          itemExtent: itemHeight,
+                                          cacheExtent: itemHeight * 1,
+                                          controller: playQueueScrollController,
+                                          padding: const EdgeInsets.only(
+                                            bottom: itemHeight * 2,
+                                          ),
+                                          itemBuilder: (context, index) {
+                                            return _PlayQueueItem(
+                                              item: itemsList[index],
+                                              itemHeight: itemHeight,
+                                              titleStyle: titleStyle,
+                                              highLightTitleStyle:
+                                                  highLightTitleStyle,
+                                              subStyle: subStyle,
+                                              highLightSubStyle:
+                                                  highLightSubStyle,
+                                            );
+                                          },
+                                        );
+                                      }),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            onOpen: () {
+                              SchedulerBinding.instance.addPostFrameCallback((
+                                _,
+                              ) {
+                                if (playQueueScrollController.hasClients) {
+                                  playQueueScrollController.jumpTo(
+                                    (itemHeight *
+                                            audioController.currentIndex.value)
+                                        .clamp(
+                                          0.0,
+                                          playQueueScrollController
+                                              .position
+                                              .maxScrollExtent,
+                                        ),
+                                  );
+                                }
+                              });
+                            },
+                            style: MenuStyle(
+                              backgroundColor: WidgetStatePropertyAll(
+                                Theme.of(context).colorScheme.surfaceContainer
+                                    .withValues(alpha: 0.8),
+                              ),
+                            ),
+                            controller: playQueueController,
+                            child: GenIconBtn(
+                              tooltip: '播放列表',
+                              icon: PhosphorIconsLight.queue,
+                              size: _ctrlBtnMinSize,
+                              color: mixColor,
+                              fn: () {
+                                if (playQueueController.isOpen) {
+                                  playQueueController.close();
+                                } else {
+                                  playQueueController.open();
+                                }
+                              },
                             ),
                           ),
-                          controller: playQueueController,
-                          child: GenIconBtn(
-                            tooltip: '播放列表',
-                            icon: PhosphorIconsLight.queue,
-                            size: _ctrlBtnMinSize,
-                            color: mixColor,
-                            fn: () {
-                              if (playQueueController.isOpen) {
-                                playQueueController.close();
-                              } else {
-                                playQueueController.open();
-                              }
-                            },
+                          Obx(
+                            () => GenIconBtn(
+                              tooltip: '频谱图',
+                              icon:
+                                  settingController.showSpectrogram.value
+                                      ? PhosphorIconsFill.waveTriangle
+                                      : PhosphorIconsLight.waveTriangle,
+                              size: _ctrlBtnMinSize,
+                              color: mixColor,
+                              fn: () {
+                                settingController.showSpectrogram.toggle();
+                                settingController.putScalableCache();
+                              },
+                            ),
                           ),
-                        ),
-                        Obx(
-                          () => GenIconBtn(
-                            tooltip: '频谱图',
-                            icon:
-                                _settingController.showSpectrogram.value
-                                    ? PhosphorIconsFill.waveTriangle
-                                    : PhosphorIconsLight.waveTriangle,
-                            size: _ctrlBtnMinSize,
-                            color: mixColor,
-                            fn: () {
-                              _settingController.showSpectrogram.toggle();
-                              _settingController.putScalableCache();
-                            },
-                          ),
-                        ),
-                        Obx(
-                          () => GenIconBtn(
-                            tooltip: '桌面歌词',
-                            icon:
-                                _settingController.showDesktopLyrics.value
-                                    ? PhosphorIconsFill.creditCard
-                                    : PhosphorIconsLight.creditCard,
-                            size: _ctrlBtnMinSize,
-                            color: mixColor,
-                            fn:
-                                () async {
-                                  _settingController.showDesktopLyrics.toggle();
-                                  await _settingController.putScalableCache();
+                          Obx(
+                            () => GenIconBtn(
+                              tooltip: '桌面歌词',
+                              icon:
+                                  settingController.showDesktopLyrics.value
+                                      ? PhosphorIconsFill.creditCard
+                                      : PhosphorIconsLight.creditCard,
+                              size: _ctrlBtnMinSize,
+                              color: mixColor,
+                              fn:
+                                  () async {
+                                    settingController.showDesktopLyrics
+                                        .toggle();
+                                    await settingController.putScalableCache();
 
-                                  if (_settingController
-                                      .showDesktopLyrics
-                                      .value) {
-                                    _desktopLyricsSever.connect();
-                                  } else {
-                                    _desktopLyricsSever.close();
-                                  }
-                                }.throttle(),
+                                    if (settingController
+                                        .showDesktopLyrics
+                                        .value) {
+                                      desktopLyricsSever.connect();
+                                    } else {
+                                      desktopLyricsSever.close();
+                                    }
+                                  }.throttle(),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+}
+
+// --- 主视图 ---
+class PlayPage extends StatefulWidget {
+  const PlayPage({super.key});
+
+  @override
+  State<PlayPage> createState() => _PlayPageState();
+}
+
+class _PlayPageState extends State<PlayPage> {
+  late final ScrollController _playQueueScrollController;
+  late final MenuController _menuController;
+
+  ThemeService get _themeService => ThemeService.instance;
+  AudioController get _audioController => Get.find<AudioController>();
+  SettingController get _settingController => Get.find<SettingController>();
+  MusicCacheController get _musicCacheController =>
+      Get.find<MusicCacheController>();
+  UserPlayListController get _userPlayListController =>
+      Get.find<UserPlayListController>();
+
+  @override
+  void initState() {
+    super.initState();
+    _playQueueScrollController = ScrollController();
+    _menuController = MenuController();
+  }
+
+  @override
+  void dispose() {
+    _playQueueScrollController.dispose();
+    super.dispose();
   }
 
   Widget _createMenuIconBtn({
@@ -1473,7 +1537,7 @@ class _PlayPageState extends State<PlayPage> {
                                     opacity:
                                         _coverViewMode.value == 0 ? 1.0 : 0.0,
                                     duration: 100.ms,
-                                    child: _buildLyricsSide(context),
+                                    child: const _LyricsSide(),
                                   ),
                                 ),
                               ),
@@ -1489,14 +1553,13 @@ class _PlayPageState extends State<PlayPage> {
                                           ? (context.width - coverSize) / 2
                                           : halfWidth +
                                               (halfWidth - coverSize) / 2,
-                                  width: coverSize, // 水平约束 (使用封面自身的尺寸)
-                                  top: 0, // 垂直约束
-                                  bottom: 0, // 垂直约束
-                                  child: _buildCoverSide(
-                                    context,
-                                    coverSize,
-                                    titleStyle,
-                                    subTitleStyle,
+                                  width: coverSize,
+                                  top: 0,
+                                  bottom: 0,
+                                  child: _CoverSide(
+                                    coverSize: coverSize,
+                                    titleStyle: titleStyle,
+                                    subTitleStyle: subTitleStyle,
                                   ),
                                 ),
                               ),
@@ -1599,17 +1662,13 @@ class _PlayPageState extends State<PlayPage> {
                         ),
                       ),
                     ),
-                    MouseRegion(
-                      onEnter: (_) => _isBarHover.value = true,
-                      onExit: (_) => _isBarHover.value = false,
-                      child: _buildControlBar(
-                        context,
-                        mixColor,
-                        activeTrackCover,
-                        inactiveTrackCover,
-                        timeCurrentStyle,
-                        timeTotalStyle,
-                      ),
+                    _ControlBar(
+                      mixColor: mixColor,
+                      activeTrackCover: activeTrackCover,
+                      inactiveTrackCover: inactiveTrackCover,
+                      timeCurrentStyle: timeCurrentStyle,
+                      timeTotalStyle: timeTotalStyle,
+                      playQueueScrollController: _playQueueScrollController,
                     ),
                   ],
                 ),
@@ -1645,28 +1704,23 @@ class _SpectrogramWidgetState extends State<_SpectrogramWidget>
 
   // 颜色缓存，颜色变化的时候更新painter
   Color? _cachedColor;
+  late final AnimationController _animController;
 
-  // 驱动补间插值动画
-  late AnimationController _animController;
-
-  /// 插值起点：动画开始时各柱子的高度
-  List<double> _currentFFT = [];
+  /// 缓存的 Shader，尺寸不变时复用，避免每帧重建
+  List<double> _currentFFT = const [];
 
   /// 插值终点：最新一帧从后端拉取的 FFT 数据
-  List<double> _targetFFT = [];
+  List<double> _targetFFT = const [];
 
   /// 当前实际渲染的值：_currentFFT 到 _targetFFT 之间插值的结果
-  List<double> _displayFFT = [];
+  List<double> _displayFFT = const [];
 
   /// 缓存的 Shader，尺寸不变时复用，避免每帧重建
   Shader? _cachedShader;
   Size _lastSize = Size.zero;
 
-  Worker? _fftWorker;
-
   /// 防止 dispose 后异步回调仍然执行的保护标志
   bool _isDisposed = false;
-
   /// 定时从后端拉取 FFT 数据
   /// 不用 Ticker（每帧触发）是因为音频数据不需要和屏幕刷新率同步
   /// 视觉流畅度由 _animController 的插值保证，而非拉取频率
@@ -1682,10 +1736,8 @@ class _SpectrogramWidgetState extends State<_SpectrogramWidget>
     );
     _animController.addListener(_onAnimationTick);
 
-    // 监听 audioFFT 变化，后端数据更新时触发 _onFFTUpdated
-    _fftWorker = ever(_audioController.audioFFT, _onFFTUpdated);
+    _audioController.audioFFT.addListener(_onFFTUpdated);
 
-    // 每50ms更新一次数据就已经足够，更新间隔为过渡时间(100ms)的一半
     _fetchTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
       _audioController.getAudioFFt();
     });
@@ -1696,47 +1748,60 @@ class _SpectrogramWidgetState extends State<_SpectrogramWidget>
     _isDisposed = true;
     // 先取消监听，再 dispose controller
     // 顺序重要：防止 cancel 期间还有回调触发
-    _fftWorker?.dispose();
+    _audioController.audioFFT.removeListener(_onFFTUpdated);
     _fetchTimer?.cancel();
     _animController.dispose();
     super.dispose();
   }
 
-  /// 收到新 FFT 数据时，记录插值起点和终点，启动补间动画
-  void _onFFTUpdated(List<double> newFFT) {
+  void _onFFTUpdated() {
     if (_isDisposed || !mounted) return;
+    final newFFT = _audioController.audioFFT.value;
 
-    // 以当前渲染值作为起点，避免动画跳变
-    // 首帧 _displayFFT 为空时直接用新数据初始化
-    _currentFFT = List<double>.from(_displayFFT.isEmpty ? newFFT : _displayFFT);
-    _targetFFT = newFFT;
+    final int len = newFFT.length;
 
-    // 每次数据更新都重新平滑过渡
+    if (_currentFFT.length != len) {
+      _currentFFT = List<double>.filled(len, 0.0);
+    }
+    if (_targetFFT.length != len) {
+      _targetFFT = List<double>.filled(len, 0.0);
+    }
+
+    if (_displayFFT.isEmpty || _displayFFT.length != len) {
+      _displayFFT = List<double>.filled(len, 0.0);
+      for (int i = 0; i < len; i++) {
+        _currentFFT[i] = newFFT[i];
+        _displayFFT[i] = newFFT[i];
+        _targetFFT[i] = newFFT[i];
+      }
+    } else {
+      for (int i = 0; i < len; i++) {
+        _currentFFT[i] = _displayFFT[i];
+        _targetFFT[i] = newFFT[i];
+      }
+    }
+
     _animController.forward(from: 0);
   }
 
-  /// AnimationController 每个动画帧回调，计算当前插值结果写入 _displayFFT
   void _onAnimationTick() {
     if (_isDisposed || !mounted || _targetFFT.isEmpty) return;
-    final t = _animController.value; // 当前动画进度 0.0 ~ 1.0
-    final len =
-        _currentFFT.length <= _targetFFT.length
+    final double t = _animController.value;
+    final int len =
+        _currentFFT.length < _targetFFT.length
             ? _currentFFT.length
             : _targetFFT.length;
 
-    // 长度变化时才重新分配，正常情况下复用同一个 List
     if (_displayFFT.length != len) {
       _displayFFT = List<double>.filled(len, 0.0);
     }
 
-    // 线性插值
+    final double oneMinusT = 1.0 - t;
     for (int i = 0; i < len; i++) {
-      _displayFFT[i] = _currentFFT[i] + (_targetFFT[i] - _currentFFT[i]) * t;
+      _displayFFT[i] = _currentFFT[i] * oneMinusT + _targetFFT[i] * t;
     }
   }
 
-  /// 获取或创建 Shader，尺寸与颜色不变时直接返回缓存
-  /// createShader 有一定开销，避免每帧调用
   Shader _getShader(Size size) {
     if (_cachedShader == null ||
         _cachedColor == null ||
@@ -1770,7 +1835,6 @@ class _SpectrogramWidgetState extends State<_SpectrogramWidget>
               length: widget.lenth,
               barWidth: widget.barWidth,
               paddingWidth: widget.paddingWidth,
-              // 用动画进度值作为 shouldRepaint 的判断依据
               version: _animController.value,
             ),
           );
@@ -1797,22 +1861,19 @@ class _SpectrogramPainter extends CustomPainter {
     required this.version,
   });
 
-  /// 静态复用，避免每次 paint 创建新的 Paint 对象
-  static final _paint = Paint()..style = PaintingStyle.fill;
+  final Paint _paint = Paint()..style = PaintingStyle.fill;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (fft.isEmpty) return;
 
-    // Shader 在整个频谱图范围内统一设置一次
-    // 所有柱子共享同一个 shader，而不是每根柱子单独 createShader
     _paint.shader = shader;
 
-    final maxBars = length.toInt();
-    final count = fft.length < maxBars ? fft.length : maxBars;
+    final int maxBars = length.toInt();
+    final int count = fft.length < maxBars ? fft.length : maxBars;
 
     for (int i = 0; i < count; i++) {
-      final height = fft[i] * _spectrogramHeight;
+      final double height = fft[i] * _spectrogramHeight;
       if (height < 0.5) continue;
 
       canvas.drawRect(
@@ -1829,7 +1890,6 @@ class _SpectrogramPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_SpectrogramPainter old) {
-    // version 是动画进度值，每帧都不同，判断是否需要重绘
     return old.version != version || old.shader != shader;
   }
 }
