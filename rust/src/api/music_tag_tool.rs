@@ -1,4 +1,4 @@
-use image::{load_from_memory, ImageFormat};
+use image::{load_from_memory, DynamicImage, ImageFormat};
 use lofty::config::{ParseOptions, ParsingMode, WriteOptions};
 use lofty::error::{ErrorKind as LoftyErrorKind, LoftyError};
 use lofty::file::{TaggedFile, TaggedFileExt};
@@ -459,15 +459,19 @@ pub fn get_cover(path: String, size_flag: u8) -> Option<Vec<u8>> {
         );
 
         let mut output_bytes = Vec::new();
-        image_data
+        match image_data
+            .to_rgb8()
             .write_to(&mut Cursor::new(&mut output_bytes), ImageFormat::Jpeg)
-            .unwrap_or_else(|err| {
+        {
+            Ok(_) => Some(output_bytes),
+            Err(err) => {
                 println!("Error resize cover: {}", err);
-            });
-
-        return Some(output_bytes);
+                None
+            }
+        }
+    } else {
+        None
     }
-    None
 }
 
 #[flutter_rust_bridge::frb]
