@@ -13,9 +13,6 @@ import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 
 const double _radius = 6;
-final _isSeekBarDragging = false.obs;
-
-final _seekDraggingValue = 0.0.obs;
 
 const _playModeIcons = [
   PhosphorIconsFill.repeatOnce,
@@ -43,14 +40,10 @@ class GenIconBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      waitDuration: Duration(milliseconds: 100),
+      waitDuration: const Duration(milliseconds: 100),
       message: tooltip,
       child: TextButton(
-        onPressed: () {
-          if (fn != null) {
-            fn!();
-          }
-        },
+        onPressed: fn,
         style: TextButton.styleFrom(
           padding: EdgeInsets.zero,
           minimumSize: Size(size, size),
@@ -67,53 +60,148 @@ class GenIconBtn extends StatelessWidget {
   }
 }
 
+class _SeekSlideWidget extends StatefulWidget {
+  final AudioController audioController;
+  const _SeekSlideWidget({super.key, required this.audioController});
+
+  @override
+  State<_SeekSlideWidget> createState() => _SeekSlideWidgetState();
+}
+
+class _SeekSlideWidgetState extends State<_SeekSlideWidget> {
+  final _isSeekBarDragging = ValueNotifier<bool>(false);
+  final _seekDraggingValue = ValueNotifier<double>(0.0);
+
+  @override
+  void dispose() {
+    _isSeekBarDragging.dispose();
+    _seekDraggingValue.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      canRequestFocus: false,
+      descendantsAreFocusable: false,
+      child: ListenableBuilder(
+        listenable: Listenable.merge([
+          widget.audioController.currentMs100,
+          _isSeekBarDragging,
+          _seekDraggingValue,
+        ]),
+        builder: (_, _) {
+          final pathIsEmpty =
+              widget.audioController.currentMetadata.value.path.isEmpty;
+          final double duration =
+              pathIsEmpty
+                  ? 9999.0
+                  : widget.audioController.currentDuration.value;
+
+          final double sliderValue =
+              pathIsEmpty
+                  ? 0.0
+                  : (_isSeekBarDragging.value
+                      ? _seekDraggingValue.value
+                      : widget.audioController.currentMs100.value);
+
+          return Slider(
+            min: 0.0,
+            max: duration,
+            label:
+                _isSeekBarDragging.value
+                    ? formatTime(totalSeconds: _seekDraggingValue.value)
+                    : '√',
+            value: sliderValue,
+            onChangeStart: (v) {
+              _seekDraggingValue.value = v;
+              _isSeekBarDragging.value = true;
+            },
+            onChanged: (v) {
+              _seekDraggingValue.value = v;
+            },
+            onChangeEnd: (v) {
+              widget.audioController.currentMs100.value = v;
+              _isSeekBarDragging.value = false;
+              widget.audioController.audioSetPositon(pos: v);
+              _seekDraggingValue.value = 0.0;
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
 class AudioCtrlWidget {
   final double size;
   final BuildContext context;
   final Color? color;
+
   AudioCtrlWidget({required this.size, required this.context, this.color});
 
-  final AudioController _audioController = Get.find<AudioController>();
-  final SettingController _settingController = Get.find<SettingController>();
+  Widget get speedSet => _SpeedSetBtn(size: size, color: color);
 
-  Widget get speedSet {
-    const double btnW = 72;
-    const double setBtnHeight = 36;
+  Widget get volumeSet => _VolumeSetBtn(size: size, color: color);
+
+  Widget get skipBack => _SkipBackBtn(size: size, color: color);
+
+  Widget get toggle => _PlayToggleBtn(size: size, color: color);
+
+  Widget get skipForward => _SkipForwardBtn(size: size, color: color);
+
+  Widget get changeMode => _PlayModeBtn(size: size, color: color);
+
+  Widget get seekSlide =>
+      _SeekSlideWidget(audioController: Get.find<AudioController>());
+
+  Widget get equalizerSet => _EqualizerBtn(size: size, color: color);
+}
+
+class _SpeedSetBtn extends StatelessWidget {
+  final double size;
+  final Color? color;
+  const _SpeedSetBtn({required this.size, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final AudioController audioController = Get.find<AudioController>();
     final menuController = MenuController();
+
     final speedList =
         List.generate(16, (index) => index + 5).map((i) {
           final speed = i / 10;
-          return CustomBtn(
-            fn: () async {
-              await setSpeed(speed: speed);
-              _audioController.currentSpeed.value = speed;
-              menuController.close();
-            },
-            btnWidth: btnW,
-            btnHeight: setBtnHeight,
-            label: speed.toString(),
-            icon:
-                _audioController.currentSpeed.value != speed
-                    ? null
-                    : PhosphorIconsLight.check,
-            iconSize: 'xs',
-            contentColor: Theme.of(context).colorScheme.onSecondaryContainer,
-            mainAxisAlignment:
-                _audioController.currentSpeed.value != speed
-                    ? MainAxisAlignment.end
-                    : MainAxisAlignment.spaceBetween,
-            spacing: 0,
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            backgroundColor: Colors.transparent,
-          );
+          return Obx(() {
+            final isCurrent = audioController.currentSpeed.value == speed;
+            return CustomBtn(
+              fn: () async {
+                await setSpeed(speed: speed);
+                audioController.currentSpeed.value = speed;
+                menuController.close();
+              },
+              btnWidth: 72,
+              btnHeight: 36,
+              label: speed.toString(),
+              icon: isCurrent ? PhosphorIconsLight.check : null,
+              iconSize: 'xs',
+              contentColor: Theme.of(context).colorScheme.onSecondaryContainer,
+              mainAxisAlignment:
+                  isCurrent
+                      ? MainAxisAlignment.spaceBetween
+                      : MainAxisAlignment.end,
+              spacing: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              backgroundColor: Colors.transparent,
+            );
+          });
         }).toList();
+
     return Theme(
-      // Create a unique theme with `ThemeData`.
       data: Theme.of(context).copyWith(
-        scrollbarTheme: ScrollbarThemeData(
-          thumbVisibility: WidgetStateProperty.all(false),
-          trackVisibility: WidgetStateProperty.all(false),
-          thickness: WidgetStateProperty.all(0),
+        scrollbarTheme: const ScrollbarThemeData(
+          thumbVisibility: WidgetStatePropertyAll(false),
+          trackVisibility: WidgetStatePropertyAll(false),
+          thickness: WidgetStatePropertyAll(0),
         ),
       ),
       child: MenuAnchor(
@@ -129,209 +217,228 @@ class AudioCtrlWidget {
             ).colorScheme.surfaceContainer.withValues(alpha: 0.8),
           ),
         ),
-        builder: (_, MenuController controller, Widget? child) {
+        builder: (_, MenuController controller, __) {
           return GenIconBtn(
             tooltip: "倍速",
             icon: PhosphorIconsLight.waveform,
             size: size,
             color: color,
-            fn: () {
-              if (controller.isOpen) {
-                controller.close();
-              } else {
-                controller.open();
-              }
-            },
+            fn:
+                () =>
+                    controller.isOpen ? controller.close() : controller.open(),
           );
         },
       ),
     );
   }
+}
 
-  Widget get volumeSet => MenuAnchor(
-    menuChildren: [
-      Obx(
-        () => Column(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            Text(
-              (_settingController.volume.value * 100).round().toString(),
-              style: generalTextStyle(
-                ctx: context,
-                size: 'md',
-                color: Theme.of(
-                  context,
-                ).colorScheme.primary.withValues(alpha: 0.6),
+class _VolumeSetBtn extends StatelessWidget {
+  final double size;
+  final Color? color;
+  const _VolumeSetBtn({required this.size, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final AudioController audioController = Get.find<AudioController>();
+    final SettingController settingController = Get.find<SettingController>();
+    final menuController = MenuController();
+
+    return MenuAnchor(
+      controller: menuController,
+      menuChildren: [
+        Obx(
+          () => Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Text(
+                (settingController.volume.value * 100).round().toString(),
+                style: generalTextStyle(
+                  ctx: context,
+                  size: 'md',
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.6),
+                ),
               ),
-            ),
-            RotatedBox(
-              quarterTurns: 3,
-              child: Slider(
-                min: 0.0,
-                max: 1.0,
-                value: _settingController.volume.value,
-                onChanged: (v) {
-                  _audioController.audioSetVolume(vol: v);
-                  _settingController.volume.value = v;
-                },
-                onChangeEnd: (v) {
-                  _settingController.putCache();
-                },
+              RotatedBox(
+                quarterTurns: 3,
+                child: Slider(
+                  min: 0.0,
+                  max: 1.0,
+                  value: settingController.volume.value,
+                  onChanged: (v) {
+                    audioController.audioSetVolume(vol: v);
+                    settingController.volume.value = v;
+                  },
+                  onChangeEnd: (_) => settingController.putCache(),
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
-    ],
-    style: const MenuStyle(
-      padding: WidgetStatePropertyAll(EdgeInsets.only(top: 16)),
-    ),
-    builder: (_, MenuController controller, Widget? child) {
-      // 使用 Listener 包裹按钮以监听鼠标事件
-      return Listener(
-        onPointerSignal: (pointerSignal) {
-          // 判断是否为鼠标滚轮事件
-          if (pointerSignal is PointerScrollEvent) {
-            final double currentVol = _settingController.volume.value;
-            // 每次滚动的步长，0.05 表示 5%
-            const double step = 0.05;
-            double newVol = currentVol;
-
-            // scrollDelta.dy < 0 表示滚轮向上推 -> 增加音量
-            // scrollDelta.dy > 0 表示滚轮向下滚 -> 减小音量
-            if (pointerSignal.scrollDelta.dy < 0) {
-              newVol = (currentVol + step).clamp(0.0, 1.0);
-            } else if (pointerSignal.scrollDelta.dy > 0) {
-              newVol = (currentVol - step).clamp(0.0, 1.0);
-            }
-
-            // 只有当音量真正发生变化时才执行更新
-            if (newVol != currentVol) {
-              _settingController.volume.value = newVol;
-              _audioController.audioSetVolume(vol: newVol);
-
-              _settingController.putCache.throttle(ms: 500)();
-            }
-          }
-        },
-        child: Obx(
-          () => GenIconBtn(
-            tooltip:
-                "音量：${(_settingController.volume * 100).toStringAsFixed(0)}",
-            icon: PhosphorIconsFill.speakerHigh,
-            size: size,
-            color: color,
-            fn: () {
-              if (controller.isOpen) {
-                controller.close();
-              } else {
-                controller.open();
-              }
-            },
+            ],
           ),
         ),
-      );
-    },
-  );
+      ],
+      style: const MenuStyle(
+        padding: WidgetStatePropertyAll(EdgeInsets.only(top: 16)),
+      ),
+      builder: (ctx, MenuController controller, __) {
+        return Listener(
+          onPointerSignal: (pointerSignal) {
+            if (pointerSignal is PointerScrollEvent) {
+              final double currentVol = settingController.volume.value;
+              const double step = 0.05;
+              double newVol = currentVol;
 
-  Widget get skipBack => GenIconBtn(
-    tooltip: "上一首",
-    icon: PhosphorIconsFill.skipBack,
-    size: size,
-    color: color,
-    fn: () async {
-      await _audioController.audioToPrevious();
-    }.throttle(ms: 500),
-  );
+              // scrollDelta.dy < 0 表示滚轮向上推 -> 增加音量
+              // scrollDelta.dy > 0 表示滚轮向下滚 -> 减小音量
+              if (pointerSignal.scrollDelta.dy < 0) {
+                newVol = (currentVol + step).clamp(0.0, 1.0);
+              } else if (pointerSignal.scrollDelta.dy > 0) {
+                newVol = (currentVol - step).clamp(0.0, 1.0);
+              }
 
-  Widget get toggle => Obx(
-    () => GenIconBtn(
-      tooltip:
-          _audioController.currentState.value == AudioState.playing
-              ? "暂停"
-              : "播放",
-      icon:
-          _audioController.currentState.value == AudioState.playing
-              ? PhosphorIconsFill.pause
-              : PhosphorIconsFill.play,
+              if (newVol != currentVol) {
+                settingController.volume.value = newVol;
+                audioController.audioSetVolume(vol: newVol);
+                settingController.putCache.throttle(ms: 500)();
+              }
+            }
+          },
+          child: Obx(
+            () => GenIconBtn(
+              tooltip:
+                  "音量：${(settingController.volume.value * 100).toStringAsFixed(0)}",
+              icon: PhosphorIconsFill.speakerHigh,
+              size: size,
+              color: color,
+              fn:
+                  () =>
+                      controller.isOpen
+                          ? controller.close()
+                          : controller.open(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SkipBackBtn extends StatelessWidget {
+  final double size;
+  final Color? color;
+  const _SkipBackBtn({required this.size, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final AudioController audioController = Get.find<AudioController>();
+    return GenIconBtn(
+      tooltip: "上一首",
+      icon: PhosphorIconsFill.skipBack,
       size: size,
       color: color,
       fn: () async {
-        await _audioController.audioToggle();
-      }.throttle(ms: 300),
-    ),
-  );
+        await audioController.audioToPrevious();
+      }.throttle(ms: 500),
+    );
+  }
+}
 
-  Widget get skipForward => GenIconBtn(
-    tooltip: "下一首",
-    icon: PhosphorIconsFill.skipForward,
-    size: size,
-    color: color,
-    fn: () async {
-      await _audioController.audioToNext();
-    }.throttle(ms: 500),
-  );
+class _PlayToggleBtn extends StatelessWidget {
+  final double size;
+  final Color? color;
+  const _PlayToggleBtn({required this.size, this.color});
 
-  Widget get changeMode => Obx(
-    () => GenIconBtn(
-      tooltip:
-          SettingController.playModeMap[_settingController.playMode.value] ??
-          "单曲循环",
-      icon: _playModeIcons[_settingController.playMode.value],
+  @override
+  Widget build(BuildContext context) {
+    final AudioController audioController = Get.find<AudioController>();
+    return Obx(() {
+      final isPlaying =
+          audioController.currentState.value == AudioState.playing;
+      return GenIconBtn(
+        tooltip: isPlaying ? "暂停" : "播放",
+        icon: isPlaying ? PhosphorIconsFill.pause : PhosphorIconsFill.play,
+        size: size,
+        color: color,
+        fn: () async {
+          await audioController.audioToggle();
+        }.throttle(ms: 300),
+      );
+    });
+  }
+}
+
+class _SkipForwardBtn extends StatelessWidget {
+  final double size;
+  final Color? color;
+  const _SkipForwardBtn({required this.size, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final AudioController audioController = Get.find<AudioController>();
+    return GenIconBtn(
+      tooltip: "下一首",
+      icon: PhosphorIconsFill.skipForward,
       size: size,
       color: color,
-      fn: () {
-        _audioController.changePlayMode();
-      },
-    ),
-  );
+      fn: () async {
+        await audioController.audioToNext();
+      }.throttle(ms: 500),
+    );
+  }
+}
 
-  Widget get seekSlide => Focus(
-    // 禁止键盘事件聚焦
-    canRequestFocus: false,
-    descendantsAreFocusable: false,
-    child: Obx(() {
-      late final double duration;
-      if (_audioController.currentMetadata.value.path.isNotEmpty) {
-        duration = _audioController.currentDuration.value;
-      } else {
-        _seekDraggingValue.value = 0.0;
-        duration = 9999.0;
-      }
-      return Slider(
-        min: 0.0,
-        max: duration,
-        label:
-            _isSeekBarDragging.value
-                ? formatTime(totalSeconds: _seekDraggingValue.value)
-                : '√',
-        value:
-            _isSeekBarDragging.value
-                ? _seekDraggingValue.value
-                : _audioController.currentMs100.value,
-        onChangeStart: (v) {
-          _seekDraggingValue.value = v;
-          _isSeekBarDragging.value = true;
-        },
-        onChanged: (v) {
-          _seekDraggingValue.value = v;
-        },
-        onChangeEnd: (v) {
-          _audioController.currentMs100.value = v;
-          _isSeekBarDragging.value = false;
-          _audioController.audioSetPositon(pos: v);
-          _seekDraggingValue.value = 0.0;
-        },
+class _PlayModeBtn extends StatelessWidget {
+  final double size;
+  final Color? color;
+  const _PlayModeBtn({required this.size, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final AudioController audioController = Get.find<AudioController>();
+    final SettingController settingController = Get.find<SettingController>();
+    return Obx(() {
+      final mode = settingController.playMode.value;
+      return GenIconBtn(
+        tooltip: SettingController.playModeMap[mode] ?? "单曲循环",
+        icon: _playModeIcons[mode],
+        size: size,
+        color: color,
+        fn: () => audioController.changePlayMode(),
       );
-    }),
-  );
+    });
+  }
+}
 
-  Widget get equalizerSet {
+class _EqualizerBtn extends StatelessWidget {
+  final double size;
+  final Color? color;
+  const _EqualizerBtn({required this.size, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final SettingController settingController = Get.find<SettingController>();
     final fontStyle = generalTextStyle(
       ctx: context,
       size: 'sm',
       color: Theme.of(context).colorScheme.onSecondaryContainer,
     );
+
+    return GenIconBtn(
+      tooltip: "均衡器",
+      icon: PhosphorIconsLight.equalizer,
+      size: size,
+      color: color,
+      fn: () => _showEqualizerDialog(context, settingController, fontStyle),
+    );
+  }
+
+  void _showEqualizerDialog(
+    BuildContext context,
+    SettingController settingController,
+    TextStyle fontStyle,
+  ) {
+    final backgroundColor = Theme.of(context).colorScheme.primary;
 
     final equalizerSliders =
         SettingController.equalizerFCenters.indexed.map((v) {
@@ -344,11 +451,10 @@ class AudioCtrlWidget {
               children: [
                 Obx(
                   () => Text(
-                    '${_settingController.equalizerGains[v.$1].toStringAsFixed(1)}db',
+                    '${settingController.equalizerGains[v.$1].toStringAsFixed(1)}db',
                     style: fontStyle,
                   ),
                 ),
-
                 Material(
                   color: Colors.transparent,
                   child: SliderTheme(
@@ -365,19 +471,18 @@ class AudioCtrlWidget {
                         child: Slider(
                           min: SettingController.minGain,
                           max: SettingController.maxGain,
-                          value: _settingController.equalizerGains[v.$1],
+                          value: settingController.equalizerGains[v.$1],
                           divisions: 48,
                           onChanged: (gain) async {
                             final newGains = List<double>.from(
-                              _settingController.equalizerGains,
+                              settingController.equalizerGains,
                             );
                             newGains[v.$1] = gain;
-                            _settingController.equalizerGains.value = newGains;
+                            settingController.equalizerGains.value = newGains;
                             await setEqParams(freCenterIndex: v.$1, gain: gain);
                           },
-                          onChangeEnd: (gain) {
-                            _settingController.putScalableCache();
-                          },
+                          onChangeEnd:
+                              (_) => settingController.putScalableCache(),
                         ),
                       ),
                     ),
@@ -392,104 +497,87 @@ class AudioCtrlWidget {
           );
         }).toList();
 
-    final backgroundColor = Theme.of(context).colorScheme.primary;
-    return GenIconBtn(
-      tooltip: "均衡器",
-      icon: PhosphorIconsLight.equalizer,
-      size: size,
-      color: color,
-      fn: () async {
-        showDialog(
-          barrierDismissible: true,
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text("均衡器"),
-              titleTextStyle: generalTextStyle(
-                ctx: context,
-                size: 'xl',
-                weight: FontWeight.w600,
-              ),
-
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(4)),
-              ),
-              backgroundColor: Theme.of(context).colorScheme.surface,
-
-              actionsAlignment: MainAxisAlignment.end,
-              actions: <Widget>[
-                SizedBox(
-                  width: context.width * 2 / 3,
-                  height: context.height / 2,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 16,
-                    children: [
-                      Obx(() {
-                        final equalizerGains =
-                            _settingController.equalizerGains;
-                        return Wrap(
-                          spacing: 2,
-                          runSpacing: 2,
-                          children:
-                              SettingController.equalizerGainPresets.entries
-                                  .map((entry) {
-                                    final isEqual = listEquals(
-                                      equalizerGains,
-                                      entry.value,
-                                    );
-                                    return CustomBtn(
-                                      fn: () async {
-                                        _settingController
-                                            .equalizerGains
-                                            .value = entry.value;
-                                        await _settingController
-                                            .putScalableCache();
-                                        for (final v in entry.value.indexed) {
-                                          await setEqParams(
-                                            freCenterIndex: v.$1,
-                                            gain: v.$2,
-                                          );
-                                        }
-                                      },
-                                      label:
-                                          SettingController
-                                              .equalizerGainPresetsText[entry
-                                              .key],
-                                      backgroundColor:
-                                          isEqual
-                                              ? backgroundColor
-                                              : Theme.of(context)
-                                                  .colorScheme
-                                                  .secondaryContainer
-                                                  .withValues(alpha: 0.2),
-                                      contentColor:
-                                          isEqual
-                                              ? Theme.of(
-                                                context,
-                                              ).colorScheme.onPrimary
-                                              : backgroundColor,
-                                      btnWidth: 96,
-                                      btnHeight: 36,
-                                    );
-                                  })
-                                  .toList(),
-                        );
-                      }),
-                      Expanded(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: equalizerSliders,
-                        ),
-                      ),
-                    ],
+    showDialog(
+      barrierDismissible: true,
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("均衡器"),
+          titleTextStyle: generalTextStyle(
+            ctx: context,
+            size: 'xl',
+            weight: FontWeight.w600,
+          ),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(4)),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          actionsAlignment: MainAxisAlignment.end,
+          actions: <Widget>[
+            SizedBox(
+              width: context.width * 2 / 3,
+              height: context.height / 2,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 16,
+                children: [
+                  Obx(() {
+                    final equalizerGains = settingController.equalizerGains;
+                    return Wrap(
+                      spacing: 2,
+                      runSpacing: 2,
+                      children:
+                          SettingController.equalizerGainPresets.entries.map((
+                            entry,
+                          ) {
+                            final isEqual = listEquals(
+                              equalizerGains,
+                              entry.value,
+                            );
+                            return CustomBtn(
+                              fn: () async {
+                                settingController.equalizerGains.value =
+                                    entry.value;
+                                await settingController.putScalableCache();
+                                for (final v in entry.value.indexed) {
+                                  await setEqParams(
+                                    freCenterIndex: v.$1,
+                                    gain: v.$2,
+                                  );
+                                }
+                              },
+                              label:
+                                  SettingController
+                                      .equalizerGainPresetsText[entry.key],
+                              backgroundColor:
+                                  isEqual
+                                      ? backgroundColor
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .secondaryContainer
+                                          .withValues(alpha: 0.2),
+                              contentColor:
+                                  isEqual
+                                      ? Theme.of(context).colorScheme.onPrimary
+                                      : backgroundColor,
+                              btnWidth: 96,
+                              btnHeight: 36,
+                            );
+                          }).toList(),
+                    );
+                  }),
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: equalizerSliders,
+                    ),
                   ),
-                ),
-              ],
-            );
-          },
+                ],
+              ),
+            ),
+          ],
         );
       },
     );

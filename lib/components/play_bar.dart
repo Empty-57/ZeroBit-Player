@@ -45,14 +45,14 @@ class _ProgressBar extends GetView<AudioController> {
           ..style = PaintingStyle.fill;
 
     return RepaintBoundary(
-      child: Obx(
-        () => CustomPaint(
-          size: const Size(_barWidth, _barHeight),
-          painter: _ProgressPainter(
-            progress: c.progress.value,
-            fgPaint: fgPaint,
-          ),
-        ),
+      child: ValueListenableBuilder(
+        valueListenable: c.progress,
+        builder: (_, p, _) {
+          return CustomPaint(
+            size: const Size(_barWidth, _barHeight),
+            painter: _ProgressPainter(progress: p, fgPaint: fgPaint),
+          );
+        },
       ),
     );
   }

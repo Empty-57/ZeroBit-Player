@@ -30,9 +30,9 @@ enum GetBuilderId { lyricRender }
 class AudioController extends GetxController {
   final currentPath = ''.obs;
   final currentIndex = (-1).obs;
-  final currentMs100 = 0.0.obs;
+  final ValueNotifier<double> currentMs100 = ValueNotifier<double>(0.0);
   final currentSec = 0.0.obs;
-  final progress = 0.0.obs;
+  final ValueNotifier<double> progress = ValueNotifier<double>(0.0);
 
   late final Rx<MusicCache> currentMetadata =
       MusicCache(
@@ -73,7 +73,7 @@ class AudioController extends GetxController {
 
   final currentLyrics = Rxn<ParsedLyricModel>();
 
-  final audioFFT = <double>[].obs;
+  final ValueNotifier<List<double>> audioFFT = ValueNotifier<List<double>>([]);
 
   final _defaultFFT = List<double>.generate(bassDataFFT512, (i) => 0.0);
 
@@ -124,12 +124,8 @@ class AudioController extends GetxController {
     }
   }
 
-  @override
-  void onInit() async {
-    super.onInit();
-
-    ever(currentMs100, (_) {
-      if (currentDuration.value > 0 &&
+  void _updateProgress(){
+    if (currentDuration.value > 0 &&
           currentMetadata.value.path.isNotEmpty &&
           playListCacheItems.isNotEmpty) {
         progress.value = (currentMs100.value / currentDuration.value).clamp(
@@ -140,11 +136,21 @@ class AudioController extends GetxController {
         progress.value = 0.0;
         currentMs100.value = 0.0;
       }
-    });
+  }
+
+  @override
+  void dispose() {
+    currentMs100.removeListener(_updateProgress);
+    super.dispose();
+  }
+
+  @override
+  void onInit() async {
+    super.onInit();
+
+    currentMs100.addListener(_updateProgress);
 
     ever(currentMetadata, (_) async {
-      currentMs100.value = 0;
-      currentSec.value = 0;
       try {
         await _syncInfo();
       } catch (e) {
@@ -372,8 +378,6 @@ class AudioController extends GetxController {
 
   /// 播放音频
   Future<void> audioPlay({required MusicCache metadata}) async {
-    currentMs100.value = 0.0;
-    currentSec.value = 0.0;
     final prevMetadata = currentMetadata.value;
     try {
       await smtcUpdateState(state: SMTCState.playing);
