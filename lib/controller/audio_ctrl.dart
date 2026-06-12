@@ -250,9 +250,7 @@ class AudioController extends GetxController {
           await getCover(path: currentPath.value, sizeFlag: 0) ??
           kTransparentImage;
 
-      if (_settingController.dynamicThemeColor.value) {
-        await _setThemeColor4Cover();
-      }
+      await _setThemeColor4Cover();
 
       await windowManager.setTitle(title + artist);
       try {
@@ -278,16 +276,17 @@ class AudioController extends GetxController {
   }
 
   void _setThemeColor({required int color}) {
-    _settingController.themeColor.value = color;
-    final newColor = Color(color);
-    if (!coverPalette.contains(newColor)) {
-      coverPalette.insert(0, newColor);
+    if (!_settingController.dynamicThemeColor.value) {
+      return;
     }
+    _settingController.themeColor.value = color;
     _settingController.putCache();
   }
 
   Future<void> _setThemeColor4Cover() async {
-    if (currentMetadata.value.path.isEmpty) {
+    if (currentMetadata.value.path.isEmpty ||
+        (!_settingController.dynamicThemeColor.value &&
+            !_settingController.useMesh.value)) {
       return;
     }
 

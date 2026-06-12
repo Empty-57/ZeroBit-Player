@@ -8,17 +8,17 @@ class LyricsMesh extends GetView<AudioController> {
 
   @override
   Widget build(BuildContext context) {
-    return Obx((){
-      return AnimatedMeshGradient(
-      colors: controller.coverPalette,
-      options: AnimatedMeshGradientOptions(
-        frequency: 5,
-        amplitude:30,
-        speed: 0.6,
-        grain: 0,
+    return Obx(
+      () => AnimatedMeshGradient(
+        colors: controller.coverPalette.value,
+        options: AnimatedMeshGradientOptions(
+          frequency: 5,
+          amplitude: 30,
+          speed: 0.6,
+          grain: 0,
+        ),
+        child: Container(),
       ),
-      child: Container(),
     );
-    });
   }
 }
