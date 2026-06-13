@@ -40,6 +40,7 @@ class GenIconBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
+      excludeFromSemantics: true,
       waitDuration: const Duration(milliseconds: 100),
       message: tooltip,
       child: TextButton(

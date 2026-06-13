@@ -42,6 +42,7 @@ class CustomBtn<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
+      excludeFromSemantics: true,
       message: tooltip ?? '',
       child: SizedBox(
         width: btnWidth!,

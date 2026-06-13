@@ -10,7 +10,7 @@ import 'package:zerobit_player/tools/func/general_style.dart';
 import '../field/operate_area.dart';
 
 const double _itemHeight = 64.0;
-const _borderRadius = BorderRadius.all(Radius.circular(4));
+const BorderRadius _borderRadius = BorderRadius.all(Radius.circular(4));
 
 class PlayListPreviewPage extends GetView<UserPlayListController> {
   const PlayListPreviewPage({super.key});
@@ -24,74 +24,77 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
       text: initialText,
     );
 
-    return showDialog<String>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          titleTextStyle: generalTextStyle(
-            ctx: context,
-            size: 20,
-            weight: FontWeight.w600,
-          ),
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(4)),
-          ),
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          content: SizedBox(
-            width: 400,
-            child: TextField(
-              autofocus: true,
-              controller: textCtrl,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: '歌单名称',
+    try {
+      return await showDialog<String>(
+        context: context,
+        builder: (BuildContext context) {
+          final primaryColor = Theme.of(context).colorScheme.primary;
+          return AlertDialog(
+            title: Text(title),
+            titleTextStyle: generalTextStyle(
+              ctx: context,
+              size: 20,
+              weight: FontWeight.w600,
+            ),
+            shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            content: SizedBox(
+              width: 400,
+              child: TextField(
+                autofocus: true,
+                controller: textCtrl,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: '歌单名称',
+                ),
+                onSubmitted: (value) => Navigator.pop(context, value),
               ),
-              onSubmitted: (value) => Navigator.pop(context, value),
             ),
-          ),
-          actions: [
-            CustomBtn(
-              fn: () => Navigator.pop(context, null),
-              backgroundColor: Colors.transparent,
-              contentColor: Theme.of(context).colorScheme.primary,
-              btnWidth: 72,
-              btnHeight: 36,
-              label: "取消",
-            ),
-            CustomBtn(
-              fn: () => Navigator.pop(context, textCtrl.text),
-              backgroundColor: Colors.transparent,
-              contentColor: Theme.of(context).colorScheme.primary,
-              btnWidth: 72,
-              btnHeight: 36,
-              label: "确定",
-            ),
-          ],
-        );
-      },
-    );
+            actions: [
+              CustomBtn(
+                fn: () => Navigator.pop(context, null),
+                backgroundColor: Colors.transparent,
+                contentColor: primaryColor,
+                btnWidth: 72,
+                btnHeight: 36,
+                label: "取消",
+              ),
+              CustomBtn(
+                fn: () => Navigator.pop(context, textCtrl.text),
+                backgroundColor: primaryColor,
+                contentColor: Theme.of(context).colorScheme.onPrimary,
+                overlayColor: Theme.of(context).colorScheme.surfaceContainer,
+                btnWidth: 72,
+                btnHeight: 36,
+                label: "确定",
+              ),
+            ],
+          );
+        },
+      );
+    } finally {
+      textCtrl.dispose();
+    }
   }
 
   Future<bool> _showDeleteConfirmDialog(
     BuildContext context,
     String playlistName,
   ) async {
+    final primaryColor = Theme.of(context).colorScheme.primary;
     return await showDialog<bool>(
           context: context,
           builder: (context) {
             return AlertDialog(
               title: const Text('删除歌单'),
               content: Text('确定要删除歌单 "$playlistName" 吗？此操作无法撤销。'),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(4)),
-              ),
+              shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
               backgroundColor: Theme.of(context).colorScheme.surface,
               actions: [
                 CustomBtn(
                   fn: () => Navigator.pop(context, false),
                   backgroundColor: Colors.transparent,
-                  contentColor: Theme.of(context).colorScheme.primary,
+                  contentColor: primaryColor,
                   btnWidth: 72,
                   btnHeight: 36,
                   label: "取消",
@@ -120,13 +123,15 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(context),
-          const SizedBox(height: 16),
-          Expanded(child: Obx(() => _buildListView(context))),
-        ],
+      child: ExcludeSemantics(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 16,
+          children: [
+            _buildHeader(context),
+            Expanded(child: Obx(() => _buildListView(context))),
+          ],
+        ),
       ),
     );
   }
@@ -137,6 +142,7 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 8,
           children: [
             Text(
               '歌单',
@@ -146,7 +152,6 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
                 weight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
             Obx(
               () => Text(
                 '共${controller.items.length}个歌单',
@@ -178,7 +183,7 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
     final textStyle2 = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
 
     return ListView.builder(
-      scrollCacheExtent: const ScrollCacheExtent.pixels(_itemHeight * 1),
+      scrollCacheExtent: const ScrollCacheExtent.pixels(_itemHeight),
       itemCount: controller.items.length,
       itemExtent: _itemHeight,
       itemBuilder: (context, index) {
@@ -186,6 +191,7 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
         final displayName = item.userKey.split('_')[0];
 
         return TextButton(
+          key: ValueKey(item.userKey),
           onPressed: () => Get.toNamed(
             AppRoutes.details,
             arguments: {
@@ -198,6 +204,7 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
           ),
           style: TextButton.styleFrom(
             shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
+            enabledMouseCursor: SystemMouseCursors.click,
           ),
           child: Row(
             children: [
