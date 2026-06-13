@@ -73,10 +73,9 @@ class MusicTile extends StatelessWidget {
         onPressed: _onTileTapped.throttle(ms: isMulSelect.value ? 10 : 500),
         style: TextButton.styleFrom(
           shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
-          backgroundColor:
-              isSelected
-                  ? Theme.of(context).colorScheme.secondaryContainer
-                  : null,
+          backgroundColor: isSelected
+              ? Theme.of(context).colorScheme.secondaryContainer
+              : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -154,14 +153,15 @@ class AsyncCover extends StatefulWidget {
 }
 
 class _AsyncCoverState extends State<AsyncCover> {
-  Future<Uint8List?>? _coverFuture;
+  Uint8List? _imageData;
   late final int _cacheResolution;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
     _cacheResolution = (widget.size * _dpr).round();
-    _triggerLoad();
+    _triggerLoad(isInit: true);
   }
 
   @override
@@ -173,37 +173,51 @@ class _AsyncCoverState extends State<AsyncCover> {
     }
   }
 
-  void _triggerLoad() {
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
+  void _triggerLoad({bool isInit = false}) {
+    _debounceTimer?.cancel();
+
     final cachedData = CoverLRUCache.get(widget.music.path);
     if (cachedData != null) {
-      setState(() {
-        _coverFuture = Future.value(cachedData);
-      });
+      if (isInit) {
+        _imageData = cachedData;
+      } else {
+        setState(() => _imageData = cachedData);
+      }
       return;
     }
 
-    setState(() {
-      _coverFuture = _loadCoverAndSave();
+    _debounceTimer = Timer(const Duration(milliseconds: 100), () {
+      if (mounted) _loadCoverAndSave();
     });
   }
 
-  Future<Uint8List?> _loadCoverAndSave() async {
-    await Future.delayed(const Duration(milliseconds: 100)); //防抖
-    if (!mounted) return null;
+  Future<void> _loadCoverAndSave() async {
+    final targetPath = widget.music.path;
+    final coverData = await getCover(path: targetPath, sizeFlag: 0);
+
+    if (!mounted || widget.music.path != targetPath) return;
 
     Uint8List? finalData;
-    final coverData = await getCover(path: widget.music.path, sizeFlag: 0);
 
     if (coverData == null) {
       final title = widget.music.title;
       final artist =
           (widget.music.artist.isNotEmpty && widget.music.artist != 'UNKNOWN')
-              ? ' - ${widget.music.artist}'
-              : '';
+          ? ' - ${widget.music.artist}'
+          : '';
       final generatedData = await saveCoverByText(
         text: title + artist,
-        songPath: widget.music.path,
+        songPath: targetPath,
       );
+
+      if (!mounted || widget.music.path != targetPath) return;
+
       if (generatedData != null && generatedData.isNotEmpty) {
         finalData = Uint8List.fromList(generatedData);
       }
@@ -211,47 +225,37 @@ class _AsyncCoverState extends State<AsyncCover> {
       finalData = coverData;
     }
 
-    if (finalData != null && mounted) {
-      CoverLRUCache.put(widget.music.path, finalData);
+    if (finalData != null) {
+      CoverLRUCache.put(targetPath, finalData);
+      setState(() => _imageData = finalData);
     }
-
-    return finalData;
-  }
-
-  Widget _renderCover(Uint8List imageBytes) {
-    return ClipRRect(
-      borderRadius: _coverBorderRadius,
-      child: Image.memory(
-        imageBytes,
-        key: ValueKey(imageBytes.hashCode),
-        width: widget.size,
-        height: widget.size,
-        fit: BoxFit.cover,
-        cacheWidth: _cacheResolution,
-        cacheHeight: _cacheResolution,
-        gaplessPlayback: true,
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Uint8List?>(
-      future: _coverFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done &&
-            snapshot.hasData) {
-          return _renderCover(snapshot.data!);
-        }
-        return Container(
-          height: widget.size,
+    final data = _imageData;
+    if (data != null) {
+      return ClipRRect(
+        borderRadius: _coverBorderRadius,
+        child: Image.memory(
+          data,
+          key: ValueKey(data.hashCode),
           width: widget.size,
-          decoration: BoxDecoration(
-            color: const Color(0x1A808080),
-            borderRadius: _coverBorderRadius,
-          ),
-        );
-      },
+          height: widget.size,
+          fit: BoxFit.cover,
+          cacheWidth: _cacheResolution,
+          cacheHeight: _cacheResolution,
+          gaplessPlayback: true,
+        ),
+      );
+    }
+    return Container(
+      height: widget.size,
+      width: widget.size,
+      decoration: BoxDecoration(
+        color: const Color(0x1A808080),
+        borderRadius: _coverBorderRadius,
+      ),
     );
   }
 }
