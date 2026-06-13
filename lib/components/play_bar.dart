@@ -39,10 +39,9 @@ class _ProgressBar extends GetView<AudioController> {
     final progressColor = Theme.of(
       context,
     ).colorScheme.secondaryContainer.withValues(alpha: 0.8);
-    final fgPaint =
-        Paint()
-          ..color = progressColor
-          ..style = PaintingStyle.fill;
+    final fgPaint = Paint()
+      ..color = progressColor
+      ..style = PaintingStyle.fill;
 
     return RepaintBoundary(
       child: ValueListenableBuilder(
@@ -100,8 +99,8 @@ class PlayBar extends GetView<AudioController> {
           (screenWidth -
                   (screenWidth > _resViewThresholds
                       ? controller.navigationIsExtend.value
-                          ? _navigationWidth
-                          : _navigationWidthSmall
+                            ? _navigationWidth
+                            : _navigationWidthSmall
                       : _navigationWidthSmall)) /
               2 -
           _barWidthHalf;
@@ -112,11 +111,13 @@ class PlayBar extends GetView<AudioController> {
         right: rightOffset,
         child: ClipRRect(
           borderRadius: _coverBorderRadius,
-          child: Column(
-            children: [
-              _buildSlider(context, audioCtrlWidget),
-              _buildPlayBarBody(context, audioCtrlWidget),
-            ],
+          child: ExcludeSemantics(
+            child: Column(
+              children: [
+                _buildSlider(context, audioCtrlWidget),
+                _buildPlayBarBody(context, audioCtrlWidget),
+              ],
+            ),
           ),
         ),
       );
@@ -293,36 +294,36 @@ class PlayBar extends GetView<AudioController> {
                 Obx(() {
                   final title =
                       controller.currentMetadata.value.title.isNotEmpty
-                          ? controller.currentMetadata.value.title
-                          : "ZeroBit Player";
+                      ? controller.currentMetadata.value.title
+                      : "ZeroBit Player";
                   return _isBarHover.value
                       ? _buildScrollText(title, titleStyle, titleStrut)
                       : Text(
-                        title,
-                        softWrap: false,
-                        overflow: TextOverflow.fade,
-                        strutStyle: titleStrut,
-                        maxLines: 1,
-                        style: titleStyle,
-                        textAlign: TextAlign.left,
-                      );
+                          title,
+                          softWrap: false,
+                          overflow: TextOverflow.fade,
+                          strutStyle: titleStrut,
+                          maxLines: 1,
+                          style: titleStyle,
+                          textAlign: TextAlign.left,
+                        );
                 }),
                 Obx(() {
                   final artist =
                       controller.currentMetadata.value.artist.isNotEmpty
-                          ? controller.currentMetadata.value.artist
-                          : "39";
+                      ? controller.currentMetadata.value.artist
+                      : "39";
                   return _isBarHover.value
                       ? _buildScrollText(artist, timeTextStyle, subTitleStrut)
                       : Text(
-                        artist,
-                        softWrap: false,
-                        overflow: TextOverflow.fade,
-                        strutStyle: subTitleStrut,
-                        maxLines: 1,
-                        style: timeTextStyle,
-                        textAlign: TextAlign.left,
-                      );
+                          artist,
+                          softWrap: false,
+                          overflow: TextOverflow.fade,
+                          strutStyle: subTitleStrut,
+                          maxLines: 1,
+                          style: timeTextStyle,
+                          textAlign: TextAlign.left,
+                        );
                 }),
               ],
             ),
@@ -371,10 +372,9 @@ class PlayBar extends GetView<AudioController> {
       child: RepaintBoundary(
         child: Center(
           child: Obx(() {
-            final duration =
-                c.currentDuration.value > 0
-                    ? formatTime(totalSeconds: c.currentDuration.value)
-                    : "--:--";
+            final duration = c.currentDuration.value > 0
+                ? formatTime(totalSeconds: c.currentDuration.value)
+                : "--:--";
             final currentSec = formatTime(totalSeconds: c.currentSec.value);
             return Text("$currentSec / $duration", style: timeTextStyle);
           }),

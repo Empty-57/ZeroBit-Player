@@ -111,7 +111,10 @@ class _SearchDialogContentState extends State<_SearchDialogContent> {
                 flex: 1,
                 child: Obx(
                   () => ListView.builder(
-                    scrollCacheExtent: const ScrollCacheExtent.pixels(_itemHeight * 1), itemCount: widget.cacheCtrl.searchResult.length,
+                    scrollCacheExtent: const ScrollCacheExtent.pixels(
+                      _itemHeight * 1,
+                    ),
+                    itemCount: widget.cacheCtrl.searchResult.length,
                     itemExtent: _itemHeight,
                     padding: EdgeInsets.only(bottom: _itemHeight * 2),
                     itemBuilder: (context, index) {
@@ -161,8 +164,8 @@ class _SearchDialogContentState extends State<_SearchDialogContent> {
                                 },
                               ),
                               MenuAnchor(
-                                menuChildren:
-                                    userPlayListController.allUserKey.map((v) {
+                                menuChildren: userPlayListController.allUserKey
+                                    .map((v) {
                                       return MenuItemButton(
                                         onPressed: () {
                                           userPlayListController.addToAudioList(
@@ -174,7 +177,8 @@ class _SearchDialogContentState extends State<_SearchDialogContent> {
                                           child: Text(v.split('_')[0]),
                                         ),
                                       );
-                                    }).toList(),
+                                    })
+                                    .toList(),
                                 controller: menuController,
                                 consumeOutsideTap: true,
                                 style: MenuStyle(
@@ -242,10 +246,9 @@ class _ControllerButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       icon: Icon(icon),
-      color:
-          onlyDarkMode
-              ? ThemeService.instance.darkTheme.colorScheme.onSurface
-              : Theme.of(context).colorScheme.onSurface,
+      color: onlyDarkMode
+          ? ThemeService.instance.darkTheme.colorScheme.onSurface
+          : Theme.of(context).colorScheme.onSurface,
       tooltip: tooltip,
       iconSize: getIconSize(size: 'lg'),
       hoverColor: hoverColor,
@@ -300,10 +303,9 @@ class WindowControllerBar extends GetView<MyWindowListener> {
             padding: EdgeInsets.only(right: 8),
             child: _ControllerButton(
               onlyDarkMode: onlyDarkMode,
-              icon:
-                  useCaretDown
-                      ? PhosphorIconsLight.caretDown
-                      : PhosphorIconsLight.caretLeft,
+              icon: useCaretDown
+                  ? PhosphorIconsLight.caretDown
+                  : PhosphorIconsLight.caretLeft,
               fn: () {
                 Get.back(id: isNestedRoute ? 1 : null);
               },
@@ -357,15 +359,13 @@ class WindowControllerBar extends GetView<MyWindowListener> {
               child: Obx(
                 () => _ControllerButton(
                   onlyDarkMode: onlyDarkMode,
-                  icon:
-                      settingController.themeMode.value == 'dark'
-                          ? PhosphorIconsLight.moon
-                          : PhosphorIconsLight.sun,
+                  icon: settingController.themeMode.value == 'dark'
+                      ? PhosphorIconsLight.moon
+                      : PhosphorIconsLight.sun,
                   fn: ThemeService.instance.setThemeMode,
-                  tooltip:
-                      settingController.themeMode.value == 'dark'
-                          ? "暗色主题"
-                          : "亮色主题",
+                  tooltip: settingController.themeMode.value == 'dark'
+                      ? "暗色主题"
+                      : "亮色主题",
                 ),
               ),
             ),
@@ -392,10 +392,9 @@ class WindowControllerBar extends GetView<MyWindowListener> {
               visible: !windowListener.isFullScreen.value,
               child: _ControllerButton(
                 onlyDarkMode: onlyDarkMode,
-                icon:
-                    windowListener.isMaximized.value
-                        ? PhosphorIconsLight.cornersIn
-                        : PhosphorIconsLight.cornersOut,
+                icon: windowListener.isMaximized.value
+                    ? PhosphorIconsLight.cornersIn
+                    : PhosphorIconsLight.cornersOut,
                 fn: windowListener.toggleMaximize,
                 tooltip: windowListener.isMaximized.value ? "还原" : "最大化",
               ),
@@ -410,10 +409,9 @@ class WindowControllerBar extends GetView<MyWindowListener> {
               ),
               child: _ControllerButton(
                 onlyDarkMode: onlyDarkMode,
-                icon:
-                    windowListener.isFullScreen.value
-                        ? PhosphorIconsLight.arrowsInSimple
-                        : PhosphorIconsLight.arrowsOutSimple,
+                icon: windowListener.isFullScreen.value
+                    ? PhosphorIconsLight.arrowsInSimple
+                    : PhosphorIconsLight.arrowsOutSimple,
                 fn: windowListener.toggleFullScreen,
                 tooltip: windowListener.isFullScreen.value ? "还原" : "全屏",
               ),

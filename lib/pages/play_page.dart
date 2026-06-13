@@ -1458,206 +1458,212 @@ class _PlayPageState extends State<PlayPage> {
     return Focus(
       autofocus: true,
       onKeyEvent: _onKeyEvent,
-      child: BlurWithCoverBackground(
-        cover: _audioController.currentSmallCover,
-        useGradient: false,
-        sigma: 256,
-        useMask: true,
-        radius: 0,
-        meshEnable: true,
-        onlyDarkMode: true,
-        child: Container(
-          color: Theme.of(
-            context,
-          ).colorScheme.surfaceContainer.withValues(alpha: 0.0),
-          child: Column(
-            children: [
-              const WindowControllerBar(
-                isNestedRoute: false,
-                showLogo: false,
-                useCaretDown: true,
-                useSearch: false,
-                useThemeSwitch: false,
-                onlyDarkMode: true,
-              ),
-              Expanded(
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTapDown: (_) => _menuController.isOpen
-                            ? _menuController.close()
-                            : null,
-                        onSecondaryTapDown: (details) => _menuController.open(
-                          position: details.localPosition,
-                        ),
-                        child: MenuAnchor(
-                          consumeOutsideTap: true,
-                          controller: _menuController,
-                          style: MenuStyle(
-                            backgroundColor: WidgetStatePropertyAll(
-                              darkColorScheme.surfaceContainer.withValues(
-                                alpha: 0.8,
+      child: ExcludeSemantics(
+        child: BlurWithCoverBackground(
+          cover: _audioController.currentSmallCover,
+          useGradient: false,
+          sigma: 256,
+          useMask: true,
+          radius: 0,
+          meshEnable: true,
+          onlyDarkMode: true,
+          child: Container(
+            color: Theme.of(
+              context,
+            ).colorScheme.surfaceContainer.withValues(alpha: 0.0),
+            child: Column(
+              children: [
+                const WindowControllerBar(
+                  isNestedRoute: false,
+                  showLogo: false,
+                  useCaretDown: true,
+                  useSearch: false,
+                  useThemeSwitch: false,
+                  onlyDarkMode: true,
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTapDown: (_) => _menuController.isOpen
+                              ? _menuController.close()
+                              : null,
+                          onSecondaryTapDown: (details) => _menuController.open(
+                            position: details.localPosition,
+                          ),
+                          child: MenuAnchor(
+                            consumeOutsideTap: true,
+                            controller: _menuController,
+                            style: MenuStyle(
+                              backgroundColor: WidgetStatePropertyAll(
+                                darkColorScheme.surfaceContainer.withValues(
+                                  alpha: 0.8,
+                                ),
                               ),
                             ),
-                          ),
-                          menuChildren: _getMenuItem(
-                            _menuController,
-                            darkColorScheme,
-                            _audioController.currentMetadata,
-                          ),
-                          child: Stack(
-                            children: [
-                              // --- 歌词侧 ---
-                              Obx(
-                                () => AnimatedPositioned(
-                                  duration: 300.ms,
-                                  curve: Curves.fastOutSlowIn,
-                                  right: _coverViewMode.value == 0
-                                      ? 0
-                                      : (-halfWidth),
-                                  width: halfWidth, // 水平约束
-                                  top: 0, // 垂直约束
-                                  bottom: 0, // 垂直约束
-                                  child: AnimatedOpacity(
-                                    opacity: _coverViewMode.value == 0
-                                        ? 1.0
-                                        : 0.0,
-                                    duration: 100.ms,
-                                    child: const _LyricsSide(),
-                                  ),
-                                ),
-                              ),
-                              // --- 封面侧 ---
-                              Obx(
-                                () => AnimatedPositioned(
-                                  duration: 300.ms,
-                                  curve: Curves.fastOutSlowIn,
-                                  left: _coverViewMode.value == 0
-                                      ? (halfWidth - coverSize) / 2
-                                      : _coverViewMode.value == 1
-                                      ? (context.width - coverSize) / 2
-                                      : halfWidth + (halfWidth - coverSize) / 2,
-                                  width: coverSize,
-                                  top: 0,
-                                  bottom: 0,
-                                  child: _CoverSide(
-                                    coverSize: coverSize,
-                                    titleStyle: titleStyle,
-                                    subTitleStyle: subTitleStyle,
-                                  ),
-                                ),
-                              ),
-                              // --- 详情侧 ---
-                              Obx(() {
-                                final textStyle_ = titleStyle.copyWith(
-                                  fontWeight: FontWeight.w100,
-                                  fontSize: titleStyle.fontSize! - 3,
-                                );
-                                final metadata =
-                                    _audioController.currentMetadata.value;
-                                return AnimatedPositioned(
-                                  duration: 300.ms,
-                                  curve: Curves.fastOutSlowIn,
-                                  left: _coverViewMode.value == 2
-                                      ? (halfWidth - 100) / 4
-                                      : (-halfWidth),
-                                  width: halfWidth - 100, // 水平约束
-                                  top: 0, // 垂直约束
-                                  bottom: 0, // 垂直约束
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    spacing: 10,
-                                    children: [
-                                      Text(
-                                        "标题：${metadata.title}",
-                                        style: textStyle_,
-                                      ),
-                                      Text(
-                                        "艺术家：${metadata.artist}",
-                                        style: textStyle_,
-                                      ),
-                                      Text(
-                                        "专辑：${metadata.album}",
-                                        style: textStyle_,
-                                      ),
-                                      Text(
-                                        "流派：${metadata.genre}",
-                                        style: textStyle_,
-                                      ),
-                                      Text(
-                                        "时长：${formatTime(totalSeconds: metadata.duration)}",
-                                        style: textStyle_,
-                                      ),
-                                      Text(
-                                        "比特率：${metadata.bitrate ?? "UNKNOWN"}kbps",
-                                        style: textStyle_,
-                                      ),
-                                      Text(
-                                        "采样率：${metadata.sampleRate ?? "UNKNOWN"}hz",
-                                        style: textStyle_,
-                                      ),
-                                      Text(
-                                        "音轨号：${metadata.trackNumber}",
-                                        style: textStyle_,
-                                      ),
-                                      Text(
-                                        "位深度：${metadata.bitDepth}",
-                                        style: textStyle_,
-                                      ),
-                                      Text(
-                                        "通道数：${metadata.channels}",
-                                        style: textStyle_,
-                                      ),
-                                      Text(
-                                        "路径：${metadata.path}",
-                                        style: textStyle_,
-                                        maxLines: 5,
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }),
-                              // --- 频谱图 ---
-                              Positioned(
-                                left: 0,
-                                bottom: 0,
-                                child: Obx(() {
-                                  if (!settingController
-                                      .showSpectrogram
-                                      .value) {
-                                    return const SizedBox.shrink();
-                                  }
-                                  return _SpectrogramWidget(
-                                    key: ValueKey(
-                                      _settingController.showSpectrogram.value,
+                            menuChildren: _getMenuItem(
+                              _menuController,
+                              darkColorScheme,
+                              _audioController.currentMetadata,
+                            ),
+                            child: Stack(
+                              children: [
+                                // --- 歌词侧 ---
+                                Obx(
+                                  () => AnimatedPositioned(
+                                    duration: 300.ms,
+                                    curve: Curves.fastOutSlowIn,
+                                    right: _coverViewMode.value == 0
+                                        ? 0
+                                        : (-halfWidth),
+                                    width: halfWidth, // 水平约束
+                                    top: 0, // 垂直约束
+                                    bottom: 0, // 垂直约束
+                                    child: AnimatedOpacity(
+                                      opacity: _coverViewMode.value == 0
+                                          ? 1.0
+                                          : 0.0,
+                                      duration: 100.ms,
+                                      child: const _LyricsSide(),
                                     ),
-                                    gradient: spectrogramBarGradient,
-                                    lenth: spectrogramBarLength,
-                                    barWidth: spectrogramBarWidth,
-                                    paddingWidth: spectrogramPaddingWidth,
+                                  ),
+                                ),
+                                // --- 封面侧 ---
+                                Obx(
+                                  () => AnimatedPositioned(
+                                    duration: 300.ms,
+                                    curve: Curves.fastOutSlowIn,
+                                    left: _coverViewMode.value == 0
+                                        ? (halfWidth - coverSize) / 2
+                                        : _coverViewMode.value == 1
+                                        ? (context.width - coverSize) / 2
+                                        : halfWidth +
+                                              (halfWidth - coverSize) / 2,
+                                    width: coverSize,
+                                    top: 0,
+                                    bottom: 0,
+                                    child: _CoverSide(
+                                      coverSize: coverSize,
+                                      titleStyle: titleStyle,
+                                      subTitleStyle: subTitleStyle,
+                                    ),
+                                  ),
+                                ),
+                                // --- 详情侧 ---
+                                Obx(() {
+                                  final textStyle_ = titleStyle.copyWith(
+                                    fontWeight: FontWeight.w100,
+                                    fontSize: titleStyle.fontSize! - 3,
+                                  );
+                                  final metadata =
+                                      _audioController.currentMetadata.value;
+                                  return AnimatedPositioned(
+                                    duration: 300.ms,
+                                    curve: Curves.fastOutSlowIn,
+                                    left: _coverViewMode.value == 2
+                                        ? (halfWidth - 100) / 4
+                                        : (-halfWidth),
+                                    width: halfWidth - 100, // 水平约束
+                                    top: 0, // 垂直约束
+                                    bottom: 0, // 垂直约束
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      spacing: 10,
+                                      children: [
+                                        Text(
+                                          "标题：${metadata.title}",
+                                          style: textStyle_,
+                                        ),
+                                        Text(
+                                          "艺术家：${metadata.artist}",
+                                          style: textStyle_,
+                                        ),
+                                        Text(
+                                          "专辑：${metadata.album}",
+                                          style: textStyle_,
+                                        ),
+                                        Text(
+                                          "流派：${metadata.genre}",
+                                          style: textStyle_,
+                                        ),
+                                        Text(
+                                          "时长：${formatTime(totalSeconds: metadata.duration)}",
+                                          style: textStyle_,
+                                        ),
+                                        Text(
+                                          "比特率：${metadata.bitrate ?? "UNKNOWN"}kbps",
+                                          style: textStyle_,
+                                        ),
+                                        Text(
+                                          "采样率：${metadata.sampleRate ?? "UNKNOWN"}hz",
+                                          style: textStyle_,
+                                        ),
+                                        Text(
+                                          "音轨号：${metadata.trackNumber}",
+                                          style: textStyle_,
+                                        ),
+                                        Text(
+                                          "位深度：${metadata.bitDepth}",
+                                          style: textStyle_,
+                                        ),
+                                        Text(
+                                          "通道数：${metadata.channels}",
+                                          style: textStyle_,
+                                        ),
+                                        Text(
+                                          "路径：${metadata.path}",
+                                          style: textStyle_,
+                                          maxLines: 5,
+                                        ),
+                                      ],
+                                    ),
                                   );
                                 }),
-                              ),
-                            ],
+                                // --- 频谱图 ---
+                                Positioned(
+                                  left: 0,
+                                  bottom: 0,
+                                  child: Obx(() {
+                                    if (!settingController
+                                        .showSpectrogram
+                                        .value) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    return _SpectrogramWidget(
+                                      key: ValueKey(
+                                        _settingController
+                                            .showSpectrogram
+                                            .value,
+                                      ),
+                                      gradient: spectrogramBarGradient,
+                                      lenth: spectrogramBarLength,
+                                      barWidth: spectrogramBarWidth,
+                                      paddingWidth: spectrogramPaddingWidth,
+                                    );
+                                  }),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    _ControlBar(
-                      mixColor: mixColor,
-                      activeTrackCover: activeTrackCover,
-                      inactiveTrackCover: inactiveTrackCover,
-                      timeCurrentStyle: timeCurrentStyle,
-                      timeTotalStyle: timeTotalStyle,
-                      playQueueScrollController: _playQueueScrollController,
-                    ),
-                  ],
+                      _ControlBar(
+                        mixColor: mixColor,
+                        activeTrackCover: activeTrackCover,
+                        inactiveTrackCover: inactiveTrackCover,
+                        timeCurrentStyle: timeCurrentStyle,
+                        timeTotalStyle: timeTotalStyle,
+                        playQueueScrollController: _playQueueScrollController,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

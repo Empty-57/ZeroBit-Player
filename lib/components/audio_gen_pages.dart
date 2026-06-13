@@ -702,14 +702,15 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         children: [
           Obx(() {
             final viewMode = _settingController.viewModeMap[widget.operateArea];
-            final extent = const ScrollCacheExtent.pixels(_itemHeight * 2);
+            final extent = const ScrollCacheExtent.pixels(_itemHeight * 4);
+            final padding = const EdgeInsets.only(bottom: _itemHeight * 2);
             return viewMode!
                 ? ListView.builder(
                     scrollCacheExtent: extent,
                     controller: _scrollControllerList,
                     itemCount: widget.controller.items.length,
                     itemExtent: _itemHeight,
-                    padding: const EdgeInsets.only(bottom: _itemHeight * 2),
+                    padding: padding,
                     addRepaintBoundaries: true,
                     addAutomaticKeepAlives: false,
                     addSemanticIndexes: false,
@@ -734,7 +735,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
                       childAspectRatio: 1.0,
                       mainAxisExtent: _itemHeight,
                     ),
-                    padding: const EdgeInsets.only(bottom: _itemHeight * 2),
+                    padding: padding,
                     addRepaintBoundaries: true,
                     addAutomaticKeepAlives: false,
                     addSemanticIndexes: false,
