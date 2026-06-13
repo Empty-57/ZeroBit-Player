@@ -35,6 +35,16 @@ class ThemeService {
         radius: Radius.circular(_radius),
         interactive: true,
       ),
+      textButtonTheme: TextButtonThemeData(
+        style: ButtonStyle(
+          mouseCursor: WidgetStateProperty.resolveWith<MouseCursor>((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return SystemMouseCursors.basic;
+            }
+            return SystemMouseCursors.click;
+          }),
+        ),
+      ),
     );
   }
 
