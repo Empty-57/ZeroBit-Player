@@ -2,8 +2,9 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
@@ -132,16 +133,15 @@ List<Widget> _genMenuItems({
     divider,
 
     buildMenuBtn(
-      fn:
-          () => Get.toNamed(
-            AppRoutes.details,
-            arguments: {
-              'pathList': cacheCtrl.albumItemsDict[albumWithLetter],
-              'title': album,
-              'operateArea': OperateArea.albumDetails,
-            },
-            id: 1,
-          ),
+      fn: () => Get.toNamed(
+        AppRoutes.details,
+        arguments: {
+          'pathList': cacheCtrl.albumItemsDict[albumWithLetter],
+          'title': album,
+          'operateArea': OperateArea.albumDetails,
+        },
+        id: 1,
+      ),
       icon: PhosphorIconsLight.vinylRecord,
       label: album,
       tooltip: '跳转到 "$album"',
@@ -149,16 +149,15 @@ List<Widget> _genMenuItems({
 
     if (artistList.length == 1)
       buildMenuBtn(
-        fn:
-            () => Get.toNamed(
-              AppRoutes.details,
-              arguments: {
-                'pathList': cacheCtrl.artistItemsDict[artistFirstWithLetter],
-                'title': artistFirst,
-                'operateArea': OperateArea.artistDetails,
-              },
-              id: 1,
-            ),
+        fn: () => Get.toNamed(
+          AppRoutes.details,
+          arguments: {
+            'pathList': cacheCtrl.artistItemsDict[artistFirstWithLetter],
+            'title': artistFirst,
+            'operateArea': OperateArea.artistDetails,
+          },
+          id: 1,
+        ),
         icon: PhosphorIconsLight.userFocus,
         label: artistFirst,
         tooltip: '跳转到 "$artistFirst"',
@@ -176,26 +175,24 @@ List<Widget> _genMenuItems({
           PhosphorIconsLight.userFocus,
           size: getIconSize(size: 'md'),
         ),
-        menuChildren:
-            artistList.map((v) {
-              return MenuItemButton(
-                onPressed: () {
-                  menuController.close();
-                  Get.toNamed(
-                    AppRoutes.details,
-                    arguments: {
-                      'pathList':
-                          cacheCtrl
-                              .artistItemsDict[cacheCtrl.getLetter(str: v) + v],
-                      'title': v,
-                      'operateArea': OperateArea.artistDetails,
-                    },
-                    id: 1,
-                  );
+        menuChildren: artistList.map((v) {
+          return MenuItemButton(
+            onPressed: () {
+              menuController.close();
+              Get.toNamed(
+                AppRoutes.details,
+                arguments: {
+                  'pathList': cacheCtrl
+                      .artistItemsDict[cacheCtrl.getLetter(str: v) + v],
+                  'title': v,
+                  'operateArea': OperateArea.artistDetails,
                 },
-                child: Center(child: Text(v)),
+                id: 1,
               );
-            }).toList(),
+            },
+            child: Center(child: Text(v)),
+          );
+        }).toList(),
         child: const Text('查看艺术家'),
       ),
 
@@ -209,16 +206,15 @@ List<Widget> _genMenuItems({
       ),
       menuStyle: const MenuStyle(alignment: Alignment.topRight),
       leadingIcon: Icon(PhosphorIconsLight.plus, size: getIconSize(size: 'md')),
-      menuChildren:
-          playListCtrl.allUserKey.map((v) {
-            return MenuItemButton(
-              onPressed: () {
-                menuController.close();
-                playListCtrl.addToAudioList(metadata: metadata, userKey: v);
-              },
-              child: Center(child: Text(v.split('_')[0])),
-            );
-          }).toList(),
+      menuChildren: playListCtrl.allUserKey.map((v) {
+        return MenuItemButton(
+          onPressed: () {
+            menuController.close();
+            playListCtrl.addToAudioList(metadata: metadata, userKey: v);
+          },
+          child: Center(child: Text(v.split('_')[0])),
+        );
+      }).toList(),
       child: const Text('添加到歌单'),
     ),
 
@@ -392,8 +388,8 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       child: Obx(() {
         return AnimatedSwitcher(
           duration: Duration(milliseconds: 300),
-          transitionBuilder:
-              (child, anim) => FadeTransition(opacity: anim, child: child),
+          transitionBuilder: (child, anim) =>
+              FadeTransition(opacity: anim, child: child),
           child: Image.memory(
             widget.controller.headCover.value,
             key: ValueKey(widget.controller.headCover.value.hashCode),
@@ -427,13 +423,11 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         Obx(
           () => AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
-            transitionBuilder:
-                (child, animation) =>
-                    FadeTransition(opacity: animation, child: child),
-            child:
-                _isMulSelect.value
-                    ? _buildMultiSelectActions()
-                    : _buildNormalActions(),
+            transitionBuilder: (child, animation) =>
+                FadeTransition(opacity: animation, child: child),
+            child: _isMulSelect.value
+                ? _buildMultiSelectActions()
+                : _buildNormalActions(),
           ),
         ),
       ],
@@ -454,10 +448,9 @@ class _AudioGenPagesState extends State<AudioGenPages> {
               widget.controller.itemReverse();
               _audioController.syncCurrentIndex();
             },
-            icon:
-                _settingController.isReverse.value
-                    ? PhosphorIconsLight.arrowDown
-                    : PhosphorIconsLight.arrowUp,
+            icon: _settingController.isReverse.value
+                ? PhosphorIconsLight.arrowDown
+                : PhosphorIconsLight.arrowUp,
             btnHeight: btnHeight,
             btnWidth: btnWidth,
             tooltip: _settingController.isReverse.value ? '降序' : '升序',
@@ -470,16 +463,14 @@ class _AudioGenPagesState extends State<AudioGenPages> {
                   !_settingController.viewModeMap[widget.operateArea]!;
               _settingController.putCache();
             },
-            icon:
-                _settingController.viewModeMap[widget.operateArea]!
-                    ? PhosphorIconsLight.listDashes
-                    : PhosphorIconsLight.gridFour,
+            icon: _settingController.viewModeMap[widget.operateArea]!
+                ? PhosphorIconsLight.listDashes
+                : PhosphorIconsLight.gridFour,
             btnHeight: btnHeight,
             btnWidth: btnWidth,
-            tooltip:
-                _settingController.viewModeMap[widget.operateArea]!
-                    ? "列表视图"
-                    : "表格视图",
+            tooltip: _settingController.viewModeMap[widget.operateArea]!
+                ? "列表视图"
+                : "表格视图",
           ),
         ),
         _buildMultiSelectToggleButton(),
@@ -519,10 +510,9 @@ class _AudioGenPagesState extends State<AudioGenPages> {
                 _selectedList.value = [...widget.controller.items];
               }
             },
-            icon:
-                _selectedList.isNotEmpty
-                    ? PhosphorIconsLight.selectionSlash
-                    : PhosphorIconsLight.selectionAll,
+            icon: _selectedList.isNotEmpty
+                ? PhosphorIconsLight.selectionSlash
+                : PhosphorIconsLight.selectionAll,
             btnHeight: btnHeight,
             btnWidth: btnWidth,
             tooltip: _selectedList.isNotEmpty ? '清空选择' : '全选',
@@ -539,10 +529,9 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         _selectedList.clear();
         _isMulSelect.value = !_isMulSelect.value;
       },
-      icon:
-          _isMulSelect.value
-              ? PhosphorIconsLight.xSquare
-              : PhosphorIconsLight.selection,
+      icon: _isMulSelect.value
+          ? PhosphorIconsLight.xSquare
+          : PhosphorIconsLight.selection,
       btnHeight: btnHeight,
       btnWidth: btnWidth,
       tooltip: _isMulSelect.value ? '退出多选' : '多选模式',
@@ -610,23 +599,22 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   Widget _buildAddToPlaylistMenuButton() {
     return MenuAnchor(
       controller: _playListMenuController,
-      menuChildren:
-          _userPlayListController.allUserKey.map((v) {
-            return CustomBtn(
-              fn: () {
-                _playListMenuController.close();
-                _userPlayListController.addAllToAudioList(
-                  selectedList: [..._selectedList],
-                  userKey: v,
-                );
-              },
-              btnWidth: 160,
-              btnHeight: btnHeight,
-              label: v.split('_')[0],
-              mainAxisAlignment: MainAxisAlignment.center,
-              backgroundColor: Colors.transparent,
+      menuChildren: _userPlayListController.allUserKey.map((v) {
+        return CustomBtn(
+          fn: () {
+            _playListMenuController.close();
+            _userPlayListController.addAllToAudioList(
+              selectedList: [..._selectedList],
+              userKey: v,
             );
-          }).toList(),
+          },
+          btnWidth: 160,
+          btnHeight: btnHeight,
+          label: v.split('_')[0],
+          mainAxisAlignment: MainAxisAlignment.center,
+          backgroundColor: Colors.transparent,
+        );
+      }).toList(),
       child: CustomBtn(
         fn: () {
           if (_userPlayListController.allUserKey.isEmpty) {
@@ -651,7 +639,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   Widget _buildMusicList() {
     return RawMenuAnchor(
       controller: _musicMenuCtrl.menuController,
-      consumeOutsideTaps: true,
+      consumeOutsideTaps: false,
       overlayBuilder: (context, info) {
         final currentMetadata = _musicMenuCtrl.currentMetadata;
         final position = _musicMenuCtrl.menuPosition;
@@ -661,8 +649,9 @@ class _AudioGenPagesState extends State<AudioGenPages> {
 
         double left = position.dx + 16;
         double top = position.dy;
-        final itemCount =
-            widget.operateArea == OperateArea.playListDetails ? 8 : 7;
+        final itemCount = widget.operateArea == OperateArea.playListDetails
+            ? 8
+            : 7;
         if (top + _menuBtnHeight * (itemCount + 1.5) > Get.height) {
           top = top - _menuBtnHeight * itemCount;
         }
@@ -674,11 +663,9 @@ class _AudioGenPagesState extends State<AudioGenPages> {
           top: top,
           left: left,
           child: TapRegion(
-            onTapOutside:
-                (_) => Future.delayed(
-                  const Duration(milliseconds: 100),
-                  _musicMenuCtrl.closeMenu,
-                ),
+            behavior: HitTestBehavior.opaque,
+            groupId: _musicMenuCtrl.menuController,
+            onTapOutside: (_) => _musicMenuCtrl.closeMenu(),
             child: Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainer,
@@ -715,53 +702,52 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         children: [
           Obx(() {
             final viewMode = _settingController.viewModeMap[widget.operateArea];
+            final extent = const ScrollCacheExtent.pixels(_itemHeight * 2);
             return viewMode!
                 ? ListView.builder(
-                  controller: _scrollControllerList,
-                  itemCount: widget.controller.items.length,
-                  itemExtent: _itemHeight,
-                  cacheExtent: _itemHeight * 2,
-                  padding: const EdgeInsets.only(bottom: _itemHeight * 2),
-                  addRepaintBoundaries: true,
-                  addAutomaticKeepAlives: false,
-                  addSemanticIndexes: false,
-                  itemBuilder:
-                      (context, index) => _buildMusicTile(
-                        context,
-                        index,
-                        _titleStyle,
-                        _highLightTitleStyle,
-                        _subStyle,
-                        _highLightSubStyle,
-                        viewMode,
-                      ),
-                )
+                    scrollCacheExtent: extent,
+                    controller: _scrollControllerList,
+                    itemCount: widget.controller.items.length,
+                    itemExtent: _itemHeight,
+                    padding: const EdgeInsets.only(bottom: _itemHeight * 2),
+                    addRepaintBoundaries: true,
+                    addAutomaticKeepAlives: false,
+                    addSemanticIndexes: false,
+                    itemBuilder: (context, index) => _buildMusicTile(
+                      context,
+                      index,
+                      _titleStyle,
+                      _highLightTitleStyle,
+                      _subStyle,
+                      _highLightSubStyle,
+                      viewMode,
+                    ),
+                  )
                 : GridView.builder(
-                  controller: _scrollControllerGrid,
-                  itemCount: widget.controller.items.length,
-                  cacheExtent: _itemHeight * 2,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: context.width < resViewThresholds ? 3 : 4,
-                    mainAxisSpacing: 4.0,
-                    crossAxisSpacing: 8.0,
-                    childAspectRatio: 1.0,
-                    mainAxisExtent: _itemHeight,
-                  ),
-                  padding: const EdgeInsets.only(bottom: _itemHeight * 2),
-                  addRepaintBoundaries: true,
-                  addAutomaticKeepAlives: false,
-                  addSemanticIndexes: false,
-                  itemBuilder:
-                      (context, index) => _buildMusicTile(
-                        context,
-                        index,
-                        _titleStyle,
-                        _highLightTitleStyle,
-                        _subStyle,
-                        _highLightSubStyle,
-                        viewMode,
-                      ),
-                );
+                    scrollCacheExtent: extent,
+                    controller: _scrollControllerGrid,
+                    itemCount: widget.controller.items.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: context.width < resViewThresholds ? 3 : 4,
+                      mainAxisSpacing: 4.0,
+                      crossAxisSpacing: 8.0,
+                      childAspectRatio: 1.0,
+                      mainAxisExtent: _itemHeight,
+                    ),
+                    padding: const EdgeInsets.only(bottom: _itemHeight * 2),
+                    addRepaintBoundaries: true,
+                    addAutomaticKeepAlives: false,
+                    addSemanticIndexes: false,
+                    itemBuilder: (context, index) => _buildMusicTile(
+                      context,
+                      index,
+                      _titleStyle,
+                      _highLightTitleStyle,
+                      _subStyle,
+                      _highLightSubStyle,
+                      viewMode,
+                    ),
+                  );
           }),
           FloatingButton(
             scrollControllerList: _scrollControllerList,
