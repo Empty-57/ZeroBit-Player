@@ -518,7 +518,6 @@ class _KaraOkLyricWidget extends StatelessWidget {
                   isFloating: isFloating,
                   duration: isFloating ? floatingDuration : 600,
                   delay: isFloating ? floatingDelay : 0,
-                  floatingY: _floatingY,
                   child: wordWidget,
                 ),
               );
@@ -537,7 +536,6 @@ class _SyllableFloatWidget extends StatefulWidget {
   final bool isFloating;
   final double duration;
   final double delay;
-  final double floatingY;
   final Widget child;
 
   const _SyllableFloatWidget({
@@ -545,7 +543,6 @@ class _SyllableFloatWidget extends StatefulWidget {
     required this.isFloating,
     required this.duration,
     required this.delay,
-    required this.floatingY,
     required this.child,
   });
 
@@ -621,7 +618,7 @@ class _SyllableFloatWidgetState extends State<_SyllableFloatWidget>
       builder: (context, child) {
         final double value = _curvedAnimation.value;
         return Transform.translate(
-          offset: Offset(0, ui.lerpDouble(0.0, widget.floatingY, value)!),
+          offset: Offset(0, ui.lerpDouble(0.0, _floatingY, value)!),
           filterQuality: FilterQuality.low,
           child: child,
         );
