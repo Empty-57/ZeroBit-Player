@@ -356,7 +356,7 @@ class _HighlightedWordState extends State<_HighlightedWord> {
 class _KaraOkLyricWidget extends StatelessWidget {
   final List<WordEntry> text;
   final TextStyle style;
-  final bool isCurrent;
+  final bool isCurrentLine;
   final bool isPrevLine;
   final int lrcAlignmentIndex;
   final LyricController lyricController;
@@ -365,7 +365,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
   const _KaraOkLyricWidget({
     required this.text,
     required this.style,
-    required this.isCurrent,
+    required this.isCurrentLine,
     required this.lrcAlignmentIndex,
     required this.lyricController,
     required this.strutStyle,
@@ -395,7 +395,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!isCurrent && !isPrevLine) {
+    if (!isCurrentLine && !isPrevLine) {
       return _createTextRich();
     }
 
@@ -418,13 +418,14 @@ class _KaraOkLyricWidget extends StatelessWidget {
               final word = entry.lyricWord;
               final double dura = entry.duration;
 
-              final bool isFloating = isCurrent && wordIndex <= currentIndex;
+              final bool isFloating =
+                  isCurrentLine && wordIndex <= currentIndex;
               final floatingDuration = dura * (1000 * 1.8) + 50;
               final floatingDelay = dura * (1000 * 0.2);
 
               Widget wordWidget;
 
-              if (isCurrent && wordIndex == currentIndex) {
+              if (isCurrentLine && wordIndex == currentIndex) {
                 gradientColors[2] = style.color!.withValues(
                   alpha: wordIndex == 0 ? _currentAlpha - 0.15 : _currentAlpha,
                 ); // 视觉欺骗，防止颜色突变
@@ -468,7 +469,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
                 Color targetColor;
                 Color beginColor;
 
-                if (isCurrent) {
+                if (isCurrentLine) {
                   if (wordIndex < currentIndex) {
                     targetColor = style.color!.withValues(
                       alpha: _highLightAlpha,
@@ -500,6 +501,14 @@ class _KaraOkLyricWidget extends StatelessWidget {
                     );
                   },
                 );
+
+                // wordWidget = AnimatedDefaultTextStyle(
+                //   key: ValueKey('word_$wordIndex'),
+                //   duration: const Duration(milliseconds: 600),
+                //   curve: Curves.easeInOut,
+                //   style: style.copyWith(color: targetColor),
+                //   child: Text(word, strutStyle: strutStyle),
+                // );
               }
 
               return WidgetSpan(
@@ -975,7 +984,7 @@ class _StaggeredLyricItem extends StatelessWidget {
               child: _KaraOkLyricWidget(
                 text: lineText as List<WordEntry>,
                 style: lyricStyle,
-                isCurrent: isCurrent,
+                isCurrentLine: isCurrent,
                 isPrevLine: isPrevLine,
                 lrcAlignmentIndex: lrcAlignment,
                 lyricController: lyricController,
