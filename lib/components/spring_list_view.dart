@@ -140,8 +140,9 @@ class SpringListController extends GetxController {
             nextBoxKey.currentContext!.findRenderObject() as RenderBox;
 
         //计算下一行行相对于滚动区域的高度，用这个相对高度减去锚点高度获取偏移量
-        double nextLocalY =
-            scrollBox.globalToLocal(nextBox.localToGlobal(Offset.zero)).dy;
+        double nextLocalY = scrollBox
+            .globalToLocal(nextBox.localToGlobal(Offset.zero))
+            .dy;
         double anchorY = scrollBox.size.height * _anchorPercentage;
         deltaY = nextLocalY - anchorY;
       }
@@ -282,7 +283,10 @@ class _SpringListViewState extends State<SpringListView> {
                       }
 
                       return CustomScrollView(
-                        scrollCacheExtent: const ScrollCacheExtent.pixels(200.0), controller: _controller._scrollController,
+                        scrollCacheExtent: const ScrollCacheExtent.pixels(
+                          200.0,
+                        ),
+                        controller: _controller._scrollController,
                         center: centerKey,
                         anchor: newAnchorPercentage,
                         slivers: [
@@ -374,10 +378,9 @@ class _SpringItemState extends State<_SpringItem>
       return;
     }
 
-    int delayMs =
-        relativeIndex < 0 && SpringListController._centerOffset != 0
-            ? 0
-            : (relativeIndexAbs + 1) * controller._delay;
+    int delayMs = relativeIndex < 0 && SpringListController._centerOffset != 0
+        ? 0
+        : (relativeIndexAbs + 1) * controller._delay;
     final currentTriggerId = ++_animTriggerId;
 
     // 动画准备阶段：瞬间将元素偏移到 deltaY 的位置
@@ -403,9 +406,11 @@ class _SpringItemState extends State<_SpringItem>
     stiffness = stiffness.clamp(100.0, 200.0);
 
     // 动态计算弹性,duration越大越有弹性
-    double durationProgress = (controller._duration /
-            SpringListController._durationMax)
-        .clamp(0.0, 1.0);
+    double durationProgress =
+        (controller._duration / SpringListController._durationMax).clamp(
+          0.0,
+          1.0,
+        );
     double springRatio = 1.0 - (0.3 * durationProgress); // 区间 [0.7,1.0
 
     final springDesc = SpringDescription.withDampingRatio(
