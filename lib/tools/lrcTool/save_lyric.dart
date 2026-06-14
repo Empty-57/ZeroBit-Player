@@ -19,8 +19,9 @@ Future<void> saveLyrics({
     final String dir = p.dirname(path);
     final String baseName = p.basenameWithoutExtension(path);
 
-    final String lyricType =
-        lrcData.type.startsWith('.') ? lrcData.type : '.${lrcData.type}';
+    final String lyricType = lrcData.type.startsWith('.')
+        ? lrcData.type
+        : '.${lrcData.type}';
     final String? lrcContent = lrcData.verbatimLrc ?? lrcData.lrc;
 
     if (lrcContent == null || lrcContent.isEmpty) {

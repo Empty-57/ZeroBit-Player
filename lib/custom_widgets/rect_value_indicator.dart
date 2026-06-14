@@ -27,10 +27,9 @@ class RectangularValueIndicatorShape extends SliderComponentShape {
     required Size sizeWithOverflow,
   }) {
     final canvas = context.canvas;
-    final paint =
-        Paint()
-          ..color = sliderTheme.valueIndicatorColor!
-          ..style = PaintingStyle.fill;
+    final paint = Paint()
+      ..color = sliderTheme.valueIndicatorColor!
+      ..style = PaintingStyle.fill;
 
     // 先画一个圆角矩形
     final rect = RRect.fromRectAndRadius(

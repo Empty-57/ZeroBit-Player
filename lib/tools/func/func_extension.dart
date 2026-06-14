@@ -13,6 +13,7 @@ extension DebounceExtension on Function {
 }
 
 bool _throttleIsAllowed = true;
+
 extension ThrottleExtension on Function {
   void Function() throttle({int ms = 500}) {
     Timer? throttleTimer;

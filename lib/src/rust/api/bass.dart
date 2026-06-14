@@ -3,8 +3,9 @@
 
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
-import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+
+import '../frb_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `apply_volume`, `apply_wasapi_init`, `bass_init`, `calculate_dynamic_bandwidth_linear`, `chan_free`, `chan_get_data`, `create_stream`, `fade_in`, `fade_out`, `get_len`, `get_pos`, `get_state`, `get_volume`, `get_wasapi_info`, `listen_progress`, `load`, `notify_state`, `on_end_sync`, `or_err_`, `pause`, `play_file`, `resume`, `set_all_eq_params`, `set_eq_params`, `set_pos`, `set_speed`, `set_sync`, `set_volume`, `stop`, `stream_free`, `switch_exclusive_mode`, `toggle`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `BassApi`

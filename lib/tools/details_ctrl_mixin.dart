@@ -62,16 +62,15 @@ List<MusicCache> _sortPairs((List<(MusicCache, DateTime)>, bool) args) {
 List<MusicCache> _sortPairs2((List<MusicCache>, int, bool) args) {
   final (pairs, type, descending) = args;
   pairs.sort(
-    (a, b) =>
-        descending
-            ? getSortType(
-              type: type,
-              data: b,
-            ).compareTo(getSortType(type: type, data: a))
-            : getSortType(
-              type: type,
-              data: a,
-            ).compareTo(getSortType(type: type, data: b)),
+    (a, b) => descending
+        ? getSortType(
+            type: type,
+            data: b,
+          ).compareTo(getSortType(type: type, data: a))
+        : getSortType(
+            type: type,
+            data: a,
+          ).compareTo(getSortType(type: type, data: b)),
   );
   return pairs.map((p) => p).toList();
 }
@@ -89,8 +88,9 @@ mixin DetailsPageControllerBase {
       audioCtrl.currentAudioSource = audioSource;
       audioCtrl.playListCacheItems.value = [...items];
       _settingController.lastAudioInfo[SettingController
-              .lastAudioPlayPathListKey] =
-          items.map((v) => v.path).toList();
+          .lastAudioPlayPathListKey] = items
+          .map((v) => v.path)
+          .toList();
     }
     if (items.isEmpty) {
       showSnackBar(
@@ -134,10 +134,9 @@ mixin DetailsPageControllerBase {
     if (type == SortType.trackNumber) {
       // 按照音轨排序数据量一般很小，不做处理
       items.sort(
-        (a, b) =>
-            _settingController.isReverse.value
-                ? b.trackNumber.compareTo(a.trackNumber)
-                : a.trackNumber.compareTo(b.trackNumber),
+        (a, b) => _settingController.isReverse.value
+            ? b.trackNumber.compareTo(a.trackNumber)
+            : a.trackNumber.compareTo(b.trackNumber),
       );
       return;
     }

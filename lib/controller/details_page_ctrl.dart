@@ -73,10 +73,9 @@ class DetailsPageController extends GetxController
     bool loadCover = true,
   }) async {
     final pathSet = pathList.toSet();
-    items.value =
-        _musicCacheController.items
-            .where((v) => pathSet.contains(v.path))
-            .toList();
+    items.value = _musicCacheController.items
+        .where((v) => pathSet.contains(v.path))
+        .toList();
 
     itemReSort(operateArea: operateArea);
     if (loadCover) {
@@ -90,8 +89,9 @@ class DetailsPageController extends GetxController
       final firstItem = items.first;
       final title = firstItem.title;
       final artist = firstItem.artist;
-      final artistText =
-          (artist.isNotEmpty && artist != 'UNKNOWN') ? ' - $artist' : '';
+      final artistText = (artist.isNotEmpty && artist != 'UNKNOWN')
+          ? ' - $artist'
+          : '';
 
       final cover = await getCover(path: firstItem.path, sizeFlag: 1);
       if (cover != null && cover.isNotEmpty) {

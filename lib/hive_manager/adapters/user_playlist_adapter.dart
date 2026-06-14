@@ -1,18 +1,16 @@
-
-
 import 'package:hive_ce/hive.dart';
 import 'package:zerobit_player/hive_manager/models/user_playlist_model.dart';
 
 import '../hive_types.dart';
 
-class UserPlayListAdapter extends TypeAdapter<UserPlayListCache>{
+class UserPlayListAdapter extends TypeAdapter<UserPlayListCache> {
   @override
   int get typeId => HiveTypes.userPlayListCache;
 
   @override
   UserPlayListCache read(BinaryReader reader) {
     return UserPlayListCache(
-        pathList: reader.readStringList(),
+      pathList: reader.readStringList(),
       userKey: reader.readString(),
     );
   }

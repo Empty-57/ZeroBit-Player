@@ -36,21 +36,19 @@ class DiamondSliderThumbShape extends SliderComponentShape {
     required Size sizeWithOverflow,
   }) {
     final Canvas canvas = context.canvas;
-    final paint =
-        Paint()
-          ..color = sliderTheme.thumbColor ?? Colors.blue
-          ..style = PaintingStyle.fill;
+    final paint = Paint()
+      ..color = sliderTheme.thumbColor ?? Colors.blue
+      ..style = PaintingStyle.fill;
 
     final hd2 = horizontalDiagonal / 2;
     final vd2 = verticalDiagonal / 2;
 
-    final path =
-        Path()
-          ..moveTo(center.dx, center.dy - vd2) // 上顶点
-          ..lineTo(center.dx + hd2, center.dy) // 右顶点
-          ..lineTo(center.dx, center.dy + vd2) // 下顶点
-          ..lineTo(center.dx - hd2, center.dy) // 左顶点
-          ..close();
+    final path = Path()
+      ..moveTo(center.dx, center.dy - vd2) // 上顶点
+      ..lineTo(center.dx + hd2, center.dy) // 右顶点
+      ..lineTo(center.dx, center.dy + vd2) // 下顶点
+      ..lineTo(center.dx - hd2, center.dy) // 左顶点
+      ..close();
 
     canvas.drawPath(path, paint);
   }

@@ -4,11 +4,11 @@ class StorageCRUD<T> {
   final Box<T> cacheBox;
   const StorageCRUD({required this.cacheBox});
 
-  Future<void> put({required T data, required String key}) async{
+  Future<void> put({required T data, required String key}) async {
     await cacheBox.put(key, data);
   }
 
-  Future<void> putAll({required Map<String, T> data})async {
+  Future<void> putAll({required Map<String, T> data}) async {
     await cacheBox.putAll(data);
   }
 
@@ -19,16 +19,16 @@ class StorageCRUD<T> {
   List<T> getAll() {
     return cacheBox.values.toList();
   }
-  
-  List getKeyAll(){
+
+  List getKeyAll() {
     return cacheBox.keys.toList();
   }
 
-  Future<void> del({required String key})async {
+  Future<void> del({required String key}) async {
     await cacheBox.delete(key);
   }
 
-  Future<void> delAll({required List<String> keyList}) async{
+  Future<void> delAll({required List<String> keyList}) async {
     await cacheBox.deleteAll(keyList);
   }
 }

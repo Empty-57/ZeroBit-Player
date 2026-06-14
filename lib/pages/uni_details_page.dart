@@ -66,10 +66,10 @@ class _UniDetailsPageState extends State<UniDetailsPage> {
         userKey: userKey,
         backgroundColor:
             (operateArea == OperateArea.artistDetails ||
-                    operateArea == OperateArea.albumDetails ||
-                    operateArea == OperateArea.playListDetails)
-                ? Colors.transparent
-                : null,
+                operateArea == OperateArea.albumDetails ||
+                operateArea == OperateArea.playListDetails)
+            ? Colors.transparent
+            : null,
       ),
     );
   }

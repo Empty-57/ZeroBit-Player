@@ -341,10 +341,9 @@ Future<Get4NetLrcModel?> _neGetLrc({required int id}) async {
   final String? lrcLyric = data['lrc']?['lyric'];
   final String? yrcLyric = data['yrc']?['lyric'];
   final String? tLyric = data['tlyric']?['lyric'];
-  final String type =
-      yrcLyric != null && yrcLyric.isNotEmpty
-          ? LyricFormat.yrc
-          : LyricFormat.lrc;
+  final String type = yrcLyric != null && yrcLyric.isNotEmpty
+      ? LyricFormat.yrc
+      : LyricFormat.lrc;
 
   return Get4NetLrcModel(
     lrc: lrcLyric,

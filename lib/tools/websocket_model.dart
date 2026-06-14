@@ -18,10 +18,10 @@ abstract class SeverCmdType {
   static const setIgnoreMouseEvents = 'setIgnoreMouseEvents';
   static const setLrcAlignment = 'setLrcAlignment';
   static const setDisplayMode = 'setDisplayMode';
-  static const setStrokeEnable='setStrokeEnable';
-  static const setStrokeColor='setStrokeColor';
+  static const setStrokeEnable = 'setStrokeEnable';
+  static const setStrokeColor = 'setStrokeColor';
   static const heartBeat = 'heartBeat';
-  static const showDoubleLine='showDoubleLine';
+  static const showDoubleLine = 'showDoubleLine';
 }
 
 abstract class ClientCmdType {

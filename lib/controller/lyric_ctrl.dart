@@ -109,11 +109,10 @@ class LyricController extends GetxController {
       final ms = currentMs20Notifier.value;
 
       final diffTime = ms - word.start;
-      _wordProgressIncrement =
-          diffTime >= _loopTime
-              ? _loopTime /
-                  (duration - diffTime) // 校准分支 误差大于一个周期就校准
-              : _loopTime / duration; // 正常分支
+      _wordProgressIncrement = diffTime >= _loopTime
+          ? _loopTime /
+                (duration - diffTime) // 校准分支 误差大于一个周期就校准
+          : _loopTime / duration; // 正常分支
     }
   }
 
@@ -146,10 +145,9 @@ class LyricController extends GetxController {
     }
 
     final interlude = interludeProcess.value;
-    final double threshold =
-        lyrics!.type == LyricFormat.byWordLrc
-            ? 0 // byWordLrc 每一行最后一个词为空白符 代表本行的结束时间 不需要预设下限 本行的结束时间就是间奏开始时间
-            : _showIntervalLowLimit;
+    final double threshold = lyrics!.type == LyricFormat.byWordLrc
+        ? 0 // byWordLrc 每一行最后一个词为空白符 代表本行的结束时间 不需要预设下限 本行的结束时间就是间奏开始时间
+        : _showIntervalLowLimit;
 
     final show =
         _interval >= _intervalThreshold &&
@@ -173,8 +171,9 @@ class LyricController extends GetxController {
       wordProgress.value = 0;
 
       if (Get.isRegistered<SpringListController>()) {
-        visibleItemCount =
-            newLineIndex <= 0 ? 20 : _springConntroller.getVisibleItemCount();
+        visibleItemCount = newLineIndex <= 0
+            ? 20
+            : _springConntroller.getVisibleItemCount();
       }
       currentLineIndex.value = newLineIndex;
       _updateLyricsInfo(updateLineOnly: true);

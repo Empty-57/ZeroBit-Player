@@ -2,6 +2,7 @@ abstract class TimedEntry {
   double get start;
   double get nextTime;
 }
+
 /// 行时间轴
 class LyricEntry<T> implements TimedEntry {
   @override
@@ -17,20 +18,19 @@ class LyricEntry<T> implements TimedEntry {
     this.nextTime = double.infinity,
     required this.lyricText,
     this.translate = '',
-    this.roma=''
+    this.roma = '',
   });
 
   @override
   String toString() {
-    final display =
-        lyricText is String
-            ? lyricText
-            : (lyricText as List<WordEntry>)
-                .map(
-                  (w) =>
-                      "word:${w.lyricWord} start:${w.start} duration:${w.duration} \n",
-                )
-                .join();
+    final display = lyricText is String
+        ? lyricText
+        : (lyricText as List<WordEntry>)
+              .map(
+                (w) =>
+                    "word:${w.lyricWord} start:${w.start} duration:${w.duration} \n",
+              )
+              .join();
     return '[segmentStart: $start,\n lyricText: "$display",\n nextTime: $nextTime,\n translate: "$translate"\n]';
   }
 }
@@ -50,38 +50,50 @@ class WordEntry implements TimedEntry {
     this.nextTime = double.infinity,
   });
 
-  static Map<String, dynamic> toJson(WordEntry value) =>
-      {'start': value.start, 'duration': value.duration,'lyricWord':value.lyricWord};
-
+  static Map<String, dynamic> toJson(WordEntry value) => {
+    'start': value.start,
+    'duration': value.duration,
+    'lyricWord': value.lyricWord,
+  };
 }
 
-class ParsedLyricModel{
+class ParsedLyricModel {
   final List<LyricEntry<dynamic>>? parsedLrc;
   final String type;
-  const ParsedLyricModel({required this.parsedLrc,required this.type});
+  const ParsedLyricModel({required this.parsedLrc, required this.type});
 }
 
-class Get4NetLrcModel{
+class Get4NetLrcModel {
   final String? lrc;
   final String? verbatimLrc;
   final String? translate;
   final String type;
-  const Get4NetLrcModel({required this.lrc,required this.verbatimLrc,required this.translate,required this.type});
+  const Get4NetLrcModel({
+    required this.lrc,
+    required this.verbatimLrc,
+    required this.translate,
+    required this.type,
+  });
 }
 
-class SearchLrcModel{
+class SearchLrcModel {
   final String title;
   final String artist;
   final dynamic id;
   final Get4NetLrcModel? lyric;
 
-  const SearchLrcModel({required this.title,required this.artist,required this.id,required this.lyric});
+  const SearchLrcModel({
+    required this.title,
+    required this.artist,
+    required this.id,
+    required this.lyric,
+  });
 }
 
-abstract class LyricFormat{
-  static const qrc='.qrc';
-  static const yrc='.yrc';
-  static const krc='.krc';
-  static const lrc='.lrc';
-  static const byWordLrc='.byWordLrc';
+abstract class LyricFormat {
+  static const qrc = '.qrc';
+  static const yrc = '.yrc';
+  static const krc = '.krc';
+  static const lrc = '.lrc';
+  static const byWordLrc = '.byWordLrc';
 }

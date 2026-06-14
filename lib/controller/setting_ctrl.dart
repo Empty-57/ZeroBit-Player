@@ -53,7 +53,7 @@ class SettingController extends GetxController {
   final useExclusiveMode = false.obs;
   final showSpectrogram = false.obs;
   final equalizerGains = List.generate(10, (_) => 0.0).toList().obs;
-  final useReplayGain=false.obs;
+  final useReplayGain = false.obs;
 
   static const minGain = -12.0;
   static const maxGain = 12.0;
@@ -164,14 +164,22 @@ class SettingController extends GetxController {
   // 快捷键状态
   final hotKeyScope =
       false.obs; //false : HotKeyScope.inapp.obs true: HotKeyScope.system.obs
-  final hotKeyToggle =
-      HotKey(key: PhysicalKeyboardKey.space, scope: HotKeyScope.inapp).obs;
-  final hotKeyNext =
-      HotKey(key: PhysicalKeyboardKey.arrowRight, scope: HotKeyScope.inapp).obs;
-  final hotKeyPrevious =
-      HotKey(key: PhysicalKeyboardKey.arrowLeft, scope: HotKeyScope.inapp).obs;
-  final hotKeyFullScreen =
-      HotKey(key: PhysicalKeyboardKey.f1, scope: HotKeyScope.inapp).obs;
+  final hotKeyToggle = HotKey(
+    key: PhysicalKeyboardKey.space,
+    scope: HotKeyScope.inapp,
+  ).obs;
+  final hotKeyNext = HotKey(
+    key: PhysicalKeyboardKey.arrowRight,
+    scope: HotKeyScope.inapp,
+  ).obs;
+  final hotKeyPrevious = HotKey(
+    key: PhysicalKeyboardKey.arrowLeft,
+    scope: HotKeyScope.inapp,
+  ).obs;
+  final hotKeyFullScreen = HotKey(
+    key: PhysicalKeyboardKey.f1,
+    scope: HotKeyScope.inapp,
+  ).obs;
 
   List<int> modifierToggleHidList = [];
   List<int> modifierNextHidList = [];
@@ -326,10 +334,9 @@ class SettingController extends GetxController {
   ) {
     try {
       final rawStr = prefs?.getString(prefKey);
-      final keys =
-          (rawStr != null)
-              ? rawStr.split('_').map(int.parse).toList()
-              : [defaultHid];
+      final keys = (rawStr != null)
+          ? rawStr.split('_').map(int.parse).toList()
+          : [defaultHid];
       onLoaded(
         keys.last,
         keys.length > 1 ? keys.sublist(0, keys.length - 1) : [],
@@ -464,14 +471,14 @@ class SettingController extends GetxController {
     overrideValue: use,
   );
 
-  void setUseReplayGain({required bool use})async{
+  void setUseReplayGain({required bool use}) async {
     await setReplayGain(gainDb: 0.0, peak: 1.0);
     _setBoolPref(
-    SharedPreferencesKey.useReplayGain,
-    useReplayGain,
-    overrideValue: use,
-  );
-}
+      SharedPreferencesKey.useReplayGain,
+      useReplayGain,
+      overrideValue: use,
+    );
+  }
 
   /// 提取 HotKey 的主键和修饰键 (HID)
   (int, List<int>) _extractHid(HotKey key) {

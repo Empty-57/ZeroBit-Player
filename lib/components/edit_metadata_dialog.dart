@@ -143,8 +143,9 @@ class _MetadataEditorState extends State<_MetadataEditor> {
       final bytes = await getCover(path: widget.metadata.path, sizeFlag: 1);
       if (mounted) {
         setState(() {
-          _currentCoverSource =
-              bytes != null ? _InitialCover(bytes) : _NoCover();
+          _currentCoverSource = bytes != null
+              ? _InitialCover(bytes)
+              : _NoCover();
           _isCoverLoading = false;
         });
       }
@@ -178,8 +179,8 @@ class _MetadataEditorState extends State<_MetadataEditor> {
       final title = _titleCtrl.text;
       final artist =
           (_artistCtrl.text.isNotEmpty && _artistCtrl.text != 'UNKNOWN')
-              ? ' - ${_artistCtrl.text}'
-              : '';
+          ? ' - ${_artistCtrl.text}'
+          : '';
 
       final coverData = await saveCoverByText(
         text: title + artist,
@@ -189,10 +190,9 @@ class _MetadataEditorState extends State<_MetadataEditor> {
 
       if (mounted && coverData != null && coverData.isNotEmpty) {
         setState(
-          () =>
-              _currentCoverSource = _GeneratedCover(
-                Uint8List.fromList(coverData),
-              ),
+          () => _currentCoverSource = _GeneratedCover(
+            Uint8List.fromList(coverData),
+          ),
         );
       } else {
         _showError('未找到网络封面');
@@ -408,47 +408,46 @@ class _MetadataEditorState extends State<_MetadataEditor> {
       padding: const EdgeInsets.only(top: 16.0),
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
-        child:
-            _isLoading
-                ? Row(
-                  key: const ValueKey('saving'),
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+        child: _isLoading
+            ? Row(
+                key: const ValueKey('saving'),
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    "执行中……",
+                    style: generalTextStyle(
+                      ctx: context,
+                      size: 'md',
+                      color: Theme.of(context).colorScheme.primary,
                     ),
-                    const SizedBox(width: 12),
-                    Text(
-                      "执行中……",
-                      style: generalTextStyle(
-                        ctx: context,
-                        size: 'md',
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                )
-                : Row(
-                  key: const ValueKey('buttons'),
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  spacing: 8,
-                  children: [
-                    _actionButton(label: "网络封面", onPressed: _fetchNetworkCover),
-                    _actionButton(label: "本地封面", onPressed: _pickLocalCover),
-                    const Spacer(),
-                    _actionButton(
-                      label: "取消",
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    _actionButton(
-                      label: "确定",
-                      onPressed: _saveChanges,
-                      isPrimary: true,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
+              )
+            : Row(
+                key: const ValueKey('buttons'),
+                mainAxisAlignment: MainAxisAlignment.end,
+                spacing: 8,
+                children: [
+                  _actionButton(label: "网络封面", onPressed: _fetchNetworkCover),
+                  _actionButton(label: "本地封面", onPressed: _pickLocalCover),
+                  const Spacer(),
+                  _actionButton(
+                    label: "取消",
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  _actionButton(
+                    label: "确定",
+                    onPressed: _saveChanges,
+                    isPrimary: true,
+                  ),
+                ],
+              ),
       ),
     );
   }

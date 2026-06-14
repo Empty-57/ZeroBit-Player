@@ -34,22 +34,21 @@ class AudioController extends GetxController {
   final currentSec = 0.0.obs;
   final ValueNotifier<double> progress = ValueNotifier<double>(0.0);
 
-  late final Rx<MusicCache> currentMetadata =
-      MusicCache(
-        title: '',
-        artist: '',
-        album: '',
-        trackNumber: 0,
-        genre: '',
-        duration: 9999,
-        bitrate: null,
-        sampleRate: null,
-        bitDepth: 16,
-        channels: 1,
-        trackGain: 0.0,
-        trackPeak: 1.0,
-        path: '',
-      ).obs;
+  late final Rx<MusicCache> currentMetadata = MusicCache(
+    title: '',
+    artist: '',
+    album: '',
+    trackNumber: 0,
+    genre: '',
+    duration: 9999,
+    bitrate: null,
+    sampleRate: null,
+    bitDepth: 16,
+    channels: 1,
+    trackGain: 0.0,
+    trackPeak: 1.0,
+    path: '',
+  ).obs;
 
   final currentDuration = 0.0.obs;
 
@@ -59,8 +58,9 @@ class AudioController extends GetxController {
   final MusicCacheController _musicCacheController =
       Get.find<MusicCacheController>();
 
-  late final RxList<MusicCache> playListCacheItems =
-      [..._musicCacheController.items].obs;
+  late final RxList<MusicCache> playListCacheItems = [
+    ..._musicCacheController.items,
+  ].obs;
 
   MusicCache? _hasNextAudioMetadata;
 
@@ -83,8 +83,12 @@ class AudioController extends GetxController {
 
   final navigationIsExtend = true.obs;
 
-  final coverPalette =
-      <Color>[Colors.black12, Colors.white24, Colors.white, Colors.grey].obs;
+  final coverPalette = <Color>[
+    Colors.black12,
+    Colors.white24,
+    Colors.white,
+    Colors.grey,
+  ].obs;
 
   int reTryCount = 0;
 
@@ -124,18 +128,18 @@ class AudioController extends GetxController {
     }
   }
 
-  void _updateProgress(){
+  void _updateProgress() {
     if (currentDuration.value > 0 &&
-          currentMetadata.value.path.isNotEmpty &&
-          playListCacheItems.isNotEmpty) {
-        progress.value = (currentMs100.value / currentDuration.value).clamp(
-          0.0,
-          1.0,
-        );
-      } else {
-        progress.value = 0.0;
-        currentMs100.value = 0.0;
-      }
+        currentMetadata.value.path.isNotEmpty &&
+        playListCacheItems.isNotEmpty) {
+      progress.value = (currentMs100.value / currentDuration.value).clamp(
+        0.0,
+        1.0,
+      );
+    } else {
+      progress.value = 0.0;
+      currentMs100.value = 0.0;
+    }
   }
 
   @override
@@ -188,10 +192,9 @@ class AudioController extends GetxController {
               as List<String>;
       if (lastPlayPathList.isNotEmpty) {
         final pathSet = lastPlayPathList.toSet();
-        playListCacheItems.value =
-            _musicCacheController.items
-                .where((v) => pathSet.contains(v.path))
-                .toList();
+        playListCacheItems.value = _musicCacheController.items
+            .where((v) => pathSet.contains(v.path))
+            .toList();
       }
     } catch (e) {
       debugPrint("Restore State Error: $e");
@@ -232,8 +235,8 @@ class AudioController extends GetxController {
       final title = metadata.title;
       final artist =
           (metadata.artist.isNotEmpty && metadata.artist != 'UNKNOWN')
-              ? ' - ${metadata.artist}'
-              : '';
+          ? ' - ${metadata.artist}'
+          : '';
 
       if (await getCover(path: currentPath.value, sizeFlag: 1) case final src?
           when src.isNotEmpty) {
@@ -344,19 +347,21 @@ class AudioController extends GetxController {
       final List<int> rankedColors = Score.score(colorToCount);
 
       // 转换格式，填充并更新 coverPalette
-      final List<Color> extractedColors =
-          rankedColors.map((c) => Color(c)).toList();
+      final List<Color> extractedColors = rankedColors
+          .map((c) => Color(c))
+          .toList();
       if (extractedColors.length >= 4) {
         coverPalette.value = extractedColors.sublist(0, 4);
       } else {
-        coverPalette.value = List<Color>.from(extractedColors)..addAll(
-          [
-            Colors.black12,
-            Colors.white24,
-            Colors.white,
-            Colors.grey,
-          ].sublist(0, 4 - extractedColors.length),
-        );
+        coverPalette.value = List<Color>.from(extractedColors)
+          ..addAll(
+            [
+              Colors.black12,
+              Colors.white24,
+              Colors.white,
+              Colors.grey,
+            ].sublist(0, 4 - extractedColors.length),
+          );
       }
 
       if (coverPalette.isNotEmpty) {
@@ -465,10 +470,9 @@ class AudioController extends GetxController {
     try {
       await toggle();
       await smtcUpdateState(
-        state:
-            currentState.value == AudioState.playing
-                ? SMTCState.playing
-                : SMTCState.paused,
+        state: currentState.value == AudioState.playing
+            ? SMTCState.playing
+            : SMTCState.paused,
       );
     } catch (e) {
       currentState.value = AudioState.stop;

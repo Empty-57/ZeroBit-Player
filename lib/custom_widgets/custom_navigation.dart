@@ -51,25 +51,22 @@ class CustomNavigationBtn extends GetView<AudioController> {
       child: Obx(() {
         final index = SidebarNavState.currentNavigationIndex.value;
         return TextButton(
-          onPressed:
-              index != localIndex
-                  ? () {
-                    _oldIndex = index;
-                    SidebarNavState.beginOffset =
-                        _oldIndex >= localIndex
-                            ? const Offset(0.1, 0.1)
-                            : const Offset(-0.1, -0.1);
-                    Get.toNamed(_mainRoutes[localIndex], id: 1);
-                  }
-                  : null,
+          onPressed: index != localIndex
+              ? () {
+                  _oldIndex = index;
+                  SidebarNavState.beginOffset = _oldIndex >= localIndex
+                      ? const Offset(0.1, 0.1)
+                      : const Offset(-0.1, -0.1);
+                  Get.toNamed(_mainRoutes[localIndex], id: 1);
+                }
+              : null,
           style: TextButton.styleFrom(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(4),
             ),
-            backgroundColor:
-                index == localIndex
-                    ? backgroundColor.withValues(alpha: 1)
-                    : backgroundColor.withValues(alpha: 0),
+            backgroundColor: index == localIndex
+                ? backgroundColor.withValues(alpha: 1)
+                : backgroundColor.withValues(alpha: 0),
             padding: const EdgeInsets.only(
               left: 12,
               right: 0,
@@ -87,12 +84,11 @@ class CustomNavigationBtn extends GetView<AudioController> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Tooltip(
-                      message:
-                          context.width > _resViewThresholds
-                              ? controller.navigationIsExtend.value
-                                  ? ""
-                                  : label
-                              : label,
+                      message: context.width > _resViewThresholds
+                          ? controller.navigationIsExtend.value
+                                ? ""
+                                : label
+                          : label,
                       child: Icon(
                         icon,
                         color: Theme.of(context).colorScheme.onSurface,
@@ -107,9 +103,9 @@ class CustomNavigationBtn extends GetView<AudioController> {
                           curve: Curves.easeOutCubic,
                           opacity:
                               (context.width > _resViewThresholds &&
-                                      controller.navigationIsExtend.value)
-                                  ? 1.0
-                                  : 0.0,
+                                  controller.navigationIsExtend.value)
+                              ? 1.0
+                              : 0.0,
                           child: Text(
                             label,
                             style: generalTextStyle(ctx: context, size: 'md'),
@@ -126,12 +122,11 @@ class CustomNavigationBtn extends GetView<AudioController> {
                     height: _navigationBtnHeight - 8,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(2),
-                      color:
-                          index == localIndex
-                              ? Theme.of(
-                                context,
-                              ).colorScheme.primary.withValues(alpha: 0.8)
-                              : Colors.transparent,
+                      color: index == localIndex
+                          ? Theme.of(
+                              context,
+                            ).colorScheme.primary.withValues(alpha: 0.8)
+                          : Colors.transparent,
                     ),
                   )
                   .animate()
@@ -140,10 +135,9 @@ class CustomNavigationBtn extends GetView<AudioController> {
                   .fade(duration: 500.ms)
                   .moveY(
                     duration: 300.ms,
-                    begin:
-                        _oldIndex >= localIndex
-                            ? _navigationBtnHeight
-                            : -_navigationBtnHeight,
+                    begin: _oldIndex >= localIndex
+                        ? _navigationBtnHeight
+                        : -_navigationBtnHeight,
                     end: 0,
                     curve: Curves.easeOutBack,
                   ),
@@ -179,12 +173,11 @@ class CustomNavigation extends GetView<AudioController> {
 
     return Obx(() {
       final isExtend = c.navigationIsExtend.value;
-      final targetWidth =
-          context.width > _resViewThresholds
-              ? isExtend
-                  ? _navigationWidth
-                  : _navigationWidthSmall
-              : _navigationWidthSmall;
+      final targetWidth = context.width > _resViewThresholds
+          ? isExtend
+                ? _navigationWidth
+                : _navigationWidthSmall
+          : _navigationWidthSmall;
 
       return AnimatedContainer(
         duration: const Duration(milliseconds: 300),
@@ -228,7 +221,11 @@ class CustomNavigation extends GetView<AudioController> {
                             flex: 1,
                             child: Obx(() {
                               return ListView.builder(
-                                scrollCacheExtent: const ScrollCacheExtent.pixels(_itemHeight * 1), itemCount: c.playListCacheItems.length,
+                                scrollCacheExtent:
+                                    const ScrollCacheExtent.pixels(
+                                      _itemHeight * 1,
+                                    ),
+                                itemCount: c.playListCacheItems.length,
                                 itemExtent: _itemHeight,
                                 controller: _playQueueScrollController,
                                 padding: const EdgeInsets.only(
@@ -249,14 +246,12 @@ class CustomNavigation extends GetView<AudioController> {
                                       child: Obx(() {
                                         final isCurrent =
                                             c.currentPath.value == items.path;
-                                        final subTextStyle =
-                                            !isCurrent
-                                                ? subStyle
-                                                : highLightSubStyle;
-                                        final textStyle =
-                                            !isCurrent
-                                                ? titleStyle
-                                                : highLightTitleStyle;
+                                        final subTextStyle = !isCurrent
+                                            ? subStyle
+                                            : highLightSubStyle;
+                                        final textStyle = !isCurrent
+                                            ? titleStyle
+                                            : highLightTitleStyle;
 
                                         return Column(
                                           mainAxisAlignment:
@@ -334,12 +329,11 @@ class CustomNavigation extends GetView<AudioController> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Tooltip(
-                            message:
-                                context.width > _resViewThresholds
-                                    ? isExtend
-                                        ? ""
-                                        : "播放列表"
-                                    : "播放列表",
+                            message: context.width > _resViewThresholds
+                                ? isExtend
+                                      ? ""
+                                      : "播放列表"
+                                : "播放列表",
                             child: Icon(
                               PhosphorIconsLight.queue,
                               color: Theme.of(context).colorScheme.onSurface,
@@ -355,9 +349,9 @@ class CustomNavigation extends GetView<AudioController> {
                                 curve: Curves.easeOutCubic,
                                 opacity:
                                     (context.width > _resViewThresholds &&
-                                            isExtend)
-                                        ? 1.0
-                                        : 0.0,
+                                        isExtend)
+                                    ? 1.0
+                                    : 0.0,
                                 child: Text(
                                   "播放队列",
                                   style: generalTextStyle(
@@ -382,26 +376,24 @@ class CustomNavigation extends GetView<AudioController> {
                     color: Colors.transparent,
                   ),
                   child: TextButton(
-                    onPressed:
-                        context.width > _resViewThresholds
-                            ? () {
-                              c.navigationIsExtend.value = !isExtend;
-                            }
-                            : null,
+                    onPressed: context.width > _resViewThresholds
+                        ? () {
+                            c.navigationIsExtend.value = !isExtend;
+                          }
+                        : null,
                     style: TextButton.styleFrom(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
                     child: Tooltip(
-                      message:
-                          isExtend
-                              ? context.width > _resViewThresholds
-                                  ? "收起"
-                                  : "空间不足"
-                              : context.width > _resViewThresholds
-                              ? "展开"
-                              : "空间不足",
+                      message: isExtend
+                          ? context.width > _resViewThresholds
+                                ? "收起"
+                                : "空间不足"
+                          : context.width > _resViewThresholds
+                          ? "展开"
+                          : "空间不足",
                       child: Icon(
                         isExtend && context.width > _resViewThresholds
                             ? PhosphorIconsLight.caretLeft

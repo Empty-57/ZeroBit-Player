@@ -154,8 +154,9 @@ class UserPlayListController extends GetxController {
     final existingPathSet = targetList.pathList.toSet();
 
     // 过滤出真正需要添加的新歌
-    final songsToAdd =
-        selectedList.where((v) => !existingPathSet.contains(v.path)).toList();
+    final songsToAdd = selectedList
+        .where((v) => !existingPathSet.contains(v.path))
+        .toList();
 
     if (songsToAdd.isEmpty) {
       showSnackBar(
@@ -174,10 +175,12 @@ class UserPlayListController extends GetxController {
     await _userPlayListCacheBox.put(data: targetList, key: userKey);
 
     if (_audioController.currentAudioSource == userKey) {
-      final currentPlaySet =
-          _audioController.playListCacheItems.map((v) => v.path).toSet();
-      final playSongsToAdd =
-          songsToAdd.where((v) => !currentPlaySet.contains(v.path)).toList();
+      final currentPlaySet = _audioController.playListCacheItems
+          .map((v) => v.path)
+          .toSet();
+      final playSongsToAdd = songsToAdd
+          .where((v) => !currentPlaySet.contains(v.path))
+          .toList();
 
       _audioController.playListCacheItems.addAll(playSongsToAdd);
       _audioController.syncCurrentIndex();

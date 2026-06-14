@@ -55,7 +55,11 @@ class GenIconBtn extends StatelessWidget {
             borderRadius: BorderRadius.circular(_radius),
           ),
         ),
-        child: Icon(icon, size: getIconSize(size: 'lg'), color: color),
+        child: Icon(
+          icon,
+          size: getIconSize(size: 'lg'),
+          color: color,
+        ),
       ),
     );
   }
@@ -94,25 +98,22 @@ class _SeekSlideWidgetState extends State<_SeekSlideWidget> {
         builder: (_, _) {
           final pathIsEmpty =
               widget.audioController.currentMetadata.value.path.isEmpty;
-          final double duration =
-              pathIsEmpty
-                  ? 9999.0
-                  : widget.audioController.currentDuration.value;
+          final double duration = pathIsEmpty
+              ? 9999.0
+              : widget.audioController.currentDuration.value;
 
-          final double sliderValue =
-              pathIsEmpty
-                  ? 0.0
-                  : (_isSeekBarDragging.value
-                      ? _seekDraggingValue.value
-                      : widget.audioController.currentMs100.value);
+          final double sliderValue = pathIsEmpty
+              ? 0.0
+              : (_isSeekBarDragging.value
+                    ? _seekDraggingValue.value
+                    : widget.audioController.currentMs100.value);
 
           return Slider(
             min: 0.0,
             max: duration,
-            label:
-                _isSeekBarDragging.value
-                    ? formatTime(totalSeconds: _seekDraggingValue.value)
-                    : '√',
+            label: _isSeekBarDragging.value
+                ? formatTime(totalSeconds: _seekDraggingValue.value)
+                : '√',
             value: sliderValue,
             onChangeStart: (v) {
               _seekDraggingValue.value = v;
@@ -169,33 +170,31 @@ class _SpeedSetBtn extends StatelessWidget {
     final AudioController audioController = Get.find<AudioController>();
     final menuController = MenuController();
 
-    final speedList =
-        List.generate(16, (index) => index + 5).map((i) {
-          final speed = i / 10;
-          return Obx(() {
-            final isCurrent = audioController.currentSpeed.value == speed;
-            return CustomBtn(
-              fn: () async {
-                await setSpeed(speed: speed);
-                audioController.currentSpeed.value = speed;
-                menuController.close();
-              },
-              btnWidth: 72,
-              btnHeight: 36,
-              label: speed.toString(),
-              icon: isCurrent ? PhosphorIconsLight.check : null,
-              iconSize: 'xs',
-              contentColor: Theme.of(context).colorScheme.onSecondaryContainer,
-              mainAxisAlignment:
-                  isCurrent
-                      ? MainAxisAlignment.spaceBetween
-                      : MainAxisAlignment.end,
-              spacing: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              backgroundColor: Colors.transparent,
-            );
-          });
-        }).toList();
+    final speedList = List.generate(16, (index) => index + 5).map((i) {
+      final speed = i / 10;
+      return Obx(() {
+        final isCurrent = audioController.currentSpeed.value == speed;
+        return CustomBtn(
+          fn: () async {
+            await setSpeed(speed: speed);
+            audioController.currentSpeed.value = speed;
+            menuController.close();
+          },
+          btnWidth: 72,
+          btnHeight: 36,
+          label: speed.toString(),
+          icon: isCurrent ? PhosphorIconsLight.check : null,
+          iconSize: 'xs',
+          contentColor: Theme.of(context).colorScheme.onSecondaryContainer,
+          mainAxisAlignment: isCurrent
+              ? MainAxisAlignment.spaceBetween
+              : MainAxisAlignment.end,
+          spacing: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          backgroundColor: Colors.transparent,
+        );
+      });
+    }).toList();
 
     return Theme(
       data: Theme.of(context).copyWith(
@@ -224,9 +223,8 @@ class _SpeedSetBtn extends StatelessWidget {
             icon: PhosphorIconsLight.waveform,
             size: size,
             color: color,
-            fn:
-                () =>
-                    controller.isOpen ? controller.close() : controller.open(),
+            fn: () =>
+                controller.isOpen ? controller.close() : controller.open(),
           );
         },
       ),
@@ -312,11 +310,8 @@ class _VolumeSetBtn extends StatelessWidget {
               icon: PhosphorIconsFill.speakerHigh,
               size: size,
               color: color,
-              fn:
-                  () =>
-                      controller.isOpen
-                          ? controller.close()
-                          : controller.open(),
+              fn: () =>
+                  controller.isOpen ? controller.close() : controller.open(),
             ),
           ),
         );
@@ -441,62 +436,62 @@ class _EqualizerBtn extends StatelessWidget {
   ) {
     final backgroundColor = Theme.of(context).colorScheme.primary;
 
-    final equalizerSliders =
-        SettingController.equalizerFCenters.indexed.map((v) {
-          return SizedBox(
-            width: 52,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              spacing: 6,
-              children: [
-                Obx(
-                  () => Text(
-                    '${settingController.equalizerGains[v.$1].toStringAsFixed(1)}db',
-                    style: fontStyle,
-                  ),
-                ),
-                Material(
-                  color: Colors.transparent,
-                  child: SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      trackHeight: 4,
-                      thumbShape: const DiamondSliderThumbShape(
-                        horizontalDiagonal: 16,
-                        verticalDiagonal: 16,
-                      ),
-                    ),
-                    child: Obx(
-                      () => RotatedBox(
-                        quarterTurns: 3,
-                        child: Slider(
-                          min: SettingController.minGain,
-                          max: SettingController.maxGain,
-                          value: settingController.equalizerGains[v.$1],
-                          divisions: 48,
-                          onChanged: (gain) async {
-                            final newGains = List<double>.from(
-                              settingController.equalizerGains,
-                            );
-                            newGains[v.$1] = gain;
-                            settingController.equalizerGains.value = newGains;
-                            await setEqParams(freCenterIndex: v.$1, gain: gain);
-                          },
-                          onChangeEnd:
-                              (_) => settingController.putScalableCache(),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Text(
-                  '${v.$2 >= 1000 ? '${(v.$2 / 1000).toInt()}k' : v.$2.toInt()}hz',
-                  style: fontStyle,
-                ),
-              ],
+    final equalizerSliders = SettingController.equalizerFCenters.indexed.map((
+      v,
+    ) {
+      return SizedBox(
+        width: 52,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          spacing: 6,
+          children: [
+            Obx(
+              () => Text(
+                '${settingController.equalizerGains[v.$1].toStringAsFixed(1)}db',
+                style: fontStyle,
+              ),
             ),
-          );
-        }).toList();
+            Material(
+              color: Colors.transparent,
+              child: SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  trackHeight: 4,
+                  thumbShape: const DiamondSliderThumbShape(
+                    horizontalDiagonal: 16,
+                    verticalDiagonal: 16,
+                  ),
+                ),
+                child: Obx(
+                  () => RotatedBox(
+                    quarterTurns: 3,
+                    child: Slider(
+                      min: SettingController.minGain,
+                      max: SettingController.maxGain,
+                      value: settingController.equalizerGains[v.$1],
+                      divisions: 48,
+                      onChanged: (gain) async {
+                        final newGains = List<double>.from(
+                          settingController.equalizerGains,
+                        );
+                        newGains[v.$1] = gain;
+                        settingController.equalizerGains.value = newGains;
+                        await setEqParams(freCenterIndex: v.$1, gain: gain);
+                      },
+                      onChangeEnd: (_) => settingController.putScalableCache(),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Text(
+              '${v.$2 >= 1000 ? '${(v.$2 / 1000).toInt()}k' : v.$2.toInt()}hz',
+              style: fontStyle,
+            ),
+          ],
+        ),
+      );
+    }).toList();
 
     showDialog(
       barrierDismissible: true,
@@ -528,10 +523,8 @@ class _EqualizerBtn extends StatelessWidget {
                     return Wrap(
                       spacing: 2,
                       runSpacing: 2,
-                      children:
-                          SettingController.equalizerGainPresets.entries.map((
-                            entry,
-                          ) {
+                      children: SettingController.equalizerGainPresets.entries
+                          .map((entry) {
                             final isEqual = listEquals(
                               equalizerGains,
                               entry.value,
@@ -548,24 +541,22 @@ class _EqualizerBtn extends StatelessWidget {
                                   );
                                 }
                               },
-                              label:
-                                  SettingController
-                                      .equalizerGainPresetsText[entry.key],
-                              backgroundColor:
-                                  isEqual
-                                      ? backgroundColor
-                                      : Theme.of(context)
-                                          .colorScheme
-                                          .secondaryContainer
-                                          .withValues(alpha: 0.2),
-                              contentColor:
-                                  isEqual
-                                      ? Theme.of(context).colorScheme.onPrimary
-                                      : backgroundColor,
+                              label: SettingController
+                                  .equalizerGainPresetsText[entry.key],
+                              backgroundColor: isEqual
+                                  ? backgroundColor
+                                  : Theme.of(context)
+                                        .colorScheme
+                                        .secondaryContainer
+                                        .withValues(alpha: 0.2),
+                              contentColor: isEqual
+                                  ? Theme.of(context).colorScheme.onPrimary
+                                  : backgroundColor,
                               btnWidth: 96,
                               btnHeight: 36,
                             );
-                          }).toList(),
+                          })
+                          .toList(),
                     );
                   }),
                   Expanded(

@@ -15,20 +15,25 @@ class DesktopLyricsSettingController extends GetxController {
   final isLock = false.obs;
   double windowDx = 50.0;
   double windowDy = 50.0;
-  double windowWidth=450.0;
-  double windowHeight=150.0;
+  double windowWidth = 450.0;
+  double windowHeight = 150.0;
   final isIgnoreMouseEvents = false.obs;
 
-  final lrcAlignment=1.obs;
-  final useVerticalDisplayMode=false.obs;
+  final lrcAlignment = 1.obs;
+  final useVerticalDisplayMode = false.obs;
 
-  final useStroke =true.obs;
+  final useStroke = true.obs;
 
-  final strokeColor=0xff000000.obs;
+  final strokeColor = 0xff000000.obs;
 
-  final showDoubleLine=false.obs;
+  final showDoubleLine = false.obs;
 
-  static const Map<int, String> lrcAlignmentMap = {0: '左对齐', 1: '居中', 2: '右对齐', 3: '左右分离'};
+  static const Map<int, String> lrcAlignmentMap = {
+    0: '左对齐',
+    1: '居中',
+    2: '右对齐',
+    3: '左右分离',
+  };
 
   SharedPreferences? prefs;
 
@@ -50,14 +55,14 @@ class DesktopLyricsSettingController extends GetxController {
     isLock.value = prefs!.getBool('isLock') ?? false;
     windowDx = prefs!.getDouble('dx') ?? 50.0;
     windowDy = prefs!.getDouble('dy') ?? 50.0;
-    windowWidth=prefs!.getDouble('windowWidth') ?? 450.0;
-    windowHeight=prefs!.getDouble('windowHeight') ?? 150.0;
-    isIgnoreMouseEvents.value=prefs!.getBool('isIgnoreMouseEvents')??false;
-    lrcAlignment.value=prefs!.getInt('lrcAlignment')??1;
-    useVerticalDisplayMode.value=prefs!.getBool('displayMode')??false;
-    useStroke.value=prefs!.getBool('useStroke')??true;
-    strokeColor.value=prefs!.getInt('strokeColor') ?? 0xff000000;
-    showDoubleLine.value=prefs!.getBool('showDoubleLine')??false;
+    windowWidth = prefs!.getDouble('windowWidth') ?? 450.0;
+    windowHeight = prefs!.getDouble('windowHeight') ?? 150.0;
+    isIgnoreMouseEvents.value = prefs!.getBool('isIgnoreMouseEvents') ?? false;
+    lrcAlignment.value = prefs!.getInt('lrcAlignment') ?? 1;
+    useVerticalDisplayMode.value = prefs!.getBool('displayMode') ?? false;
+    useStroke.value = prefs!.getBool('useStroke') ?? true;
+    strokeColor.value = prefs!.getInt('strokeColor') ?? 0xff000000;
+    showDoubleLine.value = prefs!.getBool('showDoubleLine') ?? false;
   }
 
   void setFontSize({required int size}) {
@@ -172,8 +177,8 @@ class DesktopLyricsSettingController extends GetxController {
     prefs!.setDouble('windowHeight', height);
   }
 
-  void setIgnoreMouseEvents({required bool isIgnore}){
-    isIgnoreMouseEvents.value=isIgnore;
+  void setIgnoreMouseEvents({required bool isIgnore}) {
+    isIgnoreMouseEvents.value = isIgnore;
     _desktopLyricsSever.sendCmd(
       cmdType: SeverCmdType.setIgnoreMouseEvents,
       cmdData: isIgnoreMouseEvents.value,
@@ -184,49 +189,63 @@ class DesktopLyricsSettingController extends GetxController {
     prefs!.setBool('isIgnoreMouseEvents', isIgnore);
   }
 
-  void setLrcAlignment({required int alignment}){
-    lrcAlignment.value=alignment;
-    _desktopLyricsSever.sendCmd(cmdType: SeverCmdType.setLrcAlignment, cmdData: lrcAlignment.value);
+  void setLrcAlignment({required int alignment}) {
+    lrcAlignment.value = alignment;
+    _desktopLyricsSever.sendCmd(
+      cmdType: SeverCmdType.setLrcAlignment,
+      cmdData: lrcAlignment.value,
+    );
     if (prefs == null) {
       return;
     }
     prefs!.setInt('lrcAlignment', alignment);
   }
 
-  void setUseVerticalDisplayMode({required bool use}){
-    useVerticalDisplayMode.value=use;
-    _desktopLyricsSever.sendCmd(cmdType: SeverCmdType.setDisplayMode, cmdData: useVerticalDisplayMode.value);
+  void setUseVerticalDisplayMode({required bool use}) {
+    useVerticalDisplayMode.value = use;
+    _desktopLyricsSever.sendCmd(
+      cmdType: SeverCmdType.setDisplayMode,
+      cmdData: useVerticalDisplayMode.value,
+    );
     if (prefs == null) {
       return;
     }
     prefs!.setBool('displayMode', use);
   }
 
-  void setStrokeEnable({required bool enable}){
-    useStroke.value=enable;
-    _desktopLyricsSever.sendCmd(cmdType: SeverCmdType.setStrokeEnable, cmdData: useStroke.value);
+  void setStrokeEnable({required bool enable}) {
+    useStroke.value = enable;
+    _desktopLyricsSever.sendCmd(
+      cmdType: SeverCmdType.setStrokeEnable,
+      cmdData: useStroke.value,
+    );
     if (prefs == null) {
       return;
     }
     prefs!.setBool('useStroke', enable);
   }
 
-  void setStrokeColor({required int color}){
-    strokeColor.value=color;
-    _desktopLyricsSever.sendCmd(cmdType: SeverCmdType.setStrokeColor, cmdData: strokeColor.value);
+  void setStrokeColor({required int color}) {
+    strokeColor.value = color;
+    _desktopLyricsSever.sendCmd(
+      cmdType: SeverCmdType.setStrokeColor,
+      cmdData: strokeColor.value,
+    );
     if (prefs == null) {
       return;
     }
     prefs!.setInt('strokeColor', color);
   }
 
-  void setShowDoubleLine({required bool show}){
-    showDoubleLine.value=show;
-    _desktopLyricsSever.sendCmd(cmdType: SeverCmdType.showDoubleLine, cmdData: showDoubleLine.value);
+  void setShowDoubleLine({required bool show}) {
+    showDoubleLine.value = show;
+    _desktopLyricsSever.sendCmd(
+      cmdType: SeverCmdType.showDoubleLine,
+      cmdData: showDoubleLine.value,
+    );
     if (prefs == null) {
       return;
     }
     prefs!.setBool('showDoubleLine', show);
   }
-
 }

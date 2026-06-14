@@ -68,7 +68,10 @@ class FoldersPreviewPage extends GetView<SettingController> {
             child: Obx(() {
               final folders = folderPathMap.keys.toList();
               return ListView.builder(
-                scrollCacheExtent: const ScrollCacheExtent.pixels(_itemHeight * 1), itemCount: settingController.folders.length,
+                scrollCacheExtent: const ScrollCacheExtent.pixels(
+                  _itemHeight * 1,
+                ),
+                itemCount: settingController.folders.length,
                 itemExtent: _itemHeight,
                 itemBuilder: (context, index) {
                   if (folders.isEmpty || index > folders.length - 1) {

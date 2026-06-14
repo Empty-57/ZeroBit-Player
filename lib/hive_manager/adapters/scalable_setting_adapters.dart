@@ -3,7 +3,7 @@ import 'package:zerobit_player/hive_manager/models/scalable_setting_cache_model.
 
 import '../hive_types.dart';
 
-class ScalableSettingAdapter extends TypeAdapter<ScalableSettingCache>{
+class ScalableSettingAdapter extends TypeAdapter<ScalableSettingCache> {
   @override
   int get typeId => HiveTypes.scalableSettingCache;
 

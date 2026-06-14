@@ -38,22 +38,21 @@ class CustomDropdownMenu<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final menuController = MenuController();
-    final menuList =
-        itemMap.entries.map((entry) {
-          return CustomBtn(
-            fn: () {
-              fn(entry);
-              menuController.close();
-            },
-            btnHeight: itemHeight,
-            btnWidth: itemWidth,
-            radius: 4,
-            icon: entry.value[1] as IconData?,
-            label: entry.value[0].toString(),
-            mainAxisAlignment: MainAxisAlignment.start,
-            backgroundColor: Colors.transparent,
-          );
-        }).toList();
+    final menuList = itemMap.entries.map((entry) {
+      return CustomBtn(
+        fn: () {
+          fn(entry);
+          menuController.close();
+        },
+        btnHeight: itemHeight,
+        btnWidth: itemWidth,
+        radius: 4,
+        icon: entry.value[1] as IconData?,
+        label: entry.value[0].toString(),
+        mainAxisAlignment: MainAxisAlignment.start,
+        backgroundColor: Colors.transparent,
+      );
+    }).toList();
 
     return MenuAnchor(
       menuChildren: menuList,

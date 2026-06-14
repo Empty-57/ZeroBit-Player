@@ -122,9 +122,9 @@ class _FloatingButtonState extends State<FloatingButton> {
     // 这个值应该与 AudioGenPages 中的头部高度保持一致
     final double headerOffset =
         (widget.operateArea == OperateArea.allMusic ||
-                widget.operateArea == OperateArea.foldersDetails)
-            ? 280
-            : 384;
+            widget.operateArea == OperateArea.foldersDetails)
+        ? 280
+        : 384;
     final double middleOffset = (screenSize.height - headerOffset) / 2;
 
     final scrollControllerList = widget.scrollControllerList;

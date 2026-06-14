@@ -128,8 +128,10 @@ List<LyricEntry> _parseLyrics(String text) {
       .map((match) {
         try {
           final start = _parseTime(match[1]!, match[2]!);
-          final lyric =
-              match[3]!.replaceAll(reg1, '').replaceAll(reg2, '').trim();
+          final lyric = match[3]!
+              .replaceAll(reg1, '')
+              .replaceAll(reg2, '')
+              .trim();
           if (lyric.isEmpty) return null;
           return LyricEntry(start: start, lyricText: lyric);
         } catch (e) {
@@ -157,14 +159,15 @@ List<WordEntry> _enhancedAndWordByWordLrcAnalysis(
     );
 
     if (words.isNotEmpty) {
-      words.last.duration = max(0.0,curr.start - words.last.start);
+      words.last.duration = max(0.0, curr.start - words.last.start);
     }
     words.add(curr);
   }
 
   for (var i = 0; i < words.length; i++) {
-    words[i].nextTime =
-        (i < words.length - 1) ? words[i + 1].start : double.infinity;
+    words[i].nextTime = (i < words.length - 1)
+        ? words[i + 1].start
+        : double.infinity;
   }
 
   // for(var i=0;i<words.length-1;i++){  // 对于逐字Lrc的合并
@@ -197,10 +200,9 @@ List<WordEntry> _enhancedAndWordByWordLrcAnalysis(
     final start = _parseTime(m[1]!, m[2]!);
     final lyric = m[3]!.trim();
 
-    final words =
-        reg == _wordByWordLrcWordRegex
-            ? _enhancedAndWordByWordLrcAnalysis(m[0]!.trim(), reg)
-            : _enhancedAndWordByWordLrcAnalysis(lyric, reg);
+    final words = reg == _wordByWordLrcWordRegex
+        ? _enhancedAndWordByWordLrcAnalysis(m[0]!.trim(), reg)
+        : _enhancedAndWordByWordLrcAnalysis(lyric, reg);
 
     segments.add(LyricEntry(start: start, lyricText: words));
   }
@@ -256,8 +258,9 @@ List<WordEntry> _processWords(
   }
 
   for (var i = 0; i < words.length; i++) {
-    words[i].nextTime =
-        (i < words.length - 1) ? words[i + 1].start : double.infinity;
+    words[i].nextTime = (i < words.length - 1)
+        ? words[i + 1].start
+        : double.infinity;
   }
 
   return words;
@@ -318,10 +321,9 @@ List<LyricEntry> _mergeLrcInlineTranslations(
 
   // 设置 nextTime
   for (var i = 0; i < mainEntries.length; i++) {
-    mainEntries[i].nextTime =
-        (i < mainEntries.length - 1)
-            ? mainEntries[i + 1].start
-            : double.infinity;
+    mainEntries[i].nextTime = (i < mainEntries.length - 1)
+        ? mainEntries[i + 1].start
+        : double.infinity;
   }
 
   // byWordLrc 需要修正最后一个单词的 duration
@@ -395,8 +397,9 @@ void _applyRoma(LyricEntry roma, LyricEntry primary) {
   if (roma.lyricText is String) {
     primary.roma = roma.lyricText as String;
   } else if (roma.lyricText is List<WordEntry>) {
-    primary.roma =
-        (roma.lyricText as List<WordEntry>).map((w) => w.lyricWord).join();
+    primary.roma = (roma.lyricText as List<WordEntry>)
+        .map((w) => w.lyricWord)
+        .join();
   }
 }
 
@@ -479,10 +482,9 @@ List<LyricEntry> _mergeByTimeMatch(
   final transQueue = _parseLyrics(lyricDataTs);
   if (transQueue.isEmpty) return mainEntries;
 
-  final String Function(LyricEntry) getTranslate =
-      type == LyricFormat.qrc
-          ? (e) => e.lyricText == '//' ? ' ' : e.lyricText as String
-          : (e) => e.lyricText as String;
+  final String Function(LyricEntry) getTranslate = type == LyricFormat.qrc
+      ? (e) => e.lyricText == '//' ? ' ' : e.lyricText as String
+      : (e) => e.lyricText as String;
 
   // 记录上一句被匹配上的原文索引
   int lastMatchedMainIdx = -1;
@@ -567,8 +569,9 @@ List<LyricEntry>? parseKaraOkLyric({
 
   // 本行 start+dur 不一定等于下一行 start，手动赋值 nextTime
   for (var i = 0; i < segments.length; i++) {
-    segments[i].nextTime =
-        (i < segments.length - 1) ? segments[i + 1].start : double.infinity;
+    segments[i].nextTime = (i < segments.length - 1)
+        ? segments[i + 1].start
+        : double.infinity;
   }
 
   debugPrint("currentLyrics | parsedType: $type");

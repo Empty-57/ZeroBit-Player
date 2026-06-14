@@ -88,18 +88,16 @@ class DesktopLyricsSever extends GetxController {
     }
 
     final currLyrics = lyrics[lineIndex].lyricText;
-    final nextLyrics =
-        nextLineIndex > lyrics.length - 1
-            ? type == LyricFormat.lrc
-                ? ''
-                : [WordEntry(start: 0.0, duration: 0.0, lyricWord: '')]
-            : lyrics[nextLineIndex].lyricText;
+    final nextLyrics = nextLineIndex > lyrics.length - 1
+        ? type == LyricFormat.lrc
+              ? ''
+              : [WordEntry(start: 0.0, duration: 0.0, lyricWord: '')]
+        : lyrics[nextLineIndex].lyricText;
 
     final translate = lyrics[lineIndex].translate;
-    final nextTranslate =
-        nextLineIndex > lyrics.length - 1
-            ? ''
-            : lyrics[nextLineIndex].translate;
+    final nextTranslate = nextLineIndex > lyrics.length - 1
+        ? ''
+        : lyrics[nextLineIndex].translate;
 
     if (type == LyricFormat.lrc) {
       try {
@@ -115,15 +113,13 @@ class DesktopLyricsSever extends GetxController {
         _add(nextJsonData);
       } catch (_) {}
     } else {
-      final line =
-          (currLyrics as List<WordEntry>).map((v) {
-            return WordEntry.toJson(v);
-          }).toList();
+      final line = (currLyrics as List<WordEntry>).map((v) {
+        return WordEntry.toJson(v);
+      }).toList();
 
-      final nextLine =
-          (nextLyrics as List<WordEntry>).map((v) {
-            return WordEntry.toJson(v);
-          }).toList();
+      final nextLine = (nextLyrics as List<WordEntry>).map((v) {
+        return WordEntry.toJson(v);
+      }).toList();
 
       try {
         final jsonData = jsonEncode(
@@ -203,16 +199,14 @@ class DesktopLyricsSever extends GetxController {
                     'windowWidth': _desktopLyricsSettingController.windowWidth,
                     'windowHeight':
                         _desktopLyricsSettingController.windowHeight,
-                    'isIgnoreMouseEvents':
-                        _desktopLyricsSettingController
-                            .isIgnoreMouseEvents
-                            .value,
+                    'isIgnoreMouseEvents': _desktopLyricsSettingController
+                        .isIgnoreMouseEvents
+                        .value,
                     'lrcAlignment':
                         _desktopLyricsSettingController.lrcAlignment.value,
-                    'displayMode':
-                        _desktopLyricsSettingController
-                            .useVerticalDisplayMode
-                            .value,
+                    'displayMode': _desktopLyricsSettingController
+                        .useVerticalDisplayMode
+                        .value,
                     'useStroke':
                         _desktopLyricsSettingController.useStroke.value,
                     'strokeColor':

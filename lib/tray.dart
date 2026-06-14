@@ -47,10 +47,9 @@ class Tray extends GetxController with TrayListener {
       items: [
         MenuItem(
           key: 'toggle',
-          label:
-              _audioController.currentState.value == AudioState.playing
-                  ? '暂停'
-                  : '播放',
+          label: _audioController.currentState.value == AudioState.playing
+              ? '暂停'
+              : '播放',
           onClick: (_) async => await _audioController.audioToggle(),
         ),
         MenuItem(
@@ -65,8 +64,9 @@ class Tray extends GetxController with TrayListener {
         ),
         MenuItem(
           key: 'desktopLyric',
-          label:
-              _settingController.showDesktopLyrics.value ? '关闭桌面歌词' : '显示桌面歌词',
+          label: _settingController.showDesktopLyrics.value
+              ? '关闭桌面歌词'
+              : '显示桌面歌词',
           onClick: (_) async {
             _settingController.showDesktopLyrics.toggle();
             await _settingController.putScalableCache();

@@ -110,20 +110,18 @@ Future<void> syncCache() async {
 
   final scannedPaths = await scanAudioPaths(settingCtrl.folders, settingCtrl);
 
-  final existingKeys =
-      musicBox
-          .getAll()
-          .map((v) => v.path)
-          .whereType<String>()
-          .where((k) => supportedExts.contains(p.extension(k).toLowerCase()))
-          .toSet(); //清除不是音频格式的路径，防止路径被污染
+  final existingKeys = musicBox
+      .getAll()
+      .map((v) => v.path)
+      .whereType<String>()
+      .where((k) => supportedExts.contains(p.extension(k).toLowerCase()))
+      .toSet(); //清除不是音频格式的路径，防止路径被污染
 
   final newPaths = scannedPaths.difference(existingKeys);
-  final removedPaths =
-      existingKeys
-          .difference(scannedPaths)
-          .map((v) => md5.convert(utf8.encode(v)).toString())
-          .toList();
+  final removedPaths = existingKeys
+      .difference(scannedPaths)
+      .map((v) => md5.convert(utf8.encode(v)).toString())
+      .toList();
 
   if (removedPaths.isNotEmpty) {
     await musicBox.delAll(keyList: removedPaths);
@@ -138,6 +136,6 @@ Future<void> syncCache() async {
   musicCacheCtrl.items.clear();
   musicCacheCtrl.loadData();
 
-  audioCtrl.playListCacheItems.value=[...musicCacheCtrl.items];
+  audioCtrl.playListCacheItems.value = [...musicCacheCtrl.items];
   audioCtrl.syncCurrentIndex();
 }

@@ -123,7 +123,9 @@ class _FolderManagerDialog extends GetView<MusicCacheController> {
                         flex: 1,
                         child: Obx(() {
                           return ListView.builder(
-                            scrollCacheExtent: const ScrollCacheExtent.pixels(36 * 1),
+                            scrollCacheExtent: const ScrollCacheExtent.pixels(
+                              36 * 1,
+                            ),
                             itemCount: _settingController.folders.length,
                             itemExtent: 36,
                             itemBuilder: (context, index) {
@@ -559,7 +561,9 @@ Widget _getFontFamilyDialog(
                     Expanded(
                       flex: 1,
                       child: ListView.builder(
-                        scrollCacheExtent: const ScrollCacheExtent.pixels(36 * 1),
+                        scrollCacheExtent: const ScrollCacheExtent.pixels(
+                          36 * 1,
+                        ),
                         itemCount: _fontsList.length,
                         itemExtent: 36,
                         itemBuilder: (context, index) {

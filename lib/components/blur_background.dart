@@ -37,10 +37,9 @@ class BlurWithCoverBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor =
-        onlyDarkMode
-            ? ThemeService.instance.darkTheme.colorScheme.surface
-            : Theme.of(context).colorScheme.surface;
+    final backgroundColor = onlyDarkMode
+        ? ThemeService.instance.darkTheme.colorScheme.surface
+        : Theme.of(context).colorScheme.surface;
     return Stack(
       children: [
         ClipRRect(
@@ -83,24 +82,23 @@ class BlurWithCoverBackground extends StatelessWidget {
                       sigmaY: sigma,
                       tileMode: TileMode.clamp,
                     ),
-                    child:
-                        useGradient
-                            ? ShaderMask(
-                              blendMode: BlendMode.modulate,
-                              shaderCallback: (Rect bounds) {
-                                return LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: <Color>[
-                                    Colors.white.withValues(alpha: 0.4),
-                                    Colors.transparent,
-                                  ],
-                                  tileMode: TileMode.clamp,
-                                ).createShader(bounds);
-                              },
-                              child: rawCover,
-                            )
-                            : rawCover,
+                    child: useGradient
+                        ? ShaderMask(
+                            blendMode: BlendMode.modulate,
+                            shaderCallback: (Rect bounds) {
+                              return LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: <Color>[
+                                  Colors.white.withValues(alpha: 0.4),
+                                  Colors.transparent,
+                                ],
+                                tileMode: TileMode.clamp,
+                              ).createShader(bounds);
+                            },
+                            child: rawCover,
+                          )
+                        : rawCover,
                   ),
                 ),
               );
@@ -115,8 +113,8 @@ class BlurWithCoverBackground extends StatelessWidget {
               color: backgroundColor.withValues(
                 alpha:
                     _settingController.themeMode.value == 'dark' || onlyDarkMode
-                        ? 0.4
-                        : 0.2,
+                    ? 0.4
+                    : 0.2,
               ),
             ),
           ),
