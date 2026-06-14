@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
@@ -487,7 +488,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
                 }
 
                 wordWidget = TweenAnimationBuilder<Color?>(
-                  key: ValueKey('word_$wordIndex'), // ???
+                  // key: ValueKey('word_$wordIndex'), // ???
                   duration: const Duration(milliseconds: 600),
                   curve: Curves.easeInOut,
                   tween: ColorTween(begin: beginColor, end: targetColor),
@@ -501,29 +502,17 @@ class _KaraOkLyricWidget extends StatelessWidget {
                 );
               }
 
-              // return _SyllableFloatWidget(isFloating: isFloating,duration: isFloating ? floatingDuration : 600,delay: isFloating ? floatingDelay : 0,child: wordWidget,);
-
               return WidgetSpan(
                 alignment: PlaceholderAlignment.baseline,
                 baseline: TextBaseline.alphabetic,
-                child: wordWidget,
+                child: _SyllableFloatWidget(
+                  isFloating: isFloating,
+                  duration: isFloating ? floatingDuration : 600,
+                  delay: isFloating ? floatingDelay : 0,
+                  floatingY: _floatingY,
+                  child: wordWidget,
+                ),
               );
-              // .animate(target: isFloating ? 1.0 : 0.0)
-              // .custom(
-              //   duration: isFloating ? floatingDuration.ms : 600.ms,
-              //   delay: isFloating ? floatingDelay.ms : 0.ms,
-              //   curve: isFloating ? Curves.easeInOut : Curves.easeInCubic,
-              //   builder: (context, value, child) {
-              //     return Transform.translate(
-              //       offset: Offset(
-              //         0,
-              //         ui.lerpDouble(0.0, _floatingY, value)!,
-              //       ),
-              //       filterQuality: FilterQuality.low,
-              //       child: child,
-              //     );
-              //   },
-              // );
             }),
           ),
           textAlign: textAlign,
@@ -535,88 +524,103 @@ class _KaraOkLyricWidget extends StatelessWidget {
   }
 }
 
-// class _SyllableFloatWidget extends StatefulWidget {
-//   final bool isFloating;
-//   final double duration;
-//   final double delay;
-//   final Widget child;
-//
-//   const _SyllableFloatWidget({
-//     required this.isFloating,
-//     required this.duration,
-//     required this.delay,
-//     required this.child,
-//   });
-//
-//   @override
-//   State<_SyllableFloatWidget> createState() => _SyllableFloatWidgetState();
-// }
-//
-// class _SyllableFloatWidgetState extends State<_SyllableFloatWidget>
-//     with SingleTickerProviderStateMixin {
-//   late AnimationController _controller;
-//   late Animation<double> _animation;
-//   Timer? _delayTimer;
-//
-//   @override
-//   void initState() {
-//     super.initState();
-//     _controller = AnimationController(vsync: this);
-//     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
-//     _updateAnimation();
-//   }
-//
-//   @override
-//   void didUpdateWidget(_SyllableFloatWidget oldWidget) {
-//     super.didUpdateWidget(oldWidget);
-//     if (oldWidget.isFloating != widget.isFloating ||
-//         oldWidget.duration != widget.duration ||
-//         oldWidget.delay != widget.delay) {
-//       _updateAnimation();
-//     }
-//   }
-//
-//   void _updateAnimation() {
-//     _delayTimer?.cancel();
-//     if (widget.isFloating) {
-//       _controller.duration = Duration(milliseconds: widget.duration.round());
-//       if (widget.delay > 0) {
-//         _delayTimer = Timer(Duration(milliseconds: widget.delay.round()), () {
-//           if (mounted) _controller.forward();
-//         });
-//       } else {
-//         _controller.forward();
-//       }
-//     } else {
-//       _controller.duration = const Duration(milliseconds: 600);
-//       _controller.reverse();
-//     }
-//   }
-//
-//   @override
-//   void dispose() {
-//     _delayTimer?.cancel();
-//     _controller.dispose();
-//     super.dispose();
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return AnimatedBuilder(
-//       animation: _animation,
-//       builder: (context, child) {
-//         final double offset = ui.lerpDouble(0.0, _floatingY, _animation.value)!;
-//         if (offset == 0.0) return child!;
-//         return Transform.translate(
-//           offset: Offset(0, offset),
-//           filterQuality: FilterQuality.low,
-//           child: child,
-//         );
-//       },
-//       child: widget.child,
-//     );
-//   }
-// }
+class _SyllableFloatWidget extends StatefulWidget {
+  final bool isFloating;
+  final double duration;
+  final double delay;
+  final double floatingY;
+  final Widget child;
+
+  const _SyllableFloatWidget({
+    super.key,
+    required this.isFloating,
+    required this.duration,
+    required this.delay,
+    required this.floatingY,
+    required this.child,
+  });
+
+  @override
+  State<_SyllableFloatWidget> createState() => _SyllableFloatWidgetState();
+}
+
+class _SyllableFloatWidgetState extends State<_SyllableFloatWidget>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late CurvedAnimation _curvedAnimation;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: widget.duration.round()),
+    );
+    _curvedAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: widget.isFloating ? Curves.easeInOut : Curves.easeInCubic,
+    );
+    _updateAnimation();
+  }
+
+  @override
+  void didUpdateWidget(_SyllableFloatWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isFloating != widget.isFloating ||
+        oldWidget.duration != widget.duration ||
+        oldWidget.delay != widget.delay) {
+      _controller.duration = Duration(milliseconds: widget.duration.round());
+
+      _curvedAnimation.dispose();
+      _curvedAnimation = CurvedAnimation(
+        parent: _controller,
+        curve: widget.isFloating ? Curves.easeInOut : Curves.easeInCubic,
+      );
+
+      _updateAnimation();
+    }
+  }
+
+  void _updateAnimation() {
+    _timer?.cancel();
+    final double target = widget.isFloating ? 1.0 : 0.0;
+
+    if (widget.delay > 0 && widget.isFloating) {
+      _timer = Timer(Duration(milliseconds: widget.delay.round()), () {
+        if (mounted) {
+          _controller.animateTo(target);
+        }
+      });
+    } else {
+      _controller.animateTo(target);
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _curvedAnimation.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _curvedAnimation,
+      builder: (context, child) {
+        final double value = _curvedAnimation.value;
+        return Transform.translate(
+          offset: Offset(0, ui.lerpDouble(0.0, widget.floatingY, value)!),
+          filterQuality: FilterQuality.low,
+          child: child,
+        );
+      },
+      child: widget.child,
+    );
+  }
+}
 
 class LyricsRender extends StatefulWidget {
   const LyricsRender({super.key});
