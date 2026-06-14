@@ -48,11 +48,6 @@ const _lrcScaleAlignment = <Alignment>[
   Alignment.center,
   Alignment.centerRight,
 ];
-const _lrcWrapAlignment = <WrapAlignment>[
-  WrapAlignment.start,
-  WrapAlignment.center,
-  WrapAlignment.end,
-];
 
 const _lrcTextAlign = <TextAlign>[
   TextAlign.left,
@@ -538,7 +533,6 @@ class _SyllableFloatWidget extends StatefulWidget {
   final Widget child;
 
   const _SyllableFloatWidget({
-    super.key,
     required this.isFloating,
     required this.duration,
     required this.delay,
