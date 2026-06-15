@@ -1382,7 +1382,7 @@ class SettingPage extends StatelessWidget {
                   ),
 
                   _createSetItem(
-                    text: '自动下载选择的歌词',
+                    text: '自动保存获取的歌词',
                     child: _createSwitchBtn(
                       value: _settingController.autoDownloadLrc,
                       trackColor: switchTrackColor,
@@ -1390,6 +1390,19 @@ class SettingPage extends StatelessWidget {
                       fn: (bool value) {
                         _settingController.autoDownloadLrc.value = value;
                         _settingController.putCache();
+                      },
+                    ),
+                    context: context,
+                  ),
+
+                  _createSetItem(
+                    text: '自动从API获取歌词',
+                    child: _createSwitchBtn(
+                      value: _settingController.autoGetLyrics,
+                      trackColor: switchTrackColor,
+                      context: context,
+                      fn: (bool value) {
+                        _settingController.setAutoGetLyrics(value: value);
                       },
                     ),
                     context: context,
@@ -1417,7 +1430,7 @@ class SettingPage extends StatelessWidget {
                         trackColor: switchTrackColor,
                         context: context,
                         fn: (bool value) {
-                          _settingController.setUseReplayGain(use: value);
+                          _settingController.setUseReplayGain(value: value);
                         },
                       ),
                       context: context,
@@ -1431,7 +1444,7 @@ class SettingPage extends StatelessWidget {
                       trackColor: switchTrackColor,
                       context: context,
                       fn: (bool value) {
-                        _settingController.setClose2Tray(use: value);
+                        _settingController.setClose2Tray(value: value);
                       },
                     ),
                     context: context,
@@ -1550,7 +1563,7 @@ class SettingPage extends StatelessWidget {
                         trackColor: switchTrackColor,
                         context: context,
                         fn: (bool value) {
-                          _settingController.setUseMesh(show: value);
+                          _settingController.setUseMesh(value: value);
                         },
                       ),
                       context: context,
@@ -1583,7 +1596,7 @@ class SettingPage extends StatelessWidget {
                         trackColor: switchTrackColor,
                         context: context,
                         fn: (bool value) {
-                          _settingController.setSpringScroll(use: value);
+                          _settingController.setSpringScroll(value: value);
                         },
                       ),
                       context: context,

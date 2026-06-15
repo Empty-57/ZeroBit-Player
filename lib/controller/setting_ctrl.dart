@@ -39,6 +39,7 @@ class SettingController extends GetxController {
   final lrcFontWeight = 5.obs; // 0-8 w100-w900
   final autoDownloadLrc = true.obs;
   final showDesktopLyrics = false.obs;
+  final autoGetLyrics=true.obs;
 
   static const int lrcFontSizeMax = 48;
   static const int lrcFontSizeMin = 24;
@@ -293,6 +294,8 @@ class SettingController extends GetxController {
     useSpringScroll.value =
         prefs?.getBool(SharedPreferencesKey.useSpringScroll) ?? true;
     close2Tray.value = prefs?.getBool(SharedPreferencesKey.close2Tray) ?? false;
+    useReplayGain.value = prefs?.getBool(SharedPreferencesKey.useReplayGain) ?? false;
+    autoGetLyrics.value=prefs?.getBool(SharedPreferencesKey.autoGetLyrics) ?? true;
 
     // 提取快捷键解析逻辑，消除冗余
     _loadKeyConfig(SharedPreferencesKey.toggleHidString, hotKeyToggleHid, (
@@ -453,32 +456,38 @@ class SettingController extends GetxController {
   void setShowTranslate() =>
       _setBoolPref(SharedPreferencesKey.showTranslate, showTranslate);
   void setShowRoma() => _setBoolPref(SharedPreferencesKey.showRoma, showRoma);
-  void setHotKeyScope({required bool scope}) => _setBoolPref(
+  void setHotKeyScope({required bool value}) => _setBoolPref(
     SharedPreferencesKey.hotKeyScope,
     hotKeyScope,
-    overrideValue: scope,
+    overrideValue: value,
   );
-  void setUseMesh({required bool show}) =>
-      _setBoolPref(SharedPreferencesKey.useMesh, useMesh, overrideValue: show);
-  void setSpringScroll({required bool use}) => _setBoolPref(
+  void setUseMesh({required bool value}) =>
+      _setBoolPref(SharedPreferencesKey.useMesh, useMesh, overrideValue: value);
+  void setSpringScroll({required bool value}) => _setBoolPref(
     SharedPreferencesKey.useSpringScroll,
     useSpringScroll,
-    overrideValue: use,
+    overrideValue: value,
   );
-  void setClose2Tray({required bool use}) => _setBoolPref(
+  void setClose2Tray({required bool value}) => _setBoolPref(
     SharedPreferencesKey.close2Tray,
     close2Tray,
-    overrideValue: use,
+    overrideValue: value,
   );
 
-  void setUseReplayGain({required bool use}) async {
+  void setUseReplayGain({required bool value}) async {
     await setReplayGain(gainDb: 0.0, peak: 1.0);
     _setBoolPref(
       SharedPreferencesKey.useReplayGain,
       useReplayGain,
-      overrideValue: use,
+      overrideValue: value,
     );
   }
+
+  void setAutoGetLyrics({required bool value}) async =>_setBoolPref(
+      SharedPreferencesKey.autoGetLyrics,
+      autoGetLyrics,
+      overrideValue: value,
+    );
 
   /// 提取 HotKey 的主键和修饰键 (HID)
   (int, List<int>) _extractHid(HotKey key) {

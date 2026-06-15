@@ -21,6 +21,8 @@ import 'package:zerobit_player/tools/cover_lru_cache.dart';
 import 'package:zerobit_player/tools/lrcTool/get_lyrics.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
+import '../tools/lrcTool/parse_lyrics.dart';
+import '../tools/lrcTool/save_lyric.dart';
 import 'music_cache_ctrl.dart';
 
 enum AudioState { stop, playing, pause, ended }
@@ -201,13 +203,82 @@ class AudioController extends GetxController {
     }
   }
 
+  Future<void> _checkAndGetLyrics4Net() async {
+    final hasLocalLyrics = currentLyrics.value?.parsedLrc?.isNotEmpty ?? false;
+    showLyricRender = hasLocalLyrics;
+    if (hasLocalLyrics || !_settingController.autoGetLyrics.value) {
+      return;
+    }
+
+    final metadata = currentMetadata.value;
+    final searchText = "${metadata.title} - ${metadata.artist}";
+
+    try {
+      final searchedLyric = await getLrcBySearch(
+        text: searchText,
+        offset: 1,
+        limit: 1,
+      );
+
+      if (searchedLyric.isEmpty) return;
+
+      final lyricInfo = searchedLyric.first?.lyric;
+      if (lyricInfo == null) return;
+
+      final type = lyricInfo.type;
+      List<LyricEntry<dynamic>>? parsedResult;
+
+      if (type == LyricFormat.lrc) {
+        parsedResult = parseLrc(
+          lyricData: lyricInfo.lrc,
+          lyricDataTs: lyricInfo.translate,
+        );
+      } else if (type == LyricFormat.yrc ||
+          type == LyricFormat.qrc ||
+          type == LyricFormat.krc) {
+        parsedResult = parseKaraOkLyric(
+          lyricData: lyricInfo.verbatimLrc,
+          lyricDataTs: lyricInfo.translate,
+          type: type,
+        );
+      }
+
+      if (parsedResult == null || parsedResult.isEmpty) {
+        return;
+      }
+
+      currentLyrics.value = ParsedLyricModel(
+        parsedLrc: parsedResult,
+        type: type,
+      );
+      showLyricRender = true;
+
+      debugPrint('AutoGetLyrics4Net ↑↑');
+
+      if (_settingController.autoDownloadLrc.value) {
+        _saveLyricsSilently(path: currentPath.value, lrcData: lyricInfo);
+      }
+    } catch (e, stackTrace) {
+      debugPrint('Error getting lyrics: $e\n$stackTrace');
+    }
+  }
+
+  void _saveLyricsSilently({
+    required String path,
+    required Get4NetLrcModel? lrcData,
+  }) {
+    saveLyrics(path: path, lrcData: lrcData).catchError((error) {
+      debugPrint('Failed to save lyrics to disk: $error');
+    });
+  }
+
   Future<void> loadLyrics(String path, {bool changed = false}) async {
     if (!changed) {
       currentLyrics.value = await getParsedLyric(filePath: path);
     }
 
+    await _checkAndGetLyrics4Net();
     final parsedLrc = currentLyrics.value?.parsedLrc;
-    showLyricRender = parsedLrc != null && parsedLrc.isNotEmpty;
 
     // 重要：在这里就处理歌词数据，渲染端直接用,防止内存泄露
     if (showLyricRender) {
@@ -217,6 +288,12 @@ class AudioController extends GetxController {
       startTime = parsedLrc.map((v) => v.start).toList();
       romaList = parsedLrc.map((v) => v.roma).toList();
       lineDurationList = parsedLrc.map((v) => v.nextTime - v.start).toList();
+    } else {
+      lineTextList.clear();
+      translateList.clear();
+      startTime.clear();
+      romaList.clear();
+      lineDurationList.clear();
     }
     update([GetBuilderId.lyricRender]);
   }

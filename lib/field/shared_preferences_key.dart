@@ -11,4 +11,5 @@ abstract class SharedPreferencesKey {
   static const useSpringScroll = 'useSpringScroll';
   static const close2Tray = 'close2Tray';
   static const useReplayGain = 'useReplayGain';
+  static const autoGetLyrics = 'autoGetLyrics';
 }
