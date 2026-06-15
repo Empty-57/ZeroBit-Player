@@ -432,7 +432,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
 
                 if (dura >= _rippleThreshold) {
                   // 将词的持续时间 dura 在 [_rippleThreshold, 3] 区间内归一化为 [0.0, 1.0] 的比例值
-                  // 用于控制特效的最大值
+                  // 时间参数，根据dura的大小影响缩放和辉光效果的最大值
                   final effectRatio =
                       (((dura - _rippleThreshold) /
                               (3 - _rippleThreshold))) // 最大观测长度 3s
