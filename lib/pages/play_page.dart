@@ -1486,12 +1486,12 @@ class _PlayPageState extends State<PlayPage> {
                     children: [
                       Expanded(
                         child: GestureDetector(
-                          onTapDown: (_) => _menuController.isOpen
+                          onSecondaryTapDown: (details) =>
+                              _menuController.isOpen
                               ? _menuController.close()
-                              : null,
-                          onSecondaryTapDown: (details) => _menuController.open(
-                            position: details.localPosition,
-                          ),
+                              : _menuController.open(
+                                  position: details.localPosition,
+                                ),
                           child: MenuAnchor(
                             consumeOutsideTap: true,
                             controller: _menuController,

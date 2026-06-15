@@ -38,10 +38,12 @@ const _borderRadius = BorderRadius.all(Radius.circular(4));
 final double _dpr = PlatformDispatcher.instance.views.first.devicePixelRatio;
 
 class _MusicMenuController {
-  final menuController = MenuController();
+  final _menuController = MenuController();
   Offset? menuPosition;
   MusicCache? currentMetadata;
   int currentIndex = -1;
+
+  bool get isOpen => _menuController.isOpen;
 
   void openMenu({
     required Offset overlayOffset,
@@ -51,12 +53,12 @@ class _MusicMenuController {
     menuPosition = overlayOffset;
     currentMetadata = metadata;
     currentIndex = index;
-    menuController.open(position: Offset.zero);
+    _menuController.open(position: Offset.zero);
   }
 
   void closeMenu() {
-    if (menuController.isOpen) {
-      menuController.close();
+    if (_menuController.isOpen) {
+      _menuController.close();
     }
   }
 }
@@ -638,7 +640,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
 
   Widget _buildMusicList() {
     return RawMenuAnchor(
-      controller: _musicMenuCtrl.menuController,
+      controller: _musicMenuCtrl._menuController,
       consumeOutsideTaps: false,
       overlayBuilder: (context, info) {
         final currentMetadata = _musicMenuCtrl.currentMetadata;
@@ -664,7 +666,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
           left: left,
           child: TapRegion(
             behavior: HitTestBehavior.opaque,
-            groupId: _musicMenuCtrl.menuController,
+            groupId: _musicMenuCtrl._menuController,
             onTapOutside: (_) => _musicMenuCtrl.closeMenu(),
             child: Container(
               decoration: BoxDecoration(
@@ -682,7 +684,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
               child: Column(
                 children: _genMenuItems(
                   context: context,
-                  menuController: _musicMenuCtrl.menuController,
+                  menuController: _musicMenuCtrl._menuController,
                   metadata: currentMetadata,
                   userKey: widget.userKey,
                   index: _musicMenuCtrl.currentIndex,
@@ -774,6 +776,11 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     return GestureDetector(
       key: ValueKey(metadata.path),
       onSecondaryTapDown: (e) {
+        if (_musicMenuCtrl.isOpen) {
+          _musicMenuCtrl.closeMenu();
+          return;
+        }
+
         RenderBox overlayBox =
             Overlay.of(context).context.findRenderObject() as RenderBox;
         Offset overlayOffset = overlayBox.globalToLocal(e.globalPosition);

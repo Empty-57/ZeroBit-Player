@@ -29,8 +29,8 @@ const double _ctrlBtnMinSize = 40.0;
 const double _floatingY = -1.5;
 const double _rippleThreshold = 1.5;
 const double _ripplesScaleMin = 1.1;
-const double _glowAlphaMin = 0.2;
 const double _ripplesScaleExtra = 0.1;
+const double _glowAlphaMin = 0.2;
 const double _glowAlphaExtra = 0.3;
 
 const _lrcCrossAlignment = <CrossAxisAlignment>[
