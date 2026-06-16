@@ -427,7 +427,7 @@ class WindowControllerBar extends GetView<MyWindowListener> {
                 await windowManager.hide();
                 return;
               }
-              await windowManager.close();
+              await windowListener.closeAndClean();
             },
             tooltip: "退出",
           ),

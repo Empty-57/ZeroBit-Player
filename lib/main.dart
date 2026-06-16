@@ -156,11 +156,15 @@ void main() async {
   try {
     await loadLib();
     await initBass();
-  } catch (_) {}
+  } catch (e) {
+    debugPrint('Error on initBass: $e');
+  }
 
   try {
     await initSmtc();
-  } catch (_) {}
+  } catch (e) {
+    debugPrint('Error on initSmtc: $e');
+  }
 
   await Hive.initFlutter(configDirectory);
 

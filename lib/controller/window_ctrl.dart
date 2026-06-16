@@ -39,12 +39,16 @@ class MyWindowListener extends GetxController with WindowListener {
     this.isFullScreen.value = !isFullScreen;
   }
 
-  @override
-  void onWindowClose() async {
-    await smtcClear();
-    await _desktopLyricsSever.close();
-    windowManager.removeListener(this);
-    super.onClose();
+  Future<void> closeAndClean() async {
+    try {
+      await smtcClear();
+      await _desktopLyricsSever.close();
+    } catch (e) {
+      debugPrint('Error on closeClean: $e');
+    } finally {
+      windowManager.removeListener(this);
+      await windowManager.close();
+    }
   }
 
   @override

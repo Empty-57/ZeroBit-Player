@@ -319,7 +319,9 @@ class DesktopLyricsSever extends GetxController {
     try {
       final jsonData = jsonEncode(LyricsIOModel.sendCmd(cmdType, cmdData));
       _add(jsonData);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint(e.toString());
+    }
   }
 
   Future<void> close() async {
