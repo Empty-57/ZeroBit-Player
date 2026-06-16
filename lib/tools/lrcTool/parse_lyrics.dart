@@ -528,6 +528,15 @@ List<LyricEntry> _mergeByTimeMatch(
     }
   }
 
+  if (type == LyricFormat.lrc) {
+    // 设置 nextTime
+    for (var i = 0; i < mainEntries.length; i++) {
+      mainEntries[i].nextTime = (i < mainEntries.length - 1)
+          ? mainEntries[i + 1].start
+          : double.infinity;
+    }
+  }
+
   return mainEntries;
 }
 
