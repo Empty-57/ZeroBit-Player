@@ -164,27 +164,22 @@ List<WordEntry> _enhancedAndWordByWordLrcAnalysis(
       if (words.isNotEmpty) {
         words.last.duration = max(0.0, currStart - words.last.start);
       }
-      if (text.isEmpty) {
-        continue;
-      }
       final curr = WordEntry(start: currStart, duration: 5.0, lyricWord: text);
       words.add(curr);
     }
   } else {
     // 兼容标准Lrc格式的翻译行
-    if (lrcContent.isNotEmpty) {
-      final line = _parseLyrics(matchedContent[0]!.trim());
-      if (line.isNotEmpty) {
-        final curr = WordEntry(
-          start: line.first.start,
-          duration: 5.0,
-          lyricWord: line.first.lyricText,
-        );
-        if (words.isNotEmpty) {
-          words.last.duration = max(0.0, curr.start - words.last.start);
-        }
-        words.add(curr);
+    final line = _parseLyrics(matchedContent[0]!.trim());
+    if (line.isNotEmpty) {
+      final curr = WordEntry(
+        start: line.first.start,
+        duration: 5.0,
+        lyricWord: line.first.lyricText,
+      );
+      if (words.isNotEmpty) {
+        words.last.duration = max(0.0, curr.start - words.last.start);
       }
+      words.add(curr);
     }
   }
 
