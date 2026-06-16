@@ -146,22 +146,46 @@ List<LyricEntry> _parseLyrics(String text) {
 // ─────────────────────────── 增强 / 逐字 LRC 解析 ───────────────────────────
 
 List<WordEntry> _enhancedAndWordByWordLrcAnalysis(
-  String lrcContent,
+  RegExpMatch matchedContent,
+  bool isWordByWord,
   RegExp reg,
 ) {
+  final lrcContent = isWordByWord
+      ? matchedContent[0]!.trim()
+      : matchedContent[3]!.trim();
+
   final List<WordEntry> words = [];
 
-  for (final m in reg.allMatches(lrcContent)) {
-    final curr = WordEntry(
-      start: _parseTime(m.group(1)!, m.group(2)!),
-      duration: 5.0,
-      lyricWord: m.group(3)!.replaceAll('\n', ''),
-    );
-
-    if (words.isNotEmpty) {
-      words.last.duration = max(0.0, curr.start - words.last.start);
+  final Iterable<RegExpMatch> wordMatches = reg.allMatches(lrcContent);
+  if (wordMatches.isNotEmpty) {
+    for (final m in wordMatches) {
+      final double currStart = _parseTime(m.group(1)!, m.group(2)!);
+      final String text = m.group(3)!.replaceAll('\n', '');
+      if (words.isNotEmpty) {
+        words.last.duration = max(0.0, currStart - words.last.start);
+      }
+      if (text.isEmpty) {
+        continue;
+      }
+      final curr = WordEntry(start: currStart, duration: 5.0, lyricWord: text);
+      words.add(curr);
     }
-    words.add(curr);
+  } else {
+    // 兼容标准Lrc格式的翻译行
+    if (lrcContent.isNotEmpty) {
+      final line = _parseLyrics(matchedContent[0]!.trim());
+      if (line.isNotEmpty) {
+        final curr = WordEntry(
+          start: line.first.start,
+          duration: 5.0,
+          lyricWord: line.first.lyricText,
+        );
+        if (words.isNotEmpty) {
+          words.last.duration = max(0.0, curr.start - words.last.start);
+        }
+        words.add(curr);
+      }
+    }
   }
 
   for (var i = 0; i < words.length; i++) {
@@ -195,14 +219,12 @@ List<WordEntry> _enhancedAndWordByWordLrcAnalysis(
     return (_parseLyrics(lrcContent), LyricFormat.lrc);
   }
 
+  final bool isWordByWord = reg == _wordByWordLrcWordRegex;
   final List<LyricEntry> segments = [];
   for (final m in _lrcLineRegex.allMatches(lrcContent)) {
     final start = _parseTime(m[1]!, m[2]!);
-    final lyric = m[3]!.trim();
 
-    final words = reg == _wordByWordLrcWordRegex
-        ? _enhancedAndWordByWordLrcAnalysis(m[0]!.trim(), reg)
-        : _enhancedAndWordByWordLrcAnalysis(lyric, reg);
+    final words = _enhancedAndWordByWordLrcAnalysis(m, isWordByWord, reg);
 
     segments.add(LyricEntry(start: start, lyricText: words));
   }
