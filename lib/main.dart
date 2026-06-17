@@ -57,8 +57,8 @@ import 'hive_manager/models/music_cache_model.dart';
 import 'logger.dart';
 import 'theme_manager.dart';
 
-int countMs100 = 0;
-int countSec = 0;
+int _countMs100 = 0;
+int _countSec = 0;
 
 const String configDirectory = 'zerobit_config';
 
@@ -66,13 +66,13 @@ StreamSubscription? _audioEventSub;
 StreamSubscription? _progressSub;
 StreamSubscription? _smtcSub;
 
-void hiveSafeRegisterAdapter<T>(TypeAdapter<T> adapter) {
+void _hiveSafeRegisterAdapter<T>(TypeAdapter<T> adapter) {
   if (!Hive.isAdapterRegistered(adapter.typeId)) {
     Hive.registerAdapter<T>(adapter);
   }
 }
 
-Future<Box> openSafeBox<T>(String boxName) async {
+Future<Box> _openSafeBox<T>(String boxName) async {
   try {
     return await Hive.openBox<T>(boxName);
   } catch (e) {
@@ -105,7 +105,7 @@ Future<Box> openSafeBox<T>(String boxName) async {
   }
 }
 
-Future<void> initLog() async {
+Future<void> _initLog() async {
   // 初始化本地日志系统
   await FileLogger.init();
 
@@ -142,7 +142,7 @@ void main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
 
-  await initLog();
+  await _initLog();
 
   await windowManager.ensureInitialized();
   await RustLib.init();
@@ -173,16 +173,16 @@ void main() async {
   // await Hive.deleteBoxFromDisk(HiveBoxes.userPlayListCacheBox);
   // await Hive.deleteBoxFromDisk(HiveBoxes.scalableSettingCacheBox);
 
-  hiveSafeRegisterAdapter<MusicCache>(MusicCacheAdapter());
-  hiveSafeRegisterAdapter<SettingCache>(SettingCacheAdapter());
-  hiveSafeRegisterAdapter<UserPlayListCache>(UserPlayListAdapter());
-  hiveSafeRegisterAdapter<ScalableSettingCache>(ScalableSettingAdapter());
+  _hiveSafeRegisterAdapter<MusicCache>(MusicCacheAdapter());
+  _hiveSafeRegisterAdapter<SettingCache>(SettingCacheAdapter());
+  _hiveSafeRegisterAdapter<UserPlayListCache>(UserPlayListAdapter());
+  _hiveSafeRegisterAdapter<ScalableSettingCache>(ScalableSettingAdapter());
 
-  final musicBox = await openSafeBox<MusicCache>(HiveBoxes.musicCacheBox);
+  final musicBox = await _openSafeBox<MusicCache>(HiveBoxes.musicCacheBox);
 
-  await openSafeBox<SettingCache>(HiveBoxes.settingCacheBox);
-  await openSafeBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
-  await openSafeBox<ScalableSettingCache>(HiveBoxes.scalableSettingCacheBox);
+  await _openSafeBox<SettingCache>(HiveBoxes.settingCacheBox);
+  await _openSafeBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
+  await _openSafeBox<ScalableSettingCache>(HiveBoxes.scalableSettingCacheBox);
 
   Get.put(SettingController());
   Get.put(MusicCacheController());
@@ -335,15 +335,15 @@ Future<void> initStream(AudioController audioController) async {
   try {
     _progressSub = progressListen().listen((data) {
       lyricController.currentMs20Notifier.value = data;
-      countMs100++;
-      countSec++;
-      if (countMs100 > 3) {
+      _countMs100++;
+      _countSec++;
+      if (_countMs100 > 3) {
         audioController.currentMs100.value = data;
-        countMs100 = 0;
+        _countMs100 = 0;
       }
-      if (countSec > 48) {
+      if (_countSec > 48) {
         audioController.currentSec.value = data;
-        countSec = 0;
+        _countSec = 0;
       }
     });
   } catch (e) {
