@@ -20,6 +20,8 @@ abstract class AppRoutes {
 
   static const playPage = '/playPage';
 
+  static const audioInfoEdit = '/audioInfoEdit';
+
   static const homeOrder = 0;
 
   static const artistPreviewOrder = 1;
@@ -37,6 +39,8 @@ abstract class AppRoutes {
   static const settingOrder = 5;
 
   static const detailsOrder = 0;
+
+  static const audioInfoEditOrder = 0;
 
   static const Map<String, int> orderMap = {
     home: homeOrder,
@@ -71,5 +75,7 @@ abstract class AppRoutes {
     details: detailsOrder,
 
     setting: settingOrder,
+
+    audioInfoEdit:audioInfoEditOrder,
   };
 }

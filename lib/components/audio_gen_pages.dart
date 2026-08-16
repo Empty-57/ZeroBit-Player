@@ -20,7 +20,6 @@ import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 
 import 'edit_embedded_lyrics_dialog.dart';
-import 'edit_metadata_dialog.dart';
 import 'floating_button.dart';
 import 'get_snack_bar.dart';
 import 'music_list_tool.dart';
@@ -120,11 +119,23 @@ List<Widget> _genMenuItems({
       label: "添加到下一首",
     ),
 
-    EditMetadataDialog(
-      menuController: menuController,
-      metadata: metadata,
-      index: index,
-      operateArea: operateArea,
+    CustomBtn(
+      fn: () {
+        menuController.close();
+        Get.toNamed(
+          AppRoutes.audioInfoEdit,
+          id: 1,
+          arguments: {'metadata': metadata},
+        );
+      },
+      btnHeight: _menuBtnHeight,
+      btnWidth: _menuBtnWidth,
+      radius: _menuBtnRadius,
+      icon: PhosphorIconsLight.pencilSimpleLine,
+      label: "编辑元数据",
+      mainAxisAlignment: MainAxisAlignment.start,
+      backgroundColor: Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
     ),
 
     EditEmbeddedLyricsDialog(
@@ -424,8 +435,8 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         ),
         Obx(
           () => _isMulSelect.value
-                ? _buildMultiSelectActions()
-                : _buildNormalActions(),
+              ? _buildMultiSelectActions()
+              : _buildNormalActions(),
         ),
       ],
     );

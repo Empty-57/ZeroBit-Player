@@ -29,6 +29,7 @@ import 'package:zerobit_player/hive_manager/models/setting_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/user_playlist_model.dart';
 import 'package:zerobit_player/pages/album_preview_page.dart';
 import 'package:zerobit_player/pages/artist_preview_page.dart';
+import 'package:zerobit_player/pages/audio_info_edit_page.dart';
 import 'package:zerobit_player/pages/folders_preview_page.dart';
 import 'package:zerobit_player/pages/local_music_page.dart';
 import 'package:zerobit_player/pages/play_page.dart';
@@ -248,7 +249,7 @@ void main() async {
   //   );
   // }
 
-  debugRepaintRainbowEnabled = true;
+  debugRepaintRainbowEnabled = false;
   _initLeakTracking();
   runApp(const MainFrame());
 
@@ -465,6 +466,11 @@ class MainFrame extends StatelessWidget {
             maintainState: false,
           ),
           GetPage(
+            name: AppRoutes.audioInfoEdit,
+            page: () => const AudioInfoEditorPage(),
+            maintainState: false,
+          ),
+          GetPage(
             name: AppRoutes.playPage,
             page: () => const PlayPage(),
             maintainState: false,
@@ -525,6 +531,8 @@ class HomePage extends StatelessWidget {
         return const FoldersPreviewPage();
       case AppRoutes.details:
         return const UniDetailsPage();
+      case AppRoutes.audioInfoEdit:
+        return const AudioInfoEditorPage();
     }
     return const LocalMusicPage();
   }
