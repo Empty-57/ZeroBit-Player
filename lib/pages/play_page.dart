@@ -1196,6 +1196,7 @@ class _PlayPageState extends State<PlayPage> {
     required String text,
     required ColorScheme darkColorScheme,
     required List<Widget> menuChildren,
+    Widget? leadingIcon,
   }) {
     return SubmenuButton(
       submenuIcon: const WidgetStatePropertyAll(SizedBox.shrink()),
@@ -1204,6 +1205,7 @@ class _PlayPageState extends State<PlayPage> {
           const EdgeInsets.symmetric(horizontal: 16),
         ),
       ),
+      leadingIcon: leadingIcon,
       menuStyle: MenuStyle(
         alignment: Alignment.topRight,
         backgroundColor: WidgetStatePropertyAll(
@@ -1303,6 +1305,7 @@ class _PlayPageState extends State<PlayPage> {
             });
           },
           text: album,
+          icon: PhosphorIconsLight.vinylRecord,
           toolTip: '跳转到 "$album"',
         );
       }),
@@ -1331,6 +1334,7 @@ class _PlayPageState extends State<PlayPage> {
               });
             },
             text: artistFirst,
+            icon: PhosphorIconsLight.userFocus,
             toolTip: '跳转到 "$artistFirst"',
           );
         }
@@ -1338,6 +1342,10 @@ class _PlayPageState extends State<PlayPage> {
           return _createdSubmenuBtn(
             text: '查看艺术家',
             darkColorScheme: darkColorScheme,
+            leadingIcon: Icon(
+              PhosphorIconsLight.userFocus,
+              size: getIconSize(size: 'md'),
+            ),
             menuChildren: artistList.map((v) {
               return MenuItemButton(
                 onPressed: () {
@@ -1371,6 +1379,10 @@ class _PlayPageState extends State<PlayPage> {
       _createdSubmenuBtn(
         text: '添加到歌单',
         darkColorScheme: darkColorScheme,
+        leadingIcon: Icon(
+          PhosphorIconsLight.plus,
+          size: getIconSize(size: 'md'),
+        ),
         menuChildren: _userPlayListController.allUserKey.map((v) {
           return MenuItemButton(
             onPressed: () {
