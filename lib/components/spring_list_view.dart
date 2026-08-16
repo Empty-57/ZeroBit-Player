@@ -16,7 +16,7 @@ class SpringListController extends GetxController {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _scrollAreaKey = GlobalKey();
 
-  final RxInt _currentIndex = 0.obs;
+  final ValueNotifier<int> _currentIndex = ValueNotifier(0);
 
   final Map<int, GlobalKey> _sliverKeys = {};
   final Map<int, GlobalKey> _boxKeys = {};
@@ -179,6 +179,7 @@ class SpringListController extends GetxController {
     cachedScreenHeight = 0.0;
     _scrollController.dispose();
     _jumpNotifier.dispose();
+    _currentIndex.dispose();
     super.onClose();
   }
 }
@@ -254,66 +255,65 @@ class _SpringListViewState extends State<SpringListView> {
                     bottom: -extraSpace, // 往下拉伸 extraSpace
                     left: 0,
                     right: 0,
-                    child: Obx(() {
-                      final currentIndex = _controller._currentIndex.value;
-                      if (currentIndex < widget.lineDuration.length &&
-                          currentIndex >= 0) {
-                        // 原式: controller.delay = lineDuration[controller.currentIndex.value] *1000 / SpringController.durationMax *SpringController.delayMax
-                        _controller._delay =
-                            (widget.lineDuration[currentIndex] * 50)
-                                .clamp(
-                                  SpringListController._delayMax * 0.2,
-                                  SpringListController._delayMax,
-                                )
-                                .toInt();
-                        _controller._duration =
-                            widget.lineDuration[currentIndex];
-                      } else {
-                        _controller._duration =
-                            SpringListController._durationMax;
-                      }
+                    child: ValueListenableBuilder(
+                      valueListenable: _controller._currentIndex,
+                      builder: (_, index, _) {
+                        if (index < widget.lineDuration.length && index >= 0) {
+                          // 原式: controller.delay = lineDuration[index] *1000 / SpringController.durationMax *SpringController.delayMax
+                          _controller._delay = (widget.lineDuration[index] * 50)
+                              .clamp(
+                                SpringListController._delayMax * 0.2,
+                                SpringListController._delayMax,
+                              )
+                              .toInt();
+                          _controller._duration = widget.lineDuration[index];
+                        } else {
+                          _controller._duration =
+                              SpringListController._durationMax;
+                        }
 
-                      Key? centerKey;
-                      if (_controller._totalLength > 0) {
-                        int effectiveIndex = currentIndex.clamp(
-                          0, // 前奏时也为0
-                          _controller._totalLength - 1,
-                        );
-                        centerKey = _controller.getSliverKey(effectiveIndex);
-                      }
+                        Key? centerKey;
+                        if (_controller._totalLength > 0) {
+                          int effectiveIndex = index.clamp(
+                            0, // 前奏时也为0
+                            _controller._totalLength - 1,
+                          );
+                          centerKey = _controller.getSliverKey(effectiveIndex);
+                        }
 
-                      return CustomScrollView(
-                        scrollCacheExtent: const ScrollCacheExtent.pixels(
-                          200.0,
-                        ),
-                        controller: _controller._scrollController,
-                        center: centerKey,
-                        anchor: newAnchorPercentage,
-                        slivers: [
-                          SliverToBoxAdapter(
-                            child: SizedBox(
-                              height: screenHeight * 0.3 + extraSpace,
-                            ), // 前后留白区域也要加上拉伸值
+                        return CustomScrollView(
+                          scrollCacheExtent: const ScrollCacheExtent.pixels(
+                            200.0,
                           ),
-
-                          for (int i = 0; i < widget.length; i++)
+                          controller: _controller._scrollController,
+                          center: centerKey,
+                          anchor: newAnchorPercentage,
+                          slivers: [
                             SliverToBoxAdapter(
-                              key: _controller.getSliverKey(i),
-                              child: _SpringItem(
-                                index: i,
-                                boxKey: _controller.getBoxKey(i),
-                                child: widget.itemBuilder(i),
+                              child: SizedBox(
+                                height: screenHeight * 0.3 + extraSpace,
+                              ), // 前后留白区域也要加上拉伸值
+                            ),
+
+                            for (int i = 0; i < widget.length; i++)
+                              SliverToBoxAdapter(
+                                key: _controller.getSliverKey(i),
+                                child: _SpringItem(
+                                  index: i,
+                                  boxKey: _controller.getBoxKey(i),
+                                  child: widget.itemBuilder(i),
+                                ),
+                              ),
+
+                            SliverToBoxAdapter(
+                              child: SizedBox(
+                                height: screenHeight * 0.3 + extraSpace,
                               ),
                             ),
-
-                          SliverToBoxAdapter(
-                            child: SizedBox(
-                              height: screenHeight * 0.3 + extraSpace,
-                            ),
-                          ),
-                        ],
-                      );
-                    }),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
