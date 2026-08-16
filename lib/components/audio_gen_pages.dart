@@ -423,14 +423,9 @@ class _AudioGenPagesState extends State<AudioGenPages> {
           overlayColor: Theme.of(context).colorScheme.surfaceContainer,
         ),
         Obx(
-          () => AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            transitionBuilder: (child, animation) =>
-                FadeTransition(opacity: animation, child: child),
-            child: _isMulSelect.value
+          () => _isMulSelect.value
                 ? _buildMultiSelectActions()
                 : _buildNormalActions(),
-          ),
         ),
       ],
     );
