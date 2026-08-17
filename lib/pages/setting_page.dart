@@ -18,6 +18,7 @@ import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/src/rust/api/get_fonts.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 
+import '../desktop_lyrics_sever.dart';
 import '../field/shared_preferences_key.dart';
 
 const double btnW = 108;
@@ -25,6 +26,8 @@ final SettingController _settingController = Get.find<SettingController>();
 
 final DesktopLyricsSettingController _desktopLyricsSettingController =
     Get.find<DesktopLyricsSettingController>();
+
+final DesktopLyricsSever _desktopLyricsSever = Get.find<DesktopLyricsSever>();
 
 List<String> _fontsList = [];
 
@@ -1649,6 +1652,26 @@ class SettingPage extends StatelessWidget {
                   ),
 
                   const _SetDivider(title: '桌面歌词样式'),
+
+                  _createSetItem(
+                    text: '开启桌面歌词',
+                    child: _createSwitchBtn(
+                      value: _settingController.showDesktopLyrics,
+                      trackColor: switchTrackColor,
+                      context: context,
+                      fn: (bool value) async {
+                        _settingController.showDesktopLyrics.value = value;
+                        await _settingController.putScalableCache();
+
+                        if (_settingController.showDesktopLyrics.value) {
+                          _desktopLyricsSever.connect();
+                        } else {
+                          _desktopLyricsSever.close();
+                        }
+                      },
+                    ),
+                    context: context,
+                  ),
 
                   _createSetItem(
                     text: '字号',
