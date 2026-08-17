@@ -9,7 +9,7 @@ import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 
-// 内容项宽高
+// 内容项宽高常量
 const double _itemHeight = 230.0;
 const double _itemWidth = 180.0;
 
@@ -17,9 +17,9 @@ const double _itemHeight_2 = 72;
 const double _itemWidth_2 = 240;
 
 const double _coverSize = _itemWidth;
-const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
+const BorderRadius _coverBorderRadius = BorderRadius.all(Radius.circular(6));
+const BorderRadius _borderRadius = BorderRadius.all(Radius.circular(4));
 const double _itemSpacing = 12.0;
-const _borderRadius = BorderRadius.all(Radius.circular(4));
 
 /// 代表一个内容项
 class _ContentItem {
@@ -82,13 +82,13 @@ class _SortedListViewState extends State<SortedListView> {
   late final ScrollController _scrollController;
 
   List<_SectionItem> _sections = [];
-  Map<String, MusicCache> _itemMap = {};
 
+  // 样式缓存，避免在 build 阶段重复创建
   late TextStyle _letterTitleStyle;
   late TextStyle _titleStyle;
   late TextStyle _subStyle;
   late WidgetStateProperty<Color?> _foregroundColorHover;
-  late Color _itemBackgroundColor;
+  late ButtonStyle _itemBtnStyle;
 
   @override
   void initState() {
@@ -102,16 +102,25 @@ class _SortedListViewState extends State<SortedListView> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // 依赖 context 的样式统一初始化缓存
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // 初始化并缓存所有 TextStyle 和 ButtonStyle
     _letterTitleStyle = generalTextStyle(ctx: context, size: 'xl');
     _titleStyle = generalTextStyle(ctx: context, size: 'md');
     _subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-    _itemBackgroundColor = Theme.of(context).colorScheme.surfaceContainer;
+
     _foregroundColorHover = WidgetStateProperty.resolveWith<Color>((states) {
       return states.contains(WidgetState.hovered)
-          ? Theme.of(context).colorScheme.primary
-          : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8);
+          ? colorScheme.primary
+          : colorScheme.onSurface.withValues(alpha: 0.8);
     });
+
+    // 缓存 TextButton 样式
+    _itemBtnStyle = TextButton.styleFrom(
+      shape: const RoundedRectangleBorder(borderRadius: _coverBorderRadius),
+      padding: EdgeInsets.zero,
+      backgroundColor: colorScheme.surfaceContainer,
+    );
   }
 
   @override
@@ -128,17 +137,17 @@ class _SortedListViewState extends State<SortedListView> {
     _scrollController.dispose();
     _sectionKeys.clear();
     _sections.clear();
-    _itemMap.clear();
     super.dispose();
   }
 
   void _processData() {
-    final dict = widget.sortedDict;
+    // 建立临时字典用于快速查找封面，用完即销毁，不常驻内存
+    final Map<String, MusicCache> tempItemMap = {
+      for (final item in widget.items) item.path: item,
+    };
 
-    _itemMap = {for (final item in widget.items) item.path: item};
-    // 以首字母为键、以内容项列表为值的分组 map
     final Map<String, List<_ContentItem>> grouped = {};
-    for (final entry in dict.entries) {
+    for (final entry in widget.sortedDict.entries) {
       final key = entry.key;
       if (key.isEmpty) continue;
 
@@ -147,7 +156,7 @@ class _SortedListViewState extends State<SortedListView> {
       final paths = entry.value; // 音频路径列表
 
       // 取第一首作为封面
-      final coverMusic = paths.isNotEmpty ? _itemMap[paths[0]] : null;
+      final coverMusic = paths.isNotEmpty ? tempItemMap[paths[0]] : null;
 
       grouped
           .putIfAbsent(letter, () => [])
@@ -199,15 +208,9 @@ class _SortedListViewState extends State<SortedListView> {
           Expanded(
             child: Row(
               children: [
-                Expanded(
-                  child: _buildMainList(
-                    _sections,
-                    viewType,
-                    _itemBackgroundColor,
-                  ),
-                ),
+                Expanded(child: _buildMainList(_sections, viewType)),
                 const SizedBox(width: 4),
-                _buildLetterIndexer(_foregroundColorHover),
+                _buildLetterIndexer(),
               ],
             ),
           ),
@@ -238,11 +241,7 @@ class _SortedListViewState extends State<SortedListView> {
   }
 
   /// 主列表：按首字母分组的 SliverGrid
-  Widget _buildMainList(
-    List<_SectionItem> sections,
-    _ViewType viewType,
-    Color itemBackgroundColor,
-  ) {
+  Widget _buildMainList(List<_SectionItem> sections, _ViewType viewType) {
     if (sections.isEmpty) {
       return Center(
         child: Text(
@@ -253,14 +252,24 @@ class _SortedListViewState extends State<SortedListView> {
     }
 
     final isAlbum = viewType == _ViewType.album;
-    final maxCrossAxisExtent = isAlbum ? _itemWidth : _itemWidth_2;
+
     final mainAxisExtent = isAlbum ? _itemHeight : _itemHeight_2;
+    final gridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
+      maxCrossAxisExtent: isAlbum ? _itemWidth : _itemWidth_2,
+      mainAxisExtent: mainAxisExtent,
+      crossAxisSpacing: _itemSpacing,
+      mainAxisSpacing: _itemSpacing,
+    );
 
     return NotificationListener<ScrollEndNotification>(
       onNotification: (notification) {
-        final offset = notification.metrics.pixels; // 滚动停止时的偏移量
-        widget.rwScrollOffset(route: widget.toRoute, rw: false, offset: offset);
-        return false; // false = 继续冒泡
+        widget.rwScrollOffset(
+          route: widget.toRoute,
+          rw: false,
+          offset: notification.metrics.pixels,
+        );
+        // false = 继续冒泡
+        return false;
       },
       child: CustomScrollView(
         scrollCacheExtent: ScrollCacheExtent.pixels(mainAxisExtent * 2),
@@ -280,18 +289,18 @@ class _SortedListViewState extends State<SortedListView> {
             ),
             // 内容网格
             SliverGrid(
-              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: maxCrossAxisExtent,
-                mainAxisExtent: mainAxisExtent,
-                crossAxisSpacing: _itemSpacing,
-                mainAxisSpacing: _itemSpacing,
+              gridDelegate: gridDelegate,
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final item = section.items[index];
+                  return isAlbum
+                      ? _buildAlbumTile(item)
+                      : _buildArtistTile(item);
+                },
+                childCount: section.items.length,
+                addAutomaticKeepAlives: false,
+                addRepaintBoundaries: false,
               ),
-              delegate: SliverChildBuilderDelegate((context, index) {
-                final item = section.items[index];
-                return isAlbum
-                    ? _buildAlbumTile(item, itemBackgroundColor)
-                    : _buildArtistTile(item, itemBackgroundColor);
-              }, childCount: section.items.length),
             ),
           ],
           const SliverToBoxAdapter(child: SizedBox(height: 128)),
@@ -301,16 +310,12 @@ class _SortedListViewState extends State<SortedListView> {
   }
 
   /// album_view 样式
-  Widget _buildAlbumTile(_ContentItem item, Color itemBackgroundColor) {
+  Widget _buildAlbumTile(_ContentItem item) {
     return Tooltip(
       message: item.title,
       child: TextButton(
         onPressed: () => _navigateTo(item),
-        style: TextButton.styleFrom(
-          shape: const RoundedRectangleBorder(borderRadius: _coverBorderRadius),
-          padding: EdgeInsets.zero,
-          backgroundColor: itemBackgroundColor,
-        ),
+        style: _itemBtnStyle,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 2,
@@ -346,26 +351,21 @@ class _SortedListViewState extends State<SortedListView> {
   }
 
   /// artist_view 样式
-  Widget _buildArtistTile(_ContentItem item, Color itemBackgroundColor) {
-    const double coverSize = _itemHeight_2;
+  Widget _buildArtistTile(_ContentItem item) {
     return Tooltip(
       message: item.title,
       child: TextButton(
         onPressed: () => _navigateTo(item),
-        style: TextButton.styleFrom(
-          shape: const RoundedRectangleBorder(borderRadius: _coverBorderRadius),
-          padding: EdgeInsets.zero,
-          backgroundColor: itemBackgroundColor,
-        ),
+        style: _itemBtnStyle,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           spacing: 1,
           children: [
             // 封面区域 固定正方形
             SizedBox.square(
-              dimension: coverSize,
+              dimension: _itemHeight_2,
               child: item.coverMusic != null
-                  ? AsyncCover(music: item.coverMusic!, size: coverSize)
+                  ? AsyncCover(music: item.coverMusic!, size: _itemHeight_2)
                   : const SizedBox.shrink(),
             ),
             const SizedBox(width: 2),
@@ -395,18 +395,20 @@ class _SortedListViewState extends State<SortedListView> {
   }
 
   /// 首字母索引条
-  Widget _buildLetterIndexer(WidgetStateProperty<Color?> foregroundColorHover) {
+  Widget _buildLetterIndexer() {
     return SizedBox(
       width: 24,
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
-        child: ListView(
+        child: ListView.builder(
           padding: const EdgeInsets.only(bottom: 64),
-          children: widget.letterList.map((letter) {
+          itemCount: widget.letterList.length,
+          itemBuilder: (context, index) {
+            final letter = widget.letterList[index];
             return TextButton(
               onPressed: () => _scrollToLetter(letter),
               style: ButtonStyle(
-                foregroundColor: foregroundColorHover,
+                foregroundColor: _foregroundColorHover,
                 padding: const WidgetStatePropertyAll(EdgeInsets.zero),
                 shape: const WidgetStatePropertyAll(
                   RoundedRectangleBorder(borderRadius: _borderRadius),
@@ -414,7 +416,7 @@ class _SortedListViewState extends State<SortedListView> {
               ),
               child: Text(letter, style: const TextStyle(fontSize: 11)),
             );
-          }).toList(),
+          },
         ),
       ),
     );

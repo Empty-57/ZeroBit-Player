@@ -167,8 +167,8 @@ class _AsyncCoverState extends State<AsyncCover> {
   @override
   void didUpdateWidget(AsyncCover oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.music.path != oldWidget.music.path ||
-        !identical(widget.music, oldWidget.music)) {
+    if (widget.music.path != oldWidget.music.path) {
+      _imageData = null;
       _triggerLoad();
     }
   }
@@ -192,7 +192,7 @@ class _AsyncCoverState extends State<AsyncCover> {
       return;
     }
 
-    _debounceTimer = Timer(const Duration(milliseconds: 100), () {
+    _debounceTimer = Timer(const Duration(milliseconds: 150), () {
       if (mounted) _loadCoverAndSave();
     });
   }
@@ -239,7 +239,6 @@ class _AsyncCoverState extends State<AsyncCover> {
         borderRadius: _coverBorderRadius,
         child: Image.memory(
           data,
-          key: ValueKey(data.hashCode),
           width: widget.size,
           height: widget.size,
           fit: BoxFit.cover,
