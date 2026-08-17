@@ -807,7 +807,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         isMulSelect: _isMulSelect,
         selectedList: _selectedList,
         viewMode: viewMode,
-        baseBontroller: widget.controller,
+        baseController: widget.controller,
       ),
     );
   }

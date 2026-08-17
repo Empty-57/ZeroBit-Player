@@ -27,7 +27,7 @@ class MusicTile extends StatelessWidget {
   final RxBool isMulSelect;
   final RxList<MusicCache> selectedList;
   final bool viewMode;
-  final DetailsPageControllerBase baseBontroller;
+  final DetailsPageControllerBase baseController;
 
   const MusicTile({
     super.key,
@@ -41,7 +41,7 @@ class MusicTile extends StatelessWidget {
     required this.isMulSelect,
     required this.selectedList,
     required this.viewMode,
-    required this.baseBontroller,
+    required this.baseController,
   });
 
   void _onTileTapped() {
@@ -53,7 +53,7 @@ class MusicTile extends StatelessWidget {
         selectedList.add(metadata);
       }
     } else {
-      baseBontroller.play(audioSource, metadata: metadata);
+      baseController.play(audioSource, metadata: metadata);
     }
   }
 
@@ -63,7 +63,7 @@ class MusicTile extends StatelessWidget {
 
     return Obx(() {
       final isPlaying =
-          baseBontroller.audioController.currentPath.value == metadata.path;
+          baseController.audioController.currentPath.value == metadata.path;
       final isSelected = selectedList.any((v) => v.path == metadata.path);
 
       final subTextStyle = isPlaying ? highLightSubStyle : subStyle;
