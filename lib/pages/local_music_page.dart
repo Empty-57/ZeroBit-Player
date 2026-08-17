@@ -18,6 +18,7 @@ class LocalMusicPage extends GetView<MusicCacheController> {
       audioSource: AudioSource.allMusic,
       userKey: '',
       controller: c,
+      rwScrollOffset: c.rwScrollOffset,
     );
   }
 }

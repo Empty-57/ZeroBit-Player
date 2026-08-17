@@ -259,6 +259,8 @@ class AudioGenPages extends StatefulWidget {
   final DetailsPageControllerBase controller;
   final String userKey;
   final Color? backgroundColor;
+  final double? Function({required String route, bool rw, double? offset})?
+  rwScrollOffset;
 
   const AudioGenPages({
     super.key,
@@ -267,6 +269,7 @@ class AudioGenPages extends StatefulWidget {
     required this.audioSource,
     required this.controller,
     required this.userKey,
+    this.rwScrollOffset,
     this.backgroundColor,
   });
 
@@ -317,8 +320,22 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     _isMulSelect = false.obs;
     _selectedList = <MusicCache>[].obs;
     _playListMenuController = MenuController();
-    _scrollControllerList = ScrollController();
-    _scrollControllerGrid = ScrollController();
+
+    final initialOffset =
+        widget.rwScrollOffset?.call(
+          route: widget.operateArea == OperateArea.allMusic
+              ? AppRoutes.home
+              : '',
+          rw: true,
+        ) ??
+        0.0;
+
+    _scrollControllerList = ScrollController(
+      initialScrollOffset: initialOffset,
+    );
+    _scrollControllerGrid = ScrollController(
+      initialScrollOffset: initialOffset,
+    );
   }
 
   @override
@@ -708,56 +725,72 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       },
       child: Stack(
         children: [
-          Obx(() {
-            final viewMode = _settingController.viewModeMap[widget.operateArea];
-            final extent = const ScrollCacheExtent.pixels(_itemHeight * 4);
-            final padding = const EdgeInsets.only(bottom: _itemHeight * 2);
-            return viewMode!
-                ? ListView.builder(
-                    scrollCacheExtent: extent,
-                    controller: _scrollControllerList,
-                    itemCount: widget.controller.items.length,
-                    itemExtent: _itemHeight,
-                    padding: padding,
-                    addRepaintBoundaries: true,
-                    addAutomaticKeepAlives: false,
-                    addSemanticIndexes: false,
-                    itemBuilder: (context, index) => _buildMusicTile(
-                      context,
-                      index,
-                      _titleStyle,
-                      _highLightTitleStyle,
-                      _subStyle,
-                      _highLightSubStyle,
-                      viewMode,
-                    ),
-                  )
-                : GridView.builder(
-                    scrollCacheExtent: extent,
-                    controller: _scrollControllerGrid,
-                    itemCount: widget.controller.items.length,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: context.width < resViewThresholds ? 3 : 4,
-                      mainAxisSpacing: 4.0,
-                      crossAxisSpacing: 8.0,
-                      childAspectRatio: 1.0,
-                      mainAxisExtent: _itemHeight,
-                    ),
-                    padding: padding,
-                    addRepaintBoundaries: true,
-                    addAutomaticKeepAlives: false,
-                    addSemanticIndexes: false,
-                    itemBuilder: (context, index) => _buildMusicTile(
-                      context,
-                      index,
-                      _titleStyle,
-                      _highLightTitleStyle,
-                      _subStyle,
-                      _highLightSubStyle,
-                      viewMode,
-                    ),
-                  );
-          }),
+          NotificationListener<ScrollEndNotification>(
+            onNotification: (notification) {
+              widget.rwScrollOffset?.call(
+                route: widget.operateArea == OperateArea.allMusic
+                    ? AppRoutes.home
+                    : '',
+                rw: false,
+                offset: notification.metrics.pixels,
+              );
+              // false = 继续冒泡
+              return false;
+            },
+            child: Obx(() {
+              final viewMode =
+                  _settingController.viewModeMap[widget.operateArea];
+              final extent = const ScrollCacheExtent.pixels(_itemHeight * 4);
+              final padding = const EdgeInsets.only(bottom: _itemHeight * 2);
+              return viewMode!
+                  ? ListView.builder(
+                      scrollCacheExtent: extent,
+                      controller: _scrollControllerList,
+                      itemCount: widget.controller.items.length,
+                      itemExtent: _itemHeight,
+                      padding: padding,
+                      addRepaintBoundaries: true,
+                      addAutomaticKeepAlives: false,
+                      addSemanticIndexes: false,
+                      itemBuilder: (context, index) => _buildMusicTile(
+                        context,
+                        index,
+                        _titleStyle,
+                        _highLightTitleStyle,
+                        _subStyle,
+                        _highLightSubStyle,
+                        viewMode,
+                      ),
+                    )
+                  : GridView.builder(
+                      scrollCacheExtent: extent,
+                      controller: _scrollControllerGrid,
+                      itemCount: widget.controller.items.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: context.width < resViewThresholds
+                            ? 3
+                            : 4,
+                        mainAxisSpacing: 4.0,
+                        crossAxisSpacing: 8.0,
+                        childAspectRatio: 1.0,
+                        mainAxisExtent: _itemHeight,
+                      ),
+                      padding: padding,
+                      addRepaintBoundaries: true,
+                      addAutomaticKeepAlives: false,
+                      addSemanticIndexes: false,
+                      itemBuilder: (context, index) => _buildMusicTile(
+                        context,
+                        index,
+                        _titleStyle,
+                        _highLightTitleStyle,
+                        _subStyle,
+                        _highLightSubStyle,
+                        viewMode,
+                      ),
+                    );
+            }),
+          ),
           FloatingButton(
             scrollControllerList: _scrollControllerList,
             scrollControllerGrid: _scrollControllerGrid,

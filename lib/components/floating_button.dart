@@ -45,7 +45,6 @@ class _FloatingBtn extends StatelessWidget {
   }
 }
 
-// --- 主组件 (FloatingButton) ---
 class FloatingButton extends StatefulWidget {
   final ScrollController scrollControllerList;
   final ScrollController scrollControllerGrid;

@@ -26,6 +26,8 @@ class MusicCacheController extends GetxController
   final albumHasLetter = <String>[];
   double _albumViewScrollOffset = 0.0;
 
+  double _homeViewScrollOffset = 0.0;
+
   final _musicCacheBox = HiveBox.musicCacheBox;
 
   final currentScanAudio = ''.obs;
@@ -141,17 +143,26 @@ class MusicCacheController extends GetxController
       'rw=true -> offset=null  rw=false -> offset!=null',
     );
     if (rw) {
-      if (route == AppRoutes.albumDetails) {
-        return _albumViewScrollOffset;
-      } else {
-        return _artistViewScrollOffset;
+      switch (route) {
+        case AppRoutes.albumDetails:
+          return _albumViewScrollOffset;
+        case AppRoutes.artistDetails:
+          return _artistViewScrollOffset;
+        case AppRoutes.home:
+          return _homeViewScrollOffset;
+        default:
+          return null;
       }
     } else {
-      if (route == AppRoutes.albumDetails) {
-        _albumViewScrollOffset = offset!;
-      } else {
-        _artistViewScrollOffset = offset!;
+      switch (route) {
+        case AppRoutes.albumDetails:
+          _albumViewScrollOffset = offset!;
+        case AppRoutes.artistDetails:
+          _artistViewScrollOffset = offset!;
+        case AppRoutes.home:
+          _homeViewScrollOffset = offset!;
       }
+
       return null;
     }
   }
