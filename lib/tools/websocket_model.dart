@@ -22,6 +22,7 @@ abstract class SeverCmdType {
   static const setStrokeColor = 'setStrokeColor';
   static const heartBeat = 'heartBeat';
   static const showDoubleLine = 'showDoubleLine';
+  static const lyricsSwitchAnimateMode = 'lyricsSwitchAnimateMode';
 }
 
 abstract class ClientCmdType {

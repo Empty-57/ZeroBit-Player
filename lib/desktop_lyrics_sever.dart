@@ -223,6 +223,9 @@ class DesktopLyricsSever extends GetxController {
                         _desktopLyricsSettingController.strokeColor.value,
                     'showDoubleLine':
                         _desktopLyricsSettingController.showDoubleLine.value,
+                    'lyricsSwitchAnimateMode': _desktopLyricsSettingController
+                        .lyricsSwitchAnimateMode
+                        .value,
                   },
                 );
               }

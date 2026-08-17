@@ -1082,6 +1082,48 @@ class _DesktopLyricsAlignmentRadio extends StatelessWidget {
   }
 }
 
+class _LyricsSwitchAnimateModeRadio extends StatelessWidget {
+  const _LyricsSwitchAnimateModeRadio();
+
+  @override
+  Widget build(BuildContext context) {
+    final alignment = [0, 1, 2, 3];
+    return Material(
+      child: Obx(
+        () => RadioGroup<int>(
+          groupValue:
+              _desktopLyricsSettingController.lyricsSwitchAnimateMode.value,
+          onChanged: (int? v) {
+            _desktopLyricsSettingController.setLyricsSwitchAnimateMode(
+              mode: v ?? 1,
+            );
+          },
+          child: Wrap(
+            spacing: 8,
+            children: alignment
+                .map(
+                  (v) => Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    spacing: 2,
+                    children: [
+                      Radio<int>(value: v),
+                      Text(
+                        DesktopLyricsSettingController
+                                .lyricsSwitchAnimateModeMap[v] ??
+                            '无',
+                      ),
+                    ],
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 Widget _createHotKeyItem(
   BuildContext context, {
   required Rx<HotKey> myHotkey,
@@ -1665,6 +1707,12 @@ class SettingPage extends StatelessWidget {
                   _createSetItem(
                     text: '对齐方式',
                     child: const _DesktopLyricsAlignmentRadio(),
+                    context: context,
+                  ),
+
+                  _createSetItem(
+                    text: '歌词切换特效',
+                    child: const _LyricsSwitchAnimateModeRadio(),
                     context: context,
                   ),
 

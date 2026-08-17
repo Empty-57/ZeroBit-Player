@@ -29,11 +29,20 @@ class DesktopLyricsSettingController extends GetxController {
 
   final useDynamicOverlayColor = false.obs;
 
+  final lyricsSwitchAnimateMode = 1.obs; // 0 无动画 1 淡入淡出 2滑动 3 缩放
+
   static const Map<int, String> lrcAlignmentMap = {
     0: '左对齐',
     1: '居中',
     2: '右对齐',
     3: '左右分离',
+  };
+
+  static const Map<int, String> lyricsSwitchAnimateModeMap = {
+    0: '无',
+    1: '淡入淡出',
+    2: '滑动',
+    3: '缩放',
   };
 
   SharedPreferences? prefs;
@@ -65,6 +74,8 @@ class DesktopLyricsSettingController extends GetxController {
     showDoubleLine.value = prefs!.getBool('showDoubleLine') ?? false;
     useDynamicOverlayColor.value =
         prefs!.getBool('useDynamicOverlayColor') ?? false;
+    lyricsSwitchAnimateMode.value =
+        prefs!.getInt('lyricsSwitchAnimateMode') ?? 1;
   }
 
   void setFontSize({required int size}) {
@@ -273,5 +284,17 @@ class DesktopLyricsSettingController extends GetxController {
       return;
     }
     prefs!.setBool('useDynamicOverlayColor', value);
+  }
+
+  void setLyricsSwitchAnimateMode({required int mode}) {
+    lyricsSwitchAnimateMode.value = mode;
+    _desktopLyricsSever.sendCmd(
+      cmdType: SeverCmdType.lyricsSwitchAnimateMode,
+      cmdData: lyricsSwitchAnimateMode.value,
+    );
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setInt('lyricsSwitchAnimateMode', mode);
   }
 }
