@@ -1,10 +1,13 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/desktop_lyrics_sever.dart';
 import 'package:zerobit_player/tools/websocket_model.dart';
 
 class DesktopLyricsSettingController extends GetxController {
   final DesktopLyricsSever _desktopLyricsSever = Get.find<DesktopLyricsSever>();
+  final SettingController _settingController = Get.find<SettingController>();
   final fontFamily = "Microsoft YaHei Light".obs;
   final fontSize = 24.obs; // 16-36
   final fontWeight = 5.obs; // 0-8  w100-w900
@@ -27,6 +30,8 @@ class DesktopLyricsSettingController extends GetxController {
   final strokeColor = 0xff000000.obs;
 
   final showDoubleLine = false.obs;
+
+  final useDynamicOverlayColor = false.obs;
 
   static const Map<int, String> lrcAlignmentMap = {
     0: '左对齐',
@@ -63,6 +68,8 @@ class DesktopLyricsSettingController extends GetxController {
     useStroke.value = prefs!.getBool('useStroke') ?? true;
     strokeColor.value = prefs!.getInt('strokeColor') ?? 0xff000000;
     showDoubleLine.value = prefs!.getBool('showDoubleLine') ?? false;
+    useDynamicOverlayColor.value =
+        prefs!.getBool('useDynamicOverlayColor') ?? false;
   }
 
   void setFontSize({required int size}) {
@@ -247,5 +254,37 @@ class DesktopLyricsSettingController extends GetxController {
       return;
     }
     prefs!.setBool('showDoubleLine', show);
+  }
+
+  void setDynamicOverlayColor(int color) {
+    _desktopLyricsSever.sendCmd(
+      cmdType: SeverCmdType.setOverlayColor,
+      cmdData: color,
+    );
+    _desktopLyricsSever.sendCmd(
+      cmdType: SeverCmdType.setUnderColor,
+      cmdData: 0xFFD4D8E5,
+    );
+  }
+
+  void setUseDynamicOverlayColor({required bool value, required int color}) {
+    useDynamicOverlayColor.value = value;
+    if (value) {
+      setDynamicOverlayColor(color);
+    } else {
+      _desktopLyricsSever.sendCmd(
+        cmdType: SeverCmdType.setOverlayColor,
+        cmdData: overlayColor.value,
+      );
+      _desktopLyricsSever.sendCmd(
+        cmdType: SeverCmdType.setUnderColor,
+        cmdData: underColor.value,
+      );
+    }
+
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setBool('useDynamicOverlayColor', value);
   }
 }

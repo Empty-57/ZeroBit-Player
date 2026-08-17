@@ -24,6 +24,7 @@ import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import '../tools/func/func_extension.dart';
 import '../tools/lrcTool/parse_lyrics.dart';
 import '../tools/lrcTool/save_lyric.dart';
+import 'desktop_lyrics_setting_ctrl.dart';
 import 'music_cache_ctrl.dart';
 
 enum AudioState { stop, playing, pause, ended }
@@ -112,6 +113,9 @@ class AudioController extends GetxController {
 
   SpringListController get _springController =>
       Get.find<SpringListController>();
+
+  DesktopLyricsSettingController get _desktopLyricsSettingController =>
+      Get.find<DesktopLyricsSettingController>();
 
   late final void Function(double pos) throttledSeek =
       ((double pos) => audioSetPositon(pos: pos)).throttleArgs(ms: 500);
@@ -370,6 +374,9 @@ class AudioController extends GetxController {
       return;
     }
     _settingController.themeColor.value = color;
+    if(_desktopLyricsSettingController.useDynamicOverlayColor.value){
+      _desktopLyricsSettingController.setDynamicOverlayColor(color);
+    }
     _settingController.putCache();
   }
 

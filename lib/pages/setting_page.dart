@@ -515,6 +515,9 @@ class _ColorPicker extends StatelessWidget {
       color,
     ) {
       _settingController.themeColor.value = color;
+      if (_desktopLyricsSettingController.useDynamicOverlayColor.value) {
+        _desktopLyricsSettingController.setDynamicOverlayColor(color);
+      }
       _settingController.putCache();
     });
   }
@@ -1620,6 +1623,24 @@ class SettingPage extends StatelessWidget {
                   _createSetItem(
                     text: '不透明度',
                     child: const _DesktopLrcFontOpacityDropMenu(),
+                    context: context,
+                  ),
+
+                  _createSetItem(
+                    text: '已播放颜色跟随主题色',
+                    child: _createSwitchBtn(
+                      value: _desktopLyricsSettingController
+                          .useDynamicOverlayColor,
+                      trackColor: switchTrackColor,
+                      context: context,
+                      fn: (bool value) {
+                        _desktopLyricsSettingController
+                            .setUseDynamicOverlayColor(
+                              value: value,
+                              color: _settingController.themeColor.value,
+                            );
+                      },
+                    ),
                     context: context,
                   ),
 
