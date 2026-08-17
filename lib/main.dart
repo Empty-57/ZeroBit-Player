@@ -249,7 +249,7 @@ void main() async {
   //   );
   // }
 
-  debugRepaintRainbowEnabled = true;
+  debugRepaintRainbowEnabled = false;
   _initLeakTracking();
   runApp(const MainFrame());
 

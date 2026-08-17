@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -34,6 +36,10 @@ const String _latestRepoApiUrl =
     "https://api.github.com/repos/Empty-57/ZeroBit-Player/releases/latest";
 const String _latestRepoUrl =
     "https://github.com/Empty-57/ZeroBit-Player/releases/latest";
+const String _repoUrl = "https://github.com/Empty-57/ZeroBit-Player";
+
+const String _reportUrl =
+    "https://github.com/Empty-57/ZeroBit-Player/issues/new/choose";
 
 class _RepoInfo {
   final String version;
@@ -738,181 +744,262 @@ class _LrcFontWeightDropMenu extends StatelessWidget {
   }
 }
 
-class _CheckVersion extends StatelessWidget {
+class _CheckVersion extends StatefulWidget {
   const _CheckVersion();
 
   @override
-  Widget build(BuildContext context) {
-    return CustomBtn(
-      fn: () async {
-        snackBar() => showSnackBar(
-          title: "ERROR",
-          msg: "获取更新失败",
-          duration: Duration(milliseconds: 3000),
+  State<_CheckVersion> createState() => _CheckVersionState();
+}
+
+class _CheckVersionState extends State<_CheckVersion>
+    with SingleTickerProviderStateMixin {
+  bool _loading = false;
+
+  late final AnimationController _loadingController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loadingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+  }
+
+  @override
+  void dispose() {
+    _loadingController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _checkVersion() async {
+    if (_loading) return;
+
+    setState(() {
+      _loading = true;
+    });
+
+    _loadingController.repeat();
+
+    snackBar() => showSnackBar(
+      title: "ERROR",
+      msg: "获取更新失败",
+      duration: const Duration(milliseconds: 3000),
+    );
+
+    try {
+      final dio = Dio(
+        BaseOptions(
+          headers: {
+            'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                '(KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+            'Connection': 'keep-alive',
+          },
+        ),
+      );
+
+      final response = await dio.get(
+        _latestRepoApiUrl,
+        options: Options(responseType: ResponseType.json),
+      );
+
+      if (response.data == null) {
+        snackBar();
+        return;
+      }
+
+      final Map<String, dynamic> jsonData = response.data;
+
+      final List<int> latestVer = jsonData['tag_name']
+          .toString()
+          .replaceAll('v', '')
+          .split('.')
+          .map((v) => int.parse(v))
+          .toList();
+
+      final List<int> localVer = (await PackageInfo.fromPlatform()).version
+          .split('.')
+          .map((v) => int.parse(v))
+          .toList();
+
+      final hasUpdate =
+          latestVer[0] > localVer[0] ||
+          (latestVer[0] == localVer[0] && latestVer[1] > localVer[1]) ||
+          (latestVer[0] == localVer[0] &&
+              latestVer[1] == localVer[1] &&
+              latestVer[2] > localVer[2]);
+
+      if (hasUpdate) {
+        final repoInfo = _RepoInfo(
+          version: jsonData['tag_name'].toString(),
+          updatedTime: DateTime.parse(
+            jsonData['updated_at'].toString(),
+          ).toLocal().toString().substring(0, 19),
+          title: jsonData['name'].toString(),
+          body: jsonData['body'].toString(),
         );
 
-        try {
-          final dio = Dio(
-            BaseOptions(
-              headers: {
-                'User-Agent':
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
-                'Connection': 'keep-alive',
-              },
-            ),
-          );
-          final response = await dio.get(
-            _latestRepoApiUrl,
-            options: Options(responseType: ResponseType.json),
-          );
-          if (response.data != null) {
-            final Map<String, dynamic> jsonData = response.data;
+        if (!mounted) return;
 
-            final List<int> latestVer = jsonData['tag_name']
-                .toString()
-                .replaceAll('v', '')
-                .split('.')
-                .map((v) => int.parse(v))
-                .toList();
-            final List<int> localVer = (await PackageInfo.fromPlatform())
-                .version
-                .split('.')
-                .map((v) => int.parse(v))
-                .toList();
-            if (latestVer[0] > localVer[0] ||
-                (latestVer[0] == localVer[0] && latestVer[1] > localVer[1]) ||
-                (latestVer[0] == localVer[0] &&
-                    latestVer[1] == localVer[1] &&
-                    latestVer[2] > localVer[2])) {
-              final repoInfo = _RepoInfo(
-                version: jsonData['tag_name'].toString(),
-                updatedTime: DateTime.parse(
-                  jsonData['updated_at'].toString(),
-                ).toLocal().toString().substring(0, 19),
-                title: jsonData['name'].toString(),
-                body: jsonData['body'].toString(),
-              );
-
-              if (context.mounted) {
-                showDialog(
-                  barrierDismissible: true,
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Text(repoInfo.title),
-                      titleTextStyle: generalTextStyle(
-                        ctx: context,
-                        size: 'xl',
-                        weight: FontWeight.w600,
+        await showDialog(
+          barrierDismissible: true,
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text(repoInfo.title),
+              titleTextStyle: generalTextStyle(
+                ctx: context,
+                size: 'xl',
+                weight: FontWeight.w600,
+              ),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(4)),
+              ),
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              actionsAlignment: MainAxisAlignment.end,
+              actions: <Widget>[
+                SizedBox(
+                  width: context.width / 2,
+                  height: context.height / 2,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 8,
+                    children: [
+                      Text(
+                        '更新于：${repoInfo.updatedTime}\n更新信息：',
+                        style: generalTextStyle(ctx: context, size: 'md'),
                       ),
-
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(4)),
-                      ),
-                      backgroundColor: Theme.of(context).colorScheme.surface,
-
-                      actionsAlignment: MainAxisAlignment.end,
-                      actions: <Widget>[
-                        SizedBox(
-                          width: context.width / 2,
-                          height: context.height / 2,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            spacing: 8,
-                            children: [
-                              Text(
-                                '更新于：${repoInfo.updatedTime}\n更新信息：',
-                                style: generalTextStyle(
-                                  ctx: context,
-                                  size: 'md',
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Markdown(data: repoInfo.body),
-                              ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                spacing: 8,
-                                children: [
-                                  CustomBtn(
-                                    fn: () {
-                                      Navigator.pop(context, 'cancel');
-                                    },
-                                    backgroundColor: Colors.transparent,
-                                    contentColor: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                    btnWidth: 72,
-                                    btnHeight: 36,
-                                    label: "取消",
-                                  ),
-                                  CustomBtn(
-                                    fn: () async {
-                                      Navigator.pop(context, 'action');
-                                      final Uri url = Uri.parse(_latestRepoUrl);
-                                      try {
-                                        await launchUrl(url);
-                                      } catch (e) {
-                                        debugPrint(e.toString());
-                                        showSnackBar(
-                                          title: "ERROR",
-                                          msg: "跳转失败，请前往浏览器下载！",
-                                          duration: Duration(
-                                            milliseconds: 3000,
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    backgroundColor: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                    contentColor: Theme.of(
-                                      context,
-                                    ).colorScheme.onPrimary,
-                                    overlayColor: Theme.of(
-                                      context,
-                                    ).colorScheme.surfaceContainer,
-                                    btnWidth: 128,
-                                    btnHeight: 36,
-                                    icon: PhosphorIconsLight.arrowUpRight,
-                                    label: "获取更新",
-                                  ),
-                                ],
-                              ),
-                            ],
+                      Expanded(child: Markdown(data: repoInfo.body)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        spacing: 8,
+                        children: [
+                          CustomBtn(
+                            fn: () {
+                              Navigator.pop(context, 'cancel');
+                            },
+                            backgroundColor: Colors.transparent,
+                            contentColor: Theme.of(context).colorScheme.primary,
+                            btnWidth: 72,
+                            btnHeight: 36,
+                            label: "取消",
                           ),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              }
-            } else {
-              showSnackBar(
-                title: "OK",
-                msg: "目前是最新版本",
-                duration: Duration(milliseconds: 3000),
-              );
-            }
-          } else {
-            snackBar();
-          }
-        } catch (err) {
-          debugPrint(err.toString());
-          snackBar();
+                          CustomBtn(
+                            fn: () async {
+                              Navigator.pop(context, 'action');
+
+                              final Uri url = Uri.parse(_latestRepoUrl);
+
+                              try {
+                                await launchUrl(url);
+                              } catch (e) {
+                                debugPrint(e.toString());
+                                showSnackBar(
+                                  title: "ERROR",
+                                  msg: "跳转失败，请前往浏览器下载！",
+                                  duration: const Duration(milliseconds: 3000),
+                                );
+                              }
+                            },
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
+                            contentColor: Theme.of(
+                              context,
+                            ).colorScheme.onPrimary,
+                            overlayColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainer,
+                            btnWidth: 128,
+                            btnHeight: 36,
+                            icon: PhosphorIconsLight.arrowUpRight,
+                            label: "获取更新",
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        if (mounted) {
+          showSnackBar(
+            title: "OK",
+            msg: "目前是最新版本",
+            duration: const Duration(milliseconds: 3000),
+          );
         }
-      },
-      icon: PhosphorIconsLight.spinnerGap,
-      label: '检查更新',
+      }
+    } catch (err, stack) {
+      debugPrint('$err');
+      debugPrint('$stack');
+
+      if (mounted) {
+        snackBar();
+      }
+    } finally {
+      _loadingController.stop();
+
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.onPrimary;
+
+    return CustomBtn(
+      fn: _loading ? null : _checkVersion,
       btnHeight: _setBtnHeight,
       btnWidth: 148,
       mainAxisAlignment: MainAxisAlignment.center,
       backgroundColor: Theme.of(context).colorScheme.primary,
       overlayColor: Theme.of(context).colorScheme.surfaceContainer,
-      contentColor: Theme.of(context).colorScheme.onPrimary,
+      contentColor: color,
+
+      children: [
+        AnimatedBuilder(
+          animation: _loadingController,
+          builder: (context, child) {
+            return Transform.rotate(
+              angle: _loading ? _loadingController.value * 2 * math.pi : 0,
+              child: child,
+            );
+          },
+          child: Icon(
+            _loading
+                ? PhosphorIconsLight.spinnerGap
+                : PhosphorIconsLight.arrowClockwise,
+            color: color,
+            size: getIconSize(size: 'md'),
+          ),
+        ),
+
+        Flexible(
+          child: Text(
+            _loading ? '检查中...' : '检查更新',
+            style: generalTextStyle(
+              ctx: context,
+              size: 'md',
+              color: Theme.of(context).colorScheme.onPrimary,
+            ),
+            softWrap: false,
+            maxLines: 1,
+            overflow: TextOverflow.fade,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1846,7 +1933,8 @@ class SettingPage extends StatelessWidget {
                   _createSetItem(
                     text: '当前版本',
                     child: SizedBox(
-                      width: 108,
+                      width: 148,
+                      height: _setBtnHeight,
                       child: Center(
                         child: FutureBuilder<PackageInfo>(
                           future: PackageInfo.fromPlatform(),
@@ -1877,6 +1965,66 @@ class SettingPage extends StatelessWidget {
                   _createSetItem(
                     text: '检查更新',
                     child: const _CheckVersion(),
+                    context: context,
+                  ),
+
+                  _createSetItem(
+                    text: '项目主页',
+                    child: CustomBtn(
+                      fn: () async {
+                        final Uri url = Uri.parse(_repoUrl);
+                        try {
+                          await launchUrl(url);
+                        } catch (e) {
+                          debugPrint(e.toString());
+                          showSnackBar(
+                            title: "ERROR",
+                            msg: "跳转失败！",
+                            duration: const Duration(milliseconds: 3000),
+                          );
+                        }
+                      },
+                      contentColor: Theme.of(context).colorScheme.onPrimary,
+                      btnHeight: _setBtnHeight,
+                      btnWidth: 148,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      overlayColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainer,
+                      icon: PhosphorIconsLight.code,
+                      label: "前往仓库",
+                    ),
+                    context: context,
+                  ),
+
+                  _createSetItem(
+                    text: '反馈',
+                    child: CustomBtn(
+                      fn: () async {
+                        final Uri url = Uri.parse(_reportUrl);
+                        try {
+                          await launchUrl(url);
+                        } catch (e) {
+                          debugPrint(e.toString());
+                          showSnackBar(
+                            title: "ERROR",
+                            msg: "跳转失败！",
+                            duration: const Duration(milliseconds: 3000),
+                          );
+                        }
+                      },
+                      contentColor: Theme.of(context).colorScheme.onPrimary,
+                      btnHeight: _setBtnHeight,
+                      btnWidth: 148,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      overlayColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainer,
+                      icon: PhosphorIconsLight.bug,
+                      label: "创建问题",
+                    ),
                     context: context,
                   ),
 
