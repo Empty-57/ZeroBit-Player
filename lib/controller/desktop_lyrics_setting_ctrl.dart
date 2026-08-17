@@ -1,13 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/desktop_lyrics_sever.dart';
 import 'package:zerobit_player/tools/websocket_model.dart';
 
 class DesktopLyricsSettingController extends GetxController {
   final DesktopLyricsSever _desktopLyricsSever = Get.find<DesktopLyricsSever>();
-  final SettingController _settingController = Get.find<SettingController>();
   final fontFamily = "Microsoft YaHei Light".obs;
   final fontSize = 24.obs; // 16-36
   final fontWeight = 5.obs; // 0-8  w100-w900
@@ -15,7 +12,6 @@ class DesktopLyricsSettingController extends GetxController {
   final underColor = 0xff0000ff.obs;
   final fontOpacity = 1.0.obs;
 
-  final isLock = false.obs;
   double windowDx = 50.0;
   double windowDy = 50.0;
   double windowWidth = 450.0;
@@ -57,7 +53,6 @@ class DesktopLyricsSettingController extends GetxController {
     overlayColor.value = prefs!.getInt('overlayColor') ?? 0xffff0000;
     underColor.value = prefs!.getInt('underColor') ?? 0xff0000ff;
     fontOpacity.value = prefs!.getDouble('fontOpacity') ?? 1.0;
-    isLock.value = prefs!.getBool('isLock') ?? false;
     windowDx = prefs!.getDouble('dx') ?? 50.0;
     windowDy = prefs!.getDouble('dy') ?? 50.0;
     windowWidth = prefs!.getDouble('windowWidth') ?? 450.0;
@@ -142,14 +137,6 @@ class DesktopLyricsSettingController extends GetxController {
       return;
     }
     prefs!.setDouble('fontOpacity', opacity);
-  }
-
-  void setIsLock({required bool lock}) {
-    isLock.value = lock;
-    if (prefs == null) {
-      return;
-    }
-    prefs!.setBool('isLock', lock);
   }
 
   void setDx({required double dx}) {

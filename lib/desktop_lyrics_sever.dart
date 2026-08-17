@@ -38,7 +38,9 @@ class DesktopLyricsSever extends GetxController {
     if (_settingController.showDesktopLyrics.value) {
       connect();
     }
+  }
 
+  void _startStateWorker() {
     _stateWorker = ever(_audioController.currentState, (_) {
       if (_settingController.showDesktopLyrics.value) {
         _refreshStatus();
@@ -166,6 +168,7 @@ class DesktopLyricsSever extends GetxController {
   void connect() async {
     await close();
     try {
+      _startStateWorker();
       _startLineWorker();
       _startMs20Worker();
       _wakeUpDesktopLyrics();
@@ -188,12 +191,19 @@ class DesktopLyricsSever extends GetxController {
                     'fontWeight':
                         _desktopLyricsSettingController.fontWeight.value,
                     'overlayColor':
-                        _desktopLyricsSettingController.overlayColor.value,
+                        _desktopLyricsSettingController
+                            .useDynamicOverlayColor
+                            .value
+                        ? _settingController.themeColor.value
+                        : _desktopLyricsSettingController.overlayColor.value,
                     'underColor':
-                        _desktopLyricsSettingController.underColor.value,
+                        _desktopLyricsSettingController
+                            .useDynamicOverlayColor
+                            .value
+                        ? 0xFFD4D8E5
+                        : _desktopLyricsSettingController.underColor.value,
                     'fontOpacity':
                         _desktopLyricsSettingController.fontOpacity.value,
-                    'isLock': _desktopLyricsSettingController.isLock.value,
                     'dx': _desktopLyricsSettingController.windowDx,
                     'dy': _desktopLyricsSettingController.windowDy,
                     'windowWidth': _desktopLyricsSettingController.windowWidth,
@@ -281,7 +291,9 @@ class DesktopLyricsSever extends GetxController {
             );
             return;
           case ClientCmdType.switchLock:
-            _desktopLyricsSettingController.setIsLock(lock: cmdData);
+            _desktopLyricsSettingController.setIgnoreMouseEvents(
+              isIgnore: cmdData,
+            );
             return;
           case ClientCmdType.setDx:
             _desktopLyricsSettingController.setDx(dx: cmdData);
