@@ -10,7 +10,7 @@ import 'package:zerobit_player/tools/func/sync_cache.dart';
 const double _itemHeight = 64.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 
-class FoldersPreviewPage extends GetView<SettingController> {
+class FoldersPreviewPage extends StatelessWidget {
   const FoldersPreviewPage({super.key});
 
   void createMap(SettingController c, RxMap<String, List<String>> map) async {
@@ -24,7 +24,7 @@ class FoldersPreviewPage extends GetView<SettingController> {
     final folderPathMap = <String, List<String>>{}.obs; // 每次重新扫描
     final textStyle1 = generalTextStyle(ctx: context, size: 'md');
     final textStyle2 = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-    final settingController = controller;
+    final settingController = SettingController.instance;
     createMap(settingController, folderPathMap);
 
     return Container(

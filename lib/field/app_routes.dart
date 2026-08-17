@@ -76,6 +76,6 @@ abstract class AppRoutes {
 
     setting: settingOrder,
 
-    audioInfoEdit:audioInfoEditOrder,
+    audioInfoEdit: audioInfoEditOrder,
   };
 }

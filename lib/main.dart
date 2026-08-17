@@ -185,17 +185,17 @@ void main() async {
   await _openSafeBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
   await _openSafeBox<ScalableSettingCache>(HiveBoxes.scalableSettingCacheBox);
 
-  Get.put(SettingController());
+  DesktopLyricsSettingController.instance.init();
+  SettingController.instance.init();
   Get.put(MusicCacheController());
   Get.put(AudioController());
   Get.put(UserPlayListController());
   Get.put(LyricController());
-  Get.put(DesktopLyricsSever());
-  Get.put(DesktopLyricsSettingController());
+  DesktopLyricsSever.instance.init();
   Get.put(Tray());
   Get.put(MyWindowListener());
 
-  final SettingController settingController = Get.find<SettingController>();
+  final SettingController settingController = SettingController.instance;
 
   double w = 1200;
   double h = 800;
@@ -410,7 +410,7 @@ class MainFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeService themeService = ThemeService.instance;
-    final SettingController settingController = Get.find<SettingController>();
+    final SettingController settingController = SettingController.instance;
     return Obx(
       () => GetMaterialApp(
         enableLog: true,

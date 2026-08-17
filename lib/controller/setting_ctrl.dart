@@ -16,10 +16,14 @@ import 'package:zerobit_player/hive_manager/models/setting_cache_model.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/tools/func/sync_cache.dart';
 
+import '../desktop_lyrics_sever.dart';
 import 'audio_ctrl.dart';
 
-class SettingController extends GetxController {
+class SettingController {
+  SettingController._();
+  static final instance = SettingController._();
   MyWindowListener get _myWindowListener => Get.find<MyWindowListener>();
+  DesktopLyricsSever get _desktopLyricsSever => DesktopLyricsSever.instance;
 
   // UI & 偏好设置状态
   final themeMode = 'dark'.obs;
@@ -39,7 +43,7 @@ class SettingController extends GetxController {
   final lrcFontWeight = 5.obs; // 0-8 w100-w900
   final autoDownloadLrc = true.obs;
   final showDesktopLyrics = false.obs;
-  final autoGetLyrics=true.obs;
+  final autoGetLyrics = true.obs;
 
   static const int lrcFontSizeMax = 48;
   static const int lrcFontSizeMin = 24;
@@ -210,9 +214,7 @@ class SettingController extends GetxController {
         null;
   }
 
-  @override
-  void onInit() async {
-    super.onInit();
+  void init() async {
     await _initHive();
     await _initPrefs();
     await initHotKey();
@@ -294,8 +296,10 @@ class SettingController extends GetxController {
     useSpringScroll.value =
         prefs?.getBool(SharedPreferencesKey.useSpringScroll) ?? true;
     close2Tray.value = prefs?.getBool(SharedPreferencesKey.close2Tray) ?? false;
-    useReplayGain.value = prefs?.getBool(SharedPreferencesKey.useReplayGain) ?? false;
-    autoGetLyrics.value=prefs?.getBool(SharedPreferencesKey.autoGetLyrics) ?? true;
+    useReplayGain.value =
+        prefs?.getBool(SharedPreferencesKey.useReplayGain) ?? false;
+    autoGetLyrics.value =
+        prefs?.getBool(SharedPreferencesKey.autoGetLyrics) ?? true;
 
     // 提取快捷键解析逻辑，消除冗余
     _loadKeyConfig(SharedPreferencesKey.toggleHidString, hotKeyToggleHid, (
@@ -483,11 +487,11 @@ class SettingController extends GetxController {
     );
   }
 
-  void setAutoGetLyrics({required bool value}) async =>_setBoolPref(
-      SharedPreferencesKey.autoGetLyrics,
-      autoGetLyrics,
-      overrideValue: value,
-    );
+  void setAutoGetLyrics({required bool value}) async => _setBoolPref(
+    SharedPreferencesKey.autoGetLyrics,
+    autoGetLyrics,
+    overrideValue: value,
+  );
 
   /// 提取 HotKey 的主键和修饰键 (HID)
   (int, List<int>) _extractHid(HotKey key) {
@@ -595,6 +599,22 @@ class SettingController extends GetxController {
     key,
     (hid) => hotKeyFullScreenHid = hid,
   );
+
+  void setShowDesktopLyrics([bool? value]) async {
+    if (value != null) {
+      showDesktopLyrics.value = value;
+    } else {
+      showDesktopLyrics.toggle();
+    }
+
+    await putScalableCache();
+
+    if (showDesktopLyrics.value) {
+      _desktopLyricsSever.connect();
+    } else {
+      _desktopLyricsSever.close();
+    }
+  }
 
   void setExclusiveMode({required bool use}) async {
     final prev = useExclusiveMode.value;

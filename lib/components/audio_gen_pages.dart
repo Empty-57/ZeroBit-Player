@@ -283,8 +283,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   late final MenuController _playListMenuController;
   late final ScrollController _scrollControllerList;
   late final ScrollController _scrollControllerGrid;
-  late final SettingController _settingController =
-      Get.find<SettingController>();
+  late final SettingController _settingController = SettingController.instance;
   late final AudioController _audioController = Get.find<AudioController>();
   late final MusicCacheController _musicCacheController =
       Get.find<MusicCacheController>();

@@ -58,7 +58,7 @@ class AudioController extends GetxController {
 
   final currentState = AudioState.stop.obs;
 
-  final SettingController _settingController = Get.find<SettingController>();
+  final SettingController _settingController = SettingController.instance;
   final MusicCacheController _musicCacheController =
       Get.find<MusicCacheController>();
 
@@ -115,7 +115,7 @@ class AudioController extends GetxController {
       Get.find<SpringListController>();
 
   DesktopLyricsSettingController get _desktopLyricsSettingController =>
-      Get.find<DesktopLyricsSettingController>();
+      DesktopLyricsSettingController.instance;
 
   late final void Function(double pos) throttledSeek =
       ((double pos) => audioSetPositon(pos: pos)).throttleArgs(ms: 500);
@@ -374,7 +374,7 @@ class AudioController extends GetxController {
       return;
     }
     _settingController.themeColor.value = color;
-    if(_desktopLyricsSettingController.useDynamicOverlayColor.value){
+    if (_desktopLyricsSettingController.useDynamicOverlayColor.value) {
       _desktopLyricsSettingController.setDynamicOverlayColor(color);
     }
     _settingController.putCache();

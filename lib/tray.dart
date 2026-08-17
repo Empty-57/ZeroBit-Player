@@ -7,12 +7,9 @@ import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/controller/window_ctrl.dart';
 
-import 'desktop_lyrics_sever.dart';
-
 class Tray extends GetxController with TrayListener {
   AudioController get _audioController => Get.find<AudioController>();
-  DesktopLyricsSever get _desktopLyricsSever => Get.find<DesktopLyricsSever>();
-  SettingController get _settingController => Get.find<SettingController>();
+  SettingController get _settingController => SettingController.instance;
   MyWindowListener get _windowListener => Get.find<MyWindowListener>();
 
   @override
@@ -70,22 +67,15 @@ class Tray extends GetxController with TrayListener {
               ? '关闭桌面歌词'
               : '显示桌面歌词',
           onClick: (_) async {
-            _settingController.showDesktopLyrics.toggle();
-            await _settingController.putScalableCache();
-
-            if (_settingController.showDesktopLyrics.value) {
-              _desktopLyricsSever.connect();
-            } else {
-              await _desktopLyricsSever.close();
-            }
+            _settingController.setShowDesktopLyrics();
           },
         ),
         MenuItem.separator(),
         MenuItem(
           key: 'exit',
           label: '退出ZeroBit Player',
-          onClick: (_) async{
-            if(Get.isRegistered<MyWindowListener>()){
+          onClick: (_) async {
+            if (Get.isRegistered<MyWindowListener>()) {
               await _windowListener.closeAndClean();
             }
           },

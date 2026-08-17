@@ -240,7 +240,7 @@ class _VolumeSetBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AudioController audioController = Get.find<AudioController>();
-    final SettingController settingController = Get.find<SettingController>();
+    final SettingController settingController = SettingController.instance;
     final menuController = MenuController();
 
     return MenuAnchor(
@@ -386,7 +386,7 @@ class _PlayModeBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AudioController audioController = Get.find<AudioController>();
-    final SettingController settingController = Get.find<SettingController>();
+    final SettingController settingController = SettingController.instance;
     return Obx(() {
       final mode = settingController.playMode.value;
       return GenIconBtn(
@@ -407,7 +407,7 @@ class _EqualizerBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final SettingController settingController = Get.find<SettingController>();
+    final SettingController settingController = SettingController.instance;
     final fontStyle = generalTextStyle(
       ctx: context,
       size: 'sm',

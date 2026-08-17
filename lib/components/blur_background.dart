@@ -33,7 +33,7 @@ class BlurWithCoverBackground extends StatelessWidget {
     this.onlyDarkMode = false,
   });
 
-  SettingController get _settingController => Get.find<SettingController>();
+  SettingController get _settingController => SettingController.instance;
 
   @override
   Widget build(BuildContext context) {

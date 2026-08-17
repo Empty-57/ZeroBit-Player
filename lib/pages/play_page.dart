@@ -21,7 +21,6 @@ import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/custom_widgets/rect_value_indicator.dart';
 import 'package:zerobit_player/custom_widgets/scroll_text.dart';
-import 'package:zerobit_player/desktop_lyrics_sever.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
@@ -346,8 +345,7 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
   final TextEditingController _textEditingController = TextEditingController();
 
   late final AudioController _audioController = Get.find<AudioController>();
-  late final SettingController _settingController =
-      Get.find<SettingController>();
+  late final SettingController _settingController = SettingController.instance;
 
   @override
   void initState() {
@@ -781,9 +779,7 @@ class _ControlBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AudioController audioController = Get.find<AudioController>();
-    final SettingController settingController = Get.find<SettingController>();
-    final DesktopLyricsSever desktopLyricsSever =
-        Get.find<DesktopLyricsSever>();
+    final SettingController settingController = SettingController.instance;
 
     final audioCtrlWidget = AudioCtrlWidget(
       context: context,
@@ -1053,14 +1049,7 @@ class _ControlBar extends StatelessWidget {
                               size: _ctrlBtnMinSize,
                               color: mixColor,
                               fn: () async {
-                                settingController.showDesktopLyrics.toggle();
-                                await settingController.putScalableCache();
-
-                                if (settingController.showDesktopLyrics.value) {
-                                  desktopLyricsSever.connect();
-                                } else {
-                                  desktopLyricsSever.close();
-                                }
+                                settingController.setShowDesktopLyrics();
                               }.throttle(),
                             ),
                           ),
@@ -1092,7 +1081,7 @@ class _PlayPageState extends State<PlayPage> {
 
   ThemeService get _themeService => ThemeService.instance;
   AudioController get _audioController => Get.find<AudioController>();
-  SettingController get _settingController => Get.find<SettingController>();
+  SettingController get _settingController => SettingController.instance;
   MusicCacheController get _musicCacheController =>
       Get.find<MusicCacheController>();
   UserPlayListController get _userPlayListController =>

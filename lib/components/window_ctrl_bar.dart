@@ -288,7 +288,7 @@ class WindowControllerBar extends GetView<MyWindowListener> {
     final AudioController audioController = Get.find<AudioController>();
     final MusicCacheController musicCacheController =
         Get.find<MusicCacheController>();
-    final SettingController settingController = Get.find<SettingController>();
+    final SettingController settingController = SettingController.instance;
 
     return Container(
       height: _controllerBarHeight,

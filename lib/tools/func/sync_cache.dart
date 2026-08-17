@@ -103,7 +103,7 @@ Future<Map<String, MusicCache>> _fetchMetadataBatch(
 
 /// 同步本地音乐缓存
 Future<void> syncCache() async {
-  final settingCtrl = Get.find<SettingController>();
+  final settingCtrl = SettingController.instance;
   final musicCacheCtrl = Get.find<MusicCacheController>();
   final audioCtrl = Get.find<AudioController>();
   final musicBox = HiveBox.musicCacheBox;

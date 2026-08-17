@@ -78,7 +78,7 @@ List<MusicCache> _sortPairs2((List<MusicCache>, int, bool) args) {
 mixin DetailsPageControllerBase {
   RxList<MusicCache> get items;
   Rx<Uint8List> get headCover => kTransparentImage.obs;
-  final SettingController _settingController = Get.find<SettingController>();
+  final SettingController _settingController = SettingController.instance;
   AudioController get audioController => Get.find<AudioController>();
 
   void play(String audioSource, {MusicCache? metadata}) {

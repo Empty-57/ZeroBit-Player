@@ -8,8 +8,8 @@ import 'package:zerobit_player/src/rust/api/smtc.dart';
 class MyWindowListener extends GetxController with WindowListener {
   final isMaximized = false.obs;
   final isFullScreen = false.obs;
-  final DesktopLyricsSever _desktopLyricsSever = Get.find<DesktopLyricsSever>();
-  final SettingController _settingController = Get.find<SettingController>();
+  final DesktopLyricsSever _desktopLyricsSever = DesktopLyricsSever.instance;
+  final SettingController _settingController = SettingController.instance;
 
   @override
   void onInit() {

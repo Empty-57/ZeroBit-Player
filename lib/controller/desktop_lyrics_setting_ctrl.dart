@@ -3,8 +3,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zerobit_player/desktop_lyrics_sever.dart';
 import 'package:zerobit_player/tools/websocket_model.dart';
 
-class DesktopLyricsSettingController extends GetxController {
-  final DesktopLyricsSever _desktopLyricsSever = Get.find<DesktopLyricsSever>();
+class DesktopLyricsSettingController {
+  DesktopLyricsSettingController._();
+  static final instance = DesktopLyricsSettingController._();
+  final DesktopLyricsSever _desktopLyricsSever = DesktopLyricsSever.instance;
   final fontFamily = "Microsoft YaHei Light".obs;
   final fontSize = 24.obs; // 16-36
   final fontWeight = 5.obs; // 0-8  w100-w900
@@ -50,10 +52,7 @@ class DesktopLyricsSettingController extends GetxController {
   static const int fontSizeMin = 16;
   static const int fontSizeMax = 48;
 
-  @override
-  void onInit() async {
-    super.onInit();
-
+  void init() async {
     prefs = await SharedPreferences.getInstance();
     fontSize.value = prefs!.getInt('fontSize') ?? 24;
     fontWeight.value = prefs!.getInt('fontWeight') ?? 5;

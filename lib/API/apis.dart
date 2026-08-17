@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart' hide Response;
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/tools/lrcTool/krc_decryptor.dart';
@@ -44,7 +43,7 @@ final _qmDio = Dio(
   ),
 );
 
-final SettingController _settingController = Get.find<SettingController>();
+final SettingController _settingController = SettingController.instance;
 
 /// 提取 qrc 正文 翻译 罗马音
 Map<String, String?> _qrcParseLyricByRegex(String rawXml) {

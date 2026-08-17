@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 
-final SettingController _settingController = Get.find<SettingController>();
+final SettingController _settingController = SettingController.instance;
 TextStyle generalTextStyle<T>({
   BuildContext? ctx,
   Color? color,

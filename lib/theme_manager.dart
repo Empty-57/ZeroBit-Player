@@ -6,7 +6,7 @@ import 'controller/setting_ctrl.dart';
 class ThemeService {
   ThemeService._();
   static final instance = ThemeService._();
-  final SettingController _settingController = Get.find<SettingController>();
+  final SettingController _settingController = SettingController.instance;
 
   final _contrastLevel = 0.0;
   final _dynamicSchemeVariant = DynamicSchemeVariant.tonalSpot;

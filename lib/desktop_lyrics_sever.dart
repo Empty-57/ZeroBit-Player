@@ -15,10 +15,12 @@ import 'controller/desktop_lyrics_setting_ctrl.dart';
 import 'controller/lyric_ctrl.dart';
 import 'controller/setting_ctrl.dart';
 
-class DesktopLyricsSever extends GetxController {
-  final LyricController _lyricController = Get.find<LyricController>();
-  final AudioController _audioController = Get.find<AudioController>();
-  final SettingController _settingController = Get.find<SettingController>();
+class DesktopLyricsSever {
+  DesktopLyricsSever._();
+  static final instance = DesktopLyricsSever._();
+  late final LyricController _lyricController = Get.find<LyricController>();
+  late final AudioController _audioController = Get.find<AudioController>();
+  final SettingController _settingController = SettingController.instance;
   final _wsUrl = Uri.parse('ws://127.0.0.1:7070');
 
   HttpServer? _server;
@@ -29,12 +31,9 @@ class DesktopLyricsSever extends GetxController {
   Worker? _stateWorker;
 
   DesktopLyricsSettingController get _desktopLyricsSettingController =>
-      Get.find<DesktopLyricsSettingController>();
+      DesktopLyricsSettingController.instance;
 
-  @override
-  void onInit() {
-    super.onInit();
-
+  void init() {
     if (_settingController.showDesktopLyrics.value) {
       connect();
     }
@@ -46,12 +45,6 @@ class DesktopLyricsSever extends GetxController {
         _refreshStatus();
       }
     });
-  }
-
-  @override
-  void onClose() async {
-    await close();
-    super.onClose();
   }
 
   void _refreshStatus() {

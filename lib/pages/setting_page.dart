@@ -18,16 +18,13 @@ import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/src/rust/api/get_fonts.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 
-import '../desktop_lyrics_sever.dart';
 import '../field/shared_preferences_key.dart';
 
 const double btnW = 108;
-final SettingController _settingController = Get.find<SettingController>();
+final SettingController _settingController = SettingController.instance;
 
 final DesktopLyricsSettingController _desktopLyricsSettingController =
-    Get.find<DesktopLyricsSettingController>();
-
-final DesktopLyricsSever _desktopLyricsSever = Get.find<DesktopLyricsSever>();
+    DesktopLyricsSettingController.instance;
 
 List<String> _fontsList = [];
 
@@ -1659,15 +1656,8 @@ class SettingPage extends StatelessWidget {
                       value: _settingController.showDesktopLyrics,
                       trackColor: switchTrackColor,
                       context: context,
-                      fn: (bool value) async {
-                        _settingController.showDesktopLyrics.value = value;
-                        await _settingController.putScalableCache();
-
-                        if (_settingController.showDesktopLyrics.value) {
-                          _desktopLyricsSever.connect();
-                        } else {
-                          _desktopLyricsSever.close();
-                        }
+                      fn: (bool value) {
+                        _settingController.setShowDesktopLyrics(value);
                       },
                     ),
                     context: context,

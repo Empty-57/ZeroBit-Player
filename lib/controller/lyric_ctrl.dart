@@ -16,7 +16,7 @@ class LyricController extends GetxController {
   final AudioController _audioController = Get.find<AudioController>();
   SpringListController get _springConntroller =>
       Get.find<SpringListController>();
-  final SettingController _settingController = Get.find<SettingController>();
+  final SettingController _settingController = SettingController.instance;
 
   final currentLineIndex = (-1).obs;
   final ValueNotifier<int> currentWordIndexNotifier = ValueNotifier<int>(0);

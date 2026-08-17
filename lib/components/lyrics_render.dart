@@ -12,7 +12,6 @@ import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/lyric_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/theme_manager.dart';
-import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
@@ -58,7 +57,7 @@ const _gradientStops = <double>[0.0, 0.333, 0.666];
 const double _lrcScale = 1.1;
 
 class _LyricsStyle {
-  final SettingController _settingsController = Get.find();
+  final SettingController _settingsController = SettingController.instance;
 
   final _themeService = ThemeService.instance;
 
@@ -631,7 +630,7 @@ class LyricsRender extends StatefulWidget {
 
 class _LyricsRenderState extends State<LyricsRender> {
   final AudioController _audioController = Get.find<AudioController>();
-  final SettingController _settingController = Get.find<SettingController>();
+  final SettingController _settingController = SettingController.instance;
   final LyricController _lyricController = Get.find<LyricController>();
   final _isHover = false.obs;
   final _LyricsStyle lrcStylePackage = _LyricsStyle();
