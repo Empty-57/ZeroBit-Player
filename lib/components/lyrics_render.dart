@@ -483,7 +483,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
                 }
 
                 wordWidget = TweenAnimationBuilder<Color?>(
-                  // key: ValueKey('word_$wordIndex'), // ???
+                  key: ValueKey('word_$wordIndex'),
                   duration: const Duration(milliseconds: 600),
                   curve: Curves.easeInOut,
                   tween: ColorTween(begin: beginColor, end: targetColor),
@@ -496,6 +496,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
                   },
                 );
 
+                // 这套方案的问题： 在歌词换行的时候最后一个词偶尔会直接跳变为透明色 但性能较优
                 // wordWidget = AnimatedDefaultTextStyle(
                 //   key: ValueKey('word_$wordIndex'),
                 //   duration: const Duration(milliseconds: 600),
@@ -1041,8 +1042,8 @@ class _StaggeredLyricItem extends StatelessWidget {
 
       return TextButton(
         onPressed: () {
-          audioController.audioSetPositon(pos: startTime);
-        }.throttle(ms: 500),
+          audioController.throttledSeek(startTime);
+        },
         style: TextButton.styleFrom(
           shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
           padding: lrcPadding,

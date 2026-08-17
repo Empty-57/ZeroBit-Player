@@ -28,3 +28,19 @@ extension ThrottleExtension on Function {
     };
   }
 }
+
+extension ThrottleExtensionArgs<T> on void Function(T) {
+  void Function(T) throttleArgs({int ms = 500}) {
+    bool isAllowed = true;
+    Timer? throttleTimer;
+    return (T arg) {
+      if (!isAllowed) return;
+      isAllowed = false;
+      this(arg);
+      throttleTimer?.cancel();
+      throttleTimer = Timer(Duration(milliseconds: ms), () {
+        isAllowed = true;
+      });
+    };
+  }
+}

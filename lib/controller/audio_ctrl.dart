@@ -21,6 +21,7 @@ import 'package:zerobit_player/tools/cover_lru_cache.dart';
 import 'package:zerobit_player/tools/lrcTool/get_lyrics.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
+import '../tools/func/func_extension.dart';
 import '../tools/lrcTool/parse_lyrics.dart';
 import '../tools/lrcTool/save_lyric.dart';
 import 'music_cache_ctrl.dart';
@@ -111,6 +112,9 @@ class AudioController extends GetxController {
 
   SpringListController get _springController =>
       Get.find<SpringListController>();
+
+  late final void Function(double pos) throttledSeek =
+      ((double pos) => audioSetPositon(pos: pos)).throttleArgs(ms: 500);
 
   /// 获取音频FFT数据
   void getAudioFFt() async {

@@ -333,9 +333,7 @@ class _SkipBackBtn extends StatelessWidget {
       icon: PhosphorIconsFill.skipBack,
       size: size,
       color: color,
-      fn: () async {
-        await audioController.audioToPrevious();
-      }.throttle(ms: 500),
+      fn: audioController.audioToPrevious.throttle(ms: 500),
     );
   }
 }
@@ -356,9 +354,7 @@ class _PlayToggleBtn extends StatelessWidget {
         icon: isPlaying ? PhosphorIconsFill.pause : PhosphorIconsFill.play,
         size: size,
         color: color,
-        fn: () async {
-          await audioController.audioToggle();
-        }.throttle(ms: 300),
+        fn: audioController.audioToggle.throttle(ms: 300),
       );
     });
   }
@@ -377,9 +373,7 @@ class _SkipForwardBtn extends StatelessWidget {
       icon: PhosphorIconsFill.skipForward,
       size: size,
       color: color,
-      fn: () async {
-        await audioController.audioToNext();
-      }.throttle(ms: 500),
+      fn: audioController.audioToNext.throttle(ms: 500),
     );
   }
 }

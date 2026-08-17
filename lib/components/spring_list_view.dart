@@ -18,7 +18,6 @@ class SpringListController extends GetxController {
 
   final ValueNotifier<int> _currentIndex = ValueNotifier(0);
 
-  final Map<int, GlobalKey> _sliverKeys = {};
   final Map<int, GlobalKey> _boxKeys = {};
 
   final ValueNotifier<_JumpSignal> _jumpNotifier = ValueNotifier(
@@ -35,8 +34,6 @@ class SpringListController extends GetxController {
   int _delay = _delayMax; // ms
   double _duration = _durationMax; // sec
 
-  GlobalKey getSliverKey(int index) =>
-      _sliverKeys.putIfAbsent(index, () => GlobalKey());
   GlobalKey getBoxKey(int index) =>
       _boxKeys.putIfAbsent(index, () => GlobalKey());
 
@@ -161,7 +158,6 @@ class SpringListController extends GetxController {
   }
 
   void clearState() {
-    _sliverKeys.clear();
     _boxKeys.clear();
     _currentIndex.value = 0;
     _cachedVisibleItemCount = null;
@@ -173,7 +169,6 @@ class SpringListController extends GetxController {
 
   @override
   void onClose() {
-    _sliverKeys.clear();
     _boxKeys.clear();
     _cachedVisibleItemCount = null;
     cachedScreenHeight = 0.0;
@@ -278,7 +273,7 @@ class _SpringListViewState extends State<SpringListView> {
                             0, // 前奏时也为0
                             _controller._totalLength - 1,
                           );
-                          centerKey = _controller.getSliverKey(effectiveIndex);
+                          centerKey = ValueKey('sliver_$effectiveIndex');
                         }
 
                         return CustomScrollView(
@@ -297,7 +292,7 @@ class _SpringListViewState extends State<SpringListView> {
 
                             for (int i = 0; i < widget.length; i++)
                               SliverToBoxAdapter(
-                                key: _controller.getSliverKey(i),
+                                key: ValueKey('sliver_$i'),
                                 child: _SpringItem(
                                   index: i,
                                   boxKey: _controller.getBoxKey(i),
@@ -442,6 +437,7 @@ class _SpringItemState extends State<_SpringItem>
     controller._jumpNotifier.removeListener(_onJumpSignal);
     _delayTimer?.cancel();
     _animController.dispose();
+    controller._boxKeys.remove(widget.index);
     super.dispose();
   }
 
