@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
@@ -271,6 +273,7 @@ class WindowControllerBar extends GetView<MyWindowListener> {
   final bool useSearch;
   final bool useThemeSwitch;
   final bool onlyDarkMode;
+  final bool useBlur;
 
   const WindowControllerBar({
     super.key,
@@ -280,6 +283,7 @@ class WindowControllerBar extends GetView<MyWindowListener> {
     this.useSearch = true,
     this.useThemeSwitch = true,
     this.onlyDarkMode = false,
+    this.useBlur = true,
   });
 
   @override
@@ -290,10 +294,12 @@ class WindowControllerBar extends GetView<MyWindowListener> {
         Get.find<MusicCacheController>();
     final SettingController settingController = SettingController.instance;
 
-    return Container(
+    final content = Container(
       height: _controllerBarHeight,
       padding: EdgeInsets.only(left: 16, top: 0, right: 4, bottom: 0),
-      color: Colors.transparent,
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainer.withValues(alpha: useBlur ? 0.6 : 0.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -434,5 +440,14 @@ class WindowControllerBar extends GetView<MyWindowListener> {
         ],
       ),
     );
+
+    return useBlur
+        ? ClipRect(
+            child: BackdropFilter(
+              filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: content,
+            ),
+          )
+        : content;
   }
 }

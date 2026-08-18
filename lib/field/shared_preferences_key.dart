@@ -13,4 +13,7 @@ abstract class SharedPreferencesKey {
   static const useReplayGain = 'useReplayGain';
   static const autoGetLyrics = 'autoGetLyrics';
   static const useTaskBarCtrl = 'useTaskBarCtrl';
+  static const backgroundImageOpacity = 'backgroundImageOpacity';
+  static const backgroundImageBlur = 'backgroundImageBlur';
+  static const backgroundImagePath = 'backgroundImagePath';
 }

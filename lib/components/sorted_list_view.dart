@@ -197,7 +197,6 @@ class _SortedListViewState extends State<SortedListView> {
     return Container(
       padding: const EdgeInsets.only(left: 16, top: 32, right: 4, bottom: 16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.only(topLeft: Radius.circular(8)),
       ),
       child: Column(

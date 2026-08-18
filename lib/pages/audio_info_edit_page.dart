@@ -263,7 +263,8 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
     );
 
     return Material(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: const BorderRadius.only(topLeft: Radius.circular(8)),
+      color: Colors.transparent,
       child: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsetsGeometry.all(16),
@@ -449,7 +450,9 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainer,
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainer.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Column(

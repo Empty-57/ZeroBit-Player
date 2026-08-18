@@ -19,7 +19,7 @@ import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/src/rust/api/get_fonts.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
-
+import 'package:path/path.dart' as p;
 import '../field/shared_preferences_key.dart';
 
 const double btnW = 108;
@@ -1048,8 +1048,8 @@ class _DesktopLrcFontWeightDropMenu extends StatelessWidget {
   }
 }
 
-class _DesktopLrcFontOpacityDropMenu extends StatelessWidget {
-  const _DesktopLrcFontOpacityDropMenu();
+class _DesktopLrcFontOpacitySlider extends StatelessWidget {
+  const _DesktopLrcFontOpacitySlider();
 
   @override
   Widget build(BuildContext context) {
@@ -1060,19 +1060,27 @@ class _DesktopLrcFontOpacityDropMenu extends StatelessWidget {
           context,
         ).copyWith(showValueIndicator: ShowValueIndicator.onDrag),
         child: Obx(
-          () => Slider(
-            min: 0.0,
-            max: 1.0,
-            label: _desktopLyricsSettingController.fontOpacity.value
-                .toStringAsFixed(2),
-            value: _desktopLyricsSettingController.fontOpacity.value,
+          () => Row(
+            children: [
+              Text(
+                _desktopLyricsSettingController.fontOpacity.value
+                    .toStringAsFixed(2),
+              ),
+              Slider(
+                min: 0.0,
+                max: 1.0,
+                label: _desktopLyricsSettingController.fontOpacity.value
+                    .toStringAsFixed(2),
+                value: _desktopLyricsSettingController.fontOpacity.value,
 
-            onChanged: (v) {
-              _desktopLyricsSettingController.setFontOpacity(opacity: v);
-            },
-            onChangeEnd: (v) {
-              _desktopLyricsSettingController.setFontOpacity(opacity: v);
-            },
+                onChanged: (v) {
+                  _desktopLyricsSettingController.setFontOpacity(opacity: v);
+                },
+                onChangeEnd: (v) {
+                  _desktopLyricsSettingController.setFontOpacity(opacity: v);
+                },
+              ),
+            ],
           ),
         ),
       ),
@@ -1138,6 +1146,7 @@ class _DesktopLyricsAlignmentRadio extends StatelessWidget {
   Widget build(BuildContext context) {
     final alignment = [0, 1, 2, 3];
     return Material(
+      color: Colors.transparent,
       child: Obx(
         () => RadioGroup<int>(
           groupValue: _desktopLyricsSettingController.lrcAlignment.value,
@@ -1176,6 +1185,7 @@ class _LyricsSwitchAnimateModeRadio extends StatelessWidget {
   Widget build(BuildContext context) {
     final alignment = [0, 1, 2, 3];
     return Material(
+      color: Colors.transparent,
       child: Obx(
         () => RadioGroup<int>(
           groupValue:
@@ -1413,6 +1423,152 @@ class _DesktopLyricsStrokeColor extends StatelessWidget {
   }
 }
 
+class _BackgroundImagePathPicker extends StatelessWidget {
+  const _BackgroundImagePathPicker();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      spacing: 8,
+      children: [
+        Obx(
+          () => SizedBox(
+            width: 200,
+            child: Text(
+              p.basename(_settingController.backgroundImagePath.value),
+              style: generalTextStyle(ctx: context, size: 'md'),
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+            ),
+          ),
+        ),
+        CustomBtn(
+          fn: () async {
+            try {
+              final result = await FilePicker.platform.pickFiles(
+                type: FileType.image,
+              );
+              if (result != null && result.paths.isNotEmpty) {
+                _settingController.backgroundImagePath.value =
+                    result.paths.first!;
+                _settingController.setBackgroundImagePath(
+                  value: result.paths.first!,
+                );
+              } else {
+                showSnackBar(title: 'ERR', msg: '发生未知问题');
+              }
+            } catch (e) {
+              showSnackBar(title: 'ERR', msg: '发生错误： $e');
+            }
+          },
+          icon: PhosphorIconsLight.image,
+          tooltip: '选择背景图片',
+          contentColor: theme.colorScheme.primary,
+          btnHeight: 36,
+          btnWidth: 36,
+          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+        ),
+        CustomBtn(
+          fn: () {
+            _settingController.backgroundImagePath.value = '';
+            _settingController.setBackgroundImagePath(value: '');
+          },
+          icon: PhosphorIconsLight.arrowClockwise,
+          tooltip: '还原背景',
+          contentColor: theme.colorScheme.primary,
+          btnHeight: 36,
+          btnWidth: 36,
+          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+        ),
+      ],
+    );
+  }
+}
+
+class _BackgroundImageOpacitySlider extends StatelessWidget {
+  const _BackgroundImageOpacitySlider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: SliderTheme(
+        data: SliderTheme.of(
+          context,
+        ).copyWith(showValueIndicator: ShowValueIndicator.onDrag),
+        child: Obx(
+          () => Row(
+            children: [
+              Text(
+                _settingController.backgroundImageOpacity.value.toStringAsFixed(
+                  2,
+                ),
+              ),
+              Slider(
+                min: 0.0,
+                max: 1.0,
+                label: _settingController.backgroundImageOpacity.value
+                    .toStringAsFixed(2),
+                value: _settingController.backgroundImageOpacity.value,
+
+                onChanged: (v) {
+                  _settingController.backgroundImageOpacity.value = v;
+                },
+                onChangeEnd: (v) {
+                  _settingController.setBackgroundImageOpacity(value: v);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BackgroundImageBlurSlider extends StatelessWidget {
+  const _BackgroundImageBlurSlider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: SliderTheme(
+        data: SliderTheme.of(
+          context,
+        ).copyWith(showValueIndicator: ShowValueIndicator.onDrag),
+        child: Obx(
+          () => Row(
+            children: [
+              Text(
+                _settingController.backgroundImageBlur.value.toStringAsFixed(2),
+              ),
+              Slider(
+                min: 0.0,
+                max: 36.0,
+                divisions: 18,
+                label: _settingController.backgroundImageBlur.value
+                    .toStringAsFixed(2),
+                value: _settingController.backgroundImageBlur.value,
+
+                onChanged: (v) {
+                  _settingController.backgroundImageBlur.value = v;
+                },
+                onChangeEnd: (v) {
+                  _settingController.setBackgroundImageBlur(value: v);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class SettingPage extends StatefulWidget {
   const SettingPage({super.key});
 
@@ -1483,7 +1639,6 @@ class _SettingPageState extends State<SettingPage> {
       alignment: Alignment.centerLeft,
       padding: const EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.only(topLeft: Radius.circular(8)),
       ),
       child: Column(
@@ -1735,6 +1890,15 @@ class _AppearanceTab extends StatelessWidget {
           },
         ),
         const _SettingItem(text: '字体', child: _FontFamilyDialog()),
+        const _SettingItem(text: '更改背景', child: _BackgroundImagePathPicker()),
+        const _SettingItem(
+          text: '背景图片不透明度',
+          child: _BackgroundImageOpacitySlider(),
+        ),
+        const _SettingItem(
+          text: '背景图片模糊值',
+          child: _BackgroundImageBlurSlider(),
+        ),
       ],
     );
   }
@@ -1839,10 +2003,7 @@ class _DesktopLyricsTab extends StatelessWidget {
         ),
         const _SettingItem(text: '字号', child: _DesktopLrcFontSizeDropMenu()),
         const _SettingItem(text: '字重', child: _DesktopLrcFontWeightDropMenu()),
-        const _SettingItem(
-          text: '不透明度',
-          child: _DesktopLrcFontOpacityDropMenu(),
-        ),
+        const _SettingItem(text: '不透明度', child: _DesktopLrcFontOpacitySlider()),
         _SettingSwitchItem(
           text: '已播放颜色跟随主题色',
           value: _desktopLyricsSettingController.useDynamicOverlayColor,

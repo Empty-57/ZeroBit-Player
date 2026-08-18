@@ -31,8 +31,7 @@ class FoldersPreviewPage extends StatelessWidget {
       alignment: Alignment.centerLeft,
       padding: EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: const BorderRadius.only(topLeft: Radius.circular(8))
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,

@@ -38,6 +38,9 @@ class SettingController {
   final close2Tray = false.obs;
   final showTranslate = true.obs;
   final showRoma = false.obs;
+  final backgroundImagePath = '1'.obs;
+  final backgroundImageOpacity = 0.5.obs; // 0-1
+  final backgroundImageBlur = 4.0.obs; // 0-36
 
   // 歌词状态
   final lrcAlignment = 0.obs;
@@ -302,6 +305,12 @@ class SettingController {
         prefs?.getBool(SharedPreferencesKey.useReplayGain) ?? false;
     autoGetLyrics.value =
         prefs?.getBool(SharedPreferencesKey.autoGetLyrics) ?? true;
+    backgroundImageOpacity.value =
+        prefs?.getDouble(SharedPreferencesKey.backgroundImageOpacity) ?? 0.5;
+    backgroundImageBlur.value =
+        prefs?.getDouble(SharedPreferencesKey.backgroundImageBlur) ?? 4.0;
+    backgroundImagePath.value =
+        prefs?.getString(SharedPreferencesKey.backgroundImagePath) ?? '';
 
     // 提取快捷键解析逻辑，消除冗余
     _loadKeyConfig(SharedPreferencesKey.toggleHidString, hotKeyToggleHid, (
@@ -640,6 +649,30 @@ class SettingController {
     } catch (e) {
       showSnackBar(title: 'Err', msg: 'settingERR | $e');
     }
+  }
+
+  void setBackgroundImageOpacity({required double value}) {
+    backgroundImageOpacity.value = value;
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setDouble(SharedPreferencesKey.backgroundImageOpacity, value);
+  }
+
+  void setBackgroundImageBlur({required double value}) {
+    backgroundImageBlur.value = value;
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setDouble(SharedPreferencesKey.backgroundImageBlur, value);
+  }
+
+  void setBackgroundImagePath({required String value}) {
+    backgroundImagePath.value = value;
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setString(SharedPreferencesKey.backgroundImagePath, value);
   }
 
   void setExclusiveMode({required bool use}) async {

@@ -258,7 +258,6 @@ class AudioGenPages extends StatefulWidget {
   final String audioSource;
   final DetailsPageControllerBase controller;
   final String userKey;
-  final Color? backgroundColor;
   final double? Function({required String route, bool rw, double? offset})?
   rwScrollOffset;
 
@@ -270,7 +269,6 @@ class AudioGenPages extends StatefulWidget {
     required this.controller,
     required this.userKey,
     this.rwScrollOffset,
-    this.backgroundColor,
   });
 
   @override
@@ -355,7 +353,6 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       alignment: Alignment.centerLeft,
       padding: const EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
       decoration: BoxDecoration(
-        color: widget.backgroundColor ?? Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.only(topLeft: Radius.circular(8)),
       ),
       child: Column(

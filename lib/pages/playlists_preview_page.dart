@@ -120,8 +120,7 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
       alignment: Alignment.centerLeft,
       padding: const EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: const BorderRadius.only(topLeft: Radius.circular(8)),
       ),
       child: ExcludeSemantics(
         child: Column(

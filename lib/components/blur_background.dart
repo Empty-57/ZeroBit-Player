@@ -44,7 +44,11 @@ class BlurWithCoverBackground extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.only(topLeft: Radius.circular(radius)),
-          child: Container(color: backgroundColor),
+          child: Container(
+            color: _settingController.backgroundImagePath.value.isNotEmpty
+                ? null
+                : backgroundColor,
+          ),
         ),
 
         RepaintBoundary(
@@ -53,6 +57,11 @@ class BlurWithCoverBackground extends StatelessWidget {
             if (useMesh) {
               return LyricsMesh();
             }
+
+            if (_settingController.backgroundImagePath.value.isNotEmpty) {
+              return const SizedBox.shrink();
+            }
+
             return Obx(() {
               final String themeMode = _settingController.themeMode.value;
               final Uint8List coverBytes = cover.value;

@@ -1481,6 +1481,7 @@ class _PlayPageState extends State<PlayPage> {
                   useSearch: false,
                   useThemeSwitch: false,
                   onlyDarkMode: true,
+                  useBlur: false,
                 ),
                 Expanded(
                   child: Column(

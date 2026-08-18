@@ -408,19 +408,43 @@ class _DiagonalSlideTransition extends CustomTransition {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    return SlideTransition(
-      position:
-          Tween<Offset>(
-            begin: SidebarNavState.beginOffset,
-            end: Offset.zero,
-          ).animate(
-            CurvedAnimation(parent: animation, curve: Curves.fastOutSlowIn),
-          ),
-      child: FadeTransition(
-        opacity: Tween<double>(begin: 0.3, end: 1.0).animate(
-          CurvedAnimation(parent: animation, curve: Curves.fastOutSlowIn),
+    final primaryCurved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.fastOutSlowIn,
+      reverseCurve: Curves.fastOutSlowIn.flipped,
+    );
+
+    final secondaryCurved = CurvedAnimation(
+      parent: secondaryAnimation,
+      curve: Curves.fastOutSlowIn,
+      reverseCurve: Curves.fastOutSlowIn.flipped,
+    );
+
+    final inSlide = Tween<Offset>(
+      begin: SidebarNavState.beginOffset,
+      end: Offset.zero,
+    ).animate(primaryCurved);
+
+    final inFade = Tween<double>(begin: 0.0, end: 1.0).animate(primaryCurved);
+
+    final outSlide = Tween<Offset>(
+      begin: Offset.zero,
+      end: -SidebarNavState.beginOffset,
+    ).animate(secondaryCurved);
+
+    final outFade = Tween<double>(
+      begin: 1.0,
+      end: 0.0,
+    ).animate(secondaryCurved);
+
+    return FadeTransition(
+      opacity: inFade,
+      child: SlideTransition(
+        position: inSlide,
+        child: FadeTransition(
+          opacity: outFade,
+          child: SlideTransition(position: outSlide, child: child),
         ),
-        child: child,
       ),
     );
   }
@@ -569,6 +593,38 @@ class HomePage extends StatelessWidget {
       child: ExcludeSemantics(
         child: Stack(
           children: [
+            Positioned.fill(
+              child: Obx(() {
+                final blur = SettingController.instance.backgroundImageBlur;
+                final path =
+                    SettingController.instance.backgroundImagePath.value;
+
+                if (path.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                final file = File(path);
+
+                if (!file.existsSync()) {
+                  return const SizedBox.shrink();
+                }
+
+                return ImageFiltered(
+                  enabled: blur.value != 0,
+                  imageFilter: ImageFilter.blur(
+                    sigmaX: blur.value,
+                    sigmaY: blur.value,
+                    tileMode: TileMode.clamp,
+                  ),
+                  child: Image(
+                    image: FileImage(file),
+                    fit: BoxFit.cover,
+                    gaplessPlayback: true,
+                  ),
+                );
+              }),
+            ),
+
             Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -579,7 +635,6 @@ class HomePage extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
-
                     children: <Widget>[
                       CustomNavigation(
                         btnList: const <Widget>[
@@ -616,34 +671,60 @@ class HomePage extends StatelessWidget {
                         ],
                       ),
                       Expanded(
-                        flex: 1,
-                        child: Navigator(
-                          observers: [
-                            NestedObserver(
-                              onRouteChanged: (name) {
-                                WidgetsBinding.instance.addPostFrameCallback((
-                                  _,
-                                ) {
-                                  if (AppRoutes.orderMap_[name]
-                                      case final index?) {
-                                    SidebarNavState
-                                            .currentNavigationIndex
-                                            .value =
-                                        index;
-                                  }
-                                });
+                        child: Stack(
+                          children: [
+                            Obx(
+                              () => ClipRRect(
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(8),
+                                ),
+                                child: Container(
+                                  color: Theme.of(context).colorScheme.surface
+                                      .withValues(
+                                        alpha:
+                                            SettingController
+                                                .instance
+                                                .backgroundImagePath
+                                                .value
+                                                .isNotEmpty
+                                            ? SettingController
+                                                  .instance
+                                                  .backgroundImageOpacity
+                                                  .value
+                                            : 1.0,
+                                      ),
+                                ),
+                              ),
+                            ),
+                            Navigator(
+                              observers: [
+                                NestedObserver(
+                                  onRouteChanged: (name) {
+                                    WidgetsBinding.instance
+                                        .addPostFrameCallback((_) {
+                                          if (AppRoutes.orderMap_[name]
+                                              case final index?) {
+                                            SidebarNavState
+                                                    .currentNavigationIndex
+                                                    .value =
+                                                index;
+                                          }
+                                        });
+                                  },
+                                ),
+                              ],
+                              key: Get.nestedKey(1),
+                              initialRoute: AppRoutes.home,
+                              onGenerateRoute: (settings) {
+                                return GetPageRoute(
+                                  settings: settings,
+                                  page: () =>
+                                      _getNamedPage(name: settings.name!),
+                                  maintainState: false,
+                                );
                               },
                             ),
                           ],
-                          key: Get.nestedKey(1),
-                          initialRoute: AppRoutes.home,
-                          onGenerateRoute: (settings) {
-                            return GetPageRoute(
-                              settings: settings,
-                              page: () => _getNamedPage(name: settings.name!),
-                              maintainState: false,
-                            );
-                          },
                         ),
                       ),
                     ],
