@@ -42,6 +42,7 @@ import 'package:zerobit_player/src/rust/frb_generated.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/sync_cache.dart';
 import 'package:zerobit_player/tray.dart';
+import 'package:zerobit_player/windows_taskbar_thumbnail.dart';
 
 import 'components/get_snack_bar.dart';
 import 'controller/desktop_lyrics_setting_ctrl.dart';
@@ -269,6 +270,23 @@ void main() async {
     });
   });
   await initStream(audioController);
+
+  // 初始化taskbar
+  WindowsTaskbarThumbnail.init(
+    onButtonClick: (action) {
+      switch (action) {
+        case TaskbarButtonAction.prev:
+          audioController.audioToPrevious.throttle(ms: 500)();
+          break;
+        case TaskbarButtonAction.toggle:
+          audioController.audioToggle.throttle(ms: 300)();
+          break;
+        case TaskbarButtonAction.next:
+          audioController.audioToNext.throttle(ms: 500)();
+          break;
+      }
+    },
+  );
 }
 
 void _initLeakTracking() {
@@ -324,6 +342,9 @@ Future<void> initStream(AudioController audioController) async {
     _audioEventSub = audioEventStream().listen((data) {
       final state = AudioState.values[data];
       audioController.currentState.value = state;
+      WindowsTaskbarThumbnail.setButtons(
+        isPlaying: state == AudioState.playing,
+      );
       if (state == AudioState.ended) {
         audioController.audioAutoPlay();
       }

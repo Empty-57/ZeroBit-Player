@@ -4,6 +4,8 @@
 
 #include "flutter/generated_plugin_registrant.h"
 
+#include "taskbar_manager.h"
+
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
 
@@ -35,7 +37,7 @@ bool FlutterWindow::OnCreate() {
   // registered. The following call ensures a frame is pending to ensure the
   // window is shown. It is a no-op if the first frame hasn't completed yet.
   flutter_controller_->ForceRedraw();
-
+  TaskbarManager::GetInstance().Init(GetHandle(), flutter_controller_->engine()->messenger());
   return true;
 }
 
@@ -52,6 +54,13 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
   // Give Flutter, including plugins, an opportunity to handle window messages.
+
+  // 让 TaskbarManager 优先拦截相关消息
+  auto taskbar_result = TaskbarManager::GetInstance().HandleWindowMessage(hwnd, message, wparam, lparam);
+  if (taskbar_result.has_value()) {
+    return taskbar_result.value();
+  }
+
   if (flutter_controller_) {
     std::optional<LRESULT> result =
         flutter_controller_->HandleTopLevelWindowProc(hwnd, message, wparam,

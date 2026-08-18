@@ -24,6 +24,7 @@ import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import '../tools/func/func_extension.dart';
 import '../tools/lrcTool/parse_lyrics.dart';
 import '../tools/lrcTool/save_lyric.dart';
+import '../windows_taskbar_thumbnail.dart';
 import 'desktop_lyrics_setting_ctrl.dart';
 import 'music_cache_ctrl.dart';
 
@@ -343,6 +344,10 @@ class AudioController extends GetxController {
           CoverLRUCache.get(currentPath.value) ??
           await getCover(path: currentPath.value, sizeFlag: 0) ??
           kTransparentImage;
+
+      try{
+        await WindowsTaskbarThumbnail.setThumbnail(currentSmallCover.value);
+      }catch(_){}
 
       await _setThemeColor4Cover();
 
