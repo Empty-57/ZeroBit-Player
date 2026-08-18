@@ -1,5 +1,5 @@
 #include "taskbar_manager.h"
-#include <iostream>
+#include <algorithm>
 
 #pragma comment(lib, "gdiplus.lib")
 #pragma comment(lib, "dwmapi.lib")
@@ -16,7 +16,10 @@ TaskbarManager::TaskbarManager() {
 }
 
 TaskbarManager::~TaskbarManager() {
-    if (custom_thumbnail_bitmap_) DeleteObject(custom_thumbnail_bitmap_);
+    if (custom_thumbnail_bitmap_) {
+        delete custom_thumbnail_bitmap_;
+        custom_thumbnail_bitmap_ = nullptr;
+    }
     if (icon_prev_) DestroyIcon(icon_prev_);
     if (icon_play_) DestroyIcon(icon_play_);
     if (icon_pause_) DestroyIcon(icon_pause_);
@@ -186,17 +189,24 @@ void TaskbarManager::SetCustomThumbnail(const std::vector<uint8_t>& imageBytes) 
 
     IStream* pStream = NULL;
     if (CreateStreamOnHGlobal(hMem, TRUE, &pStream) == S_OK) {
-        Bitmap* pBitmap = Bitmap::FromStream(pStream);
-        if (pBitmap && pBitmap->GetLastStatus() == Ok) {
-            if (custom_thumbnail_bitmap_) DeleteObject(custom_thumbnail_bitmap_);
-            pBitmap->GetHBITMAP(Color(0, 0, 0), &custom_thumbnail_bitmap_);
-            delete pBitmap;
+        Bitmap* tempBitmap = Bitmap::FromStream(pStream);
+        if (tempBitmap && tempBitmap->GetLastStatus() == Ok) {
+            int w = tempBitmap->GetWidth();
+            int h = tempBitmap->GetHeight();
 
+            if (custom_thumbnail_bitmap_) delete custom_thumbnail_bitmap_;
+
+            custom_thumbnail_bitmap_ = new Bitmap(w, h, PixelFormat32bppARGB);
+            Graphics g(custom_thumbnail_bitmap_);
+            g.DrawImage(tempBitmap, 0, 0, w, h);
+
+            delete tempBitmap;
             is_custom_thumbnail_active_ = true;
-            BOOL fForceIconic = TRUE;
-            BOOL fHasIconicBitmap = TRUE;
-            DwmSetWindowAttribute(hwnd_, DWMWA_FORCE_ICONIC_REPRESENTATION, &fForceIconic, sizeof(fForceIconic));
-            DwmSetWindowAttribute(hwnd_, DWMWA_HAS_ICONIC_BITMAP, &fHasIconicBitmap, sizeof(fHasIconicBitmap));
+
+            BOOL fVal = TRUE;
+            DwmSetWindowAttribute(hwnd_, DWMWA_FORCE_ICONIC_REPRESENTATION, &fVal, sizeof(fVal));
+            DwmSetWindowAttribute(hwnd_, DWMWA_HAS_ICONIC_BITMAP, &fVal, sizeof(fVal));
+            
             DwmInvalidateIconicBitmaps(hwnd_);
         }
         pStream->Release();
@@ -206,10 +216,10 @@ void TaskbarManager::SetCustomThumbnail(const std::vector<uint8_t>& imageBytes) 
 void TaskbarManager::ResetThumbnail() {
     if (!hwnd_) return;
     is_custom_thumbnail_active_ = false;
-    BOOL fForceIconic = FALSE;
-    BOOL fHasIconicBitmap = FALSE;
-    DwmSetWindowAttribute(hwnd_, DWMWA_FORCE_ICONIC_REPRESENTATION, &fForceIconic, sizeof(fForceIconic));
-    DwmSetWindowAttribute(hwnd_, DWMWA_HAS_ICONIC_BITMAP, &fHasIconicBitmap, sizeof(fHasIconicBitmap));
+
+    BOOL fVal = FALSE;
+    DwmSetWindowAttribute(hwnd_, DWMWA_FORCE_ICONIC_REPRESENTATION, &fVal, sizeof(fVal));
+    DwmSetWindowAttribute(hwnd_, DWMWA_HAS_ICONIC_BITMAP, &fVal, sizeof(fVal));
     DwmInvalidateIconicBitmaps(hwnd_);
 
     if (custom_thumbnail_bitmap_) {
@@ -252,7 +262,29 @@ std::optional<LRESULT> TaskbarManager::HandleWindowMessage(HWND hwnd, UINT messa
         }
         case WM_DWMSENDICONICTHUMBNAIL: { // 系统请求缩略图
             if (is_custom_thumbnail_active_ && custom_thumbnail_bitmap_) {
-                DwmSetIconicThumbnail(hwnd, custom_thumbnail_bitmap_, 0);
+                int max_w = LOWORD(lparam);
+                int max_h = HIWORD(lparam);
+                if (max_w <= 0) max_w = 200;
+                if (max_h <= 0) max_h = 200;
+
+                float img_w = static_cast<float>(custom_thumbnail_bitmap_->GetWidth());
+                float img_h = static_cast<float>(custom_thumbnail_bitmap_->GetHeight());
+                float scale = (std::min)(static_cast<float>(max_w) / img_w, static_cast<float>(max_h) / img_h);
+
+                int target_w = (std::max)(1, static_cast<int>(img_w * scale));
+                int target_h = (std::max)(1, static_cast<int>(img_h * scale));
+
+                Bitmap scaledBitmap(target_w, target_h, PixelFormat32bppARGB);
+                Graphics g(&scaledBitmap);
+                g.SetInterpolationMode(InterpolationModeHighQualityBicubic);
+                g.DrawImage(custom_thumbnail_bitmap_, 0, 0, target_w, target_h);
+
+                HBITMAP hBmp = nullptr;
+                scaledBitmap.GetHBITMAP(Color(0, 0, 0), &hBmp);
+                if (hBmp) {
+                    DwmSetIconicThumbnail(hwnd, hBmp, 0);
+                    DeleteObject(hBmp);
+                }
                 return 0;
             }
             break;

@@ -45,7 +45,7 @@ private:
     bool last_visible_ = true;
 
     bool is_custom_thumbnail_active_ = false;
-    HBITMAP custom_thumbnail_bitmap_ = nullptr;
+    Gdiplus::Bitmap* custom_thumbnail_bitmap_ = nullptr; // 保存原始封面图片对象
 
     HICON icon_prev_ = nullptr;
     HICON icon_play_ = nullptr;
