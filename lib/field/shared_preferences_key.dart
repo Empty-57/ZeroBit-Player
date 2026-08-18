@@ -12,4 +12,5 @@ abstract class SharedPreferencesKey {
   static const close2Tray = 'close2Tray';
   static const useReplayGain = 'useReplayGain';
   static const autoGetLyrics = 'autoGetLyrics';
+  static const useTaskBarCtrl = 'useTaskBarCtrl';
 }

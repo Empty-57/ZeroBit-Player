@@ -345,9 +345,11 @@ class AudioController extends GetxController {
           await getCover(path: currentPath.value, sizeFlag: 0) ??
           kTransparentImage;
 
-      try{
-        await WindowsTaskbarThumbnail.setThumbnail(currentSmallCover.value);
-      }catch(_){}
+      try {
+        if (_settingController.useTaskBarCtrl.value) {
+          await WindowsTaskbarThumbnail.setThumbnail(currentSmallCover.value);
+        }
+      } catch (_) {}
 
       await _setThemeColor4Cover();
 

@@ -17,6 +17,7 @@ import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/tools/func/sync_cache.dart';
 
 import '../desktop_lyrics_sever.dart';
+import '../windows_taskbar_thumbnail.dart';
 import 'audio_ctrl.dart';
 
 class SettingController {
@@ -24,6 +25,7 @@ class SettingController {
   static final instance = SettingController._();
   MyWindowListener get _myWindowListener => Get.find<MyWindowListener>();
   DesktopLyricsSever get _desktopLyricsSever => DesktopLyricsSever.instance;
+  AudioController get _audioController => Get.find<AudioController>();
 
   // UI & 偏好设置状态
   final themeMode = 'dark'.obs;
@@ -59,6 +61,7 @@ class SettingController {
   final showSpectrogram = false.obs;
   final equalizerGains = List.generate(10, (_) => 0.0).toList().obs;
   final useReplayGain = false.obs;
+  final useTaskBarCtrl = true.obs;
 
   static const minGain = -12.0;
   static const maxGain = 12.0;
@@ -203,7 +206,6 @@ class SettingController {
   final _scalableSettingCacheBox = HiveBox.scalableSettingCacheBox;
 
   SharedPreferences? prefs;
-  AudioController get _audioController => Get.find<AudioController>();
 
   /// 检查当前是否在输入框内，防止快捷键冲突
   static bool get isTextFieldFocused {
@@ -487,7 +489,7 @@ class SettingController {
     );
   }
 
-  void setAutoGetLyrics({required bool value}) async => _setBoolPref(
+  void setAutoGetLyrics({required bool value}) => _setBoolPref(
     SharedPreferencesKey.autoGetLyrics,
     autoGetLyrics,
     overrideValue: value,
@@ -613,6 +615,30 @@ class SettingController {
       _desktopLyricsSever.connect();
     } else {
       _desktopLyricsSever.close();
+    }
+  }
+
+  void setUseTaskBarCtrl({required bool value}) async {
+    _setBoolPref(
+      SharedPreferencesKey.useTaskBarCtrl,
+      useTaskBarCtrl,
+      overrideValue: value,
+    );
+
+    try {
+      if (value) {
+        await WindowsTaskbarThumbnail.setButtons(
+          isPlaying: _audioController.currentState.value == AudioState.playing,
+          visible: true,
+        );
+        await WindowsTaskbarThumbnail.setThumbnail(
+          _audioController.currentSmallCover.value,
+        );
+      } else {
+        await WindowsTaskbarThumbnail.resetAll();
+      }
+    } catch (e) {
+      showSnackBar(title: 'Err', msg: 'settingERR | $e');
     }
   }
 

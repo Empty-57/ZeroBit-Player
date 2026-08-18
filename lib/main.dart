@@ -344,6 +344,7 @@ Future<void> initStream(AudioController audioController) async {
       audioController.currentState.value = state;
       WindowsTaskbarThumbnail.setButtons(
         isPlaying: state == AudioState.playing,
+        visible: SettingController.instance.useTaskBarCtrl.value,
       );
       if (state == AudioState.ended) {
         audioController.audioAutoPlay();

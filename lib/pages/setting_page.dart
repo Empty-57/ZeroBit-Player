@@ -1703,6 +1703,11 @@ class _GeneralTab extends StatelessWidget {
           onChanged: (val) => _settingController.setUseReplayGain(value: val),
         ),
         _SettingSwitchItem(
+          text: '使用任务栏缩略图工具栏控制播放',
+          value: _settingController.useTaskBarCtrl,
+          onChanged: (val) => _settingController.setUseTaskBarCtrl(value: val),
+        ),
+        _SettingSwitchItem(
           text: '关闭窗口后在后台运行',
           value: _settingController.close2Tray,
           onChanged: (val) => _settingController.setClose2Tray(value: val),
