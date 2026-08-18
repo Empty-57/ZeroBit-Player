@@ -206,7 +206,7 @@ void TaskbarManager::SetCustomThumbnail(const std::vector<uint8_t>& imageBytes) 
             BOOL fVal = TRUE;
             DwmSetWindowAttribute(hwnd_, DWMWA_FORCE_ICONIC_REPRESENTATION, &fVal, sizeof(fVal));
             DwmSetWindowAttribute(hwnd_, DWMWA_HAS_ICONIC_BITMAP, &fVal, sizeof(fVal));
-            
+
             DwmInvalidateIconicBitmaps(hwnd_);
         }
         pStream->Release();
