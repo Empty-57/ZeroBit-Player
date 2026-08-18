@@ -11,7 +11,7 @@ class ThemeService {
   final _contrastLevel = 0.0;
   final _dynamicSchemeVariant = DynamicSchemeVariant.tonalSpot;
 
-  final _thickness = 8.0;
+  final _thickness = 4.0;
   final _radius = 8.0;
 
   ColorScheme _createColorsScheme({required Brightness brightness}) {

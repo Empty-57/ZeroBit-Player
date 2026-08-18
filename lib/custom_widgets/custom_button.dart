@@ -18,6 +18,8 @@ class CustomBtn<T> extends StatelessWidget {
   final String? tooltip;
   final MainAxisAlignment? mainAxisAlignment;
   final List<Widget>? children;
+  final double? borderWidth;
+  final Color? borderColor;
 
   const CustomBtn({
     super.key,
@@ -37,6 +39,8 @@ class CustomBtn<T> extends StatelessWidget {
     this.tooltip,
     this.mainAxisAlignment = MainAxisAlignment.spaceAround,
     this.children,
+    this.borderWidth = 0,
+    this.borderColor,
   });
 
   @override
@@ -53,6 +57,13 @@ class CustomBtn<T> extends StatelessWidget {
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(radius!),
+              side: BorderSide(
+                style: borderWidth! == 0 ? BorderStyle.none : BorderStyle.solid,
+                width: borderWidth!,
+                color:
+                    borderColor ??
+                    Theme.of(context).colorScheme.onSecondaryContainer,
+              ),
             ),
             overlayColor: overlayColor,
             backgroundColor:
