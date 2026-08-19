@@ -1716,7 +1716,11 @@ class _AppearanceTab extends StatelessWidget {
           },
         ),
         const _SettingItem(text: '字体', child: _FontFamilyDialog()),
-        const _SettingItem(text: '更改背景', child: _BackgroundImagePathPicker()),
+        const _SettingItem(
+          text: '更改背景',
+          tooltip: '选择图片后请不要移动或删除图片',
+          child: _BackgroundImagePathPicker(),
+        ),
         const _SettingItem(
           text: '背景图片不透明度',
           child: _BackgroundImageOpacitySlider(),

@@ -8,9 +8,11 @@
 </div>
 <div align="center">
   <a href="https://deepwiki.com/Empty-57/ZeroBit-Player"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
-<img src="https://img.shields.io/badge/Platform-Windows-blue" alt="Platform">
+  <img src="https://badgen.net/github/release/Empty-57/ZeroBit-Player?icon=github" alt="Version">
+  <img src="https://img.shields.io/badge/Platform-Windows-blue" alt="Platform">
   <img src="https://img.shields.io/badge/Flutter-3.44+-0044aa" alt="Flutter">
   <img src="https://img.shields.io/badge/Rust-1.92+-black" alt="Rust">
+  <img src="https://img.shields.io/github/downloads/Empty-57/ZeroBit-Player/total" alt="Downloads">
   <img src="https://img.shields.io/badge/License-GPL--3.0-green" alt="License">
 <a href="https://wakatime.com/badge/user/7dfa2142-9f15-461d-ba44-2a9e14966a3b/project/e540bf5c-e190-4823-b0bd-02e367cbfa2b"><img src="https://wakatime.com/badge/user/7dfa2142-9f15-461d-ba44-2a9e14966a3b/project/e540bf5c-e190-4823-b0bd-02e367cbfa2b.svg" alt="wakatime"></a>
 </div>
