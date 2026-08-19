@@ -13,6 +13,9 @@
 migrate_working_dir/
 .vscode/
 .junie/
+node_modules
+docs/.vitepress/dist
+docs/.vitepress/cache
 
 # IntelliJ related
 *.iml
