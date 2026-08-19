@@ -41,6 +41,7 @@ import 'package:zerobit_player/src/rust/api/smtc.dart';
 import 'package:zerobit_player/src/rust/frb_generated.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/sync_cache.dart';
+import 'package:zerobit_player/tools/version_checker.dart';
 import 'package:zerobit_player/tray.dart';
 import 'package:zerobit_player/windows_taskbar_thumbnail.dart';
 
@@ -450,8 +451,27 @@ class _DiagonalSlideTransition extends CustomTransition {
   }
 }
 
-class MainFrame extends StatelessWidget {
+class MainFrame extends StatefulWidget {
   const MainFrame({super.key});
+
+  @override
+  State<MainFrame> createState() => _MainFrameState();
+}
+
+class _MainFrameState extends State<MainFrame> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (SettingController.instance.useAutoUpdate.value) {
+        VersionChecker.checkAndShowDialog(
+          context,
+          showNoUpdateToast: false,
+          showErrorToast: false,
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

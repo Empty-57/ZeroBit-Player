@@ -21,6 +21,7 @@ import 'package:zerobit_player/src/rust/api/get_fonts.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:path/path.dart' as p;
 import '../field/shared_preferences_key.dart';
+import '../tools/version_checker.dart';
 
 const double btnW = 108;
 final SettingController _settingController = SettingController.instance;
@@ -754,13 +755,11 @@ class _CheckVersion extends StatefulWidget {
 class _CheckVersionState extends State<_CheckVersion>
     with SingleTickerProviderStateMixin {
   bool _loading = false;
-
   late final AnimationController _loadingController;
 
   @override
   void initState() {
     super.initState();
-
     _loadingController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
@@ -773,185 +772,21 @@ class _CheckVersionState extends State<_CheckVersion>
     super.dispose();
   }
 
-  Future<void> _checkVersion() async {
+  Future<void> _handleCheck() async {
     if (_loading) return;
 
-    setState(() {
-      _loading = true;
-    });
-
+    setState(() => _loading = true);
     _loadingController.repeat();
 
-    snackBar() => showSnackBar(
-      title: "ERROR",
-      msg: "获取更新失败",
-      duration: const Duration(milliseconds: 3000),
+    await VersionChecker.checkAndShowDialog(
+      context,
+      showNoUpdateToast: true,
+      showErrorToast: true,
     );
 
-    try {
-      final dio = Dio(
-        BaseOptions(
-          headers: {
-            'User-Agent':
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-                '(KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
-            'Connection': 'keep-alive',
-          },
-        ),
-      );
-
-      final response = await dio.get(
-        _latestRepoApiUrl,
-        options: Options(responseType: ResponseType.json),
-      );
-
-      if (response.data == null) {
-        snackBar();
-        return;
-      }
-
-      final Map<String, dynamic> jsonData = response.data;
-
-      final List<int> latestVer = jsonData['tag_name']
-          .toString()
-          .replaceAll('v', '')
-          .split('.')
-          .map((v) => int.parse(v))
-          .toList();
-
-      final List<int> localVer = (await PackageInfo.fromPlatform()).version
-          .split('.')
-          .map((v) => int.parse(v))
-          .toList();
-
-      final hasUpdate =
-          latestVer[0] > localVer[0] ||
-          (latestVer[0] == localVer[0] && latestVer[1] > localVer[1]) ||
-          (latestVer[0] == localVer[0] &&
-              latestVer[1] == localVer[1] &&
-              latestVer[2] > localVer[2]);
-
-      if (hasUpdate) {
-        final repoInfo = _RepoInfo(
-          version: jsonData['tag_name'].toString(),
-          updatedTime: DateTime.parse(
-            jsonData['updated_at'].toString(),
-          ).toLocal().toString().substring(0, 19),
-          title: jsonData['name'].toString(),
-          body: jsonData['body'].toString(),
-        );
-
-        if (!mounted) return;
-
-        await showDialog(
-          barrierDismissible: true,
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text(repoInfo.title),
-              titleTextStyle: generalTextStyle(
-                ctx: context,
-                size: 'xl',
-                weight: FontWeight.w600,
-              ),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(4)),
-              ),
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              actionsAlignment: MainAxisAlignment.end,
-              actions: <Widget>[
-                SizedBox(
-                  width: context.width / 2,
-                  height: context.height / 2,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 8,
-                    children: [
-                      Text(
-                        '更新于：${repoInfo.updatedTime}\n更新信息：',
-                        style: generalTextStyle(ctx: context, size: 'md'),
-                      ),
-                      Expanded(child: Markdown(data: repoInfo.body)),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        spacing: 8,
-                        children: [
-                          CustomBtn(
-                            fn: () {
-                              Navigator.pop(context, 'cancel');
-                            },
-                            backgroundColor: Colors.transparent,
-                            contentColor: Theme.of(context).colorScheme.primary,
-                            btnWidth: 72,
-                            btnHeight: 36,
-                            label: "取消",
-                          ),
-                          CustomBtn(
-                            fn: () async {
-                              Navigator.pop(context, 'action');
-
-                              final Uri url = Uri.parse(_latestRepoUrl);
-
-                              try {
-                                await launchUrl(url);
-                              } catch (e) {
-                                debugPrint(e.toString());
-                                showSnackBar(
-                                  title: "ERROR",
-                                  msg: "跳转失败，请前往浏览器下载！",
-                                  duration: const Duration(milliseconds: 3000),
-                                );
-                              }
-                            },
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.primary,
-                            contentColor: Theme.of(
-                              context,
-                            ).colorScheme.onPrimary,
-                            overlayColor: Theme.of(
-                              context,
-                            ).colorScheme.surfaceContainer,
-                            btnWidth: 128,
-                            btnHeight: 36,
-                            icon: PhosphorIconsLight.arrowUpRight,
-                            label: "获取更新",
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      } else {
-        if (mounted) {
-          showSnackBar(
-            title: "OK",
-            msg: "目前是最新版本",
-            duration: const Duration(milliseconds: 3000),
-          );
-        }
-      }
-    } catch (err, stack) {
-      debugPrint('$err');
-      debugPrint('$stack');
-
-      if (mounted) {
-        snackBar();
-      }
-    } finally {
+    if (mounted) {
       _loadingController.stop();
-
-      if (mounted) {
-        setState(() {
-          _loading = false;
-        });
-      }
+      setState(() => _loading = false);
     }
   }
 
@@ -960,14 +795,13 @@ class _CheckVersionState extends State<_CheckVersion>
     final color = Theme.of(context).colorScheme.onPrimary;
 
     return CustomBtn(
-      fn: _loading ? null : _checkVersion,
+      fn: _loading ? null : _handleCheck,
       btnHeight: _setBtnHeight,
       btnWidth: 128,
       mainAxisAlignment: MainAxisAlignment.center,
       backgroundColor: Theme.of(context).colorScheme.primary,
       overlayColor: Theme.of(context).colorScheme.surfaceContainer,
       contentColor: color,
-
       children: [
         AnimatedBuilder(
           animation: _loadingController,
@@ -985,15 +819,10 @@ class _CheckVersionState extends State<_CheckVersion>
             size: getIconSize(size: 'md'),
           ),
         ),
-
         Flexible(
           child: Text(
             _loading ? '检查中...' : '检查更新',
-            style: generalTextStyle(
-              ctx: context,
-              size: 'md',
-              color: Theme.of(context).colorScheme.onPrimary,
-            ),
+            style: generalTextStyle(ctx: context, size: 'md', color: color),
             softWrap: false,
             maxLines: 1,
             overflow: TextOverflow.fade,
@@ -2110,7 +1939,11 @@ class _AboutTab extends StatelessWidget {
               child: FutureBuilder<PackageInfo>(
                 future: packageInfoFuture,
                 builder: (context, snapshot) {
-                  final style = generalTextStyle(ctx: context, size: 'md');
+                  final style = generalTextStyle(
+                    ctx: context,
+                    size: 'lg',
+                    color: Theme.of(context).colorScheme.primary,
+                  );
                   if (snapshot.connectionState == ConnectionState.done) {
                     if (snapshot.hasData) {
                       return Text(snapshot.data!.version, style: style);
@@ -2122,6 +1955,11 @@ class _AboutTab extends StatelessWidget {
               ),
             ),
           ),
+        ),
+        _SettingSwitchItem(
+          text: '自动检查更新',
+          value: _settingController.useAutoUpdate,
+          onChanged: (val) => _settingController.setUseAutoUpdate(value: val),
         ),
         const _SettingItem(text: '检查更新', child: _CheckVersion()),
         _SettingItem(
