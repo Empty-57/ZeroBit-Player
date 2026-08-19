@@ -1,0 +1,49 @@
+:root {
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(120deg, #3e63dd 30%, #a8b1ff);
+}
+
+@media (min-width: 960px) {
+  .VPHero .image {
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center;
+  }
+
+  .VPHero .image-container {
+    margin: 0 0 0 auto !important;
+    width: 320px !important;
+    height: 320px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    position: relative !important;
+  }
+
+  .VPHero .image-bg {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 80% !important;
+    height: 80% !important;
+    z-index: 1 !important;
+
+	  border-radius: 50% !important;
+    background: radial-gradient(
+      circle,
+      rgba(59, 130, 246, 0.45) 0%,
+      rgba(147, 51, 234, 0.45) 50%,
+      transparent 60%
+    ) !important;
+    filter: blur(64px) !important;
+  }
+
+  .VPHero .image-src {
+    position: absolute !important;
+    z-index: 2 !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+  }
+}
