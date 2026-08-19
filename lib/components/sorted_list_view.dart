@@ -119,7 +119,7 @@ class _SortedListViewState extends State<SortedListView> {
     _itemBtnStyle = TextButton.styleFrom(
       shape: const RoundedRectangleBorder(borderRadius: _coverBorderRadius),
       padding: EdgeInsets.zero,
-      backgroundColor: colorScheme.surfaceContainer,
+      backgroundColor: colorScheme.surfaceContainer.withValues(alpha: 0.8),
     );
   }
 

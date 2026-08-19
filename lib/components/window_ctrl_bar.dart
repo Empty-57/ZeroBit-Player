@@ -299,7 +299,7 @@ class WindowControllerBar extends GetView<MyWindowListener> {
       padding: EdgeInsets.only(left: 16, top: 0, right: 4, bottom: 0),
       color: Theme.of(
         context,
-      ).colorScheme.surfaceContainer.withValues(alpha: useBlur ? 0.6 : 0.0),
+      ).colorScheme.surfaceContainer.withValues(alpha: useBlur ? 0.4 : 0.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -443,9 +443,12 @@ class WindowControllerBar extends GetView<MyWindowListener> {
 
     return useBlur
         ? ClipRect(
-            child: BackdropFilter(
-              filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-              child: content,
+            child: Obx(
+              () => BackdropFilter(
+                enabled: settingController.backgroundImagePath.value.isNotEmpty,
+                filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                child: content,
+              ),
             ),
           )
         : content;

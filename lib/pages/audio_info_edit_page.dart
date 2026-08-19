@@ -263,7 +263,6 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
     );
 
     return Material(
-      borderRadius: const BorderRadius.only(topLeft: Radius.circular(8)),
       color: Colors.transparent,
       child: SingleChildScrollView(
         child: Padding(

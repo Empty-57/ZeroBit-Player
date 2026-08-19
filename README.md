@@ -190,7 +190,7 @@ flutter_rust_bridge_codegen generate --watch
 
 ## 感谢
 项目在开发过程中参考/使用了以下优秀的项目:
-- [coriander_player](https://github.com/Ferry-200/coriander_player) — 借鉴了UI设计
+- [coriander_player](https://github.com/Ferry-200/coriander_player)，[Pure-music](https://github.com/qingyueyin/Pure-music) — 借鉴了UI设计
 - [BASS](https://www.un4seen.com/) — 播放器内核
 - [Lofty](https://crates.io/crates/lofty) — 读写音频元数据
 

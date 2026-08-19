@@ -585,6 +585,9 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    final viewportWidth = MediaQuery.sizeOf(context).width;
+
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainer,
@@ -616,13 +619,35 @@ class HomePage extends StatelessWidget {
                     sigmaY: blur.value,
                     tileMode: TileMode.clamp,
                   ),
-                  child: Image(
-                    image: FileImage(file),
+                  child: Image.file(
+                    file,
                     fit: BoxFit.cover,
                     gaplessPlayback: true,
+                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                    cacheWidth: (viewportWidth * dpr).round(),
                   ),
                 );
               }),
+            ),
+
+            Obx(
+              () => Positioned.fill(
+                child: ColoredBox(
+                  color: Theme.of(context).colorScheme.surface.withValues(
+                    alpha:
+                        SettingController
+                            .instance
+                            .backgroundImagePath
+                            .value
+                            .isNotEmpty
+                        ? SettingController
+                              .instance
+                              .backgroundImageOpacity
+                              .value
+                        : 1.0,
+                  ),
+                ),
+              ),
             ),
 
             Column(
@@ -636,95 +661,71 @@ class HomePage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      CustomNavigation(
-                        btnList: const <Widget>[
-                          CustomNavigationBtn(
-                            label: '音乐',
-                            icon: PhosphorIconsLight.musicNoteSimple,
-                            localIndex: AppRoutes.homeOrder,
-                          ),
-                          CustomNavigationBtn(
-                            label: '艺术家',
-                            icon: PhosphorIconsLight.userFocus,
-                            localIndex: AppRoutes.artistPreviewOrder,
-                          ),
-                          CustomNavigationBtn(
-                            label: '专辑',
-                            icon: PhosphorIconsLight.vinylRecord,
-                            localIndex: AppRoutes.albumPreviewOrder,
-                          ),
-                          CustomNavigationBtn(
-                            label: '歌单',
-                            icon: PhosphorIconsLight.playlist,
-                            localIndex: AppRoutes.playListPreviewOrder,
-                          ),
-                          CustomNavigationBtn(
-                            label: '文件夹',
-                            icon: PhosphorIconsLight.folders,
-                            localIndex: AppRoutes.foldersPreviewOrder,
-                          ),
-                          CustomNavigationBtn(
-                            label: '设置',
-                            icon: PhosphorIconsLight.gearSix,
-                            localIndex: AppRoutes.settingOrder,
-                          ),
-                        ],
+                      Padding(
+                        padding: const EdgeInsetsGeometry.all(8),
+                        child: CustomNavigation(
+                          btnList: const <Widget>[
+                            CustomNavigationBtn(
+                              label: '音乐',
+                              icon: PhosphorIconsLight.musicNoteSimple,
+                              localIndex: AppRoutes.homeOrder,
+                            ),
+                            CustomNavigationBtn(
+                              label: '艺术家',
+                              icon: PhosphorIconsLight.userFocus,
+                              localIndex: AppRoutes.artistPreviewOrder,
+                            ),
+                            CustomNavigationBtn(
+                              label: '专辑',
+                              icon: PhosphorIconsLight.vinylRecord,
+                              localIndex: AppRoutes.albumPreviewOrder,
+                            ),
+                            CustomNavigationBtn(
+                              label: '歌单',
+                              icon: PhosphorIconsLight.playlist,
+                              localIndex: AppRoutes.playListPreviewOrder,
+                            ),
+                            CustomNavigationBtn(
+                              label: '文件夹',
+                              icon: PhosphorIconsLight.folders,
+                              localIndex: AppRoutes.foldersPreviewOrder,
+                            ),
+                            CustomNavigationBtn(
+                              label: '设置',
+                              icon: PhosphorIconsLight.gearSix,
+                              localIndex: AppRoutes.settingOrder,
+                            ),
+                          ],
+                        ),
                       ),
                       Expanded(
-                        child: Stack(
-                          children: [
-                            Obx(
-                              () => ClipRRect(
-                                borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(8),
-                                ),
-                                child: Container(
-                                  color: Theme.of(context).colorScheme.surface
-                                      .withValues(
-                                        alpha:
-                                            SettingController
-                                                .instance
-                                                .backgroundImagePath
-                                                .value
-                                                .isNotEmpty
-                                            ? SettingController
-                                                  .instance
-                                                  .backgroundImageOpacity
-                                                  .value
-                                            : 1.0,
-                                      ),
-                                ),
-                              ),
-                            ),
-                            Navigator(
-                              observers: [
-                                NestedObserver(
-                                  onRouteChanged: (name) {
-                                    WidgetsBinding.instance
-                                        .addPostFrameCallback((_) {
-                                          if (AppRoutes.orderMap_[name]
-                                              case final index?) {
-                                            SidebarNavState
-                                                    .currentNavigationIndex
-                                                    .value =
-                                                index;
-                                          }
-                                        });
-                                  },
-                                ),
-                              ],
-                              key: Get.nestedKey(1),
-                              initialRoute: AppRoutes.home,
-                              onGenerateRoute: (settings) {
-                                return GetPageRoute(
-                                  settings: settings,
-                                  page: () =>
-                                      _getNamedPage(name: settings.name!),
-                                  maintainState: false,
-                                );
+                        child: Navigator(
+                          observers: [
+                            NestedObserver(
+                              onRouteChanged: (name) {
+                                WidgetsBinding.instance.addPostFrameCallback((
+                                  _,
+                                ) {
+                                  if (AppRoutes.orderMap_[name]
+                                      case final index?) {
+                                    SidebarNavState
+                                            .currentNavigationIndex
+                                            .value =
+                                        index;
+                                  }
+                                });
                               },
                             ),
                           ],
+                          key: Get.nestedKey(1),
+                          initialRoute: AppRoutes.home,
+                          onGenerateRoute: (settings) {
+                            return GetPageRoute(
+                              settings: settings,
+                              page: () => _getNamedPage(name: settings.name!),
+                              maintainState: false,
+                            );
+                          },
                         ),
                       ),
                     ],

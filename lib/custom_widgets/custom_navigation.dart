@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
@@ -16,10 +19,10 @@ class SidebarNavState {
 
 int _oldIndex = 0;
 
-const double _navigationBtnWidth = 220;
+const double _navigationBtnWidth = 200;
 const double _navigationBtnHeight = 48;
 
-const double _navigationWidth = 260;
+const double _navigationWidth = 220;
 const double _navigationWidthSmall = 64;
 const double _resViewThresholds = 1100;
 
@@ -61,11 +64,12 @@ class CustomNavigationBtn extends GetView<AudioController> {
                 }
               : null,
           style: TextButton.styleFrom(
+            alignment: Alignment.centerLeft,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(4),
             ),
             backgroundColor: index == localIndex
-                ? backgroundColor.withValues(alpha: 1)
+                ? backgroundColor
                 : backgroundColor.withValues(alpha: 0),
             padding: const EdgeInsets.only(
               left: 12,
@@ -82,6 +86,7 @@ class CustomNavigationBtn extends GetView<AudioController> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.center,
+                  spacing: 8,
                   children: [
                     Tooltip(
                       message: context.width > _resViewThresholds
@@ -96,21 +101,19 @@ class CustomNavigationBtn extends GetView<AudioController> {
                       ),
                     ),
                     Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 16.0),
-                        child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeOutCubic,
-                          opacity:
-                              (context.width > _resViewThresholds &&
-                                  controller.navigationIsExtend.value)
-                              ? 1.0
-                              : 0.0,
-                          child: Text(
-                            label,
-                            style: generalTextStyle(ctx: context, size: 'md'),
-                            softWrap: false,
-                          ),
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOutCubic,
+                        opacity:
+                            (context.width > _resViewThresholds &&
+                                controller.navigationIsExtend.value)
+                            ? 1.0
+                            : 0.0,
+                        child: Text(
+                          label,
+                          style: generalTextStyle(ctx: context, size: 'md'),
+                          softWrap: false,
+                          overflow: TextOverflow.clip,
                         ),
                       ),
                     ),
@@ -179,173 +182,252 @@ class CustomNavigation extends GetView<AudioController> {
                 : _navigationWidthSmall
           : _navigationWidthSmall;
 
-      return AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-        width: targetWidth,
-        clipBehavior: Clip.hardEdge, // 增加边缘裁剪
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainer,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          spacing: 8.0,
-          children:
-              btnList +
-              <Widget>[
-                Expanded(flex: 1, child: Container()),
-                MenuAnchor(
-                  consumeOutsideTap: true,
-                  menuChildren: [
-                    Container(
-                      height: Get.height - 200,
-                      width: Get.width / 2,
-                      color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: 8.0,
-                        children: [
-                          Text(
-                            "播放队列",
-                            style: generalTextStyle(
-                              ctx: context,
-                              size: 'xl',
-                              weight: FontWeight.w600,
-                            ),
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: Obx(() {
-                              return ListView.builder(
-                                scrollCacheExtent:
-                                    const ScrollCacheExtent.pixels(
-                                      _itemHeight * 1,
-                                    ),
-                                itemCount: c.playListCacheItems.length,
-                                itemExtent: _itemHeight,
-                                controller: _playQueueScrollController,
-                                padding: const EdgeInsets.only(
-                                  bottom: _itemHeight * 2,
+      return ClipRRect(
+        borderRadius: const BorderRadius.all(Radius.circular(8)),
+        child: BackdropFilter(
+          enabled:
+              SettingController.instance.backgroundImagePath.value.isNotEmpty,
+          filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            width: targetWidth,
+            clipBehavior: Clip.hardEdge,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).colorScheme.surfaceContainer.withValues(alpha: 0.4),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 6.0,
+              children:
+                  btnList +
+                  <Widget>[
+                    const Spacer(),
+                    MenuAnchor(
+                      consumeOutsideTap: true,
+                      menuChildren: [
+                        Container(
+                          height: Get.height - 200,
+                          width: Get.width / 2,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHigh,
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: 8.0,
+                            children: [
+                              Text(
+                                "播放队列",
+                                style: generalTextStyle(
+                                  ctx: context,
+                                  size: 'xl',
+                                  weight: FontWeight.w600,
                                 ),
-                                itemBuilder: (context, index) {
-                                  final items = c.playListCacheItems[index];
-                                  return TextButton(
-                                    onPressed: () async {
-                                      await c.audioPlay(metadata: items);
-                                    }.throttle(ms: 300),
-                                    style: TextButton.styleFrom(
-                                      shape: const RoundedRectangleBorder(
-                                        borderRadius: _borderRadius,
-                                      ),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Obx(() {
+                                  return ListView.builder(
+                                    scrollCacheExtent:
+                                        const ScrollCacheExtent.pixels(
+                                          _itemHeight * 1,
+                                        ),
+                                    itemCount: c.playListCacheItems.length,
+                                    itemExtent: _itemHeight,
+                                    controller: _playQueueScrollController,
+                                    padding: const EdgeInsets.only(
+                                      bottom: _itemHeight * 2,
                                     ),
-                                    child: SizedBox.expand(
-                                      child: Obx(() {
-                                        final isCurrent =
-                                            c.currentPath.value == items.path;
-                                        final subTextStyle = !isCurrent
-                                            ? subStyle
-                                            : highLightSubStyle;
-                                        final textStyle = !isCurrent
-                                            ? titleStyle
-                                            : highLightTitleStyle;
+                                    itemBuilder: (context, index) {
+                                      final items = c.playListCacheItems[index];
+                                      return TextButton(
+                                        onPressed: () async {
+                                          await c.audioPlay(metadata: items);
+                                        }.throttle(ms: 300),
+                                        style: TextButton.styleFrom(
+                                          shape: const RoundedRectangleBorder(
+                                            borderRadius: _borderRadius,
+                                          ),
+                                        ),
+                                        child: SizedBox.expand(
+                                          child: Obx(() {
+                                            final isCurrent =
+                                                c.currentPath.value ==
+                                                items.path;
+                                            final subTextStyle = !isCurrent
+                                                ? subStyle
+                                                : highLightSubStyle;
+                                            final textStyle = !isCurrent
+                                                ? titleStyle
+                                                : highLightTitleStyle;
 
-                                        return Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              items.title,
-                                              style: textStyle,
-                                              softWrap: true,
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
-                                            ),
-                                            Text(
-                                              "${items.artist} - ${items.album}",
-                                              style: subTextStyle,
-                                              softWrap: true,
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
-                                            ),
-                                          ],
-                                        );
-                                      }),
-                                    ),
+                                            return Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  items.title,
+                                                  style: textStyle,
+                                                  softWrap: true,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  maxLines: 1,
+                                                ),
+                                                Text(
+                                                  "${items.artist} - ${items.album}",
+                                                  style: subTextStyle,
+                                                  softWrap: true,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  maxLines: 1,
+                                                ),
+                                              ],
+                                            );
+                                          }),
+                                        ),
+                                      );
+                                    },
                                   );
-                                },
-                              );
-                            }),
+                                }),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  onOpen: () {
-                    SchedulerBinding.instance.addPostFrameCallback((_) {
-                      _playQueueScrollController.jumpTo(
-                        (_itemHeight * c.currentIndex.value).clamp(
-                          0.0,
-                          _playQueueScrollController.position.maxScrollExtent,
                         ),
-                      );
-                    });
-                  },
-                  style: const MenuStyle(alignment: Alignment.topRight),
-                  controller: _playQueueController,
-                  child: Container(
-                    width: _navigationBtnWidth,
-                    height: _navigationBtnHeight,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      color: Colors.transparent,
-                    ),
-                    child: TextButton(
-                      onPressed: () {
-                        if (_playQueueController.isOpen) {
-                          _playQueueController.close();
-                        } else {
-                          _playQueueController.open();
-                        }
+                      ],
+                      onOpen: () {
+                        SchedulerBinding.instance.addPostFrameCallback((_) {
+                          _playQueueScrollController.jumpTo(
+                            (_itemHeight * c.currentIndex.value).clamp(
+                              0.0,
+                              _playQueueScrollController
+                                  .position
+                                  .maxScrollExtent,
+                            ),
+                          );
+                        });
                       },
-                      style: TextButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        padding: const EdgeInsets.only(
-                          left: 12,
-                          right: 0,
-                          top: 8,
-                          bottom: 8,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Tooltip(
-                            message: context.width > _resViewThresholds
-                                ? isExtend
-                                      ? ""
-                                      : "播放列表"
-                                : "播放列表",
-                            child: Icon(
-                              PhosphorIconsLight.queue,
-                              color: Theme.of(context).colorScheme.onSurface,
-                              size: getIconSize(size: 'md'),
+                      style: const MenuStyle(alignment: Alignment.topRight),
+                      controller: _playQueueController,
+                      child: SizedBox(
+                        width: _navigationBtnWidth,
+                        height: _navigationBtnHeight,
+                        child: TextButton(
+                          onPressed: () {
+                            if (_playQueueController.isOpen) {
+                              _playQueueController.close();
+                            } else {
+                              _playQueueController.open();
+                            }
+                          },
+                          style: TextButton.styleFrom(
+                            alignment: Alignment.centerLeft,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            padding: const EdgeInsets.only(
+                              left: 12,
+                              right: 0,
+                              top: 8,
+                              bottom: 8,
                             ),
                           ),
-
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 16.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            spacing: 8,
+                            children: [
+                              Tooltip(
+                                message: context.width > _resViewThresholds
+                                    ? isExtend
+                                          ? ""
+                                          : "播放列表"
+                                    : "播放列表",
+                                child: Icon(
+                                  PhosphorIconsLight.queue,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                  size: getIconSize(size: 'md'),
+                                ),
+                              ),
+                              Expanded(
+                                child: AnimatedOpacity(
+                                  duration: const Duration(milliseconds: 250),
+                                  curve: Curves.easeOutCubic,
+                                  opacity:
+                                      (context.width > _resViewThresholds &&
+                                          isExtend)
+                                      ? 1.0
+                                      : 0.0,
+                                  child: Text(
+                                    "播放队列",
+                                    style: generalTextStyle(
+                                      ctx: context,
+                                      size: 'md',
+                                    ),
+                                    softWrap: false,
+                                    overflow: TextOverflow.clip,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: _navigationBtnWidth,
+                      height: _navigationBtnHeight,
+                      child: TextButton(
+                        onPressed: context.width > _resViewThresholds
+                            ? () {
+                                c.navigationIsExtend.value = !isExtend;
+                              }
+                            : null,
+                        style: TextButton.styleFrom(
+                          alignment: Alignment.centerLeft,
+                          padding: const EdgeInsets.only(
+                            left: 12,
+                            right: 0,
+                            top: 8,
+                            bottom: 8,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          spacing: 8,
+                          children: [
+                            Tooltip(
+                              message: isExtend
+                                  ? context.width > _resViewThresholds
+                                        ? "收起"
+                                        : "空间不足"
+                                  : context.width > _resViewThresholds
+                                  ? "展开"
+                                  : "空间不足",
+                              child: Icon(
+                                isExtend && context.width > _resViewThresholds
+                                    ? PhosphorIconsLight.caretLeft
+                                    : PhosphorIconsLight.caretRight,
+                                color: Theme.of(context).colorScheme.onSurface,
+                                size: getIconSize(size: 'md'),
+                              ),
+                            ),
+                            Expanded(
                               child: AnimatedOpacity(
-                                duration: const Duration(milliseconds: 300),
+                                duration: const Duration(milliseconds: 250),
                                 curve: Curves.easeOutCubic,
                                 opacity:
                                     (context.width > _resViewThresholds &&
@@ -353,58 +435,23 @@ class CustomNavigation extends GetView<AudioController> {
                                     ? 1.0
                                     : 0.0,
                                 child: Text(
-                                  "播放队列",
+                                  isExtend ? "收起侧栏" : "",
                                   style: generalTextStyle(
                                     ctx: context,
                                     size: 'md',
                                   ),
                                   softWrap: false,
+                                  overflow: TextOverflow.clip,
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                Container(
-                  width: _navigationBtnWidth,
-                  height: _navigationBtnHeight,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
-                    color: Colors.transparent,
-                  ),
-                  child: TextButton(
-                    onPressed: context.width > _resViewThresholds
-                        ? () {
-                            c.navigationIsExtend.value = !isExtend;
-                          }
-                        : null,
-                    style: TextButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    child: Tooltip(
-                      message: isExtend
-                          ? context.width > _resViewThresholds
-                                ? "收起"
-                                : "空间不足"
-                          : context.width > _resViewThresholds
-                          ? "展开"
-                          : "空间不足",
-                      child: Icon(
-                        isExtend && context.width > _resViewThresholds
-                            ? PhosphorIconsLight.caretLeft
-                            : PhosphorIconsLight.caretRight,
-                        color: Theme.of(context).colorScheme.onSurface,
-                        size: getIconSize(size: 'md'),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                  ],
+            ),
+          ),
         ),
       );
     });

@@ -43,7 +43,6 @@ class BlurWithCoverBackground extends StatelessWidget {
     return Stack(
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.only(topLeft: Radius.circular(radius)),
           child: Container(
             color: _settingController.backgroundImagePath.value.isNotEmpty
                 ? null
@@ -116,15 +115,12 @@ class BlurWithCoverBackground extends StatelessWidget {
         ),
 
         if (useMask)
-          ClipRRect(
-            borderRadius: BorderRadius.only(topLeft: Radius.circular(radius)),
-            child: Container(
-              color: backgroundColor.withValues(
-                alpha:
-                    _settingController.themeMode.value == 'dark' || onlyDarkMode
-                    ? 0.4
-                    : 0.2,
-              ),
+          Container(
+            color: backgroundColor.withValues(
+              alpha:
+                  _settingController.themeMode.value == 'dark' || onlyDarkMode
+                  ? 0.4
+                  : 0.2,
             ),
           ),
         RepaintBoundary(child: child),

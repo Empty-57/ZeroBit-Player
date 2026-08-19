@@ -1638,9 +1638,6 @@ class _SettingPageState extends State<SettingPage> {
     return Container(
       alignment: Alignment.centerLeft,
       padding: const EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.only(topLeft: Radius.circular(8)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 16,
