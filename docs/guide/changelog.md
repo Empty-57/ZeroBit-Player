@@ -5,7 +5,7 @@
 完整发布页：[GitHub](https://github.com/Empty-57/ZeroBit-Player/releases) · [Gitee 镜像](https://gitee.com/Empty-57/ZeroBit-Player/releases)（同步常滞后）
 
 <script setup>
-import Changelog from '../Changelog.vue'
+import Changelog from '../changelog.vue'
 </script>
 
 <Changelog />
