@@ -11,10 +11,10 @@ hero:
   actions:
     - theme: brand
       text: 立即下载
-      link: /download-page
+      link: /download
     - theme: alt
       text: 快速上手
-      link: /docs-page
+      link: /guide/quickstart
 
 features:
   - icon: 🎵

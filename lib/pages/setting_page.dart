@@ -32,15 +32,13 @@ final DesktopLyricsSettingController _desktopLyricsSettingController =
 List<String> _fontsList = [];
 
 const double _setBtnHeight = 40;
-
-const String _latestRepoApiUrl =
-    "https://api.github.com/repos/Empty-57/ZeroBit-Player/releases/latest";
-const String _latestRepoUrl =
-    "https://github.com/Empty-57/ZeroBit-Player/releases/latest";
 const String _repoUrl = "https://github.com/Empty-57/ZeroBit-Player";
 
 const String _reportUrl =
     "https://github.com/Empty-57/ZeroBit-Player/issues/new/choose";
+
+const String _repoSiteUrl =
+    "https://empty-57.github.io/ZeroBit-Player/";
 
 class _RepoInfo {
   final String version;
@@ -1966,6 +1964,20 @@ class _AboutTab extends StatelessWidget {
           onChanged: (val) => _settingController.setUseAutoUpdate(value: val),
         ),
         const _SettingItem(text: '检查更新', child: _CheckVersion()),
+        _SettingItem(
+          text: '官网',
+          child: CustomBtn(
+            fn: () => _launch(context, _repoSiteUrl),
+            contentColor: theme.colorScheme.onPrimary,
+            btnHeight: _setBtnHeight,
+            btnWidth: 128,
+            mainAxisAlignment: MainAxisAlignment.center,
+            backgroundColor: theme.colorScheme.primary,
+            overlayColor: theme.colorScheme.surfaceContainer,
+            icon: PhosphorIconsLight.globe,
+            label: "访问官网",
+          ),
+        ),
         _SettingItem(
           text: '项目主页',
           child: CustomBtn(

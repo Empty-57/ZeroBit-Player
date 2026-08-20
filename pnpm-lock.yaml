@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      marked:
+        specifier: ^18.0.10
+        version: 18.0.10
     devDependencies:
       vitepress:
         specifier: ^1.6.4
@@ -643,6 +647,11 @@ packages:
 
   mark.js@8.11.1:
     resolution: {integrity: sha512-1I+1qpDt4idfgLQG+BNWmrqku+7/2bi5nLf4YwF8y8zXvmfiTBY3PV3ZibfrjBueCByROpuBjLLFCajqkgYoLQ==}
+
+  marked@18.0.10:
+    resolution: {integrity: sha512-FJeH4bRpYoXiggcgriCGItKCSv3xkngJc4QCZ/rkQCogU3VYaLxYJoZl8Nw/b4+x7iij/pd+09mZ6A1dXzpL0A==}
+    engines: {node: '>= 20'}
+    hasBin: true
 
   mdast-util-to-hast@13.2.1:
     resolution: {integrity: sha512-cctsq2wp5vTsLIcaymblUriiTcZd0CwWtCbLvrOzYCDZoWyMNV8sZ7krj09FSnsiJi3WVsHLM4k6Dq/yaPyCXA==}
@@ -1402,6 +1411,8 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.5.5
 
   mark.js@8.11.1: {}
+
+  marked@18.0.10: {}
 
   mdast-util-to-hast@13.2.1:
     dependencies:

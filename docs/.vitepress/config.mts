@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitepress'
 
+// https://empty-57.github.io/ZeroBit-Player/
 export default defineConfig({
   title: "Zerobit Player",
   description: "Zerobit Player Document",
@@ -43,27 +44,100 @@ export default defineConfig({
       pattern: 'https://github.com/empty-57/ZeroBit-Player/edit/master/docs/:path',
       text: '在 GitHub 上编辑此页'
     },
-    nav: [
-      { text: '首页', link: '/' },
-        {
-        text: '指南',
+    outline: {
+      level: 'deep',
+      label: '页面导航',
+    },
+    sidebar: {
+      '/guide/':[
+      {
+        base: '/guide',
+        text: '开始',
         items: [
-          { text: 'Item A', link: '/' },
-          { text: 'Item B', link: '/' },
-          { text: 'Item C', link: '/' }
+          { text: '简介', link: '/' },
+          { text: '安装', link: '/install' },
+          { text: '快速上手', link: '/quickstart' }
         ]
       },
-      { text: '下载', link: '/download-page' }
-    ],
-
-    sidebar: [
-      {
-        text: 'tt',
+        {
+          base: '/guide',
+        text: '功能',
         items: [
-          { text: 's1', link: '/' },
-          { text: 's2', link: '/' }
+          { text: '音乐库', link: '/library' },
+          { text: '播放与音频', link: '/player' },
+          { text: '歌词', link: '/lyrics' },
+          { text: '桌面歌词', link: '/desktop-lyric' },
+          { text: '交互与手势', link: '/interactions' },
+          { text: '外观与设置', link: '/settings' },
         ]
-      }
+      },
+        {
+          base: '/guide',
+        text: '社区',
+        items: [
+          { text: '贡献指南', link: '/contribute' },
+          { text: '致谢', link: '/credits' },
+          { text: '更新日志', link: '/changelog' }
+        ]
+      },
+          {
+            base: '/guide',
+          text: '帮助',
+          items: [
+            { text: '常见问题', link: '/faq' },
+            { text: '快捷键', link: '/hotkeys' }
+          ]
+        }
+    ],
+      '/dev/': [
+        {
+          base:'/dev',
+          text: '开发',
+          items: [
+            { text: '架构', link: '/' },
+            { text: '构建', link: '/build' }
+          ]
+        }
+      ]
+    },
+    nav: [
+      { text: '首页', link: '/' },
+      {
+        text: '指南',
+        items: [
+          { text: '简介', link: '/guide/' },
+          { text: '安装', link: '/guide/install' },
+          { text: '快速上手', link: '/guide/quickstart' },
+          { text: '常见问题', link: '/guide/faq' }
+        ]
+      },
+      {
+        text: '功能',
+        items: [
+          { text: '音乐库', link: '/guide/library' },
+          { text: '播放与音频', link: '/guide/player' },
+          { text: '歌词', link: '/guide/lyrics' },
+          { text: '桌面歌词', link: '/guide/desktop-lyric' },
+          { text: '交互与手势', link: '/guide/interactions' },
+          { text: '外观与设置', link: '/guide/settings' }
+        ]
+      },
+      {
+        text: '社区',
+        items: [
+          { text: '贡献指南', link: '/guide/contribute' },
+          { text: '致谢', link: '/guide/credits' },
+          { text: '更新日志', link: '/guide/changelog' }
+        ]
+      },
+      {
+        text: '开发',
+        items: [
+          { text: '架构', link: '/dev/' },
+          { text: '构建', link: '/dev/build' }
+        ]
+      },
+      { text: '下载', link: '/download' }
     ],
 
     socialLinks: [
@@ -74,6 +148,24 @@ export default defineConfig({
     footer: {
       message: '基于 GPL-3.0 协议发布',
       copyright: `Copyright © <a href="https://github.com/Empty-57/ZeroBit-Player">ZeroBit Player</a> ${new Date().getFullYear()} by <a href="https://github.com/Empty-57">Empty-57</a>`,
+    },
+    notFound: {
+      code: '404',
+      title: '页面不存在',
+      quote: '但如果你不改变方向，继续寻找，最终可能会到达你想要去的地方……',
+      linkLabel: '回到首页',
+      linkText: '回到首页'
+    },
+    darkModeSwitchLabel: '外观',
+    lightModeSwitchTitle: '切换到浅色模式',
+    darkModeSwitchTitle: '切换到深色模式',
+    returnToTopLabel: '回到顶部',
+    sidebarMenuLabel: '菜单',
+    langMenuLabel: '切换语言',
+    skipToContentLabel: '跳到正文',
+    docFooter: {
+      prev: '上一页',
+      next: '下一页'
     }
   }
 })
