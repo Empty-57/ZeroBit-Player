@@ -23,6 +23,8 @@
 
 ![show](screenshot/7.png)
 
+前往 **[官方文档](https://empty-57.github.io/ZeroBit-Player/)** 查看更多信息
+
 ## 安装/快速开始
 ### 安装
 [点击此处安装](https://github.com/Empty-57/ZeroBit-Player/releases/latest)
