@@ -302,15 +302,15 @@
 
 ## 还是不行？
 
-| 需求            | 去哪看 |
-|---------------|--------|
-| 安装卸载          | [安装](/guide/install) |
-| 导入第一首歌        | [快速上手](/guide/quickstart) |
-| 声音、EQ、独占      | [播放与音频](/guide/playback) |
-| 歌词与动效         | [歌词](/guide/lyrics) |
-| 设置项           | [外观与设置](/guide/settings) |
-| 桌面歌词          | [桌面歌词](/guide/desktop-lyric) |
-| 基本交互          | [交互](/guide/interactions) |
-| 使用问题与交流       | [Discussions](https://github.com/Empty-57/ZeroBit-Player/discussions/categories/general) |
-| Bug、功能建议与文档问题 | [Issue 模板](https://github.com/Empty-57/ZeroBit-Player/issues/new/choose) |
+| 需求            | 去哪看                                                                                                                |
+|---------------|--------------------------------------------------------------------------------------------------------------------|
+| 安装卸载          | [安装](/guide/install)                                                                                               |
+| 导入第一首歌        | [快速上手](/guide/quickstart)                                                                                          |
+| 声音、EQ、独占      | [播放与音频](/guide/player)                                                                                              |
+| 歌词与动效         | [歌词](/guide/lyrics)                                                                                                |
+| 设置项           | [外观与设置](/guide/settings)                                                                                           |
+| 桌面歌词          | [桌面歌词](/guide/desktop-lyric)                                                                                       |
+| 基本交互          | [交互](/guide/interactions)                                                                                          |
+| 使用问题与交流       | [Discussions](https://github.com/Empty-57/ZeroBit-Player/discussions/categories/general)                           |
+| Bug、功能建议与文档问题 | [Issue 模板](https://github.com/Empty-57/ZeroBit-Player/issues/new/choose)                                           |
 | 源码            | [GitHub](https://github.com/Empty-57/ZeroBit-Player) · [Gitee 镜像](https://gitee.com/Empty-57/ZeroBit-Player)（可能滞后） |
