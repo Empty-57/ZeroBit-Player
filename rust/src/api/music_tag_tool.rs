@@ -1,4 +1,4 @@
-use image::{load_from_memory, DynamicImage, ImageFormat};
+use image::{load_from_memory, ImageFormat};
 use lofty::config::{ParseOptions, ParsingMode, WriteOptions};
 use lofty::error::{ErrorKind as LoftyErrorKind, LoftyError};
 use lofty::file::{TaggedFile, TaggedFileExt};
