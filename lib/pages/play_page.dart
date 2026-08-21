@@ -63,6 +63,7 @@ class _LrcSearchController {
 
   late final Worker _debounceWorker;
   late final Worker _everWorker;
+  bool _isClosed = false;
 
   void init() {
     searchText.value =
@@ -79,19 +80,27 @@ class _LrcSearchController {
   }
 
   void close() {
+    _isClosed = true;
     _debounceWorker.dispose();
     _everWorker.dispose();
+    currentNetLrc.clear();
+    currentNetLrc.close();
+    currentNetLrcOffest.close();
+    searchText.close();
+    isLoading.close();
   }
 
   Future<void> search() async {
     if (isLoading.value) return;
     try {
       isLoading.value = true;
-      currentNetLrc.value = await getLrcBySearch(
+      final result = await getLrcBySearch(
         text: searchText.value,
         offset: currentNetLrcOffest.value,
         limit: 5,
       );
+      if (_isClosed) return;
+      currentNetLrc.value = result;
 
       currentNetLrc.removeWhere(
         (v) =>
@@ -100,7 +109,7 @@ class _LrcSearchController {
             (v.lyric!.lrc == null && v.lyric!.verbatimLrc == null)),
       );
     } finally {
-      isLoading.value = false;
+      if (!_isClosed) isLoading.value = false;
     }
   }
 }
@@ -562,7 +571,7 @@ class _ScrollTextWidget extends StatelessWidget {
   }
 }
 
-class _CoverSide extends StatelessWidget {
+class _CoverSide extends StatefulWidget {
   final double coverSize;
   final TextStyle titleStyle;
   final TextStyle subTitleStyle;
@@ -574,16 +583,22 @@ class _CoverSide extends StatelessWidget {
   });
 
   @override
+  State<_CoverSide> createState() => _CoverSideState();
+}
+
+class _CoverSideState extends State<_CoverSide> {
+  bool _isHeadHover = false;
+
+  @override
   Widget build(BuildContext context) {
-    final isHeadHover = false.obs;
     final AudioController audioController = Get.find<AudioController>();
-    final cacheResolution = (coverSize * _dpr).round();
+    final cacheResolution = (widget.coverSize * _dpr).round();
     final titleStrut = StrutStyle(
-      fontSize: titleStyle.fontSize,
+      fontSize: widget.titleStyle.fontSize,
       forceStrutHeight: true,
     );
     final subTitleStrut = StrutStyle(
-      fontSize: subTitleStyle.fontSize,
+      fontSize: widget.subTitleStyle.fontSize,
       forceStrutHeight: true,
     );
 
@@ -622,20 +637,16 @@ class _CoverSide extends StatelessWidget {
                     return Tooltip(
                       message: tip,
                       mouseCursor: SystemMouseCursors.click,
-                      verticalOffset: -coverSize / 2 - 32,
+                      verticalOffset: -widget.coverSize / 2 - 32,
                       child: AnimatedSwitcher(
                         duration: 300.ms,
                         transitionBuilder: (child, anim) =>
                             FadeTransition(opacity: anim, child: child),
-                        child: Image.memory(
-                          cover,
-                          key: ValueKey(cover.hashCode),
-                          cacheWidth: cacheResolution,
-                          cacheHeight: cacheResolution,
-                          height: coverSize,
-                          width: coverSize,
-                          fit: BoxFit.cover,
-                          gaplessPlayback: true,
+                        child: _CoverMemoryImage(
+                          key: ObjectKey(cover),
+                          bytes: cover,
+                          cacheResolution: cacheResolution,
+                          size: widget.coverSize,
                         ),
                       ),
                     );
@@ -645,11 +656,15 @@ class _CoverSide extends StatelessWidget {
             ),
           ),
           Container(
-            width: coverSize - 24,
+            width: widget.coverSize - 24,
             margin: const EdgeInsets.only(top: 24),
             child: MouseRegion(
-              onEnter: (_) => isHeadHover.value = true,
-              onExit: (_) => isHeadHover.value = false,
+              onEnter: (_) {
+                if (mounted) setState(() => _isHeadHover = true);
+              },
+              onExit: (_) {
+                if (mounted) setState(() => _isHeadHover = false);
+              },
               child: Obx(() {
                 final title = audioController.currentMetadata.value.title;
                 final artistAndAlbum =
@@ -658,30 +673,30 @@ class _CoverSide extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 2,
                   children: [
-                    isHeadHover.value
+                    _isHeadHover
                         ? _ScrollTextWidget(
                             text: title,
-                            style: titleStyle,
+                            style: widget.titleStyle,
                             strutStyle: titleStrut,
                           )
                         : Text(
                             title,
-                            style: titleStyle,
+                            style: widget.titleStyle,
                             softWrap: false,
                             strutStyle: titleStrut,
                             overflow: TextOverflow.fade,
                             maxLines: 1,
                             textAlign: TextAlign.left,
                           ),
-                    isHeadHover.value
+                    _isHeadHover
                         ? _ScrollTextWidget(
                             text: artistAndAlbum,
-                            style: subTitleStyle,
+                            style: widget.subTitleStyle,
                             strutStyle: subTitleStrut,
                           )
                         : Text(
                             artistAndAlbum,
-                            style: subTitleStyle,
+                            style: widget.subTitleStyle,
                             softWrap: false,
                             strutStyle: subTitleStrut,
                             overflow: TextOverflow.fade,
@@ -695,6 +710,68 @@ class _CoverSide extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _CoverMemoryImage extends StatefulWidget {
+  final Uint8List bytes;
+  final int cacheResolution;
+  final double size;
+
+  const _CoverMemoryImage({
+    super.key,
+    required this.bytes,
+    required this.cacheResolution,
+    required this.size,
+  });
+
+  @override
+  State<_CoverMemoryImage> createState() => _CoverMemoryImageState();
+}
+
+class _CoverMemoryImageState extends State<_CoverMemoryImage> {
+  late ImageProvider _imageProvider;
+
+  ImageProvider _createProvider() {
+    return ResizeImage.resizeIfNeeded(
+      widget.cacheResolution,
+      widget.cacheResolution,
+      MemoryImage(widget.bytes),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _imageProvider = _createProvider();
+  }
+
+  @override
+  void didUpdateWidget(_CoverMemoryImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.cacheResolution != widget.cacheResolution ||
+        !identical(oldWidget.bytes, widget.bytes)) {
+      _imageProvider.evict();
+      _imageProvider = _createProvider();
+    }
+  }
+
+  @override
+  void dispose() {
+    // 退场动画结束后清掉大封面的解码缓存，压缩字节仍由播放器持有。
+    _imageProvider.evict();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Image(
+      image: _imageProvider,
+      height: widget.size,
+      width: widget.size,
+      fit: BoxFit.cover,
+      gaplessPlayback: true,
     );
   }
 }
@@ -766,6 +843,7 @@ class _ControlBar extends StatelessWidget {
   final TextStyle timeCurrentStyle;
   final TextStyle timeTotalStyle;
   final ScrollController playQueueScrollController;
+  final MenuController playQueueMenuController;
 
   const _ControlBar({
     required this.mixColor,
@@ -774,6 +852,7 @@ class _ControlBar extends StatelessWidget {
     required this.timeCurrentStyle,
     required this.timeTotalStyle,
     required this.playQueueScrollController,
+    required this.playQueueMenuController,
   });
 
   @override
@@ -801,7 +880,7 @@ class _ControlBar extends StatelessWidget {
     );
 
     const double itemHeight = 64;
-    final playQueueController = MenuController();
+    final playQueueController = playQueueMenuController;
 
     return MouseRegion(
       onEnter: (_) => _isBarHover.value = true,
@@ -1078,6 +1157,7 @@ class PlayPage extends StatefulWidget {
 class _PlayPageState extends State<PlayPage> {
   late final ScrollController _playQueueScrollController;
   late final MenuController _menuController;
+  late final MenuController _playQueueMenuController;
 
   ThemeService get _themeService => ThemeService.instance;
   AudioController get _audioController => Get.find<AudioController>();
@@ -1092,10 +1172,13 @@ class _PlayPageState extends State<PlayPage> {
     super.initState();
     _playQueueScrollController = ScrollController();
     _menuController = MenuController();
+    _playQueueMenuController = MenuController();
   }
 
   @override
   void dispose() {
+    _menuController.close();
+    _playQueueMenuController.close();
     _playQueueScrollController.dispose();
     super.dispose();
   }
@@ -1660,6 +1743,7 @@ class _PlayPageState extends State<PlayPage> {
                         timeCurrentStyle: timeCurrentStyle,
                         timeTotalStyle: timeTotalStyle,
                         playQueueScrollController: _playQueueScrollController,
+                        playQueueMenuController: _playQueueMenuController,
                       ),
                     ],
                   ),

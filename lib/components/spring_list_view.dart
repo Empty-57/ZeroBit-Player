@@ -352,17 +352,15 @@ class _SpringItem extends StatefulWidget {
 
 class _SpringItemState extends State<_SpringItem>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _animController;
+  AnimationController? _animController;
   int _animTriggerId = 0;
   Timer? _delayTimer;
 
   @override
   void initState() {
     super.initState();
-    // 使用无边界控制器，它的 value 直接代表 Y 轴的偏移像素(deltaY)
-    _animController = AnimationController.unbounded(vsync: this)
-      ..value = 0.0; // 0.0 表示在原位
-
+    // 使用无边界控制器，它的 value 直接代表 Y 轴的偏移像素(deltaY)。
+    // 控制器在行真正进入动画范围时才创建，避免整首歌词常驻 ticker。
     widget.controller._jumpNotifier.addListener(_onJumpSignal);
   }
 
@@ -382,7 +380,7 @@ class _SpringItemState extends State<_SpringItem>
 
     // 在屏幕外的元素不执行动画，直接归位
     if (relativeIndexAbs > widget.controller._visibleItemCount) {
-      _animController.value = 0.0;
+      _animController?.value = 0.0;
       return;
     }
 
@@ -393,7 +391,14 @@ class _SpringItemState extends State<_SpringItem>
     final currentTriggerId = ++_animTriggerId;
 
     // 动画准备阶段：瞬间将元素偏移到 deltaY 的位置
-    _animController.value = deltaY;
+    final needsBuilder = _animController == null;
+    final controller = _animController ??= AnimationController.unbounded(
+      vsync: this,
+    )..value = 0.0;
+    if (needsBuilder) {
+      setState(() {});
+    }
+    controller.value = deltaY;
 
     _delayTimer?.cancel();
     if (delayMs > 0) {
@@ -440,25 +445,29 @@ class _SpringItemState extends State<_SpringItem>
     );
 
     // 使用物理仿真驱动动画控制器
-    _animController.animateWith(simulation);
+    _animController?.animateWith(simulation);
   }
 
   @override
   void dispose() {
     widget.controller._jumpNotifier.removeListener(_onJumpSignal);
     _delayTimer?.cancel();
-    _animController.dispose();
+    _animController?.dispose();
     widget.controller._boxKeys.remove(widget.index);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final controller = _animController;
+    if (controller == null) {
+      return RepaintBoundary(key: widget.boxKey, child: widget.child);
+    }
     return AnimatedBuilder(
-      animation: _animController,
+      animation: controller,
       builder: (context, child) {
         return Transform.translate(
-          offset: Offset(0, _animController.value), // 直接应用物理控制器的值
+          offset: Offset(0, controller.value), // 直接应用物理控制器的值
           child: child,
         );
       },

@@ -4,8 +4,6 @@ import 'package:zerobit_player/components/audio_gen_pages.dart';
 import 'package:zerobit_player/components/blur_background.dart';
 import 'package:zerobit_player/controller/details_page_ctrl.dart';
 
-import '../field/operate_area.dart';
-
 class UniDetailsPage extends StatefulWidget {
   const UniDetailsPage({super.key});
 

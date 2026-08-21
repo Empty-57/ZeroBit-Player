@@ -97,7 +97,7 @@ const USER_ENDED: u32 = 3;
 // const USER_STALLED: u32 = 3;
 // const USER_PAUSED_DEVICE: u32 = 4;
 
-const F_BANDWIDTH: f32 = 12.0; // range: 1 ~ 36
+// const F_BANDWIDTH: f32 = 12.0; // range: 1 ~ 36
 
 const F_CENTER: [f32; 10] = [
     80.0, 100.0, 125.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0, 16000.0,
@@ -461,7 +461,10 @@ impl BassApi {
     }
 
     fn create_stream(&mut self, path: String) -> Result<(), String> {
-        self.stop()?;
+        // 即使停止旧流失败，也必须继续释放旧句柄，避免切歌时累积原生资源。
+        if let Err(err) = self.stop() {
+            eprintln!("Stop old stream before switching failed: {}", err);
+        }
         self.chan_free();
         let wide: Vec<u16> = OsStr::new(&path)
             .encode_wide()
@@ -486,9 +489,20 @@ impl BassApi {
             BASS_FX_FREESOURCE
         };
         let fx_handle = unsafe { (self.fx_tempo_create)(handle, fx_flag) };
-        self.or_err_(fx_handle as i32)?;
+        if fx_handle == 0 || fx_handle == u32::MAX {
+            // Tempo 流创建失败时，BASS_FX_FREESOURCE 尚未接管源流，需要手动释放。
+            let err_code = unsafe { (self.error_get_code)() };
+            unsafe {
+                (self.stream_free)(handle);
+            }
+            return Err(get_err_info(err_code)
+                .unwrap_or_else(|| format!("Unknown BASS error | ERR_CODE<{}>", err_code)));
+        }
         self.stream_handle = fx_handle;
-        self.set_sync(BASS_SYNC_END, Some(on_end_sync))?;
+        if let Err(err) = self.set_sync(BASS_SYNC_END, Some(on_end_sync)) {
+            self.chan_free();
+            return Err(err);
+        }
         self.set_all_eq_params();
         Ok(())
     }
@@ -687,8 +701,8 @@ impl BassApi {
             *v = transformed_val;
         }
 
-        let min_val = buffer.clone().into_iter().reduce(f32::min).unwrap_or(0.0);
-        let max_val = buffer.clone().into_iter().reduce(f32::max).unwrap_or(1.0);
+        let min_val = buffer.iter().copied().reduce(f32::min).unwrap_or(0.0);
+        let max_val = buffer.iter().copied().reduce(f32::max).unwrap_or(1.0);
         let range = max_val - min_val;
 
         for v in &mut buffer {
@@ -818,12 +832,12 @@ impl BassApi {
         }
     }
 
-    fn stream_free(&mut self) {
-        if self.stream_handle != 0 {
-            unsafe { (self.stream_free)(self.stream_handle) };
-            self.stream_handle = 0;
-        }
-    }
+    // fn stream_free(&mut self) {
+    //     if self.stream_handle != 0 {
+    //         unsafe { (self.stream_free)(self.stream_handle) };
+    //         self.stream_handle = 0;
+    //     }
+    // }
 
     fn chan_free(&mut self) {
         if self.stream_handle != 0 {

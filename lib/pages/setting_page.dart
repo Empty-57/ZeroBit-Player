@@ -1,12 +1,10 @@
 import 'dart:math' as math;
 
-import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:get/get.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -37,56 +35,7 @@ const String _repoUrl = "https://github.com/Empty-57/ZeroBit-Player";
 const String _reportUrl =
     "https://github.com/Empty-57/ZeroBit-Player/issues/new/choose";
 
-const String _repoSiteUrl =
-    "https://empty-57.github.io/ZeroBit-Player/";
-
-class _RepoInfo {
-  final String version;
-  final String updatedTime;
-  final String title;
-  final String body;
-
-  const _RepoInfo({
-    required this.version,
-    required this.updatedTime,
-    required this.title,
-    required this.body,
-  });
-}
-
-class _SetDivider extends StatelessWidget {
-  final String title;
-  const _SetDivider({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Container(
-          margin: EdgeInsets.only(bottom: 8, top: 16),
-          child: Text(
-            title,
-            style: generalTextStyle(
-              ctx: context,
-              size: 'xl',
-              weight: FontWeight.w600,
-            ),
-          ),
-        ),
-        Container(
-          margin: EdgeInsets.only(bottom: 12),
-          child: Divider(
-            height: 0,
-            thickness: 0.5,
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-          ),
-        ),
-      ],
-    );
-  }
-}
+const String _repoSiteUrl = "https://empty-57.github.io/ZeroBit-Player/";
 
 class _FolderManagerDialog extends GetView<MusicCacheController> {
   const _FolderManagerDialog();
@@ -1562,12 +1511,7 @@ class _SettingItem extends StatelessWidget {
   final Widget child;
   final String? tooltip;
 
-  const _SettingItem({
-    super.key,
-    required this.text,
-    required this.child,
-    this.tooltip,
-  });
+  const _SettingItem({required this.text, required this.child, this.tooltip});
 
   @override
   Widget build(BuildContext context) {
@@ -1598,7 +1542,6 @@ class _SettingSwitchItem extends StatelessWidget {
   final String? tooltip;
 
   const _SettingSwitchItem({
-    super.key,
     required this.text,
     required this.value,
     required this.onChanged,

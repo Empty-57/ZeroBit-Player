@@ -252,7 +252,9 @@ void main() async {
   // }
 
   debugRepaintRainbowEnabled = false;
-  _initLeakTracking();
+  if (kDebugMode) {
+    _initLeakTracking();
+  }
   runApp(const MainFrame());
 
   final AudioController audioController = Get.find<AudioController>();
