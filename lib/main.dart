@@ -277,6 +277,7 @@ void main() async {
           .toList();
       await musicBox.deleteAll(keysToDelete); //清除不是音频格式的路径，防止路径被污染
       await syncCache();
+      await StatisticsController.instance.init();
       await audioController.initRestoreState();
     });
   });

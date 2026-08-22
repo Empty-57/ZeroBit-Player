@@ -197,6 +197,9 @@ class StatisticsController {
   }
 
   void sortList() {
+    if (playedStatisticsList.isEmpty) {
+      return;
+    }
     playedStatisticsList.sort((a, b) {
       // 分别按照播放次数，时长，时间戳排序
       final countCompare = b.playedCount.compareTo(a.playedCount);
