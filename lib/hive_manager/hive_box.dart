@@ -1,6 +1,7 @@
 import 'package:hive_ce/hive.dart';
 import 'package:zerobit_player/hive_manager/models/scalable_setting_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/setting_cache_model.dart';
+import 'package:zerobit_player/hive_manager/models/statistics_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/user_playlist_model.dart';
 
 import 'hive_boxes.dart';
@@ -19,5 +20,8 @@ abstract class HiveBox {
   );
   static final scalableSettingCacheBox = StorageCRUD(
     cacheBox: Hive.box<ScalableSettingCache>(HiveBoxes.scalableSettingCacheBox),
+  );
+  static final statisticsCacheBox = StorageCRUD(
+    cacheBox: Hive.box<StatisticsCache>(HiveBoxes.statisticsCacheBox),
   );
 }

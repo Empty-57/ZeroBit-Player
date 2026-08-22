@@ -3,4 +3,5 @@ abstract class HiveBoxes {
   static const settingCacheBox = 'setting_box';
   static const userPlayListCacheBox = 'user_playlist_box';
   static const scalableSettingCacheBox = 'scalable_setting_box';
+  static const statisticsCacheBox = 'statistics_cache_box';
 }

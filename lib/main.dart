@@ -19,13 +19,16 @@ import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/components/play_bar.dart';
 import 'package:zerobit_player/components/window_ctrl_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/controller/statistics_ctrl.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/index.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/adapters/scalable_setting_adapters.dart';
+import 'package:zerobit_player/hive_manager/adapters/statistics_cache_adapter.dart';
 import 'package:zerobit_player/hive_manager/adapters/user_playlist_adapter.dart';
 import 'package:zerobit_player/hive_manager/models/scalable_setting_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/setting_cache_model.dart';
+import 'package:zerobit_player/hive_manager/models/statistics_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/user_playlist_model.dart';
 import 'package:zerobit_player/pages/album_preview_page.dart';
 import 'package:zerobit_player/pages/artist_preview_page.dart';
@@ -35,6 +38,7 @@ import 'package:zerobit_player/pages/local_music_page.dart';
 import 'package:zerobit_player/pages/play_page.dart';
 import 'package:zerobit_player/pages/playlists_preview_page.dart';
 import 'package:zerobit_player/pages/setting_page.dart';
+import 'package:zerobit_player/pages/statistics.dart';
 import 'package:zerobit_player/pages/uni_details_page.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
@@ -62,6 +66,7 @@ import 'theme_manager.dart';
 
 int _countMs100 = 0;
 int _countSec = 0;
+int _countSec30 = 0;
 
 const String configDirectory = 'zerobit_config';
 
@@ -175,17 +180,20 @@ void main() async {
   // await Hive.deleteBoxFromDisk(HiveBoxes.settingCacheBox);
   // await Hive.deleteBoxFromDisk(HiveBoxes.userPlayListCacheBox);
   // await Hive.deleteBoxFromDisk(HiveBoxes.scalableSettingCacheBox);
+  // await Hive.deleteBoxFromDisk(HiveBoxes.statisticsCacheBox);
 
   _hiveSafeRegisterAdapter<MusicCache>(MusicCacheAdapter());
   _hiveSafeRegisterAdapter<SettingCache>(SettingCacheAdapter());
   _hiveSafeRegisterAdapter<UserPlayListCache>(UserPlayListAdapter());
   _hiveSafeRegisterAdapter<ScalableSettingCache>(ScalableSettingAdapter());
+  _hiveSafeRegisterAdapter<StatisticsCache>(StatisticsCacheAdapter());
 
   final musicBox = await _openSafeBox<MusicCache>(HiveBoxes.musicCacheBox);
 
   await _openSafeBox<SettingCache>(HiveBoxes.settingCacheBox);
   await _openSafeBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
   await _openSafeBox<ScalableSettingCache>(HiveBoxes.scalableSettingCacheBox);
+  await _openSafeBox<StatisticsCache>(HiveBoxes.statisticsCacheBox);
 
   DesktopLyricsSettingController.instance.init();
   SettingController.instance.init();
@@ -363,13 +371,24 @@ Future<void> initStream(AudioController audioController) async {
       lyricController.currentMs20Notifier.value = data;
       _countMs100++;
       _countSec++;
-      if (_countMs100 > 3) {
+      _countSec30++;
+      if (_countMs100 > 4) {
         audioController.currentMs100.value = data;
         _countMs100 = 0;
       }
-      if (_countSec > 48) {
+      if (_countSec > 49) {
         audioController.currentSec.value = data;
         _countSec = 0;
+      }
+      if (_countSec30 > 1499) {
+        _countSec30 = 0;
+        StatisticsController.instance.updateStatistics();
+        unawaited(
+          StatisticsController.instance.saveStatistics().then(
+            (_) => debugPrint("Statistics Save OK!"),
+            onError: (e) => debugPrint("Statistics Save ERR> $e"),
+          ),
+        );
       }
     });
   } catch (e) {
@@ -529,6 +548,12 @@ class _MainFrameState extends State<MainFrame> {
           ),
 
           GetPage(
+            name: AppRoutes.statistics,
+            page: () => const StatisticsPage(),
+            maintainState: false,
+          ),
+
+          GetPage(
             name: AppRoutes.details,
             page: () => const UniDetailsPage(),
             maintainState: false,
@@ -601,6 +626,8 @@ class HomePage extends StatelessWidget {
         return const UniDetailsPage();
       case AppRoutes.audioInfoEdit:
         return const AudioInfoEditorPage();
+      case AppRoutes.statistics:
+        return const StatisticsPage();
     }
     return const LocalMusicPage();
   }
@@ -706,6 +733,11 @@ class HomePage extends StatelessWidget {
                               label: '歌单',
                               icon: PhosphorIconsLight.playlist,
                               localIndex: AppRoutes.playListPreviewOrder,
+                            ),
+                            CustomNavigationBtn(
+                              label: '统计',
+                              icon: PhosphorIconsLight.chartLine,
+                              localIndex: AppRoutes.statisticsOrder,
                             ),
                             CustomNavigationBtn(
                               label: '文件夹',

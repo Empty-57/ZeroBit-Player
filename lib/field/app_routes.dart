@@ -16,6 +16,8 @@ abstract class AppRoutes {
   static const foldersPreview = '/foldersPreview';
   static const foldersDetails = '/foldersDetails';
 
+  static const statistics = '/statistics';
+
   static const details = '/details';
 
   static const playPage = '/playPage';
@@ -36,7 +38,9 @@ abstract class AppRoutes {
   static const foldersPreviewOrder = 4;
   static const foldersDetailsOrder = 4;
 
-  static const settingOrder = 5;
+  static const statisticsOrder = 5;
+
+  static const settingOrder = 6;
 
   static const detailsOrder = 0;
 
@@ -52,6 +56,8 @@ abstract class AppRoutes {
     playListPreview: playListPreviewOrder,
 
     foldersPreview: foldersPreviewOrder,
+
+    statistics: statisticsOrder,
 
     setting: settingOrder,
   };
@@ -75,6 +81,8 @@ abstract class AppRoutes {
     details: detailsOrder,
 
     setting: settingOrder,
+
+    statistics: statisticsOrder,
 
     audioInfoEdit: audioInfoEditOrder,
   };

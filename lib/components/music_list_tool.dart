@@ -5,8 +5,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zerobit_player/API/apis.dart';
+import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
+import 'package:zerobit_player/hive_manager/models/statistics_cache_model.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/tools/cover_lru_cache.dart';
 import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
@@ -136,6 +138,103 @@ class MusicTile extends StatelessWidget {
         ),
       );
     });
+  }
+}
+
+class StatisticsMusicTile extends StatelessWidget {
+  final MusicCache metadata;
+  final TextStyle titleStyle;
+  final TextStyle subStyle;
+  final int rank;
+  final StatisticsCache playStatistics;
+  final AudioController audioController;
+
+  const StatisticsMusicTile({
+    super.key,
+    required this.metadata,
+    required this.titleStyle,
+    required this.subStyle,
+    required this.audioController,
+    required this.rank,
+    required this.playStatistics,
+  });
+
+  void _onTileTapped() {
+    audioController.audioPlay(metadata: metadata);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget cover = AsyncCover(music: metadata);
+
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final tertiaryColor = Theme.of(context).colorScheme.tertiary;
+    final rankColor = rank < 4 ? primaryColor : null;
+
+    return TextButton(
+      onPressed: _onTileTapped.throttle(ms: 500),
+      style: TextButton.styleFrom(
+        shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        spacing: _itemSpacing,
+        children: [
+          Text(
+            rank.toString().padLeft(2, ' '),
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+            style: titleStyle.copyWith(color: rankColor),
+          ),
+          cover,
+          Expanded(
+            flex: 1,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  metadata.title,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: titleStyle,
+                ),
+                Text(
+                  metadata.artist,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: subStyle,
+                ),
+              ],
+            ),
+          ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${playStatistics.playedCount}次',
+                softWrap: false,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                style: titleStyle.copyWith(color: primaryColor),
+              ),
+              Text(
+                formatTimeDHMS(playStatistics.playedTime.toInt()),
+                softWrap: false,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                style: subStyle.copyWith(color: tertiaryColor),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 

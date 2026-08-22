@@ -3,4 +3,5 @@ abstract class HiveTypes {
   static const settingCache = 1;
   static const userPlayListCache = 2;
   static const scalableSettingCache = 3;
+  static const statisticsCache = 4;
 }

@@ -11,3 +11,24 @@ String formatTime({required double totalSeconds}) {
 
   return '$minutesStr:$secondsStr';
 }
+
+String formatTimeDHMS(int totalSeconds) {
+  if (totalSeconds <= 0) return "0 M";
+
+  final duration = Duration(seconds: totalSeconds);
+
+  final days = duration.inDays;
+  final hours = duration.inHours % 24;
+  final minutes = duration.inMinutes % 60;
+  final seconds = duration.inSeconds % 60;
+
+  final buffer = StringBuffer();
+  if (days > 0) buffer.write('$days D ');
+  if (hours > 0 || days > 0) buffer.write('${hours}H ');
+  if (minutes > 0 || hours > 0 || days > 0) buffer.write('${minutes}M ');
+  if (seconds > 0 || minutes > 0 || hours > 0 || days > 0) {
+    buffer.write('${seconds.toString().padLeft(2, '0')}s ');
+  }
+
+  return buffer.toString().trim();
+}

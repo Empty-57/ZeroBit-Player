@@ -12,6 +12,7 @@ import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/components/get_snack_bar.dart';
 import 'package:zerobit_player/components/spring_list_view.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
+import 'package:zerobit_player/controller/statistics_ctrl.dart';
 import 'package:zerobit_player/field/audio_source.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
@@ -488,6 +489,7 @@ class AudioController extends GetxController {
           peak: metadata.trackPeak,
         );
       }
+      StatisticsController.instance.updateStatistics();
       await playFile(path: metadata.path);
 
       if (currentSpeed.value != 1.0) {
@@ -651,7 +653,10 @@ class AudioController extends GetxController {
       currentIndex.value = 0;
     }
 
-    await audioPlay(metadata: playListCacheItems[currentIndex.value]);
+    if (currentIndex.value >= 0 &&
+        currentIndex.value < playListCacheItems.length) {
+      await audioPlay(metadata: playListCacheItems[currentIndex.value]);
+    }
   }
 
   /// 上一首播放

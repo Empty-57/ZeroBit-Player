@@ -35,29 +35,26 @@ class FoldersPreviewPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 16,
         children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 8,
-              children: [
-                Text(
-                  '文件夹',
-                  style: generalTextStyle(
-                    ctx: context,
-                    size: 'title',
-                    weight: FontWeight.w600,
-                  ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 8,
+            children: [
+              Text(
+                '文件夹',
+                style: generalTextStyle(
+                  ctx: context,
+                  size: 'title',
+                  weight: FontWeight.w600,
                 ),
-                Obx(
-                  () => Text(
-                    '共${settingController.folders.length}个文件夹',
-                    style: generalTextStyle(ctx: context, size: 'md'),
-                  ),
+              ),
+              Obx(
+                () => Text(
+                  '共${settingController.folders.length}个文件夹',
+                  style: generalTextStyle(ctx: context, size: 'md'),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           Expanded(
             flex: 1,

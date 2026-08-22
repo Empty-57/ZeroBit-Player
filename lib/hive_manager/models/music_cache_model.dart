@@ -13,7 +13,7 @@ class MusicCache {
   final double trackPeak;
   final String path;
 
-  MusicCache({
+  const MusicCache({
     required this.title,
     required this.artist,
     required this.album,
