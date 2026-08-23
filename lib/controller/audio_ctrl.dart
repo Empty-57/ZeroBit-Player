@@ -140,7 +140,7 @@ class AudioController extends GetxController {
     }
   }
 
-  void _updateProgress() {
+  void updateProgress() {
     if (currentDuration.value > 0 &&
         currentMetadata.value.path.isNotEmpty &&
         playListCacheItems.isNotEmpty) {
@@ -156,15 +156,13 @@ class AudioController extends GetxController {
 
   @override
   void dispose() {
-    currentMs100.removeListener(_updateProgress);
+    currentMs100.removeListener(updateProgress);
     super.dispose();
   }
 
   @override
   void onInit() async {
     super.onInit();
-
-    currentMs100.addListener(_updateProgress);
 
     ever(currentMetadata, (_) async {
       try {

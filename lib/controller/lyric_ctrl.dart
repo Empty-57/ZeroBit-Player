@@ -48,7 +48,6 @@ class LyricController extends GetxController {
 
   @override
   void onClose() {
-    currentMs20Notifier.removeListener(_updateProgress);
     currentMs20Notifier.dispose();
     currentWordIndexNotifier.dispose();
     wordProgress.dispose();
@@ -160,7 +159,8 @@ class LyricController extends GetxController {
     if (show) interludeProcess.value += _loopTime / _interval; // 算法同词增量计算
   }
 
-  void _updateProgress() {
+  // 更新词进度
+  void updateProgress() {
     final newLineIndex = _findLrcPos(
       time: currentMs20Notifier.value,
       lyrics: _audioController.currentLyrics.value?.parsedLrc,
@@ -208,13 +208,6 @@ class LyricController extends GetxController {
 
     wordProgress.value += _wordProgressIncrement;
     _updateInterludeState();
-  }
-
-  @override
-  void onInit() {
-    super.onInit();
-    // 更新词进度
-    currentMs20Notifier.addListener(_updateProgress);
   }
 
   void pointerScroll() {

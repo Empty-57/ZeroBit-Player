@@ -370,16 +370,18 @@ Future<void> initStream(AudioController audioController) async {
   try {
     _progressSub = progressListen().listen((data) {
       lyricController.currentMs20Notifier.value = data;
+      lyricController.updateProgress();
       _countMs100++;
       _countSec++;
       _countSec30++;
       if (_countMs100 > 4) {
-        audioController.currentMs100.value = data;
         _countMs100 = 0;
+        audioController.currentMs100.value = data;
+        audioController.updateProgress();
       }
       if (_countSec > 49) {
-        audioController.currentSec.value = data;
         _countSec = 0;
+        audioController.currentSec.value = data;
       }
       if (_countSec30 > 1499) {
         _countSec30 = 0;
