@@ -443,20 +443,17 @@ pub fn get_cover(path: String, size_flag: u8) -> Option<Vec<u8>> {
             }
         };
         let mut cover_size = (150, 150);
+        let mut filter_type = image::imageops::FilterType::Lanczos3;
 
         match size_flag {
-            0 => cover_size = (150, 150),
+            0 => filter_type = image::imageops::FilterType::Triangle,
             1 => cover_size = (800, 800),
             _ => {}
         };
 
         let (cover_witdh, cover_height) = cover_size;
 
-        let image_data = image_data.resize(
-            cover_witdh,
-            cover_height,
-            image::imageops::FilterType::Lanczos3,
-        );
+        let image_data = image_data.resize(cover_witdh, cover_height, filter_type);
 
         let mut output_bytes = Vec::new();
         match image_data
