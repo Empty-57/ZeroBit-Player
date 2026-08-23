@@ -183,10 +183,6 @@ flutter_rust_bridge_codegen generate --watch
 若使用 `网络封面` 来设置封面，会以当前设置的API源来匹配封面，请尽量正确填写元数据（标题，艺术家，专辑）以提高匹配准确率</br>
 ![show](screenshot/10.png)
 
-## 提交BUG或者PR
-- 若提交BUG，请创建一个新的 issue，尽可能说明复现步骤并提供截图和日志，日志文件位于软件根目录下的 `logs` 目录下。
-- 若提交PR，请检查代码是否有潜在隐患并尽量做一些优化。
-
 ## 注意
 若软件发生了严重错误，可尝试到目录 `C:\Users\<用户名>\Documents\zerobit_config` 下删除所有 `.hive` 以及同名的 `.lock` 的后缀的配置文件
 
@@ -197,6 +193,24 @@ flutter_rust_bridge_codegen generate --watch
 - [coriander_player](https://github.com/Ferry-200/coriander_player)，[Pure-music](https://github.com/qingyueyin/Pure-music) — 借鉴了UI设计
 - [BASS](https://www.un4seen.com/) — 播放器内核
 - [Lofty](https://crates.io/crates/lofty) — 读写音频元数据
+
+
+## 贡献与赞助
+如果你喜欢这个项目，觉得它对你有帮助，可以通过以下方式支持我，让我有动力继续维护和更新
+
+### 贡献
+- 创建一个 [Issue](https://github.com/Empty-57/ZeroBit-Player/issues)
+
+可以是bug反馈，新功能请求，若提交BUG，请尽可能说明复现步骤并提供截图和日志，日志文件位于软件根目录下的 `logs` 目录下。
+
+- 创建一个 [Pull Request](https://github.com/Empty-57/ZeroBit-Player/pulls)
+
+可以是bug修复，添加新功能，或者功能优化，若提交PR，请检查代码是否有潜在隐患并尽量做一些优化。
+
+### 赞助
+
+- [爱发电](https://ifdian.net/a/emp57)
+- [赞赏码](https://cdn.phototourl.com/free/2026-08-23-f6647569-7a61-4255-93f7-23bfaf87dd39.jpg)
 
 ## 桌面歌词展示
 ![show](screenshot/12.png)
