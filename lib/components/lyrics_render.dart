@@ -128,13 +128,15 @@ class _ScaledTranslateGradientTransform extends GradientTransform {
     required this.dx,
     required this.translateGradientScale,
   });
+
+  static final Matrix4 _sharedMatrix = Matrix4.zero();
+
   @override
   Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
     // final double scale=entry.value.duration>=1.0 ? 3:2; 动态 scale 视觉效果更好
     // 先将x轴扩大scale倍，然后平移x轴
 
-    final matrix = Matrix4.zero();
-    final storage = matrix.storage;
+    final storage = _sharedMatrix.storage;
 
     // xyz缩放
     storage[0] = translateGradientScale; // x
@@ -144,7 +146,7 @@ class _ScaledTranslateGradientTransform extends GradientTransform {
 
     // x平移
     storage[12] = translateGradientScale * dx;
-    return matrix;
+    return _sharedMatrix;
   }
 }
 
@@ -639,6 +641,11 @@ class _LyricsRenderState extends State<LyricsRender> {
   void initState() {
     super.initState();
     // 首次进入页面时，跳转到当前行
+
+    if (_settingController.useSpringScroll.value) {
+      Get.put(SpringListController());
+    }
+
     _lyricController.lrcViewScrollController = ItemScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -652,6 +659,10 @@ class _LyricsRenderState extends State<LyricsRender> {
     _lyricController.lrcViewScrollController = null;
     _isHover.close();
     _blurFilterCache.clear();
+
+    if (Get.isRegistered<SpringListController>()) {
+      Get.delete<SpringListController>();
+    }
     super.dispose();
   }
 
@@ -736,7 +747,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                       return const SizedBox.shrink();
                     }
                     return _StaggeredLyricItem(
-                      key: ValueKey(index),
+                      key: ValueKey('${c.currentPath.value}_$index'),
                       index: index,
                       lyricController: _lyricController,
                       audioController: _audioController,
@@ -762,6 +773,7 @@ class _LyricsRenderState extends State<LyricsRender> {
 
                   return useSpringscroll
                       ? SpringListView(
+                          key: ValueKey(c.currentPath.value),
                           lineDuration: c.lineDurationList,
                           length: c.lineTextList.length,
                           itemBuilder: (int index) {
@@ -947,72 +959,75 @@ class _StaggeredLyricItem extends StatelessWidget {
       final isCurrent = index == currentLineIndex;
       final bool isPrevLine = (currentLineIndex - index == 1);
 
-      final content = Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: _lrcCrossAlignment[lrcAlignment],
-        children: [
-          if (index == 0)
-            _InterludeWidget(
-              lyricController: lyricController,
-              lrcAlignment: lrcAlignment,
-              interludeLyricStyle: interludeLyricStyle,
-              strutStyle: strutStyle,
-              isCurrent: currentLineIndex < 0,
-            ),
-          if (lrcType == LyricFormat.lrc)
-            _createAnimatedScaleWidget(
+      final content = SizedBox(
+        width: double.infinity,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: _lrcCrossAlignment[lrcAlignment],
+          children: [
+            if (index == 0)
+              _InterludeWidget(
+                lyricController: lyricController,
+                lrcAlignment: lrcAlignment,
+                interludeLyricStyle: interludeLyricStyle,
+                strutStyle: strutStyle,
+                isCurrent: currentLineIndex < 0,
+              ),
+            if (lrcType == LyricFormat.lrc)
+              _createAnimatedScaleWidget(
+                child: _LrcLyricWidget(
+                  text: lineText as String,
+                  style: lyricStyle,
+                  isCurrent: isCurrent,
+                  textAlign: textAlign,
+                ),
+                isCurrent: isCurrent,
+              )
+            else
+              _createAnimatedScaleWidget(
+                child: _KaraOkLyricWidget(
+                  text: lineText as List<WordEntry>,
+                  style: lyricStyle,
+                  isCurrentLine: isCurrent,
+                  isPrevLine: isPrevLine,
+                  lrcAlignmentIndex: lrcAlignment,
+                  lyricController: lyricController,
+                  strutStyle: strutStyle,
+                ),
+                isCurrent: isCurrent,
+              ),
+
+            _createAnimatedSizeWidget(
+              show: romaText.isNotEmpty && showRoma,
               child: _LrcLyricWidget(
-                text: lineText as String,
-                style: lyricStyle,
+                text: romaText,
+                style: romaLyricStyle,
                 isCurrent: isCurrent,
                 textAlign: textAlign,
+                highLightAlpha: _currentAlpha,
               ),
-              isCurrent: isCurrent,
-            )
-          else
-            _createAnimatedScaleWidget(
-              child: _KaraOkLyricWidget(
-                text: lineText as List<WordEntry>,
-                style: lyricStyle,
-                isCurrentLine: isCurrent,
-                isPrevLine: isPrevLine,
-                lrcAlignmentIndex: lrcAlignment,
+            ),
+
+            _createAnimatedSizeWidget(
+              show: translateText.isNotEmpty && showTranslate,
+              child: _LrcLyricWidget(
+                text: translateText,
+                style: tsLyricStyle,
+                isCurrent: isCurrent,
+                textAlign: textAlign,
+                highLightAlpha: _currentAlpha,
+              ),
+            ),
+            if (isCurrent)
+              _InterludeWidget(
                 lyricController: lyricController,
+                lrcAlignment: lrcAlignment,
+                interludeLyricStyle: interludeLyricStyle,
                 strutStyle: strutStyle,
+                isCurrent: isCurrent,
               ),
-              isCurrent: isCurrent,
-            ),
-
-          _createAnimatedSizeWidget(
-            show: romaText.isNotEmpty && showRoma,
-            child: _LrcLyricWidget(
-              text: romaText,
-              style: romaLyricStyle,
-              isCurrent: isCurrent,
-              textAlign: textAlign,
-              highLightAlpha: _currentAlpha,
-            ),
-          ),
-
-          _createAnimatedSizeWidget(
-            show: translateText.isNotEmpty && showTranslate,
-            child: _LrcLyricWidget(
-              text: translateText,
-              style: tsLyricStyle,
-              isCurrent: isCurrent,
-              textAlign: textAlign,
-              highLightAlpha: _currentAlpha,
-            ),
-          ),
-
-          _InterludeWidget(
-            lyricController: lyricController,
-            lrcAlignment: lrcAlignment,
-            interludeLyricStyle: interludeLyricStyle,
-            strutStyle: strutStyle,
-            isCurrent: isCurrent,
-          ),
-        ],
+          ],
+        ),
       );
 
       final int diff = (currentLineIndex - index).abs(); // 视距

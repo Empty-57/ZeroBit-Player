@@ -200,7 +200,7 @@ class SpringListController extends GetxController {
   }
 }
 
-class SpringListView extends StatefulWidget {
+class SpringListView extends StatelessWidget {
   final int length;
   final List<double> lineDuration;
   final Widget Function(int index) itemBuilder;
@@ -213,27 +213,9 @@ class SpringListView extends StatefulWidget {
   });
 
   @override
-  State<SpringListView> createState() => _SpringListViewState();
-}
-
-class _SpringListViewState extends State<SpringListView> {
-  late final SpringListController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = Get.put(SpringListController());
-  }
-
-  @override
-  void dispose() {
-    Get.delete<SpringListController>();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    _controller._totalLength = widget.length;
+    final SpringListController controller = Get.find();
+    controller._totalLength = length;
 
     /// 为了防止即将离开可视区域的列表项的滚动动画无效的方案(视觉欺骗)
     /// 将可滚动区域向上下两个方向拉伸一定距离(至少大于deltaY的值) ,使列表项在滚动动画开始的时候还在Layout(布局)内
@@ -258,7 +240,7 @@ class _SpringListViewState extends State<SpringListView> {
           return SizedBox(
             // 将原有的 scrollAreaKey 从 CustomScrollView 移到代表真实屏幕尺寸的外层 SizedBox
             // 保证 deltaY 计算依然精准 (deltaY 不受拉伸影响)
-            key: _controller._scrollAreaKey,
+            key: controller._scrollAreaKey,
             width: constraints.maxWidth,
             height: screenHeight,
             child: ClipRect(
@@ -274,18 +256,15 @@ class _SpringListViewState extends State<SpringListView> {
                     left: 0,
                     right: 0,
                     child: ValueListenableBuilder<int>(
-                      valueListenable: _controller._currentIndex,
+                      valueListenable: controller._currentIndex,
                       builder: (_, index, _) {
-                        _controller.updateDurationAndDelay(
-                          index,
-                          widget.lineDuration,
-                        );
+                        controller.updateDurationAndDelay(index, lineDuration);
 
                         Key? centerKey;
-                        if (_controller._totalLength > 0) {
+                        if (controller._totalLength > 0) {
                           final int effectiveIndex = index.clamp(
                             0, // 前奏时也为0
-                            _controller._totalLength - 1,
+                            controller._totalLength - 1,
                           );
                           centerKey = ValueKey('sliver_$effectiveIndex');
                         }
@@ -294,7 +273,7 @@ class _SpringListViewState extends State<SpringListView> {
                           scrollCacheExtent: const ScrollCacheExtent.pixels(
                             200.0,
                           ),
-                          controller: _controller._scrollController,
+                          controller: controller._scrollController,
                           center: centerKey,
                           anchor: newAnchorPercentage,
                           slivers: [
@@ -303,14 +282,14 @@ class _SpringListViewState extends State<SpringListView> {
                                 height: screenHeight * 0.3 + extraSpace,
                               ), // 前后留白区域也要加上拉伸值
                             ),
-                            for (int i = 0; i < widget.length; i++)
+                            for (int i = 0; i < length; i++)
                               SliverToBoxAdapter(
                                 key: ValueKey('sliver_$i'),
                                 child: _SpringItem(
                                   index: i,
-                                  controller: _controller,
-                                  boxKey: _controller.getBoxKey(i),
-                                  child: widget.itemBuilder(i),
+                                  controller: controller,
+                                  boxKey: controller.getBoxKey(i),
+                                  child: itemBuilder(i),
                                 ),
                               ),
                             SliverToBoxAdapter(
