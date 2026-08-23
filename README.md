@@ -199,17 +199,18 @@ flutter_rust_bridge_codegen generate --watch
 如果你喜欢这个项目，觉得它对你有帮助，可以通过以下方式支持我，让我有动力继续维护和更新
 
 ### 贡献
-* 创建一个 [Issue](https://github.com/Empty-57/ZeroBit-Player/issues)
+- 创建一个 [Issue](https://github.com/Empty-57/ZeroBit-Player/issues)
 
 可以是bug反馈，新功能请求，若提交BUG，请尽可能说明复现步骤并提供截图和日志，日志文件位于软件根目录下的 `logs` 目录下。
 
-* 创建一个 [Pull Request](https://github.com/Empty-57/ZeroBit-Player/pulls)
+- 创建一个 [Pull Request](https://github.com/Empty-57/ZeroBit-Player/pulls)
 
 可以是bug修复，添加新功能，或者功能优化，若提交PR，请检查代码是否有潜在隐患并尽量做一些优化。
 
 ### 赞助
 
-* [赞赏码](https://cdn.phototourl.com/free/2026-08-23-f6647569-7a61-4255-93f7-23bfaf87dd39.jpg)
+- [爱发电](https://ifdian.net/a/emp57)
+- [赞赏码](https://cdn.phototourl.com/free/2026-08-23-f6647569-7a61-4255-93f7-23bfaf87dd39.jpg)
 
 ## 桌面歌词展示
 ![show](screenshot/12.png)
