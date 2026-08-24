@@ -475,27 +475,8 @@ class _DiagonalSlideTransition extends CustomTransition {
   }
 }
 
-class MainFrame extends StatefulWidget {
+class MainFrame extends StatelessWidget {
   const MainFrame({super.key});
-
-  @override
-  State<MainFrame> createState() => _MainFrameState();
-}
-
-class _MainFrameState extends State<MainFrame> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (SettingController.instance.useAutoUpdate.value) {
-        VersionChecker.checkAndShowDialog(
-          context,
-          showNoUpdateToast: false,
-          showErrorToast: false,
-        );
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -608,8 +589,27 @@ class NestedObserver extends NavigatorObserver {
   }
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<StatefulWidget> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (SettingController.instance.useAutoUpdate.value) {
+        VersionChecker.checkAndShowDialog(
+          context,
+          showNoUpdateToast: false,
+          showErrorToast: false,
+        );
+      }
+    });
+    super.initState();
+  }
 
   Widget _getNamedPage({required String name}) {
     switch (name) {
