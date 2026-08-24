@@ -10,7 +10,7 @@ use once_cell::sync::{Lazy, OnceCell};
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
 use std::ptr::null_mut;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Mutex;
 use std::time::Duration;
 use std::{env, iter, thread};
@@ -64,14 +64,15 @@ static AUDIO_EVENT: Lazy<Mutex<Option<StreamSink<u32>>>> = Lazy::new(|| Mutex::n
 
 static PROGRESS_LISTEN: Lazy<Mutex<Option<StreamSink<f64>>>> = Lazy::new(|| Mutex::new(None));
 
-static FREQ: Mutex<Option<u32>> = Mutex::new(Some(44100));
-static CHANS: Mutex<Option<u32>> = Mutex::new(Some(2));
+static FREQ: AtomicU32 = AtomicU32::new(44100);
+static CHANS: AtomicU32 = AtomicU32::new(2);
 
 const WASAPI_BUFFER: f32 = 0.05;
 
 static TARGET_VOLUME: Mutex<f32> = Mutex::new(1.0);
 static TARGET_SPEED: Mutex<f32> = Mutex::new(1.0);
 static REPLAYGAIN_SCALE: Mutex<f32> = Mutex::new(1.0);
+static USE_FADE: AtomicBool = AtomicBool::new(true);
 
 const FADE_DURATION: u32 = 500;
 
@@ -131,6 +132,21 @@ unsafe extern "C" fn on_end_sync(
 ) {
     notify_state(USER_ENDED);
 }
+
+// unsafe extern "C" fn on_fade_out_pause_sync(
+//     _handle: c_uint,
+//     _channel: c_uint,
+//     _data: c_uint,
+//     _user: *mut c_void,
+// ) {
+//     if let Ok(mut api_lock) = BASS_API.lock() {
+//         if let Some(api) = api_lock.as_mut() {
+//             if api.stream_handle != 0 {
+//                 let _ = api.pause(false);
+//             }
+//         }
+//     }
+// }
 
 fn calculate_dynamic_bandwidth_linear(f_center: f32) -> f32 {
     let min_freq = *F_CENTER.first().unwrap_or(&80.0);
@@ -297,12 +313,9 @@ impl BassApi {
         let ok = unsafe { (self.wasapi_get_info)(&mut info) };
         self.or_err_(ok)?;
 
-        if let Ok(mut freq_lock) = FREQ.lock() {
-            *freq_lock = Some(info.freq);
-        }
-        if let Ok(mut chans_lock) = CHANS.lock() {
-            *chans_lock = Some(info.chans);
-        }
+        FREQ.store(info.freq, Ordering::Relaxed);
+        CHANS.store(info.chans, Ordering::Relaxed);
+
         unsafe {
             (self.wasapi_free)();
         }
@@ -318,7 +331,7 @@ impl BassApi {
             (self.wasapi_free)();
         };
 
-        let device_freq = FREQ.lock().map_err(|e| e.to_string())?.unwrap_or(44100);
+        let device_freq = FREQ.load(Ordering::Relaxed);
 
         let result =
             unsafe { (self.init)(1, device_freq, BASS_DEVICE_REINIT, null_mut(), null_mut()) };
@@ -417,6 +430,9 @@ impl BassApi {
     }
 
     fn fade_in(&mut self) -> Result<(), String> {
+        if !USE_FADE.load(Ordering::Relaxed) {
+            return Ok(());
+        }
         let ok = unsafe {
             if self.stream_handle == 0 {
                 return Ok(());
@@ -442,10 +458,23 @@ impl BassApi {
     }
 
     fn fade_out(&mut self) -> Result<(), String> {
+        if !USE_FADE.load(Ordering::Relaxed) {
+            return Ok(());
+        }
+
         if self.stream_handle == 0 {
             return Ok(());
         }
         unsafe {
+            // if is_pause {
+            //     self.set_sync(BASS_SYNC_SLIDE, Some(on_fade_out_pause_sync))
+            //         .map_err(|err| {
+            //             self.chan_free();
+            //             err
+            //         })?;
+            // }
+
+            // 之后需要将需要淡出的方法都改造成回调触发
             let result = (self.slide_attr)(self.stream_handle, BASS_ATTRIB_VOL, 0.0, FADE_DURATION);
             thread::sleep(Duration::from_millis(FADE_DURATION as u64));
             self.or_err_(result)
@@ -454,17 +483,19 @@ impl BassApi {
 
     fn set_sync(&mut self, sync_type: u32, call_back: SYNCPROC) -> Result<(), String> {
         unsafe {
-            let sync_handle =
-                (self.bass_set_sync)(self.stream_handle, sync_type, 0, call_back, null_mut());
+            let sync_handle = (self.bass_set_sync)(
+                self.stream_handle,
+                sync_type | BASS_SYNC_ONETIME,
+                0,
+                call_back,
+                null_mut(),
+            );
             self.or_err_(sync_handle as i32)
         }
     }
 
     fn create_stream(&mut self, path: String) -> Result<(), String> {
-        // 即使停止旧流失败，也必须继续释放旧句柄，避免切歌时累积原生资源。
-        if let Err(err) = self.stop() {
-            eprintln!("Stop old stream before switching failed: {}", err);
-        }
+        self.stop()?;
         self.chan_free();
         let wide: Vec<u16> = OsStr::new(&path)
             .encode_wide()

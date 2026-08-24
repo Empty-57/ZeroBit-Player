@@ -738,14 +738,14 @@ class HomePage extends StatelessWidget {
                               localIndex: AppRoutes.playListPreviewOrder,
                             ),
                             CustomNavigationBtn(
-                              label: '统计',
-                              icon: PhosphorIconsLight.chartLine,
-                              localIndex: AppRoutes.statisticsOrder,
-                            ),
-                            CustomNavigationBtn(
                               label: '文件夹',
                               icon: PhosphorIconsLight.folders,
                               localIndex: AppRoutes.foldersPreviewOrder,
+                            ),
+                            CustomNavigationBtn(
+                              label: '统计',
+                              icon: PhosphorIconsLight.chartLine,
+                              localIndex: AppRoutes.statisticsOrder,
                             ),
                             CustomNavigationBtn(
                               label: '设置',
