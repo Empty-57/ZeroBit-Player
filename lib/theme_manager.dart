@@ -29,7 +29,9 @@ class ThemeService {
       colorScheme: scheme,
       fontFamily: _settingController.fontFamily.value,
       scrollbarTheme: ScrollbarThemeData(
-        thumbColor: WidgetStateProperty.all(scheme.secondaryContainer),
+        thumbColor: WidgetStateProperty.all(
+          scheme.secondary.withValues(alpha: 0.8),
+        ),
         thickness: WidgetStatePropertyAll(_thickness),
         trackVisibility: WidgetStatePropertyAll(false),
         radius: Radius.circular(_radius),

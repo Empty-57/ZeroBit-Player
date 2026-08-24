@@ -143,8 +143,8 @@ class MusicTile extends StatelessWidget {
 
 class StatisticsMusicTile extends StatelessWidget {
   final MusicCache metadata;
-  final TextStyle titleStyle;
-  final TextStyle subStyle;
+  final TextStyle textStyle;
+  final TextStyle subTextStyle;
   final int rank;
   final StatisticsCache playStatistics;
   final AudioController audioController;
@@ -152,8 +152,8 @@ class StatisticsMusicTile extends StatelessWidget {
   const StatisticsMusicTile({
     super.key,
     required this.metadata,
-    required this.titleStyle,
-    required this.subStyle,
+    required this.textStyle,
+    required this.subTextStyle,
     required this.audioController,
     required this.rank,
     required this.playStatistics,
@@ -186,7 +186,7 @@ class StatisticsMusicTile extends StatelessWidget {
             softWrap: false,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
-            style: titleStyle.copyWith(color: rankColor),
+            style: textStyle.copyWith(color: rankColor),
           ),
           cover,
           Expanded(
@@ -200,14 +200,14 @@ class StatisticsMusicTile extends StatelessWidget {
                   softWrap: false,
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
-                  style: titleStyle,
+                  style: textStyle,
                 ),
                 Text(
                   metadata.artist,
                   softWrap: false,
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
-                  style: subStyle,
+                  style: subTextStyle,
                 ),
               ],
             ),
@@ -221,14 +221,14 @@ class StatisticsMusicTile extends StatelessWidget {
                 softWrap: false,
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
-                style: titleStyle.copyWith(color: primaryColor),
+                style: textStyle.copyWith(color: primaryColor),
               ),
               Text(
                 formatTimeDHMS(playStatistics.playedTime.toInt()),
                 softWrap: false,
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
-                style: subStyle.copyWith(color: tertiaryColor),
+                style: subTextStyle.copyWith(color: tertiaryColor),
               ),
             ],
           ),

@@ -6,6 +6,9 @@ import 'package:zerobit_player/components/music_list_tool.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/statistics_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
+import 'package:zerobit_player/field/app_routes.dart';
+import 'package:zerobit_player/field/operate_area.dart';
+import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 
 const double _resViewThresholds = 1100;
@@ -79,9 +82,13 @@ class StatisticsPage extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final AudioController audioController = Get.find<AudioController>();
 
-    final titleStyle = generalTextStyle(ctx: context, size: 'md');
+    final statisticsTextStyle = generalTextStyle(ctx: context, size: 'md');
 
-    final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
+    final statisticsSubTextStyle = generalTextStyle(
+      ctx: context,
+      size: 'sm',
+      opacity: 0.8,
+    );
 
     final subTitleStyle = generalTextStyle(ctx: context, size: 'subtitle');
 
@@ -190,6 +197,57 @@ class StatisticsPage extends StatelessWidget {
               ],
             ),
           ),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: .start,
+              spacing: 8,
+              children: [
+                Text('歌手榜 Top30', style: subTitleStyle),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Obx(() {
+                        final top30List =
+                            StatisticsController.instance.artistTop30;
+                        if (top30List.isEmpty) {
+                          return Center(
+                            child: Text('暂无数据', style: subTitleStyle),
+                          );
+                        }
+
+                        return ListView.builder(
+                          scrollCacheExtent: const ScrollCacheExtent.pixels(
+                            _itemHeight * 4,
+                          ),
+                          itemCount: top30List.length,
+                          itemExtent: _itemHeight,
+                          addRepaintBoundaries: true,
+                          addAutomaticKeepAlives: false,
+                          addSemanticIndexes: false,
+                          itemBuilder: (_, index) {
+                            final item = top30List.entries.toList()[index];
+                            final rank = index + 1;
+
+                            return _StatisticsArtistTile(
+                              textStyle: statisticsTextStyle,
+                              subTextStyle: statisticsSubTextStyle,
+                              rank: rank,
+                              pathList: item.value.pathList,
+                              artist: item.key,
+                              playedCount: item.value.playedCount,
+                              playedTime: item.value.playedTime,
+                              maxWidth: constraints.maxWidth,
+                            );
+                          },
+                        );
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: Column(
               crossAxisAlignment: .start,
@@ -219,8 +277,8 @@ class StatisticsPage extends StatelessWidget {
 
                         return StatisticsMusicTile(
                           metadata: item.metadata,
-                          titleStyle: titleStyle,
-                          subStyle: subStyle,
+                          textStyle: statisticsTextStyle,
+                          subTextStyle: statisticsSubTextStyle,
                           audioController: audioController,
                           rank: rank,
                           playStatistics: item.statistics,
@@ -228,6 +286,134 @@ class StatisticsPage extends StatelessWidget {
                       },
                     );
                   }),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+const double _itemSpacing = 16.0;
+const _borderRadius = BorderRadius.all(Radius.circular(4));
+
+class _StatisticsArtistTile extends StatelessWidget {
+  final TextStyle textStyle;
+  final TextStyle subTextStyle;
+  final int rank;
+  final List<String> pathList;
+  final String artist;
+  final int playedCount;
+  final double playedTime;
+  final double maxWidth;
+
+  const _StatisticsArtistTile({
+    required this.textStyle,
+    required this.subTextStyle,
+    required this.rank,
+    required this.pathList,
+    required this.artist,
+    required this.playedCount,
+    required this.playedTime,
+    required this.maxWidth,
+  });
+
+  void _onTileTapped() {
+    Get.toNamed(
+      AppRoutes.details,
+      arguments: {
+        'pathList': pathList,
+        'title': artist,
+        'operateArea': OperateArea.artistDetails,
+      },
+      id: 1,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final tertiaryColor = Theme.of(context).colorScheme.tertiary;
+    final rankColor = rank < 4 ? primaryColor : null;
+
+    final ratio =
+        playedCount / StatisticsController.instance.totalPlayedCountRaw;
+
+    return TextButton(
+      onPressed: _onTileTapped,
+      style: TextButton.styleFrom(
+        shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        spacing: _itemSpacing,
+        children: [
+          Text(
+            rank.toString().padLeft(2, ' '),
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+            style: textStyle.copyWith(color: rankColor),
+          ),
+          Expanded(
+            flex: 1,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  artist,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: textStyle,
+                ),
+                Row(
+                  spacing: 8,
+                  children: [
+                    SizedBox(
+                      width: maxWidth * 0.05,
+                      child: Text(
+                        '${(ratio * 100).round()}%',
+                        style: subTextStyle,
+                        textAlign: TextAlign.right,
+                      ),
+                    ),
+                    Container(
+                      width: maxWidth * 0.75 * ratio,
+                      height: 2,
+                      decoration: BoxDecoration(
+                        borderRadius: _borderRadius,
+                        color: tertiaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: maxWidth * 0.1,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '$playedCount次',
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: textStyle.copyWith(color: primaryColor),
+                ),
+                Text(
+                  formatTimeDHMS(playedTime.toInt()),
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: subTextStyle.copyWith(color: tertiaryColor),
                 ),
               ],
             ),

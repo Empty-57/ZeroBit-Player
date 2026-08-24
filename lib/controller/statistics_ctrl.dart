@@ -36,7 +36,7 @@ class StatisticsController {
   List<StatisticsCache> playedStatisticsList = [];
 
   final playedTop50 = <_RankedMusicItem>[].obs;
-  final artistTop30 = <MusicCache>[].obs;
+  final artistTop30 = <String, _RankedArtistItem>{}.obs;
 
   String? _lastTitle; // 上次统计对应的歌曲标题
   num _lastSec = 0; // 上次统计时的播放进度
@@ -215,15 +215,54 @@ class StatisticsController {
       for (final item in _musicCacheController.items) item.title: item,
     };
 
-    playedTop50.value = playedStatisticsList
+    final temp = playedStatisticsList
         .map((stat) {
           final music = musicMap[stat.title];
-          if (music == null) return null;
-          return _RankedMusicItem(metadata: music, statistics: stat);
+          return music != null
+              ? _RankedMusicItem(metadata: music, statistics: stat)
+              : null;
         })
-        .nonNulls // 过滤null
-        .take(50)
-        .toList();
+        .nonNulls
+        .toList(); // 过滤null
+
+    playedTop50.value = temp.take(50).toList();
+
+    final artistTop30Temp = <String, _RankedArtistItem>{};
+
+    for (final item in temp) {
+      final artists = item.metadata.artist.split('/');
+      for (var ar in artists) {
+        if (ar.trim().isEmpty) continue;
+        artistTop30Temp.update(
+          ar,
+          (existing) => _RankedArtistItem(
+            pathList: existing.pathList,
+            playedCount: existing.playedCount + item.statistics.playedCount,
+            playedTime: existing.playedTime + item.statistics.playedTime,
+          ),
+          ifAbsent: () {
+            final dictKey = _musicCacheController.getLetter(str: ar) + ar;
+            final pathList =
+                _musicCacheController.artistItemsDict[dictKey] ?? [];
+
+            return _RankedArtistItem(
+              pathList: pathList,
+              playedCount: item.statistics.playedCount,
+              playedTime: item.statistics.playedTime,
+            );
+          },
+        );
+      }
+    }
+
+    final sortedArtists = artistTop30Temp.entries.toList()
+      ..sort((a, b) {
+        final countComp = b.value.playedCount.compareTo(a.value.playedCount);
+        if (countComp != 0) return countComp;
+        return b.value.playedTime.compareTo(a.value.playedTime);
+      });
+
+    artistTop30.assignAll(Map.fromEntries(sortedArtists.take(30)));
   }
 }
 
@@ -232,4 +271,16 @@ class _RankedMusicItem {
   final StatisticsCache statistics;
 
   const _RankedMusicItem({required this.metadata, required this.statistics});
+}
+
+class _RankedArtistItem {
+  final List<String> pathList;
+  final int playedCount;
+  final double playedTime;
+
+  const _RankedArtistItem({
+    required this.pathList,
+    required this.playedCount,
+    required this.playedTime,
+  });
 }
