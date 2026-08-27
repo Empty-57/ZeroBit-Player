@@ -338,8 +338,11 @@ class _StatisticsArtistTile extends StatelessWidget {
     final tertiaryColor = Theme.of(context).colorScheme.tertiary;
     final rankColor = rank < 4 ? primaryColor : null;
 
-    final ratio =
-        playedCount / StatisticsController.instance.totalPlayedCountRaw;
+    double ratio = 0;
+
+    if (StatisticsController.instance.totalPlayedCountRaw > 0) {
+      ratio = playedCount / StatisticsController.instance.totalPlayedCountRaw;
+    }
 
     return TextButton(
       onPressed: _onTileTapped,
@@ -377,7 +380,7 @@ class _StatisticsArtistTile extends StatelessWidget {
                     SizedBox(
                       width: maxWidth * 0.05,
                       child: Text(
-                        '${(ratio * 100).round()}%',
+                        '${(ratio * 100).toStringAsFixed(2)}%',
                         style: subTextStyle,
                         textAlign: TextAlign.right,
                       ),
