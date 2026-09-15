@@ -41,6 +41,7 @@ class SettingController {
   final backgroundImagePath = '1'.obs;
   final backgroundImageOpacity = 0.5.obs; // 0-1
   final backgroundImageBlur = 4.0.obs; // 0-36
+  final useTransparencyBackground = false.obs;
   final useAutoUpdate = true.obs;
 
   // 歌词状态
@@ -314,6 +315,8 @@ class SettingController {
         prefs?.getString(SharedPreferencesKey.backgroundImagePath) ?? '';
     useAutoUpdate.value =
         prefs?.getBool(SharedPreferencesKey.useAutoUpdate) ?? true;
+    useTransparencyBackground.value =
+        prefs?.getBool(SharedPreferencesKey.useTransparencyBackground) ?? false;
 
     // 提取快捷键解析逻辑，消除冗余
     _loadKeyConfig(SharedPreferencesKey.toggleHidString, hotKeyToggleHid, (
@@ -681,6 +684,12 @@ class SettingController {
   void setUseAutoUpdate({required bool value}) => _setBoolPref(
     SharedPreferencesKey.useAutoUpdate,
     useAutoUpdate,
+    overrideValue: value,
+  );
+
+  void setUseTransparencyBackground({required bool value}) => _setBoolPref(
+    SharedPreferencesKey.useTransparencyBackground,
+    useTransparencyBackground,
     overrideValue: value,
   );
 

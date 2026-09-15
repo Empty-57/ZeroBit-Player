@@ -1669,6 +1669,13 @@ class _AppearanceTab extends StatelessWidget {
           tooltip: '选择图片后请不要移动或删除图片',
           child: _BackgroundImagePathPicker(),
         ),
+        _SettingSwitchItem(
+          text: '使用透明背景',
+          value: _settingController.useTransparencyBackground,
+          onChanged: (val) {
+            _settingController.setUseTransparencyBackground(value: val);
+          },
+        ),
         const _SettingItem(
           text: '背景图片不透明度',
           child: _BackgroundImageOpacitySlider(),

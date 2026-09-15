@@ -189,7 +189,8 @@ class CustomNavigation extends GetView<AudioController> {
         borderRadius: const BorderRadius.all(Radius.circular(8)),
         child: BackdropFilter(
           enabled:
-              SettingController.instance.backgroundImagePath.value.isNotEmpty,
+              SettingController.instance.backgroundImagePath.value.isNotEmpty ||
+              SettingController.instance.useTransparencyBackground.value,
           filter: ImageFilterCache.imageFilter(sigma: 16),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),

@@ -13,7 +13,10 @@ class WindowBackgroundImage extends StatelessWidget {
     return Positioned.fill(
       child: Obx(() {
         final path = SettingController.instance.backgroundImagePath.value;
-        if (path.isEmpty) return const SizedBox.shrink();
+        if (path.isEmpty ||
+            SettingController.instance.useTransparencyBackground.value) {
+          return const SizedBox.shrink();
+        }
 
         final blur = SettingController.instance.backgroundImageBlur.value;
 
@@ -55,9 +58,13 @@ class WindowBackgroundOverlay extends StatelessWidget {
         final opacity = SettingController.instance.backgroundImageOpacity.value;
 
         return ColoredBox(
-          color: Theme.of(
-            context,
-          ).colorScheme.surface.withValues(alpha: hasImage ? opacity : 1.0),
+          color: Theme.of(context).colorScheme.surface.withValues(
+            alpha:
+                hasImage ||
+                    SettingController.instance.useTransparencyBackground.value
+                ? opacity
+                : 1.0,
+          ),
         );
       }),
     );

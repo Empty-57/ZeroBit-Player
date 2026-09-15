@@ -767,78 +767,72 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainer,
-      ),
-
-      child: ExcludeSemantics(
-        child: Stack(
-          children: [
-            const WindowBackgroundImage(),
-            const WindowBackgroundOverlay(),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const WindowControllerBar(),
-                Expanded(
-                  flex: 1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsetsGeometry.all(8),
-                        child: CustomNavigation(
-                          btnList: const <Widget>[
-                            CustomNavigationBtn(
-                              label: '音乐',
-                              icon: PhosphorIconsLight.musicNoteSimple,
-                              localIndex: AppRoutes.homeOrder,
-                            ),
-                            CustomNavigationBtn(
-                              label: '艺术家',
-                              icon: PhosphorIconsLight.userFocus,
-                              localIndex: AppRoutes.artistPreviewOrder,
-                            ),
-                            CustomNavigationBtn(
-                              label: '专辑',
-                              icon: PhosphorIconsLight.vinylRecord,
-                              localIndex: AppRoutes.albumPreviewOrder,
-                            ),
-                            CustomNavigationBtn(
-                              label: '歌单',
-                              icon: PhosphorIconsLight.playlist,
-                              localIndex: AppRoutes.playListPreviewOrder,
-                            ),
-                            CustomNavigationBtn(
-                              label: '文件夹',
-                              icon: PhosphorIconsLight.folders,
-                              localIndex: AppRoutes.foldersPreviewOrder,
-                            ),
-                            CustomNavigationBtn(
-                              label: '统计',
-                              icon: PhosphorIconsLight.chartLine,
-                              localIndex: AppRoutes.statisticsOrder,
-                            ),
-                            CustomNavigationBtn(
-                              label: '设置',
-                              icon: PhosphorIconsLight.gearSix,
-                              localIndex: AppRoutes.settingOrder,
-                            ),
-                          ],
-                        ),
+    return ExcludeSemantics(
+      child: Stack(
+        children: [
+          const WindowBackgroundImage(),
+          const WindowBackgroundOverlay(),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const WindowControllerBar(),
+              Expanded(
+                flex: 1,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsetsGeometry.all(8),
+                      child: CustomNavigation(
+                        btnList: const <Widget>[
+                          CustomNavigationBtn(
+                            label: '音乐',
+                            icon: PhosphorIconsLight.musicNoteSimple,
+                            localIndex: AppRoutes.homeOrder,
+                          ),
+                          CustomNavigationBtn(
+                            label: '艺术家',
+                            icon: PhosphorIconsLight.userFocus,
+                            localIndex: AppRoutes.artistPreviewOrder,
+                          ),
+                          CustomNavigationBtn(
+                            label: '专辑',
+                            icon: PhosphorIconsLight.vinylRecord,
+                            localIndex: AppRoutes.albumPreviewOrder,
+                          ),
+                          CustomNavigationBtn(
+                            label: '歌单',
+                            icon: PhosphorIconsLight.playlist,
+                            localIndex: AppRoutes.playListPreviewOrder,
+                          ),
+                          CustomNavigationBtn(
+                            label: '文件夹',
+                            icon: PhosphorIconsLight.folders,
+                            localIndex: AppRoutes.foldersPreviewOrder,
+                          ),
+                          CustomNavigationBtn(
+                            label: '统计',
+                            icon: PhosphorIconsLight.chartLine,
+                            localIndex: AppRoutes.statisticsOrder,
+                          ),
+                          CustomNavigationBtn(
+                            label: '设置',
+                            icon: PhosphorIconsLight.gearSix,
+                            localIndex: AppRoutes.settingOrder,
+                          ),
+                        ],
                       ),
-                      Expanded(child: widget.child),
-                    ],
-                  ),
+                    ),
+                    Expanded(child: widget.child),
+                  ],
                 ),
-              ],
-            ),
-            const PlayBar(),
-          ],
-        ),
+              ),
+            ],
+          ),
+          const PlayBar(),
+        ],
       ),
     );
   }
