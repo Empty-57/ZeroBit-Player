@@ -683,8 +683,10 @@ class _LyricsRenderState extends State<LyricsRender> {
   @override
   Widget build(BuildContext context) {
     Color? mixColor = lrcStylePackage.mixColor;
+    final height = MediaQuery.sizeOf(context).height;
+    final width = MediaQuery.sizeOf(context).width;
 
-    final dynamicPadding = context.width / 2 * (1 - 1 / _lrcScale);
+    final dynamicPadding = width / 2 * (1 - 1 / _lrcScale);
 
     // 路由外部更改的值
     final useSpringscroll = _settingController.useSpringScroll.value;
@@ -809,7 +811,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                             addRepaintBoundaries: true,
                             padding: EdgeInsets.symmetric(
                               vertical:
-                                  (context.height -
+                                  (height -
                                       _audioCtrlBarHeight -
                                       _controllerBarHeight) /
                                   2,

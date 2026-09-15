@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
@@ -76,14 +77,13 @@ class FoldersPreviewPage extends StatelessWidget {
 
                   return TextButton(
                     onPressed: () {
-                      Get.toNamed(
+                      context.push(
                         AppRoutes.details,
-                        arguments: {
+                        extra: {
                           'pathList': pathList,
                           'title': folder,
                           'operateArea': OperateArea.foldersDetails,
                         },
-                        id: 1,
                       );
                     },
                     style: TextButton.styleFrom(

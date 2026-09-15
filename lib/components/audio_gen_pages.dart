@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
@@ -122,11 +123,7 @@ List<Widget> _genMenuItems({
     CustomBtn(
       fn: () {
         menuController.close();
-        Get.toNamed(
-          AppRoutes.audioInfoEdit,
-          id: 1,
-          arguments: {'metadata': metadata},
-        );
+        context.push(AppRoutes.audioInfoEdit, extra: {'metadata': metadata});
       },
       btnHeight: _menuBtnHeight,
       btnWidth: _menuBtnWidth,
@@ -146,14 +143,13 @@ List<Widget> _genMenuItems({
     divider,
 
     buildMenuBtn(
-      fn: () => Get.toNamed(
+      fn: () => context.push(
         AppRoutes.details,
-        arguments: {
+        extra: {
           'pathList': cacheCtrl.albumItemsDict[albumWithLetter],
           'title': album,
           'operateArea': OperateArea.albumDetails,
         },
-        id: 1,
       ),
       icon: PhosphorIconsLight.vinylRecord,
       label: album,
@@ -162,14 +158,13 @@ List<Widget> _genMenuItems({
 
     if (artistList.length == 1)
       buildMenuBtn(
-        fn: () => Get.toNamed(
+        fn: () => context.push(
           AppRoutes.details,
-          arguments: {
+          extra: {
             'pathList': cacheCtrl.artistItemsDict[artistFirstWithLetter],
             'title': artistFirst,
             'operateArea': OperateArea.artistDetails,
           },
-          id: 1,
         ),
         icon: PhosphorIconsLight.userFocus,
         label: artistFirst,
@@ -192,15 +187,14 @@ List<Widget> _genMenuItems({
           return MenuItemButton(
             onPressed: () {
               menuController.close();
-              Get.toNamed(
+              context.push(
                 AppRoutes.details,
-                arguments: {
+                extra: {
                   'pathList': cacheCtrl
                       .artistItemsDict[cacheCtrl.getLetter(str: v) + v],
                   'title': v,
                   'operateArea': OperateArea.artistDetails,
                 },
-                id: 1,
               );
             },
             child: Center(child: Text(v)),
@@ -655,6 +649,8 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   }
 
   Widget _buildMusicList() {
+    final height = MediaQuery.sizeOf(context).height;
+    final width = MediaQuery.sizeOf(context).width;
     return RawMenuAnchor(
       controller: _musicMenuCtrl._menuController,
       consumeOutsideTaps: false,
@@ -670,10 +666,11 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         final itemCount = widget.operateArea == OperateArea.playListDetails
             ? 8
             : 7;
-        if (top + _menuBtnHeight * (itemCount + 1.5) > Get.height) {
+
+        if (top + _menuBtnHeight * (itemCount + 1.5) > height) {
           top = top - _menuBtnHeight * itemCount;
         }
-        if (left + _menuBtnWidth * 2 > Get.width) {
+        if (left + _menuBtnWidth * 2 > width) {
           left = left - _menuBtnWidth - 16;
         }
 
@@ -760,9 +757,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
                       controller: _scrollControllerGrid,
                       itemCount: widget.controller.items.length,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: context.width < resViewThresholds
-                            ? 3
-                            : 4,
+                        crossAxisCount: width < resViewThresholds ? 3 : 4,
                         mainAxisSpacing: 4.0,
                         crossAxisSpacing: 8.0,
                         childAspectRatio: 1.0,

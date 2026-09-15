@@ -10,6 +10,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:leak_tracker/leak_tracker.dart';
 import 'package:path/path.dart' as p;
@@ -17,6 +18,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/components/play_bar.dart';
+import 'package:zerobit_player/components/window_background.dart';
 import 'package:zerobit_player/components/window_ctrl_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/statistics_ctrl.dart';
@@ -423,24 +425,6 @@ Future<void> initStream(AudioController audioController) async {
   }
 }
 
-class _DiagonalSlideTransition extends CustomTransition {
-  @override
-  Widget buildTransition(
-    BuildContext context,
-    Curve? curve,
-    Alignment? alignment,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-    Widget child,
-  ) {
-    return _DiagonalSlide(
-      animation: animation,
-      secondaryAnimation: secondaryAnimation,
-      child: child,
-    );
-  }
-}
-
 class _DiagonalSlide extends StatefulWidget {
   const _DiagonalSlide({
     required this.animation,
@@ -535,6 +519,179 @@ class _DiagonalSlideState extends State<_DiagonalSlide> {
   }
 }
 
+final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
+  debugLabel: 'root',
+);
+final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>(
+  debugLabel: 'shell',
+);
+
+// 路由切换动画页面构造函数
+CustomTransitionPage<void> _buildNormalPage({
+  required GoRouterState state,
+  required Widget child,
+  String? name,
+}) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    name: name,
+    arguments: state.extra,
+    maintainState: false,
+    transitionDuration: 250.ms,
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return _DiagonalSlide(
+        animation: animation,
+        secondaryAnimation: secondaryAnimation,
+        child: child,
+      );
+    },
+  );
+}
+
+// 播放页面切换动画构造函数
+CustomTransitionPage<void> _buildPlayPage({
+  required GoRouterState state,
+  required Widget child,
+  String? name,
+}) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    name: name,
+    arguments: state.extra,
+    maintainState: false,
+    transitionDuration: 300.ms,
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: CurvedAnimation(
+          parent: animation,
+          curve: Curves.fastOutSlowIn,
+        ),
+        child: child,
+      );
+    },
+  );
+}
+
+final GoRouter _router = GoRouter(
+  navigatorKey: _rootNavigatorKey,
+  initialLocation: AppRoutes.home,
+  routes: [
+    ShellRoute(
+      navigatorKey: _shellNavigatorKey,
+      observers: [
+        NestedObserver(
+          onRouteChanged: (name) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (AppRoutes.orderMap_[name] case final index?) {
+                SidebarNavState.currentNavigationIndex.value = index;
+              }
+            });
+          },
+        ),
+      ],
+      builder: (context, state, child) {
+        return HomePage(child: child);
+      },
+      routes: [
+        GoRoute(
+          path: AppRoutes.home,
+          name: AppRoutes.home,
+          pageBuilder: (context, state) => _buildNormalPage(
+            state: state,
+            name: AppRoutes.home,
+            child: const LocalMusicPage(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.setting,
+          name: AppRoutes.setting,
+          pageBuilder: (context, state) => _buildNormalPage(
+            state: state,
+            name: AppRoutes.setting,
+            child: const SettingPage(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.playListPreview,
+          name: AppRoutes.playListPreview,
+          pageBuilder: (context, state) => _buildNormalPage(
+            state: state,
+            name: AppRoutes.playListPreview,
+            child: const PlayListPreviewPage(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.artistPreview,
+          name: AppRoutes.artistPreview,
+          pageBuilder: (context, state) => _buildNormalPage(
+            state: state,
+            name: AppRoutes.artistPreview,
+            child: const ArtistPreviewPage(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.albumPreview,
+          name: AppRoutes.albumPreview,
+          pageBuilder: (context, state) => _buildNormalPage(
+            state: state,
+            name: AppRoutes.albumPreview,
+            child: const AlbumPreviewPage(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.foldersPreview,
+          name: AppRoutes.foldersPreview,
+          pageBuilder: (context, state) => _buildNormalPage(
+            state: state,
+            name: AppRoutes.foldersPreview,
+            child: const FoldersPreviewPage(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.statistics,
+          name: AppRoutes.statistics,
+          pageBuilder: (context, state) => _buildNormalPage(
+            state: state,
+            name: AppRoutes.statistics,
+            child: const StatisticsPage(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.details,
+          name: AppRoutes.details,
+          pageBuilder: (context, state) => _buildNormalPage(
+            state: state,
+            name: AppRoutes.details,
+            child: const UniDetailsPage(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.audioInfoEdit,
+          name: AppRoutes.audioInfoEdit,
+          pageBuilder: (context, state) => _buildNormalPage(
+            state: state,
+            name: AppRoutes.audioInfoEdit,
+            child: const AudioInfoEditorPage(),
+          ),
+        ),
+      ],
+    ),
+
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: AppRoutes.playPage,
+      name: AppRoutes.playPage,
+      pageBuilder: (context, state) => _buildPlayPage(
+        state: state,
+        name: AppRoutes.playPage,
+        child: const PlayPage(),
+      ),
+    ),
+  ],
+);
+
 class MainFrame extends StatelessWidget {
   const MainFrame({super.key});
 
@@ -543,79 +700,14 @@ class MainFrame extends StatelessWidget {
     final ThemeService themeService = ThemeService.instance;
     final SettingController settingController = SettingController.instance;
     return Obx(
-      () => GetMaterialApp(
-        enableLog: true,
+      () => MaterialApp.router(
+        routerConfig: _router,
         theme: themeService.lightTheme,
         darkTheme: themeService.darkTheme,
         themeMode: settingController.themeMode.value == 'dark'
             ? ThemeMode.dark
             : ThemeMode.light,
-        transitionDuration: 500.ms,
-        customTransition: _DiagonalSlideTransition(),
         debugShowCheckedModeBanner: false,
-        initialRoute: AppRoutes.base,
-        getPages: [
-          GetPage(
-            name: AppRoutes.base,
-            page: () => const HomePage(),
-            maintainState: false,
-          ),
-          GetPage(
-            name: AppRoutes.home,
-            page: () => const LocalMusicPage(),
-            maintainState: false,
-          ),
-          GetPage(
-            name: AppRoutes.setting,
-            page: () => const SettingPage(),
-            maintainState: false,
-          ),
-          GetPage(
-            name: AppRoutes.playListPreview,
-            page: () => const PlayListPreviewPage(),
-            maintainState: false,
-          ),
-          GetPage(
-            name: AppRoutes.artistPreview,
-            page: () => const ArtistPreviewPage(),
-            maintainState: false,
-          ),
-          GetPage(
-            name: AppRoutes.albumPreview,
-            page: () => const AlbumPreviewPage(),
-            maintainState: false,
-          ),
-          GetPage(
-            name: AppRoutes.foldersPreview,
-            page: () => const FoldersPreviewPage(),
-            maintainState: false,
-          ),
-
-          GetPage(
-            name: AppRoutes.statistics,
-            page: () => const StatisticsPage(),
-            maintainState: false,
-          ),
-
-          GetPage(
-            name: AppRoutes.details,
-            page: () => const UniDetailsPage(),
-            maintainState: false,
-          ),
-          GetPage(
-            name: AppRoutes.audioInfoEdit,
-            page: () => const AudioInfoEditorPage(),
-            maintainState: false,
-          ),
-          GetPage(
-            name: AppRoutes.playPage,
-            page: () => const PlayPage(),
-            maintainState: false,
-            transition: Transition.fade,
-            curve: Curves.fastOutSlowIn,
-            transitionDuration: 300.ms,
-          ),
-        ],
       ),
     );
   }
@@ -650,7 +742,9 @@ class NestedObserver extends NavigatorObserver {
 }
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final Widget child; // 接收 ShellRoute 分发的嵌套页面
+
+  const HomePage({super.key, required this.child});
 
   @override
   State<StatefulWidget> createState() => _HomePageState();
@@ -671,35 +765,8 @@ class _HomePageState extends State<HomePage> {
     super.initState();
   }
 
-  Widget _getNamedPage({required String name}) {
-    switch (name) {
-      case AppRoutes.home:
-        return const LocalMusicPage();
-      case AppRoutes.playListPreview:
-        return const PlayListPreviewPage();
-      case AppRoutes.setting:
-        return const SettingPage();
-      case AppRoutes.artistPreview:
-        return const ArtistPreviewPage();
-      case AppRoutes.albumPreview:
-        return const AlbumPreviewPage();
-      case AppRoutes.foldersPreview:
-        return const FoldersPreviewPage();
-      case AppRoutes.details:
-        return const UniDetailsPage();
-      case AppRoutes.audioInfoEdit:
-        return const AudioInfoEditorPage();
-      case AppRoutes.statistics:
-        return const StatisticsPage();
-    }
-    return const LocalMusicPage();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final dpr = MediaQuery.devicePixelRatioOf(context);
-    final viewportWidth = MediaQuery.sizeOf(context).width;
-
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainer,
@@ -708,60 +775,8 @@ class _HomePageState extends State<HomePage> {
       child: ExcludeSemantics(
         child: Stack(
           children: [
-            Positioned.fill(
-              child: Obx(() {
-                final blur = SettingController.instance.backgroundImageBlur;
-                final path =
-                    SettingController.instance.backgroundImagePath.value;
-
-                if (path.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-
-                final file = File(path);
-
-                if (!file.existsSync()) {
-                  return const SizedBox.shrink();
-                }
-
-                return ImageFiltered(
-                  enabled: blur.value != 0,
-                  imageFilter: ImageFilter.blur(
-                    sigmaX: blur.value,
-                    sigmaY: blur.value,
-                    tileMode: TileMode.clamp,
-                  ),
-                  child: Image.file(
-                    file,
-                    fit: BoxFit.cover,
-                    gaplessPlayback: true,
-                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                    cacheWidth: (viewportWidth * dpr).round(),
-                  ),
-                );
-              }),
-            ),
-
-            Obx(
-              () => Positioned.fill(
-                child: ColoredBox(
-                  color: Theme.of(context).colorScheme.surface.withValues(
-                    alpha:
-                        SettingController
-                            .instance
-                            .backgroundImagePath
-                            .value
-                            .isNotEmpty
-                        ? SettingController
-                              .instance
-                              .backgroundImageOpacity
-                              .value
-                        : 1.0,
-                  ),
-                ),
-              ),
-            ),
-
+            const WindowBackgroundImage(),
+            const WindowBackgroundOverlay(),
             Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -815,36 +830,7 @@ class _HomePageState extends State<HomePage> {
                           ],
                         ),
                       ),
-                      Expanded(
-                        child: Navigator(
-                          observers: [
-                            NestedObserver(
-                              onRouteChanged: (name) {
-                                WidgetsBinding.instance.addPostFrameCallback((
-                                  _,
-                                ) {
-                                  if (AppRoutes.orderMap_[name]
-                                      case final index?) {
-                                    SidebarNavState
-                                            .currentNavigationIndex
-                                            .value =
-                                        index;
-                                  }
-                                });
-                              },
-                            ),
-                          ],
-                          key: Get.nestedKey(1),
-                          initialRoute: AppRoutes.home,
-                          onGenerateRoute: (settings) {
-                            return GetPageRoute(
-                              settings: settings,
-                              page: () => _getNamedPage(name: settings.name!),
-                              maintainState: false,
-                            );
-                          },
-                        ),
-                      ),
+                      Expanded(child: widget.child),
                     ],
                   ),
                 ),

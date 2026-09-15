@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
@@ -188,15 +189,14 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
 
         return TextButton(
           key: ValueKey(item.userKey),
-          onPressed: () => Get.toNamed(
+          onPressed: () => context.push(
             AppRoutes.details,
-            arguments: {
+            extra: {
               'title': displayName,
               'pathList': item.pathList,
               'operateArea': OperateArea.playListDetails,
               'userKey': item.userKey,
             },
-            id: 1,
           ),
           style: TextButton.styleFrom(
             shape: const RoundedRectangleBorder(borderRadius: _borderRadius),

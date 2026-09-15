@@ -43,6 +43,8 @@ class _FolderManagerDialog extends GetView<MusicCacheController> {
   @override
   Widget build(BuildContext context) {
     final musicCacheController = controller;
+    final height = MediaQuery.sizeOf(context).height;
+    final width = MediaQuery.sizeOf(context).width;
     return CustomBtn(
       fn: () {
         var foldersClone = [..._settingController.folders];
@@ -66,8 +68,8 @@ class _FolderManagerDialog extends GetView<MusicCacheController> {
               actionsAlignment: MainAxisAlignment.end,
               actions: <Widget>[
                 SizedBox(
-                  width: context.width / 2,
-                  height: context.height / 2,
+                  width: width / 2,
+                  height: height / 2,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -482,6 +484,8 @@ Widget _getFontFamilyDialog(
   String label,
   void Function(int i) fn,
 ) {
+  final height = MediaQuery.sizeOf(context).height;
+  final width = MediaQuery.sizeOf(context).width;
   return CustomBtn(
     fn: () {
       showDialog(
@@ -504,8 +508,8 @@ Widget _getFontFamilyDialog(
             actionsAlignment: MainAxisAlignment.end,
             actions: <Widget>[
               SizedBox(
-                width: context.width / 2,
-                height: context.height / 2,
+                width: width / 2,
+                height: height / 2,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -624,12 +628,13 @@ MenuAnchor _getMenuAnchorButton(
   String label,
   List<Widget> menuChildren,
 ) {
+  final height = MediaQuery.sizeOf(context).height;
   return MenuAnchor(
     menuChildren: menuChildren,
     controller: menuController,
     consumeOutsideTap: true,
     style: MenuStyle(
-      maximumSize: WidgetStatePropertyAll(Size.fromHeight(context.height / 2)),
+      maximumSize: WidgetStatePropertyAll(Size.fromHeight(height / 2)),
     ),
     child: CustomBtn(
       fn: () {
@@ -1005,6 +1010,8 @@ Widget _createHotKeyItem(
 }) {
   final prev = myHotkey.value;
   final hotKey_ = myHotkey;
+  final height = MediaQuery.sizeOf(context).height;
+  final width = MediaQuery.sizeOf(context).width;
   return Row(
     mainAxisAlignment: MainAxisAlignment.center,
     crossAxisAlignment: CrossAxisAlignment.center,
@@ -1065,8 +1072,8 @@ Widget _createHotKeyItem(
                 actionsAlignment: MainAxisAlignment.end,
                 actions: <Widget>[
                   SizedBox(
-                    width: context.width / 3,
-                    height: context.height / 4,
+                    width: width / 3,
+                    height: height / 4,
                     child: Center(
                       child: Transform.scale(
                         scale: 1.5,

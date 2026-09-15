@@ -161,6 +161,9 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
       );
     }
 
+    final height = MediaQuery.sizeOf(context).height;
+    final width = MediaQuery.sizeOf(context).width;
+
     return AlertDialog(
       title: const Text("编辑内嵌歌词"),
       titleTextStyle: generalTextStyle(
@@ -174,8 +177,8 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       actionsAlignment: MainAxisAlignment.end,
       content: SizedBox(
-        width: context.width * 2 / 3,
-        height: context.height * 2 / 3,
+        width: width * 2 / 3,
+        height: height * 2 / 3,
         child: SingleChildScrollView(
           child: Column(
             spacing: 8,

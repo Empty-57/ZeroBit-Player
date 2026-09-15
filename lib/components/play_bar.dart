@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/diamond_silder_thumb.dart';
 import 'package:zerobit_player/custom_widgets/rect_value_indicator.dart';
@@ -92,9 +93,10 @@ class PlayBar extends GetView<AudioController> {
       context: context,
       size: _ctrlBtnMinSize,
     );
+    final width = MediaQuery.sizeOf(context).width;
 
     return Obx(() {
-      final screenWidth = context.width;
+      final screenWidth = width;
       final rightOffset =
           (screenWidth -
                   (screenWidth > _resViewThresholds
@@ -203,7 +205,7 @@ class PlayBar extends GetView<AudioController> {
         // 交互层
         RepaintBoundary(
           child: TextButton(
-            onPressed: () => Get.toNamed(AppRoutes.playPage),
+            onPressed: () => context.push(AppRoutes.playPage),
             onHover: (v) => _isBarHover.value = v,
             style: TextButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 12),

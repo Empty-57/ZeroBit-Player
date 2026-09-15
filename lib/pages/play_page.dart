@@ -8,6 +8,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/components/audio_ctrl_btn.dart';
@@ -418,10 +419,12 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
     final bgColor = Theme.of(
       context,
     ).colorScheme.secondaryContainer.withValues(alpha: 0.4);
+    final height = MediaQuery.sizeOf(context).height;
+    final width = MediaQuery.sizeOf(context).width;
 
     return SizedBox(
-      width: context.width * 0.65,
-      height: context.height * 0.65,
+      width: width * 0.65,
+      height: height * 0.65,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 8,
@@ -537,6 +540,7 @@ class _LyricsSide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
     return RepaintBoundary(
       child: ShaderMask(
         shaderCallback: (rect) {
@@ -547,7 +551,7 @@ class _LyricsSide extends StatelessWidget {
         },
         blendMode: BlendMode.dstIn,
         child: SizedBox(
-          width: context.width / 2,
+          width: width / 2,
           child: const Padding(
             padding: EdgeInsets.only(right: 16),
             child: LyricsRender(),
@@ -611,9 +615,11 @@ class _CoverSideState extends State<_CoverSide> {
       fontSize: widget.subTitleStyle.fontSize,
       forceStrutHeight: true,
     );
+    final height = MediaQuery.sizeOf(context).height;
+    final width = MediaQuery.sizeOf(context).width;
 
     return SizedBox(
-      width: context.width / 2,
+      width: width / 2,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -892,6 +898,9 @@ class _ControlBar extends StatelessWidget {
     const double itemHeight = 64;
     final playQueueController = playQueueMenuController;
 
+    final height = MediaQuery.sizeOf(context).height;
+    final width = MediaQuery.sizeOf(context).width;
+
     return MouseRegion(
       onEnter: (_) => _isBarHover.value = true,
       onExit: (_) => _isBarHover.value = false,
@@ -948,7 +957,7 @@ class _ControlBar extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     SizedBox(
-                      width: context.width * 0.25,
+                      width: width * 0.25,
                       height: _audioCtrlBarHeight - 24,
                       child: RepaintBoundary(
                         child: Obx(
@@ -997,7 +1006,7 @@ class _ControlBar extends StatelessWidget {
                       ),
                     ),
                     SizedBox(
-                      width: context.width * 0.25,
+                      width: width * 0.25,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         spacing: 8,
@@ -1024,8 +1033,8 @@ class _ControlBar extends StatelessWidget {
                             consumeOutsideTap: true,
                             menuChildren: [
                               Container(
-                                height: Get.height - 200,
-                                width: Get.width / 2,
+                                height: height - 200,
+                                width: width / 2,
                                 color: Colors.transparent,
                                 padding: const EdgeInsets.all(16),
                                 child: Column(
@@ -1372,17 +1381,16 @@ class _PlayPageState extends State<PlayPage> {
         return _createMenuBtn(
           fn: () {
             menuController.close();
-            Get.back();
+            context.pop();
             SchedulerBinding.instance.addPostFrameCallback((_) {
-              Get.toNamed(
+              context.push(
                 AppRoutes.details,
-                arguments: {
+                extra: {
                   'pathList':
                       musicCacheController.albumItemsDict[albumWithLetter],
                   'title': album,
                   'operateArea': OperateArea.albumDetails,
                 },
-                id: 1,
               );
             });
           },
@@ -1401,17 +1409,16 @@ class _PlayPageState extends State<PlayPage> {
           return _createMenuBtn(
             fn: () {
               menuController.close();
-              Get.back();
+              context.pop();
               SchedulerBinding.instance.addPostFrameCallback((_) {
-                Get.toNamed(
+                context.push(
                   AppRoutes.details,
-                  arguments: {
+                  extra: {
                     'pathList': musicCacheController
                         .artistItemsDict[artistFirstWithLetter],
                     'title': artistFirst,
                     'operateArea': OperateArea.artistDetails,
                   },
-                  id: 1,
                 );
               });
             },
@@ -1432,11 +1439,11 @@ class _PlayPageState extends State<PlayPage> {
               return MenuItemButton(
                 onPressed: () {
                   menuController.close();
-                  Get.back();
+                  context.pop();
                   SchedulerBinding.instance.addPostFrameCallback((_) {
-                    Get.toNamed(
+                    context.push(
                       AppRoutes.details,
-                      arguments: {
+                      extra: {
                         'pathList':
                             musicCacheController
                                 .artistItemsDict[musicCacheController.getLetter(
@@ -1446,7 +1453,6 @@ class _PlayPageState extends State<PlayPage> {
                         'title': v,
                         'operateArea': OperateArea.artistDetails,
                       },
-                      id: 1,
                     );
                   });
                 },
@@ -1483,7 +1489,7 @@ class _PlayPageState extends State<PlayPage> {
   KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
     if (event is KeyDownEvent &&
         event.logicalKey == LogicalKeyboardKey.escape) {
-      Get.back();
+      context.pop();
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
@@ -1491,8 +1497,9 @@ class _PlayPageState extends State<PlayPage> {
 
   @override
   Widget build(BuildContext context) {
-    double coverSize = (context.width * 0.3).clamp(300, 500);
-    final halfWidth = context.width / 2;
+    final width = MediaQuery.sizeOf(context).width;
+    double coverSize = (width * 0.3).clamp(300, 500);
+    final halfWidth = width / 2;
     final darkColorScheme = _themeService.darkTheme.colorScheme;
     final primaryColor = darkColorScheme.primary;
 
@@ -1544,8 +1551,8 @@ class _PlayPageState extends State<PlayPage> {
     );
     final spectrogramBarLength = AudioController.bassDataFFT512 * 0.5625; // 144
     final spectrogramBarWidth =
-        (context.width * _spectrogramWidthFactor) / spectrogramBarLength;
-    final spectrogramPaddingWidth = context.width * _spectrogramWidthFactorDiff;
+        (width * _spectrogramWidthFactor) / spectrogramBarLength;
+    final spectrogramPaddingWidth = width * _spectrogramWidthFactorDiff;
 
     final settingController = _settingController;
 
@@ -1633,7 +1640,7 @@ class _PlayPageState extends State<PlayPage> {
                                     left: _coverViewMode.value == 0
                                         ? (halfWidth - coverSize) / 2
                                         : _coverViewMode.value == 1
-                                        ? (context.width - coverSize) / 2
+                                        ? (width - coverSize) / 2
                                         : halfWidth +
                                               (halfWidth - coverSize) / 2,
                                     width: coverSize,

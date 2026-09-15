@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
@@ -236,7 +237,8 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
       );
 
       // 安全关闭
-      if (mounted) Get.back(id: 1);
+      if (mounted) context.pop();
+      ;
     } catch (e) {
       debugPrint("保存失败: $e");
       _showError('保存失败，请重试');
@@ -528,7 +530,7 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
                 _actionButton(label: "获取网络封面", onPressed: _fetchNetworkCover),
                 _actionButton(label: "使用本地封面", onPressed: _pickLocalCover),
                 const Spacer(),
-                _actionButton(label: "取消", onPressed: () => Get.back(id: 1)),
+                _actionButton(label: "取消", onPressed: () => context.pop()),
                 _actionButton(
                   label: "确定",
                   onPressed: _saveChanges,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
@@ -78,6 +79,9 @@ class _SearchDialogContentState extends State<_SearchDialogContent> {
     final titleStyle = generalTextStyle(ctx: context, size: 'md');
     final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
 
+    final height = MediaQuery.sizeOf(context).height;
+    final width = MediaQuery.sizeOf(context).width;
+
     return AlertDialog(
       title: const Text("搜索"),
       titleTextStyle: generalTextStyle(
@@ -90,8 +94,8 @@ class _SearchDialogContentState extends State<_SearchDialogContent> {
       actionsAlignment: MainAxisAlignment.end,
       actions: <Widget>[
         SizedBox(
-          width: context.width / 2,
-          height: context.height / 2,
+          width: width / 2,
+          height: height / 2,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,7 +188,7 @@ class _SearchDialogContentState extends State<_SearchDialogContent> {
                                 consumeOutsideTap: true,
                                 style: MenuStyle(
                                   maximumSize: WidgetStatePropertyAll(
-                                    Size.fromHeight(context.height / 2),
+                                    Size.fromHeight(height / 2),
                                   ),
                                 ),
                                 child: _ControllerButton(
@@ -312,7 +316,7 @@ class WindowControllerBar extends GetView<MyWindowListener> {
                   ? PhosphorIconsLight.caretDown
                   : PhosphorIconsLight.caretLeft,
               fn: () {
-                Get.back(id: isNestedRoute ? 1 : null);
+                context.pop();
               },
               tooltip: "返回",
             ),

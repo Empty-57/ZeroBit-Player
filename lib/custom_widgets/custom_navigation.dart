@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
@@ -47,6 +48,7 @@ class CustomNavigationBtn extends GetView<AudioController> {
   @override
   Widget build(BuildContext context) {
     final backgroundColor = Theme.of(context).colorScheme.secondaryContainer;
+    final width = MediaQuery.sizeOf(context).width;
     return SizedBox(
       width: _navigationBtnWidth,
       height: _navigationBtnHeight,
@@ -59,7 +61,7 @@ class CustomNavigationBtn extends GetView<AudioController> {
                   SidebarNavState.beginOffset = _oldIndex >= localIndex
                       ? const Offset(0.1, 0.1)
                       : const Offset(-0.1, -0.1);
-                  Get.toNamed(_mainRoutes[localIndex], id: 1);
+                  context.push(_mainRoutes[localIndex]);
                 }
               : null,
           style: TextButton.styleFrom(
@@ -88,7 +90,7 @@ class CustomNavigationBtn extends GetView<AudioController> {
                   spacing: 8,
                   children: [
                     Tooltip(
-                      message: context.width > _resViewThresholds
+                      message: width > _resViewThresholds
                           ? controller.navigationIsExtend.value
                                 ? ""
                                 : label
@@ -104,7 +106,7 @@ class CustomNavigationBtn extends GetView<AudioController> {
                         duration: const Duration(milliseconds: 250),
                         curve: Curves.easeOutCubic,
                         opacity:
-                            (context.width > _resViewThresholds &&
+                            (width > _resViewThresholds &&
                                 controller.navigationIsExtend.value)
                             ? 1.0
                             : 0.0,
@@ -174,8 +176,10 @@ class CustomNavigation extends GetView<AudioController> {
     final c = controller;
 
     return Obx(() {
+      final height = MediaQuery.sizeOf(context).height;
+      final width = MediaQuery.sizeOf(context).width;
       final isExtend = c.navigationIsExtend.value;
-      final targetWidth = context.width > _resViewThresholds
+      final targetWidth = width > _resViewThresholds
           ? isExtend
                 ? _navigationWidth
                 : _navigationWidthSmall
@@ -210,8 +214,8 @@ class CustomNavigation extends GetView<AudioController> {
                       consumeOutsideTap: true,
                       menuChildren: [
                         Container(
-                          height: Get.height - 200,
-                          width: Get.width / 2,
+                          height: height - 200,
+                          width: width / 2,
                           color: Theme.of(
                             context,
                           ).colorScheme.surfaceContainerHigh,
@@ -344,7 +348,7 @@ class CustomNavigation extends GetView<AudioController> {
                             spacing: 8,
                             children: [
                               Tooltip(
-                                message: context.width > _resViewThresholds
+                                message: width > _resViewThresholds
                                     ? isExtend
                                           ? ""
                                           : "播放列表"
@@ -362,8 +366,7 @@ class CustomNavigation extends GetView<AudioController> {
                                   duration: const Duration(milliseconds: 250),
                                   curve: Curves.easeOutCubic,
                                   opacity:
-                                      (context.width > _resViewThresholds &&
-                                          isExtend)
+                                      (width > _resViewThresholds && isExtend)
                                       ? 1.0
                                       : 0.0,
                                   child: Text(
@@ -386,7 +389,7 @@ class CustomNavigation extends GetView<AudioController> {
                       width: _navigationBtnWidth,
                       height: _navigationBtnHeight,
                       child: TextButton(
-                        onPressed: context.width > _resViewThresholds
+                        onPressed: width > _resViewThresholds
                             ? () {
                                 c.navigationIsExtend.value = !isExtend;
                               }
@@ -410,14 +413,14 @@ class CustomNavigation extends GetView<AudioController> {
                           children: [
                             Tooltip(
                               message: isExtend
-                                  ? context.width > _resViewThresholds
+                                  ? width > _resViewThresholds
                                         ? "收起"
                                         : "空间不足"
-                                  : context.width > _resViewThresholds
+                                  : width > _resViewThresholds
                                   ? "展开"
                                   : "空间不足",
                               child: Icon(
-                                isExtend && context.width > _resViewThresholds
+                                isExtend && width > _resViewThresholds
                                     ? PhosphorIconsLight.caretLeft
                                     : PhosphorIconsLight.caretRight,
                                 color: Theme.of(context).colorScheme.onSurface,
@@ -429,8 +432,7 @@ class CustomNavigation extends GetView<AudioController> {
                                 duration: const Duration(milliseconds: 250),
                                 curve: Curves.easeOutCubic,
                                 opacity:
-                                    (context.width > _resViewThresholds &&
-                                        isExtend)
+                                    (width > _resViewThresholds && isExtend)
                                     ? 1.0
                                     : 0.0,
                                 child: Text(

@@ -196,6 +196,8 @@ class _SpeedSetBtn extends StatelessWidget {
       });
     }).toList();
 
+    final height = MediaQuery.sizeOf(context).height;
+
     return Theme(
       data: Theme.of(context).copyWith(
         scrollbarTheme: const ScrollbarThemeData(
@@ -208,9 +210,7 @@ class _SpeedSetBtn extends StatelessWidget {
         menuChildren: speedList,
         controller: menuController,
         style: MenuStyle(
-          maximumSize: WidgetStatePropertyAll(
-            Size.fromHeight(context.height / 2),
-          ),
+          maximumSize: WidgetStatePropertyAll(Size.fromHeight(height / 2)),
           backgroundColor: WidgetStatePropertyAll(
             Theme.of(
               context,
@@ -487,6 +487,9 @@ class _EqualizerBtn extends StatelessWidget {
       );
     }).toList();
 
+    final height = MediaQuery.sizeOf(context).height;
+    final width = MediaQuery.sizeOf(context).width;
+
     showDialog(
       barrierDismissible: true,
       context: context,
@@ -505,8 +508,8 @@ class _EqualizerBtn extends StatelessWidget {
           actionsAlignment: MainAxisAlignment.end,
           actions: <Widget>[
             SizedBox(
-              width: context.width * 2 / 3,
-              height: context.height / 2,
+              width: width * 2 / 3,
+              height: height / 2,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,

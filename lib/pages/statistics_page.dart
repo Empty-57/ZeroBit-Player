@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:zerobit_player/components/music_list_tool.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
@@ -91,6 +92,7 @@ class StatisticsPage extends StatelessWidget {
     );
 
     final subTitleStyle = generalTextStyle(ctx: context, size: 'subtitle');
+    final width = MediaQuery.sizeOf(context).width;
 
     return Container(
       alignment: Alignment.centerLeft,
@@ -147,7 +149,7 @@ class StatisticsPage extends StatelessWidget {
             child: GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: context.width > _resViewThresholds ? 3 : 2,
+              crossAxisCount: width > _resViewThresholds ? 3 : 2,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
               mainAxisExtent: 64,
@@ -320,15 +322,14 @@ class _StatisticsArtistTile extends StatelessWidget {
     required this.maxWidth,
   });
 
-  void _onTileTapped() {
-    Get.toNamed(
+  void _onTileTapped(BuildContext context) {
+    context.push(
       AppRoutes.details,
-      arguments: {
+      extra: {
         'pathList': pathList,
         'title': artist,
         'operateArea': OperateArea.artistDetails,
       },
-      id: 1,
     );
   }
 
@@ -345,7 +346,7 @@ class _StatisticsArtistTile extends StatelessWidget {
     }
 
     return TextButton(
-      onPressed: _onTileTapped,
+      onPressed: () => _onTileTapped(context),
       style: TextButton.styleFrom(
         shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
       ),

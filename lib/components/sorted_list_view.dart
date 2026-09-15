@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:zerobit_player/components/music_list_tool.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
@@ -423,16 +424,15 @@ class _SortedListViewState extends State<SortedListView> {
 
   /// 导航到详情页 传入路径列表和标题
   void _navigateTo(_ContentItem item) {
-    Get.toNamed(
+    context.push(
       AppRoutes.details,
-      arguments: {
+      extra: {
         'pathList': item.paths,
         'title': item.title,
         'operateArea': widget.toRoute == AppRoutes.albumDetails
             ? OperateArea.albumDetails
             : OperateArea.artistDetails,
       },
-      id: 1,
     );
   }
 }
