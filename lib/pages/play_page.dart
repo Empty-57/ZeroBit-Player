@@ -31,6 +31,7 @@ import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import 'package:zerobit_player/tools/lrcTool/parse_lyrics.dart';
 import 'package:zerobit_player/tools/lrcTool/save_lyric.dart';
+import 'package:zerobit_player/tools/paint_cache.dart';
 
 const double _ctrlBtnMinSize = 40.0;
 const double _thumbRadius = 10.0;
@@ -52,6 +53,22 @@ const double _menuBtnHeight = 48;
 const double _menuBtnRadius = 0;
 
 final double _dpr = PlatformDispatcher.instance.views.first.devicePixelRatio;
+
+const LinearGradient _lyricsFadeGradient = LinearGradient(
+  begin: Alignment.topCenter,
+  end: Alignment.bottomCenter,
+  colors: <Color>[
+    Colors.transparent,
+    Colors.black,
+    Colors.black,
+    Colors.transparent,
+  ],
+  stops: <double>[0.0, 0.2, 0.8, 1.0],
+);
+
+final GradientShaderCache _lyricsFadeShaderCache = GradientShaderCache(
+  maxSize: 4,
+);
 
 // --- 歌词搜索控制器 ---
 class _LrcSearchController {
@@ -523,17 +540,10 @@ class _LyricsSide extends StatelessWidget {
     return RepaintBoundary(
       child: ShaderMask(
         shaderCallback: (rect) {
-          return const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.transparent,
-              Colors.black,
-              Colors.black,
-              Colors.transparent,
-            ],
-            stops: [0.0, 0.2, 0.8, 1.0],
-          ).createShader(rect);
+          return _lyricsFadeShaderCache.shader(
+            gradient: _lyricsFadeGradient,
+            rect: rect,
+          );
         },
         blendMode: BlendMode.dstIn,
         child: SizedBox(
@@ -1551,6 +1561,7 @@ class _PlayPageState extends State<PlayPage> {
           radius: 0,
           meshEnable: true,
           onlyDarkMode: true,
+          isPlayPage: true,
           child: Container(
             color: Theme.of(
               context,

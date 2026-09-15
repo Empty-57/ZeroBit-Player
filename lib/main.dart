@@ -38,7 +38,7 @@ import 'package:zerobit_player/pages/local_music_page.dart';
 import 'package:zerobit_player/pages/play_page.dart';
 import 'package:zerobit_player/pages/playlists_preview_page.dart';
 import 'package:zerobit_player/pages/setting_page.dart';
-import 'package:zerobit_player/pages/statistics.dart';
+import 'package:zerobit_player/pages/statistics_page.dart';
 import 'package:zerobit_player/pages/uni_details_page.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
@@ -433,42 +433,102 @@ class _DiagonalSlideTransition extends CustomTransition {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    final primaryCurved = CurvedAnimation(
-      parent: animation,
+    return _DiagonalSlide(
+      animation: animation,
+      secondaryAnimation: secondaryAnimation,
+      child: child,
+    );
+  }
+}
+
+class _DiagonalSlide extends StatefulWidget {
+  const _DiagonalSlide({
+    required this.animation,
+    required this.secondaryAnimation,
+    required this.child,
+  });
+
+  final Animation<double> animation;
+  final Animation<double> secondaryAnimation;
+  final Widget child;
+
+  @override
+  State<_DiagonalSlide> createState() => _DiagonalSlideState();
+}
+
+class _DiagonalSlideState extends State<_DiagonalSlide> {
+  late CurvedAnimation _primaryCurved;
+  late CurvedAnimation _secondaryCurved;
+
+  late Animation<Offset> _inSlide;
+  late Animation<double> _inFade;
+  late Animation<Offset> _outSlide;
+  late Animation<double> _outFade;
+
+  @override
+  void initState() {
+    super.initState();
+    _createAnimations();
+  }
+
+  @override
+  void didUpdateWidget(_DiagonalSlide oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.animation != widget.animation ||
+        oldWidget.secondaryAnimation != widget.secondaryAnimation) {
+      _disposeAnimations();
+      _createAnimations();
+    }
+  }
+
+  void _createAnimations() {
+    _primaryCurved = CurvedAnimation(
+      parent: widget.animation,
       curve: Curves.fastOutSlowIn,
       reverseCurve: Curves.fastOutSlowIn.flipped,
     );
 
-    final secondaryCurved = CurvedAnimation(
-      parent: secondaryAnimation,
+    _secondaryCurved = CurvedAnimation(
+      parent: widget.secondaryAnimation,
       curve: Curves.fastOutSlowIn,
       reverseCurve: Curves.fastOutSlowIn.flipped,
     );
 
-    final inSlide = Tween<Offset>(
+    _inSlide = Tween<Offset>(
       begin: SidebarNavState.beginOffset,
       end: Offset.zero,
-    ).animate(primaryCurved);
+    ).animate(_primaryCurved);
 
-    final inFade = Tween<double>(begin: 0.0, end: 1.0).animate(primaryCurved);
+    _inFade = Tween<double>(begin: 0.0, end: 1.0).animate(_primaryCurved);
 
-    final outSlide = Tween<Offset>(
+    _outSlide = Tween<Offset>(
       begin: Offset.zero,
       end: -SidebarNavState.beginOffset,
-    ).animate(secondaryCurved);
+    ).animate(_secondaryCurved);
 
-    final outFade = Tween<double>(
-      begin: 1.0,
-      end: 0.0,
-    ).animate(secondaryCurved);
+    _outFade = Tween<double>(begin: 1.0, end: 0.0).animate(_secondaryCurved);
+  }
 
+  void _disposeAnimations() {
+    _primaryCurved.dispose();
+    _secondaryCurved.dispose();
+  }
+
+  @override
+  void dispose() {
+    _disposeAnimations();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return FadeTransition(
-      opacity: inFade,
+      opacity: _inFade,
       child: SlideTransition(
-        position: inSlide,
+        position: _inSlide,
         child: FadeTransition(
-          opacity: outFade,
-          child: SlideTransition(position: outSlide, child: child),
+          opacity: _outFade,
+          child: SlideTransition(position: _outSlide, child: widget.child),
         ),
       ),
     );

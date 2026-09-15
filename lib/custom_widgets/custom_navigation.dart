@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
@@ -11,6 +9,7 @@ import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/paint_cache.dart';
 
 class SidebarNavState {
   static Offset beginOffset = const Offset(0.1, 0.1);
@@ -187,7 +186,7 @@ class CustomNavigation extends GetView<AudioController> {
         child: BackdropFilter(
           enabled:
               SettingController.instance.backgroundImagePath.value.isNotEmpty,
-          filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          filter: ImageFilterCache.imageFilter(sigma: 16),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutCubic,

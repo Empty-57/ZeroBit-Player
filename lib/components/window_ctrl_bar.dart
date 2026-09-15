@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
@@ -12,6 +10,7 @@ import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/controller/window_ctrl.dart';
 import 'package:zerobit_player/theme_manager.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/paint_cache.dart';
 
 import 'get_snack_bar.dart';
 
@@ -446,7 +445,7 @@ class WindowControllerBar extends GetView<MyWindowListener> {
             child: Obx(
               () => BackdropFilter(
                 enabled: settingController.backgroundImagePath.value.isNotEmpty,
-                filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                filter: ImageFilterCache.imageFilter(sigma: 16),
                 child: content,
               ),
             ),

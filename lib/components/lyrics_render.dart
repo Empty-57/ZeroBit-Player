@@ -7,6 +7,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:zerobit_player/components/lyric_text.dart';
 import 'package:zerobit_player/components/spring_list_view.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/lyric_ctrl.dart';
@@ -100,12 +101,14 @@ class _LrcLyricWidget extends StatelessWidget {
   final bool isCurrent;
   final TextAlign textAlign;
   final double highLightAlpha;
+  final int blurSigma;
   const _LrcLyricWidget({
     required this.text,
     required this.style,
     required this.isCurrent,
     required this.textAlign,
     this.highLightAlpha = _highLightAlpha,
+    this.blurSigma = 0,
   });
   @override
   Widget build(BuildContext context) {
@@ -116,7 +119,7 @@ class _LrcLyricWidget extends StatelessWidget {
             ? style.color?.withValues(alpha: highLightAlpha)
             : style.color,
       ),
-      child: Text(text, textAlign: textAlign, softWrap: true),
+      child: LyricText(text, textAlign: textAlign, blurSigma: blurSigma),
     );
   }
 }
@@ -203,17 +206,34 @@ class _HighlightedWordState extends State<_HighlightedWord> {
   late List<double> _windowStarts;
 
   // 正常显示文本的样式
-  late final TextStyle _normalStyle = widget.style.copyWith(
-    color: widget.style.color?.withValues(alpha: 1),
-  );
+  late TextStyle _normalStyle;
 
   // 提取基础颜色以备 shadow 计算使用
-  late final Color _baseColor = widget.style.color ?? Colors.white;
+  late Color _baseColor;
 
   @override
   void initState() {
     super.initState();
     _initCachedValues();
+    _initStyles();
+  }
+
+  @override
+  void didUpdateWidget(_HighlightedWord oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.text != widget.text) {
+      _initCachedValues();
+    }
+    if (oldWidget.style != widget.style) {
+      _initStyles();
+    }
+  }
+
+  void _initStyles() {
+    _normalStyle = widget.style.copyWith(
+      color: widget.style.color?.withValues(alpha: 1),
+    );
+    _baseColor = widget.style.color ?? Colors.white;
   }
 
   void _initCachedValues() {
@@ -256,13 +276,7 @@ class _HighlightedWordState extends State<_HighlightedWord> {
     if (widget.duartion < _rippleThreshold) {
       // 小于阈值则不应用涟漪效果
       return _shaderMaskWrap(
-        Text(
-          widget.text,
-          style: widget.style.copyWith(
-            color: widget.style.color?.withValues(alpha: 1),
-          ),
-          strutStyle: widget.strutStyle,
-        ),
+        Text(widget.text, style: _normalStyle, strutStyle: widget.strutStyle),
       );
     }
 
@@ -356,6 +370,7 @@ class _KaraOkLyricWidget extends StatelessWidget {
   final int lrcAlignmentIndex;
   final LyricController lyricController;
   final StrutStyle strutStyle;
+  final int blurSigma;
 
   const _KaraOkLyricWidget({
     required this.text,
@@ -365,33 +380,28 @@ class _KaraOkLyricWidget extends StatelessWidget {
     required this.lyricController,
     required this.strutStyle,
     required this.isPrevLine,
+    required this.blurSigma,
   });
 
-  Widget _createTextRich() {
-    return Text.rich(
-      TextSpan(
-        children: text.map((wordEntry) {
-          return WidgetSpan(
-            alignment: PlaceholderAlignment.baseline,
-            baseline: TextBaseline.alphabetic,
-            child: Text(
-              style: style,
-              wordEntry.lyricWord,
-              strutStyle: strutStyle,
-            ),
-          );
-        }).toList(),
-      ),
-      textAlign: _lrcTextAlign[lrcAlignmentIndex],
+  Widget _createPlainText() {
+    final StringBuffer buffer = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      buffer.write(text[i].lyricWord);
+    }
+
+    return LyricText(
+      buffer.toString(),
+      style: style,
       strutStyle: strutStyle,
-      softWrap: true,
+      textAlign: _lrcTextAlign[lrcAlignmentIndex],
+      blurSigma: blurSigma,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     if (!isCurrentLine && !isPrevLine) {
-      return _createTextRich();
+      return _createPlainText();
     }
 
     final gradientColors = <Color>[
@@ -489,10 +499,11 @@ class _KaraOkLyricWidget extends StatelessWidget {
                   curve: Curves.easeInOut,
                   tween: ColorTween(begin: beginColor, end: targetColor),
                   builder: (_, color, __) {
-                    return Text(
+                    return LyricText(
                       word,
                       style: style.copyWith(color: color),
                       strutStyle: strutStyle,
+                      blurSigma: blurSigma,
                     );
                   },
                 );
@@ -611,9 +622,13 @@ class _SyllableFloatWidgetState extends State<_SyllableFloatWidget>
     return AnimatedBuilder(
       animation: _curvedAnimation,
       builder: (context, child) {
-        final double value = _curvedAnimation.value;
+        final double dy = ui.lerpDouble(
+          0.0,
+          _floatingY,
+          _curvedAnimation.value,
+        )!;
         return Transform.translate(
-          offset: Offset(0, ui.lerpDouble(0.0, _floatingY, value)!),
+          offset: Offset(0, dy),
           filterQuality: FilterQuality.low,
           child: child,
         );
@@ -658,7 +673,6 @@ class _LyricsRenderState extends State<LyricsRender> {
   void dispose() {
     _lyricController.lrcViewScrollController = null;
     _isHover.close();
-    _blurFilterCache.clear();
 
     if (Get.isRegistered<SpringListController>()) {
       Get.delete<SpringListController>();
@@ -740,10 +754,10 @@ class _LyricsRenderState extends State<LyricsRender> {
                       : TextAlign.right;
 
                   Widget creatLyricItem(int index) {
-                    if ((c.currentlyricType == LyricFormat.lrc &&
+                    if (index < 0 ||
+                        (c.currentlyricType == LyricFormat.lrc &&
                             c.lineTextList[index].isEmpty &&
-                            c.translateList[index].isEmpty) ||
-                        index == -1) {
+                            c.translateList[index].isEmpty)) {
                       return const SizedBox.shrink();
                     }
                     return _StaggeredLyricItem(
@@ -948,8 +962,8 @@ class _StaggeredLyricItem extends StatelessWidget {
 
     return Obx(() {
       final int currentLineIndex = lyricController.currentLineIndex.value;
-      final renderWidget =
-          (index - currentLineIndex).abs() <= lyricController.visibleItemCount;
+      final int distance = (currentLineIndex - index).abs();
+      final renderWidget = distance <= lyricController.visibleItemCount;
 
       final isPointerScrolling = lyricController.isPointerScroll.value;
       if (!renderWidget && useSpring && !isPointerScrolling) {
@@ -958,6 +972,14 @@ class _StaggeredLyricItem extends StatelessWidget {
 
       final isCurrent = index == currentLineIndex;
       final bool isPrevLine = (currentLineIndex - index == 1);
+      final int blurSigma =
+          !useBlur ||
+              isCurrent ||
+              (index == 0 && currentLineIndex <= 0) ||
+              isPointerScrolling ||
+              !renderWidget
+          ? 0
+          : distance.clamp(0, 4);
 
       final content = SizedBox(
         width: double.infinity,
@@ -980,6 +1002,7 @@ class _StaggeredLyricItem extends StatelessWidget {
                   style: lyricStyle,
                   isCurrent: isCurrent,
                   textAlign: textAlign,
+                  blurSigma: blurSigma,
                 ),
                 isCurrent: isCurrent,
               )
@@ -993,6 +1016,7 @@ class _StaggeredLyricItem extends StatelessWidget {
                   lrcAlignmentIndex: lrcAlignment,
                   lyricController: lyricController,
                   strutStyle: strutStyle,
+                  blurSigma: blurSigma,
                 ),
                 isCurrent: isCurrent,
               ),
@@ -1005,6 +1029,7 @@ class _StaggeredLyricItem extends StatelessWidget {
                 isCurrent: isCurrent,
                 textAlign: textAlign,
                 highLightAlpha: _currentAlpha,
+                blurSigma: blurSigma,
               ),
             ),
 
@@ -1016,9 +1041,10 @@ class _StaggeredLyricItem extends StatelessWidget {
                 isCurrent: isCurrent,
                 textAlign: textAlign,
                 highLightAlpha: _currentAlpha,
+                blurSigma: blurSigma,
               ),
             ),
-            if (isCurrent)
+            if (isCurrent || isPrevLine)
               _InterludeWidget(
                 lyricController: lyricController,
                 lrcAlignment: lrcAlignment,
@@ -1030,30 +1056,6 @@ class _StaggeredLyricItem extends StatelessWidget {
         ),
       );
 
-      final int diff = (currentLineIndex - index).abs(); // 视距
-
-      // 是否需要挂载 ImageFiltered (当前行保持挂载防动画中断，其余行在视距内挂载)
-      final bool applyFilter =
-          useBlur && (isCurrent || diff <= lyricController.visibleItemCount);
-
-      Widget finalContent = content;
-
-      if (applyFilter) {
-        // 首行和当前行模糊度为 0，其余行未滚动时根据距离取 1~4
-        final double targetSigma =
-            isCurrent ||
-                (index <= 0 && currentLineIndex <= 0) ||
-                isPointerScrolling
-            ? 0.0
-            : diff.clamp(0, 4).toDouble();
-
-        finalContent = ImageFiltered(
-          enabled: targetSigma > 0,
-          imageFilter: _getBlurFilter(targetSigma), // 取缓存的ImageFilter
-          child: content,
-        );
-      }
-
       return TextButton(
         onPressed: () {
           audioController.throttledSeek(startTime);
@@ -1063,25 +1065,10 @@ class _StaggeredLyricItem extends StatelessWidget {
           padding: lrcPadding,
           overlayColor: hoverColor,
         ),
-        child: finalContent,
+        child: content,
       );
     });
   }
-}
-
-// 将 ImageFilter 缓存下来，每次使用缓存的 ImageFilter 防止内存泄露
-final Map<double, ui.ImageFilter> _blurFilterCache = {};
-
-/// 获取缓存的 ImageFilter
-ui.ImageFilter _getBlurFilter(double sigma) {
-  return _blurFilterCache.putIfAbsent(
-    sigma,
-    () => ui.ImageFilter.blur(
-      sigmaX: sigma,
-      sigmaY: sigma,
-      tileMode: TileMode.decal,
-    ),
-  );
 }
 
 class _InterludeTransition extends StatefulWidget {

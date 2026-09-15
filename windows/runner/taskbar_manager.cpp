@@ -232,26 +232,29 @@ void TaskbarManager::SetCustomThumbnail(const std::vector<uint8_t> &imageBytes)
     if (CreateStreamOnHGlobal(hMem, TRUE, &pStream) == S_OK)
     {
         Bitmap *tempBitmap = Bitmap::FromStream(pStream);
-        if (tempBitmap && tempBitmap->GetLastStatus() == Ok)
+        if (tempBitmap)
         {
-            int w = tempBitmap->GetWidth();
-            int h = tempBitmap->GetHeight();
+            if (tempBitmap->GetLastStatus() == Ok)
+            {
+                int w = tempBitmap->GetWidth();
+                int h = tempBitmap->GetHeight();
 
-            if (custom_thumbnail_bitmap_)
-                delete custom_thumbnail_bitmap_;
+                if (custom_thumbnail_bitmap_)
+                    delete custom_thumbnail_bitmap_;
 
-            custom_thumbnail_bitmap_ = new Bitmap(w, h, PixelFormat32bppARGB);
-            Graphics g(custom_thumbnail_bitmap_);
-            g.DrawImage(tempBitmap, 0, 0, w, h);
+                custom_thumbnail_bitmap_ = new Bitmap(w, h, PixelFormat32bppARGB);
+                Graphics g(custom_thumbnail_bitmap_);
+                g.DrawImage(tempBitmap, 0, 0, w, h);
 
+                is_custom_thumbnail_active_ = true;
+
+                BOOL fVal = TRUE;
+                DwmSetWindowAttribute(hwnd_, DWMWA_FORCE_ICONIC_REPRESENTATION, &fVal, sizeof(fVal));
+                DwmSetWindowAttribute(hwnd_, DWMWA_HAS_ICONIC_BITMAP, &fVal, sizeof(fVal));
+
+                DwmInvalidateIconicBitmaps(hwnd_);
+            }
             delete tempBitmap;
-            is_custom_thumbnail_active_ = true;
-
-            BOOL fVal = TRUE;
-            DwmSetWindowAttribute(hwnd_, DWMWA_FORCE_ICONIC_REPRESENTATION, &fVal, sizeof(fVal));
-            DwmSetWindowAttribute(hwnd_, DWMWA_HAS_ICONIC_BITMAP, &fVal, sizeof(fVal));
-
-            DwmInvalidateIconicBitmaps(hwnd_);
         }
         pStream->Release();
     }

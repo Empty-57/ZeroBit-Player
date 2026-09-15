@@ -1,6 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:zerobit_player/tools/paint_cache.dart';
+
+const LinearGradient _fadeGradient = LinearGradient(
+  begin: Alignment.centerLeft,
+  end: Alignment.centerRight,
+  colors: [Colors.transparent, Colors.black, Colors.black, Colors.transparent],
+  stops: [0.0, 0.05, 0.95, 1.0],
+);
+
+final GradientShaderCache _fadeShaderCache = GradientShaderCache(maxSize: 16);
 
 class ScrollText extends StatefulWidget {
   final String text;
@@ -122,17 +132,7 @@ class ScrollTextState extends State<ScrollText> {
     if (_shouldShowFade) {
       return ShaderMask(
         shaderCallback: (Rect bounds) {
-          return const LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [
-              Colors.transparent,
-              Colors.black,
-              Colors.black,
-              Colors.transparent,
-            ],
-            stops: [0.0, 0.05, 0.95, 1.0],
-          ).createShader(bounds);
+          return _fadeShaderCache.shader(gradient: _fadeGradient, rect: bounds);
         },
         blendMode: BlendMode.dstIn,
         child: scrollText,

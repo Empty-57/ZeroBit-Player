@@ -3,6 +3,15 @@ import 'package:get/get.dart';
 import 'package:mesh_gradient/mesh_gradient.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 
+final AnimatedMeshGradientOptions _meshOptions = AnimatedMeshGradientOptions(
+  frequency: 5,
+  amplitude: 30,
+  speed: 0.6,
+  grain: 0,
+);
+
+final Widget _meshChild = Container();
+
 class LyricsMesh extends GetView<AudioController> {
   const LyricsMesh({super.key});
 
@@ -11,13 +20,8 @@ class LyricsMesh extends GetView<AudioController> {
     return Obx(
       () => AnimatedMeshGradient(
         colors: controller.coverPalette.value,
-        options: AnimatedMeshGradientOptions(
-          frequency: 5,
-          amplitude: 30,
-          speed: 0.6,
-          grain: 0,
-        ),
-        child: Container(),
+        options: _meshOptions,
+        child: _meshChild,
       ),
     );
   }

@@ -34,6 +34,8 @@ enum AudioState { stop, playing, pause, ended }
 enum GetBuilderId { lyricRender }
 
 class AudioController extends GetxController {
+  int _metadataGeneration = 0; // 防异步竞态ID
+
   final currentPath = ''.obs;
   final currentIndex = (-1).obs;
   final ValueNotifier<double> currentMs100 = ValueNotifier<double>(0.0);
@@ -96,6 +98,11 @@ class AudioController extends GetxController {
     Colors.grey,
   ].obs;
 
+  /// 封面调色板缓存，key 为音频文件路径。
+  /// 缓存后来回切歌不必重复计算。
+  final Map<String, List<Color>> _paletteCache = {};
+  static const int _paletteCacheMaxSize = 64;
+
   int reTryCount = 0;
 
   // 这里预先缓存已处理歌词数据
@@ -155,29 +162,23 @@ class AudioController extends GetxController {
   }
 
   @override
-  void dispose() {
-    currentMs100.removeListener(updateProgress);
-    super.dispose();
-  }
-
-  @override
   void onInit() async {
     super.onInit();
 
-    ever(currentMetadata, (_) async {
+    ever(currentMetadata, (metadata) async {
+      final generation = ++_metadataGeneration;
       try {
         await _syncInfo();
       } catch (e) {
         debugPrint(e.toString());
         _isSyncing = false;
       }
+      if (generation != _metadataGeneration) return;
       _settingController.lastAudioInfo[SettingController.lastAudioMetadataKey] =
-          currentMetadata.value;
+          metadata;
       await _settingController.putScalableCache();
-      if (Get.isRegistered<SpringListController>()) {
-        _springController.clearState();
-      }
-      await loadLyrics(currentMetadata.value.path);
+      if (generation != _metadataGeneration) return;
+      await loadLyrics(metadata.path);
     });
   }
 
@@ -211,14 +212,16 @@ class AudioController extends GetxController {
     }
   }
 
-  Future<void> _checkAndGetLyrics4Net() async {
-    final hasLocalLyrics = currentLyrics.value?.parsedLrc?.isNotEmpty ?? false;
-    showLyricRender = hasLocalLyrics;
+  /// 检查是否有本地歌词，没有则从API获取歌词并判断是否保存到本地
+  Future<ParsedLyricModel?> _checkAndGetLyrics4Net(
+    ParsedLyricModel? localLyrics,
+    MusicCache metadata,
+  ) async {
+    final hasLocalLyrics = localLyrics?.parsedLrc?.isNotEmpty ?? false;
     if (hasLocalLyrics || !_settingController.autoGetLyrics.value) {
-      return;
+      return localLyrics;
     }
 
-    final metadata = currentMetadata.value;
     final searchText = "${metadata.title} - ${metadata.artist}";
 
     try {
@@ -228,10 +231,12 @@ class AudioController extends GetxController {
         limit: 1,
       );
 
-      if (searchedLyric.isEmpty) return;
+      if (searchedLyric.isEmpty) {
+        return localLyrics;
+      }
 
       final lyricInfo = searchedLyric.first?.lyric;
-      if (lyricInfo == null) return;
+      if (lyricInfo == null) return localLyrics;
 
       final type = lyricInfo.type;
       List<LyricEntry<dynamic>>? parsedResult;
@@ -252,22 +257,18 @@ class AudioController extends GetxController {
       }
 
       if (parsedResult == null || parsedResult.isEmpty) {
-        return;
+        return localLyrics;
       }
-
-      currentLyrics.value = ParsedLyricModel(
-        parsedLrc: parsedResult,
-        type: type,
-      );
-      showLyricRender = true;
 
       debugPrint('AutoGetLyrics4Net ↑↑');
 
       if (_settingController.autoDownloadLrc.value) {
-        _saveLyricsSilently(path: currentPath.value, lrcData: lyricInfo);
+        _saveLyricsSilently(path: metadata.path, lrcData: lyricInfo);
       }
+      return ParsedLyricModel(parsedLrc: parsedResult, type: type);
     } catch (e, stackTrace) {
       debugPrint('Error getting lyrics: $e\n$stackTrace');
+      return localLyrics;
     }
   }
 
@@ -281,28 +282,37 @@ class AudioController extends GetxController {
   }
 
   Future<void> loadLyrics(String path, {bool changed = false}) async {
-    if (!changed) {
-      currentLyrics.value = await getParsedLyric(filePath: path);
-    }
+    final metadata = currentMetadata.value;
+    final requestPath = changed ? metadata.path : path;
+    if (requestPath != metadata.path) return;
 
-    await _checkAndGetLyrics4Net();
-    final parsedLrc = currentLyrics.value?.parsedLrc;
+    var lyrics = changed
+        ? currentLyrics.value
+        : await getParsedLyric(filePath: requestPath);
 
-    // 重要：在这里就处理歌词数据，渲染端直接用,防止内存泄露
+    lyrics = await _checkAndGetLyrics4Net(lyrics, metadata);
+
+    final parsedLrc = lyrics?.parsedLrc;
+    showLyricRender = parsedLrc?.isNotEmpty ?? false;
     if (showLyricRender) {
-      currentlyricType = currentLyrics.value!.type;
+      currentlyricType = lyrics!.type;
       lineTextList = parsedLrc!.map((v) => v.lyricText).toList();
       translateList = parsedLrc.map((v) => v.translate).toList();
       startTime = parsedLrc.map((v) => v.start).toList();
       romaList = parsedLrc.map((v) => v.roma).toList();
       lineDurationList = parsedLrc.map((v) => v.nextTime - v.start).toList();
     } else {
+      currentlyricType = LyricFormat.lrc;
       lineTextList.clear();
       translateList.clear();
       startTime.clear();
       romaList.clear();
       lineDurationList.clear();
     }
+    if (Get.isRegistered<SpringListController>()) {
+      _springController.clearState();
+    }
+    currentLyrics.value = lyrics;
     update([GetBuilderId.lyricRender]);
   }
 
@@ -393,20 +403,31 @@ class AudioController extends GetxController {
       return;
     }
 
+    final String cacheKey = currentMetadata.value.path;
+
+    // 命中缓存直接复用
+    final List<Color>? cachedPalette = _paletteCache[cacheKey];
+    if (cachedPalette != null) {
+      _applyCoverPalette(List<Color>.of(cachedPalette));
+      return;
+    }
+
     final src =
         CoverLRUCache.get(currentPath.value) ??
         await getCover(path: currentMetadata.value.path, sizeFlag: 0) ??
         kTransparentImage;
 
+    ui.Codec? codec;
+    ui.Image? image;
     try {
       // 裁剪为112*112大小
-      final ui.Codec codec = await ui.instantiateImageCodec(
+      codec = await ui.instantiateImageCodec(
         src,
         targetWidth: 112,
         targetHeight: 112,
       );
       final ui.FrameInfo frameInfo = await codec.getNextFrame();
-      final ui.Image image = frameInfo.image;
+      image = frameInfo.image;
 
       // 按RGBA格式转为字节数组
       final ByteData? byteData = await image.toByteData(
@@ -415,28 +436,29 @@ class AudioController extends GetxController {
 
       // 释放资源
       image.dispose();
+      image = null;
       codec.dispose();
+      codec = null;
 
-      if (byteData == null) {
-        return;
-      }
+      if (byteData == null) return;
 
       // 将RGBA格式转为Material支持的ARGB格式
       final Uint8List rgbaBytes = byteData.buffer.asUint8List();
-      final List<int> argbPixels = [];
+      final int pixelCount = rgbaBytes.length >> 2;
+      final Int32List argbPixels = Int32List(pixelCount);
 
-      for (int i = 0; i < rgbaBytes.length; i += 4) {
-        final int r = rgbaBytes[i];
-        final int g = rgbaBytes[i + 1];
-        final int b = rgbaBytes[i + 2];
-        final int a = rgbaBytes[i + 3];
+      for (int p = 0, i = 0; p < pixelCount; p++, i += 4) {
         // 合成 32 位 ARGB 整数
-        final int argb = (a << 24) | (r << 16) | (g << 8) | b;
-        argbPixels.add(argb);
+        argbPixels[p] =
+            (rgbaBytes[i + 3] << 24) |
+            (rgbaBytes[i] << 16) |
+            (rgbaBytes[i + 1] << 8) |
+            rgbaBytes[i + 2];
       }
 
       // 量化，评分，把最合适的颜色排在前面
       final quantizerResult = await QuantizerCelebi().quantize(argbPixels, 128);
+
       final Map<int, int> colorToCount = quantizerResult.colorToCount;
       final List<int> rankedColors = Score.score(colorToCount);
 
@@ -444,10 +466,12 @@ class AudioController extends GetxController {
       final List<Color> extractedColors = rankedColors
           .map((c) => Color(c))
           .toList();
+
+      final List<Color> palette;
       if (extractedColors.length >= 4) {
-        coverPalette.value = extractedColors.sublist(0, 4);
+        palette = extractedColors.sublist(0, 4);
       } else {
-        coverPalette.value = List<Color>.from(extractedColors)
+        palette = List<Color>.from(extractedColors)
           ..addAll(
             [
               Colors.black12,
@@ -458,13 +482,25 @@ class AudioController extends GetxController {
           );
       }
 
-      if (coverPalette.isNotEmpty) {
-        // 第一个颜色即为主题色
-        _setThemeColor(color: coverPalette.first.toARGB32());
-      }
+      if (_paletteCache.length >= _paletteCacheMaxSize) _paletteCache.clear();
+      _paletteCache[cacheKey] = List<Color>.unmodifiable(palette);
+
+      _applyCoverPalette(palette);
     } catch (e) {
       debugPrint("使用 material_color_utilities 提取封面主题色出错: $e");
       _setThemeColor(color: 0xff27272a);
+    } finally {
+      image?.dispose();
+      codec?.dispose();
+    }
+  }
+
+  void _applyCoverPalette(List<Color> palette) {
+    coverPalette.value = palette;
+
+    if (palette.isNotEmpty) {
+      // 第一个颜色即为主题色
+      _setThemeColor(color: palette.first.toARGB32());
     }
   }
 

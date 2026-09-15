@@ -1,13 +1,22 @@
 import 'dart:typed_data';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zerobit_player/components/lyrics_mesh.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/theme_manager.dart';
+import 'package:zerobit_player/tools/paint_cache.dart';
 
 const int _coverBigRenderSize = 800;
+
+final LinearGradient _maskGradient = LinearGradient(
+  begin: Alignment.topCenter,
+  end: Alignment.bottomCenter,
+  colors: <Color>[Colors.white.withValues(alpha: 0.4), Colors.transparent],
+  tileMode: TileMode.clamp,
+);
+
+final GradientShaderCache _gradientShaderCache = GradientShaderCache();
 
 class BlurWithCoverBackground extends StatelessWidget {
   final Rx<Uint8List> cover;
@@ -19,6 +28,7 @@ class BlurWithCoverBackground extends StatelessWidget {
   final double radius;
   final bool meshEnable;
   final bool onlyDarkMode;
+  final bool isPlayPage;
 
   const BlurWithCoverBackground({
     super.key,
@@ -31,6 +41,7 @@ class BlurWithCoverBackground extends StatelessWidget {
     this.radius = 8.0,
     this.meshEnable = false,
     this.onlyDarkMode = false,
+    this.isPlayPage = false,
   });
 
   SettingController get _settingController => SettingController.instance;
@@ -57,7 +68,8 @@ class BlurWithCoverBackground extends StatelessWidget {
               return LyricsMesh();
             }
 
-            if (_settingController.backgroundImagePath.value.isNotEmpty) {
+            if (_settingController.backgroundImagePath.value.isNotEmpty &&
+                !isPlayPage) {
               return const SizedBox.shrink();
             }
 
@@ -79,30 +91,28 @@ class BlurWithCoverBackground extends StatelessWidget {
               );
 
               return Opacity(
-                opacity: themeMode == 'dark' ? 0.9 : 0.6,
+                opacity: isPlayPage
+                    ? 1.0
+                    : themeMode == 'dark'
+                    ? 0.9
+                    : 0.6,
                 child: ClipRRect(
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(radius),
                   ),
                   child: ImageFiltered(
-                    imageFilter: ImageFilter.blur(
-                      sigmaX: sigma,
-                      sigmaY: sigma,
+                    imageFilter: ImageFilterCache.imageFilter(
+                      sigma: sigma,
                       tileMode: TileMode.clamp,
                     ),
                     child: useGradient
                         ? ShaderMask(
                             blendMode: BlendMode.modulate,
                             shaderCallback: (Rect bounds) {
-                              return LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: <Color>[
-                                  Colors.white.withValues(alpha: 0.4),
-                                  Colors.transparent,
-                                ],
-                                tileMode: TileMode.clamp,
-                              ).createShader(bounds);
+                              return _gradientShaderCache.shader(
+                                gradient: _maskGradient,
+                                rect: bounds,
+                              );
                             },
                             child: rawCover,
                           )

@@ -41,6 +41,7 @@ class StatisticsController {
   String? _lastTitle; // 上次统计对应的歌曲标题
   num _lastSec = 0; // 上次统计时的播放进度
   bool _countedThisPlay = false; // 本次收听是否已经记过一次播放数
+  bool _rankDirty = true; // 排行榜是否需要重算
 
   Future<void> init() async {
     playedStatisticsList = _statisticsCacheBox.getAll();
@@ -49,6 +50,7 @@ class StatisticsController {
   }
 
   Future<void> refresh() async {
+    _rankDirty = true;
     updateStatistics();
     totalTime.value = _getTotalTime();
     totalSize.value = await _getTotalSize();
@@ -130,6 +132,7 @@ class StatisticsController {
       totalPlayedCount.value = totalPlayedCountRaw.toString();
     }
 
+    _rankDirty = true;
     sortList();
   }
 
@@ -200,6 +203,9 @@ class StatisticsController {
     if (playedStatisticsList.isEmpty) {
       return;
     }
+    if (!_rankDirty) return;
+    _rankDirty = false;
+
     playedStatisticsList.sort((a, b) {
       // 分别按照播放次数，时长，时间戳排序
       final countCompare = b.playedCount.compareTo(a.playedCount);

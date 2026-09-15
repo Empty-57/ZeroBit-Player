@@ -72,6 +72,7 @@ class LyricController extends GetxController {
         return;
       }
       _currentLine = lyrics[lineIndex].lyricText;
+      if (_currentLine!.isEmpty) return;
 
       final rowCurrentLine = lyrics[lineIndex];
       final lastWord = _currentLine![_currentLine!.length - 1];
@@ -87,7 +88,7 @@ class LyricController extends GetxController {
       _wordsLen = _currentLine!.length;
     } else {
       final line = _currentLine;
-      if (line == null) return;
+      if (line == null || line.isEmpty) return;
 
       final wordIndex = currentWordIndexNotifier.value.clamp(
         0,
@@ -168,6 +169,10 @@ class LyricController extends GetxController {
     );
     if (newLineIndex != currentLineIndex.value) {
       _interval = 0;
+      _currentLine = null;
+      _wordsLen = 0;
+      _wordProgressIncrement = 0;
+      currentWordIndexNotifier.value = -1;
       wordProgress.value = 0;
 
       if (Get.isRegistered<SpringListController>()) {

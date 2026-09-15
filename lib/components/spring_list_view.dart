@@ -181,6 +181,7 @@ class SpringListController extends GetxController {
   void clearState() {
     _boxKeys.clear();
     _currentIndex.value = 0;
+    _jumpNotifier.value = _JumpSignal(_jumpNotifier.value.triggerId + 1, 0);
     _cachedVisibleItemCount = null;
     cachedScreenHeight = 0.0;
     if (_scrollController.hasClients) {
@@ -349,6 +350,8 @@ class _SpringItemState extends State<_SpringItem>
 
   void _triggerAnimation(double deltaY) {
     if (!mounted) return;
+    _delayTimer?.cancel();
+    final currentTriggerId = ++_animTriggerId;
 
     final int relativeIndex =
         widget.index -
@@ -358,7 +361,7 @@ class _SpringItemState extends State<_SpringItem>
     final int relativeIndexAbs = relativeIndex.abs();
 
     // 在屏幕外的元素不执行动画，直接归位
-    if (relativeIndexAbs > widget.controller._visibleItemCount) {
+    if (deltaY == 0 || relativeIndexAbs > widget.controller._visibleItemCount) {
       _animController?.value = 0.0;
       return;
     }
@@ -367,7 +370,6 @@ class _SpringItemState extends State<_SpringItem>
         (relativeIndex < 0 && SpringListController._centerOffset != 0)
         ? 0
         : (relativeIndexAbs + 1) * widget.controller._delay;
-    final currentTriggerId = ++_animTriggerId;
 
     // 动画准备阶段：瞬间将元素偏移到 deltaY 的位置
     final needsBuilder = _animController == null;
@@ -379,7 +381,6 @@ class _SpringItemState extends State<_SpringItem>
     }
     controller.value = deltaY;
 
-    _delayTimer?.cancel();
     if (delayMs > 0) {
       _delayTimer = Timer(Duration(milliseconds: delayMs), () {
         if (mounted && currentTriggerId == _animTriggerId) {
