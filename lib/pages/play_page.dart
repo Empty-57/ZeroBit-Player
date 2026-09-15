@@ -615,7 +615,6 @@ class _CoverSideState extends State<_CoverSide> {
       fontSize: widget.subTitleStyle.fontSize,
       forceStrutHeight: true,
     );
-    final height = MediaQuery.sizeOf(context).height;
     final width = MediaQuery.sizeOf(context).width;
 
     return SizedBox(

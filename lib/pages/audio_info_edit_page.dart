@@ -238,7 +238,6 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
 
       // 安全关闭
       if (mounted) context.pop();
-      ;
     } catch (e) {
       debugPrint("保存失败: $e");
       _showError('保存失败，请重试');

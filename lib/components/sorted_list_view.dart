@@ -1,8 +1,6 @@
 import 'dart:collection';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:zerobit_player/components/music_list_tool.dart';
 import 'package:zerobit_player/field/app_routes.dart';
@@ -14,13 +12,17 @@ import 'package:zerobit_player/tools/func/general_style.dart';
 const double _itemHeight = 230.0;
 const double _itemWidth = 180.0;
 
-const double _itemHeight_2 = 72;
-const double _itemWidth_2 = 240;
+const double _itemHeight_2 = 72.0;
+const double _itemWidth_2 = 240.0;
 
 const double _coverSize = _itemWidth;
 const BorderRadius _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 const BorderRadius _borderRadius = BorderRadius.all(Radius.circular(4));
 const double _itemSpacing = 12.0;
+
+// 固定字母标题区域的高度
+const double _sectionHeaderHeight = 54.0;
+const double _bottomPadding = 128.0;
 
 /// 代表一个内容项
 class _ContentItem {
@@ -35,17 +37,12 @@ class _ContentItem {
   });
 }
 
-/// 代表一个包含 GlobalKey 且按首字母分组的内容项列表
+/// 代表一个按首字母分组的内容项列表
 class _SectionItem {
   final String letter;
-  final GlobalKey key;
   final List<_ContentItem> items;
 
-  const _SectionItem({
-    required this.letter,
-    required this.key,
-    required this.items,
-  });
+  const _SectionItem({required this.letter, required this.items});
 }
 
 /// 视图类型：专辑 or 艺术家
@@ -78,11 +75,11 @@ class SortedListView extends StatefulWidget {
 }
 
 class _SortedListViewState extends State<SortedListView> {
-  // 以首字母为键、以 GlobalKey 为值的映射，用于定位滚动
-  final Map<String, GlobalKey> _sectionKeys = {};
   late final ScrollController _scrollController;
-
   List<_SectionItem> _sections = [];
+
+  // 保存每个字母对应的精确像素偏移量
+  final Map<String, double> _letterOffsets = {};
 
   // 样式缓存，避免在 build 阶段重复创建
   late TextStyle _letterTitleStyle;
@@ -136,13 +133,12 @@ class _SortedListViewState extends State<SortedListView> {
   @override
   void dispose() {
     _scrollController.dispose();
-    _sectionKeys.clear();
     _sections.clear();
+    _letterOffsets.clear();
     super.dispose();
   }
 
   void _processData() {
-    // 建立临时字典用于快速查找封面，用完即销毁，不常驻内存
     final Map<String, MusicCache> tempItemMap = {
       for (final item in widget.items) item.path: item,
     };
@@ -152,11 +148,10 @@ class _SortedListViewState extends State<SortedListView> {
       final key = entry.key;
       if (key.isEmpty) continue;
 
-      final letter = key[0]; // 首字母
-      final title = key.substring(1); // 标题
-      final paths = entry.value; // 音频路径列表
+      final letter = key[0];
+      final title = key.substring(1);
+      final paths = entry.value;
 
-      // 取第一首作为封面
       final coverMusic = paths.isNotEmpty ? tempItemMap[paths[0]] : null;
 
       grouped
@@ -166,24 +161,55 @@ class _SortedListViewState extends State<SortedListView> {
           );
     }
 
-    // 清理已失效的 section key，避免 Map 无限膨胀
-    _sectionKeys.removeWhere((k, _) => !grouped.containsKey(k));
-
     _sections = grouped.entries.map((e) {
-      final sectionKey = _sectionKeys.putIfAbsent(e.key, () => GlobalKey());
-      return _SectionItem(letter: e.key, key: sectionKey, items: e.value);
+      return _SectionItem(letter: e.key, items: e.value);
     }).toList();
   }
 
-  // 根据首字母找到对应 GlobalKey 并滚动到该位置
-  Future<void> _scrollToLetter(String letter) async {
-    final ctx = _sectionKeys[letter]?.currentContext;
-    if (ctx == null) return;
+  /// 纯数学计算每个字母在 CustomScrollView 中的绝对像素位置
+  void _recalculateOffsets({
+    required double availableWidth,
+    required bool isAlbum,
+  }) {
+    _letterOffsets.clear();
 
-    await Scrollable.ensureVisible(
-      ctx,
-      alignment: 0.0,
-      duration: const Duration(milliseconds: 220),
+    final double maxExtent = isAlbum ? _itemWidth : _itemWidth_2;
+    final double mainAxisExtent = isAlbum ? _itemHeight : _itemHeight_2;
+
+    // 算出一行最多有多少列
+    int crossAxisCount = (availableWidth / (maxExtent + _itemSpacing)).ceil();
+    if (crossAxisCount <= 0) crossAxisCount = 1;
+
+    double accumulatedOffset = 0.0;
+
+    for (final section in _sections) {
+      // 记录当前字母在滑动视图中的起点像素
+      _letterOffsets[section.letter] = accumulatedOffset;
+
+      final int itemCount = section.items.length;
+      // 算出一共多少行
+      final int rows = (itemCount / crossAxisCount).ceil();
+
+      // 计算当前字母分类总高度
+      final double gridHeight = rows > 0
+          ? (rows * mainAxisExtent + (rows - 1) * _itemSpacing)
+          : 0.0;
+
+      accumulatedOffset += _sectionHeaderHeight + gridHeight;
+    }
+  }
+
+  /// 动画跳转到指定字母
+  void _scrollToLetter(String letter) {
+    final targetOffset = _letterOffsets[letter];
+    if (targetOffset == null || !_scrollController.hasClients) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final clampedOffset = targetOffset.clamp(0.0, maxScroll);
+
+    _scrollController.animateTo(
+      clampedOffset,
+      duration: const Duration(milliseconds: 250),
       curve: Curves.easeOutCubic,
     );
   }
@@ -197,8 +223,8 @@ class _SortedListViewState extends State<SortedListView> {
 
     return Container(
       padding: const EdgeInsets.only(left: 16, top: 32, right: 4, bottom: 16),
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.only(topLeft: Radius.circular(8)),
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(8)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,7 +234,18 @@ class _SortedListViewState extends State<SortedListView> {
           Expanded(
             child: Row(
               children: [
-                Expanded(child: _buildMainList(_sections, viewType)),
+                // 通过 LayoutBuilder 动态获取宽度以保证精准度
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      _recalculateOffsets(
+                        availableWidth: constraints.maxWidth,
+                        isAlbum: viewType == _ViewType.album,
+                      );
+                      return _buildMainList(_sections, viewType);
+                    },
+                  ),
+                ),
                 const SizedBox(width: 4),
                 _buildLetterIndexer(),
               ],
@@ -252,8 +289,8 @@ class _SortedListViewState extends State<SortedListView> {
     }
 
     final isAlbum = viewType == _ViewType.album;
-
     final mainAxisExtent = isAlbum ? _itemHeight : _itemHeight_2;
+
     final gridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
       maxCrossAxisExtent: isAlbum ? _itemWidth : _itemWidth_2,
       mainAxisExtent: mainAxisExtent,
@@ -278,13 +315,15 @@ class _SortedListViewState extends State<SortedListView> {
           for (final section in sections) ...[
             // 首字母标题
             SliverToBoxAdapter(
-              key: section.key,
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  top: _itemSpacing * 2,
-                  bottom: _itemSpacing,
+              child: SizedBox(
+                height: _sectionHeaderHeight,
+                child: Align(
+                  alignment: Alignment.bottomLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(section.letter, style: _letterTitleStyle),
+                  ),
                 ),
-                child: Text(section.letter, style: _letterTitleStyle),
               ),
             ),
             // 内容网格
@@ -303,7 +342,7 @@ class _SortedListViewState extends State<SortedListView> {
               ),
             ),
           ],
-          const SliverToBoxAdapter(child: SizedBox(height: 128)),
+          const SliverToBoxAdapter(child: SizedBox(height: _bottomPadding)),
         ],
       ),
     );
@@ -318,7 +357,6 @@ class _SortedListViewState extends State<SortedListView> {
         style: _itemBtnStyle,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 2,
           children: [
             // 封面区域 始终占据正方形空间，保证布局稳定
             AspectRatio(
