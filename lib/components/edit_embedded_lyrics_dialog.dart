@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
@@ -63,7 +63,7 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
   late final TextEditingController _lyricsCtrl;
   late final TextEditingController _lyricsTsCtrl;
   late final TextEditingController _originCtrl;
-  late final RxString _selectedValue;
+  late final Signal<String> _selectedValue;
 
   bool _isLoading = true;
   bool _hasError = false;
@@ -80,7 +80,7 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
     _lyricsCtrl = TextEditingController();
     _lyricsTsCtrl = TextEditingController();
     _originCtrl = TextEditingController();
-    _selectedValue = LyricFormat.lrc.obs;
+    _selectedValue = signal(LyricFormat.lrc);
 
     _loadEmbeddedLyric();
   }
@@ -117,6 +117,7 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
     _lyricsCtrl.dispose();
     _lyricsTsCtrl.dispose();
     _originCtrl.dispose();
+    _selectedValue.dispose();
     super.dispose();
   }
 
@@ -186,8 +187,8 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
             children: [
               const SizedBox(height: 8),
               Text("选择歌词格式", style: textStyle),
-              Obx(
-                () => RadioGroup<String>(
+              SignalBuilder(
+                builder: (context) => RadioGroup<String>(
                   groupValue: _selectedValue.value,
                   onChanged: (String? value) {
                     _selectedValue.value = value ?? LyricFormat.lrc;

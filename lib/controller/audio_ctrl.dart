@@ -4,13 +4,13 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
-import 'package:get/get.dart';
 import 'package:material_color_utilities/material_color_utilities.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/components/get_snack_bar.dart';
-import 'package:zerobit_player/components/spring_list_view.dart';
+import 'package:zerobit_player/controller/lyric_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/controller/statistics_ctrl.dart';
 import 'package:zerobit_player/field/audio_source.dart';
@@ -31,55 +31,61 @@ import 'music_cache_ctrl.dart';
 
 enum AudioState { stop, playing, pause, ended }
 
-enum GetBuilderId { lyricRender }
+class AudioController {
+  AudioController._();
+  static final AudioController instance = AudioController._();
 
-class AudioController extends GetxController {
   int _metadataGeneration = 0; // 防异步竞态ID
 
-  final currentPath = ''.obs;
-  final currentIndex = (-1).obs;
+  final currentPath = signal('');
+  final currentIndex = signal(-1);
   final ValueNotifier<double> currentMs100 = ValueNotifier<double>(0.0);
-  final currentSec = 0.0.obs;
+  final currentSec = signal(0.0);
   final ValueNotifier<double> progress = ValueNotifier<double>(0.0);
 
-  late final Rx<MusicCache> currentMetadata = MusicCache(
-    title: '',
-    artist: '',
-    album: '',
-    trackNumber: 0,
-    genre: '',
-    duration: 9999,
-    bitrate: null,
-    sampleRate: null,
-    bitDepth: 16,
-    channels: 1,
-    trackGain: 0.0,
-    trackPeak: 1.0,
-    path: '',
-  ).obs;
+  // 歌词渲染刷新计数
+  final lyricRenderRevision = signal(0);
 
-  final currentDuration = 0.0.obs;
+  late final Signal<MusicCache> currentMetadata = signal(
+    MusicCache(
+      title: '',
+      artist: '',
+      album: '',
+      trackNumber: 0,
+      genre: '',
+      duration: 9999,
+      bitrate: null,
+      sampleRate: null,
+      bitDepth: 16,
+      channels: 1,
+      trackGain: 0.0,
+      trackPeak: 1.0,
+      path: '',
+    ),
+  );
 
-  final currentState = AudioState.stop.obs;
+  final currentDuration = signal(0.0);
 
-  final SettingController _settingController = SettingController.instance;
-  final MusicCacheController _musicCacheController =
-      Get.find<MusicCacheController>();
+  final currentState = signal(AudioState.stop);
 
-  late final RxList<MusicCache> playListCacheItems = [
+  SettingController get _settingController => SettingController.instance;
+  MusicCacheController get _musicCacheController =>
+      MusicCacheController.instance;
+
+  late final ListSignal<MusicCache> playListCacheItems = listSignal([
     ..._musicCacheController.items,
-  ].obs;
+  ]);
 
   MusicCache? _hasNextAudioMetadata;
 
-  final currentCover = kTransparentImage.obs;
-  final currentSmallCover = kTransparentImage.obs;
+  final currentCover = signal(kTransparentImage);
+  final currentSmallCover = signal(kTransparentImage);
 
-  final currentSpeed = (1.0).obs;
+  final currentSpeed = signal(1.0);
 
   bool _isSyncing = false;
 
-  final currentLyrics = Rxn<ParsedLyricModel>();
+  final currentLyrics = signal<ParsedLyricModel?>(null);
 
   final ValueNotifier<List<double>> audioFFT = ValueNotifier<List<double>>([]);
 
@@ -89,14 +95,14 @@ class AudioController extends GetxController {
 
   final _unplayedIndex = <int>[];
 
-  final navigationIsExtend = true.obs;
+  final navigationIsExtend = signal(true);
 
-  final coverPalette = <Color>[
+  final coverPalette = listSignal(<Color>[
     Colors.black12,
     Colors.white24,
     Colors.white,
     Colors.grey,
-  ].obs;
+  ]);
 
   /// 封面调色板缓存，key 为音频文件路径。
   /// 缓存后来回切歌不必重复计算。
@@ -120,14 +126,63 @@ class AudioController extends GetxController {
 
   String currentAudioSource = AudioSource.allMusic;
 
-  SpringListController get _springController =>
-      Get.find<SpringListController>();
+  LyricController get _lyricController => LyricController.instance;
 
   DesktopLyricsSettingController get _desktopLyricsSettingController =>
       DesktopLyricsSettingController.instance;
 
   late final void Function(double pos) throttledSeek =
       ((double pos) => audioSetPositon(pos: pos)).throttleArgs(ms: 500);
+
+  /// currentMetadata 变更监听的清理回调
+  EffectCleanup? _metadataCleanup;
+
+  void init() {
+    _metadataCleanup = effect(() {
+      final metadata = currentMetadata.value;
+      if (metadata.path.isEmpty) {
+        _isSyncing = false;
+        return;
+      }
+      untracked(() async {
+        final generation = ++_metadataGeneration;
+        try {
+          await _syncInfo();
+        } catch (e) {
+          debugPrint(e.toString());
+          _isSyncing = false;
+        }
+        if (generation != _metadataGeneration) return;
+        _settingController.lastAudioInfo[SettingController
+                .lastAudioMetadataKey] =
+            metadata;
+        await _settingController.putScalableCache();
+        if (generation != _metadataGeneration) return;
+        await loadLyrics(metadata.path);
+      });
+    });
+  }
+
+  void dispose() {
+    _metadataCleanup?.call();
+    currentMs100.dispose();
+    progress.dispose();
+    audioFFT.dispose();
+    currentPath.dispose();
+    currentIndex.dispose();
+    currentSec.dispose();
+    lyricRenderRevision.dispose();
+    currentMetadata.dispose();
+    currentDuration.dispose();
+    currentState.dispose();
+    playListCacheItems.dispose();
+    currentCover.dispose();
+    currentSmallCover.dispose();
+    currentSpeed.dispose();
+    currentLyrics.dispose();
+    navigationIsExtend.dispose();
+    coverPalette.dispose();
+  }
 
   /// 获取音频FFT数据
   void getAudioFFt() async {
@@ -159,27 +214,6 @@ class AudioController extends GetxController {
       progress.value = 0.0;
       currentMs100.value = 0.0;
     }
-  }
-
-  @override
-  void onInit() async {
-    super.onInit();
-
-    ever(currentMetadata, (metadata) async {
-      final generation = ++_metadataGeneration;
-      try {
-        await _syncInfo();
-      } catch (e) {
-        debugPrint(e.toString());
-        _isSyncing = false;
-      }
-      if (generation != _metadataGeneration) return;
-      _settingController.lastAudioInfo[SettingController.lastAudioMetadataKey] =
-          metadata;
-      await _settingController.putScalableCache();
-      if (generation != _metadataGeneration) return;
-      await loadLyrics(metadata.path);
-    });
   }
 
   Future<void> initRestoreState() async {
@@ -309,11 +343,11 @@ class AudioController extends GetxController {
       romaList.clear();
       lineDurationList.clear();
     }
-    if (Get.isRegistered<SpringListController>()) {
-      _springController.clearState();
-    }
-    currentLyrics.value = lyrics;
-    update([GetBuilderId.lyricRender]);
+    _lyricController.springController?.clearState();
+    batch(() {
+      currentLyrics.value = lyrics;
+      lyricRenderRevision.value++;
+    });
   }
 
   Future<void> _syncInfo() async {
@@ -530,8 +564,10 @@ class AudioController extends GetxController {
         await setSpeed(speed: currentSpeed.value);
       }
 
-      currentPath.value = metadata.path;
-      currentMetadata.value = metadata;
+      batch(() {
+        currentPath.value = metadata.path;
+        currentMetadata.value = metadata;
+      });
 
       if (!playListCacheItems.any((v) => v.path == metadata.path)) {
         playListCacheItems.add(metadata);
@@ -583,8 +619,10 @@ class AudioController extends GetxController {
 
   /// 停止播放
   Future<void> audioStop() async {
-    currentState.value = AudioState.stop;
-    currentIndex.value = -1;
+    batch(() {
+      currentState.value = AudioState.stop;
+      currentIndex.value = -1;
+    });
     try {
       await smtcUpdateState(state: SMTCState.paused);
       await stop();
@@ -655,7 +693,7 @@ class AudioController extends GetxController {
     _settingController.lrcAlignment.value =
         (_settingController.lrcAlignment.value + 1) % 3;
     _settingController.putCache();
-    update([GetBuilderId.lyricRender]);
+    lyricRenderRevision.value++;
   }
 
   void _pickNextRandomIndex() {
@@ -785,9 +823,11 @@ class AudioController extends GetxController {
       audioSetPositon(pos: currentMs100.value);
     }
 
-    playListCacheItems[playListCacheItems.indexWhere((v) => v.path == path)] =
-        newCache;
-    currentMetadata.value = newCache;
+    batch(() {
+      playListCacheItems[playListCacheItems.indexWhere((v) => v.path == path)] =
+          newCache;
+      currentMetadata.value = newCache;
+    });
     currentCover.value =
         await getCover(path: currentPath.value, sizeFlag: 1) ??
         kTransparentImage;

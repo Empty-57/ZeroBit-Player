@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
-import 'package:get/get.dart';
 import 'package:path/path.dart' as p;
+import 'package:signals/signals_flutter.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
@@ -18,8 +18,8 @@ import 'controller/setting_ctrl.dart';
 class DesktopLyricsSever {
   DesktopLyricsSever._();
   static final instance = DesktopLyricsSever._();
-  late final LyricController _lyricController = Get.find<LyricController>();
-  late final AudioController _audioController = Get.find<AudioController>();
+  late final LyricController _lyricController = LyricController.instance;
+  late final AudioController _audioController = AudioController.instance;
   final SettingController _settingController = SettingController.instance;
   final _wsUrl = Uri.parse('ws://127.0.0.1:7070');
 
@@ -27,8 +27,8 @@ class DesktopLyricsSever {
   IOWebSocketChannel? _channel;
   StreamSubscription? _listen;
 
-  Worker? _lineWorker;
-  Worker? _stateWorker;
+  EffectCleanup? _lineWorker;
+  EffectCleanup? _stateWorker;
 
   DesktopLyricsSettingController get _desktopLyricsSettingController =>
       DesktopLyricsSettingController.instance;
@@ -40,10 +40,13 @@ class DesktopLyricsSever {
   }
 
   void _startStateWorker() {
-    _stateWorker = ever(_audioController.currentState, (_) {
-      if (_settingController.showDesktopLyrics.value) {
-        _refreshStatus();
-      }
+    _stateWorker = effect(() {
+      _audioController.currentState.value;
+      untracked(() {
+        if (_settingController.showDesktopLyrics.value) {
+          _refreshStatus();
+        }
+      });
     });
   }
 
@@ -131,12 +134,11 @@ class DesktopLyricsSever {
   }
 
   void _startLineWorker() {
-    _lineWorker = everAll(
-      [_lyricController.currentLineIndex, _audioController.currentLyrics],
-      (_) {
-        _lineWorkerFn();
-      },
-    );
+    _lineWorker = effect(() {
+      _lyricController.currentLineIndex.value;
+      _audioController.currentLyrics.value;
+      untracked(_lineWorkerFn);
+    });
   }
 
   void _ms20WorkerFn() {
@@ -333,9 +335,9 @@ class DesktopLyricsSever {
   }
 
   Future<void> close() async {
-    _lineWorker?.dispose();
+    _lineWorker?.call();
     _lyricController.currentMs20Notifier.removeListener(_ms20WorkerFn);
-    _stateWorker?.dispose();
+    _stateWorker?.call();
     try {
       sendCmd(cmdType: SeverCmdType.shutdown, cmdData: null);
       if (_listen != null) {

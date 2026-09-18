@@ -88,6 +88,8 @@ class _SortedListViewState extends State<SortedListView> {
   late WidgetStateProperty<Color?> _foregroundColorHover;
   late ButtonStyle _itemBtnStyle;
 
+  double _lastAvailableWidth = 0;
+
   @override
   void initState() {
     super.initState();
@@ -238,10 +240,14 @@ class _SortedListViewState extends State<SortedListView> {
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      _recalculateOffsets(
-                        availableWidth: constraints.maxWidth,
-                        isAlbum: viewType == _ViewType.album,
-                      );
+                      final maxWidth = constraints.maxWidth;
+                      if (_lastAvailableWidth != maxWidth) {
+                        _lastAvailableWidth = maxWidth;
+                        _recalculateOffsets(
+                          availableWidth: maxWidth,
+                          isAlbum: viewType == _ViewType.album,
+                        );
+                      }
                       return _buildMainList(_sections, viewType);
                     },
                   ),

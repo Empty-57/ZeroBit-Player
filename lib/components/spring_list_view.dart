@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/rendering.dart';
-import 'package:get/get.dart';
 
 class _JumpSignal {
   final int triggerId;
@@ -12,7 +11,7 @@ class _JumpSignal {
   const _JumpSignal(this.triggerId, this.deltaY);
 }
 
-class SpringListController extends GetxController {
+class SpringListController {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _scrollAreaKey = GlobalKey();
 
@@ -28,7 +27,10 @@ class SpringListController extends GetxController {
 
   int _totalLength = 0;
 
-  static const int _centerOffset = 0; // 这个常量作用是将滚动开始的中心向上/下偏移，实现弹簧从上/下拉的效果
+  static const int _defaultVisibleItemCount = 10;
+  int _visibleItemCount = _defaultVisibleItemCount; // 可视区域歌词行的数量的一半
+
+  static int _centerOffset = 0; // 这个常量作用是将滚动开始的中心向上/下偏移，实现弹簧从上/下拉的效果
   static const double _durationMax = 1.5; // sec
   static const int _delayMax = 60; // ms
   int _delay = _delayMax; // ms
@@ -42,9 +44,6 @@ class SpringListController extends GetxController {
 
   GlobalKey getBoxKey(int index) =>
       _boxKeys.putIfAbsent(index, () => GlobalKey());
-
-  static const int _defaultVisibleItemCount = 10;
-  int _visibleItemCount = _defaultVisibleItemCount;
 
   int? _cachedVisibleItemCount;
   double cachedScreenHeight = 0.0;
@@ -78,6 +77,7 @@ class SpringListController extends GetxController {
     if (_cachedVisibleItemCount != null &&
         (cachedScreenHeight - currentHeight).abs() < 0.1) {
       _visibleItemCount = _cachedVisibleItemCount!;
+      // _centerOffset = _cachedVisibleItemCount!;
       debugPrint('visibleLine> $_visibleItemCount | hitCache');
       return _cachedVisibleItemCount!;
     }
@@ -135,10 +135,12 @@ class SpringListController extends GetxController {
     );
 
     final visibleLineCount = (currentHeight / averageItemHeight).ceil();
-    final visibleItemCount = max((visibleLineCount ~/ 2) + 2, 5);
+    final visibleItemCount = max((visibleLineCount ~/ 2) + 1, 2);
 
     _cachedVisibleItemCount = visibleItemCount;
     _visibleItemCount = visibleItemCount;
+
+    // _centerOffset = _visibleItemCount;
 
     debugPrint('visibleLine> $_visibleItemCount | calc');
     return visibleItemCount;
@@ -189,15 +191,13 @@ class SpringListController extends GetxController {
     }
   }
 
-  @override
-  void onClose() {
+  void dispose() {
     _boxKeys.clear();
     _cachedVisibleItemCount = null;
     cachedScreenHeight = 0.0;
     _scrollController.dispose();
     _jumpNotifier.dispose();
     _currentIndex.dispose();
-    super.onClose();
   }
 }
 
@@ -205,17 +205,18 @@ class SpringListView extends StatelessWidget {
   final int length;
   final List<double> lineDuration;
   final Widget Function(int index) itemBuilder;
+  final SpringListController controller;
 
   const SpringListView({
     super.key,
     required this.length,
     required this.itemBuilder,
     required this.lineDuration,
+    required this.controller,
   });
 
   @override
   Widget build(BuildContext context) {
-    final SpringListController controller = Get.find();
     controller._totalLength = length;
 
     /// 为了防止即将离开可视区域的列表项的滚动动画无效的方案(视觉欺骗)
@@ -361,7 +362,10 @@ class _SpringItemState extends State<_SpringItem>
     final int relativeIndexAbs = relativeIndex.abs();
 
     // 在屏幕外的元素不执行动画，直接归位
-    if (deltaY == 0 || relativeIndexAbs > widget.controller._visibleItemCount) {
+    if (deltaY == 0 ||
+        relativeIndexAbs >
+            (widget.controller._visibleItemCount +
+                SpringListController._centerOffset)) {
       _animController?.value = 0.0;
       return;
     }

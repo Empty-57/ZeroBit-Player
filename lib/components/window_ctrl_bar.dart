@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
@@ -62,8 +62,7 @@ class _SearchDialogContentState extends State<_SearchDialogContent> {
   void initState() {
     super.initState();
     _searchCtrl = TextEditingController();
-    widget.cacheCtrl.searchResult.clear();
-    widget.cacheCtrl.searchText.value = '';
+    widget.cacheCtrl.resetSearch();
   }
 
   @override
@@ -75,7 +74,7 @@ class _SearchDialogContentState extends State<_SearchDialogContent> {
   @override
   Widget build(BuildContext context) {
     final UserPlayListController userPlayListController =
-        Get.find<UserPlayListController>();
+        UserPlayListController.instance;
     final titleStyle = generalTextStyle(ctx: context, size: 'md');
     final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
 
@@ -108,22 +107,20 @@ class _SearchDialogContentState extends State<_SearchDialogContent> {
                   border: OutlineInputBorder(),
                   labelText: '搜索',
                 ),
-                onChanged: (String text) {
-                  widget.cacheCtrl.searchText.value = text;
-                },
+                onChanged: widget.cacheCtrl.onInputChanged,
               ),
               Expanded(
                 flex: 1,
-                child: Obx(
-                  () => ListView.builder(
+                child: SignalBuilder(
+                  builder: (context) => ListView.builder(
                     scrollCacheExtent: const ScrollCacheExtent.pixels(
                       _itemHeight * 1,
                     ),
-                    itemCount: widget.cacheCtrl.searchResult.length,
+                    itemCount: widget.cacheCtrl.searchResult.value.length,
                     itemExtent: _itemHeight,
                     padding: EdgeInsets.only(bottom: _itemHeight * 2),
                     itemBuilder: (context, index) {
-                      final items = widget.cacheCtrl.searchResult[index];
+                      final items = widget.cacheCtrl.searchResult.value[index];
                       final menuController = MenuController();
                       return TextButton(
                         onPressed: () {
@@ -269,7 +266,7 @@ class _ControllerButton extends StatelessWidget {
   }
 }
 
-class WindowControllerBar extends GetView<MyWindowListener> {
+class WindowControllerBar extends StatelessWidget {
   final bool isNestedRoute;
   final bool showLogo;
   final bool useCaretDown;
@@ -291,10 +288,10 @@ class WindowControllerBar extends GetView<MyWindowListener> {
 
   @override
   Widget build(BuildContext context) {
-    final windowListener = controller;
-    final AudioController audioController = Get.find<AudioController>();
+    final windowController = WindowController.instance;
+    final AudioController audioController = AudioController.instance;
     final MusicCacheController musicCacheController =
-        Get.find<MusicCacheController>();
+        MusicCacheController.instance;
     final SettingController settingController = SettingController.instance;
 
     final content = Container(
@@ -316,7 +313,9 @@ class WindowControllerBar extends GetView<MyWindowListener> {
                   ? PhosphorIconsLight.caretDown
                   : PhosphorIconsLight.caretLeft,
               fn: () {
-                context.pop();
+                if (context.canPop()) {
+                  context.pop();
+                }
               },
               tooltip: "返回",
             ),
@@ -351,7 +350,7 @@ class WindowControllerBar extends GetView<MyWindowListener> {
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
               onPanStart: (details) => windowManager.startDragging(),
-              onDoubleTap: () => windowListener.toggleMaximize(),
+              onDoubleTap: () => windowController.toggleMaximize(),
               child: Container(),
             ),
           ),
@@ -365,8 +364,8 @@ class WindowControllerBar extends GetView<MyWindowListener> {
           if (useThemeSwitch)
             Padding(
               padding: EdgeInsets.only(right: 8, left: 8),
-              child: Obx(
-                () => _ControllerButton(
+              child: SignalBuilder(
+                builder: (context) => _ControllerButton(
                   onlyDarkMode: onlyDarkMode,
                   icon: settingController.themeMode.value == 'dark'
                       ? PhosphorIconsLight.moon
@@ -379,9 +378,9 @@ class WindowControllerBar extends GetView<MyWindowListener> {
               ),
             ),
 
-          Obx(
-            () => Visibility(
-              visible: !windowListener.isFullScreen.value,
+          SignalBuilder(
+            builder: (context) => Visibility(
+              visible: !windowController.isFullScreen.value,
               child: Padding(
                 padding: EdgeInsets.only(right: 8),
                 child: _ControllerButton(
@@ -396,33 +395,33 @@ class WindowControllerBar extends GetView<MyWindowListener> {
             ),
           ),
 
-          Obx(
-            () => Visibility(
-              visible: !windowListener.isFullScreen.value,
+          SignalBuilder(
+            builder: (context) => Visibility(
+              visible: !windowController.isFullScreen.value,
               child: _ControllerButton(
                 onlyDarkMode: onlyDarkMode,
-                icon: windowListener.isMaximized.value
+                icon: windowController.isMaximized.value
                     ? PhosphorIconsLight.cornersIn
                     : PhosphorIconsLight.cornersOut,
-                fn: windowListener.toggleMaximize,
-                tooltip: windowListener.isMaximized.value ? "还原" : "最大化",
+                fn: windowController.toggleMaximize,
+                tooltip: windowController.isMaximized.value ? "还原" : "最大化",
               ),
             ),
           ),
 
-          Obx(
-            () => Padding(
+          SignalBuilder(
+            builder: (context) => Padding(
               padding: EdgeInsets.only(
                 right: 8,
-                left: windowListener.isFullScreen.value ? 0 : 8,
+                left: windowController.isFullScreen.value ? 0 : 8,
               ),
               child: _ControllerButton(
                 onlyDarkMode: onlyDarkMode,
-                icon: windowListener.isFullScreen.value
+                icon: windowController.isFullScreen.value
                     ? PhosphorIconsLight.arrowsInSimple
                     : PhosphorIconsLight.arrowsOutSimple,
-                fn: windowListener.toggleFullScreen,
-                tooltip: windowListener.isFullScreen.value ? "还原" : "全屏",
+                fn: windowController.toggleFullScreen,
+                tooltip: windowController.isFullScreen.value ? "还原" : "全屏",
               ),
             ),
           ),
@@ -436,7 +435,7 @@ class WindowControllerBar extends GetView<MyWindowListener> {
                 await windowManager.hide();
                 return;
               }
-              await windowListener.closeAndClean();
+              await windowController.closeAndClean();
             },
             tooltip: "退出",
           ),
@@ -446,8 +445,8 @@ class WindowControllerBar extends GetView<MyWindowListener> {
 
     return useBlur
         ? ClipRect(
-            child: Obx(
-              () => BackdropFilter(
+            child: SignalBuilder(
+              builder: (context) => BackdropFilter(
                 enabled: settingController.backgroundImagePath.value.isNotEmpty,
                 filter: ImageFilterCache.imageFilter(sigma: 16),
                 child: content,

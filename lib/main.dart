@@ -9,13 +9,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
-import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:leak_tracker/leak_tracker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/components/play_bar.dart';
 import 'package:zerobit_player/components/window_background.dart';
@@ -54,7 +54,6 @@ import 'package:zerobit_player/windows_taskbar_thumbnail.dart';
 import 'components/get_snack_bar.dart';
 import 'controller/desktop_lyrics_setting_ctrl.dart';
 import 'controller/lyric_ctrl.dart';
-import 'controller/music_cache_ctrl.dart';
 import 'controller/setting_ctrl.dart';
 import 'controller/window_ctrl.dart';
 import 'desktop_lyrics_sever.dart';
@@ -199,13 +198,11 @@ void main() async {
 
   DesktopLyricsSettingController.instance.init();
   SettingController.instance.init();
-  Get.put(MusicCacheController());
-  Get.put(AudioController());
-  Get.put(UserPlayListController());
-  Get.put(LyricController());
+  AudioController.instance.init();
+  UserPlayListController.instance.init();
   DesktopLyricsSever.instance.init();
-  Get.put(Tray());
-  Get.put(MyWindowListener());
+  await TrayManagerService.instance.init();
+  WindowController.instance.init();
 
   final SettingController settingController = SettingController.instance;
 
@@ -263,11 +260,11 @@ void main() async {
 
   debugRepaintRainbowEnabled = false;
   if (kDebugMode) {
-    _initLeakTracking();
+    // _initLeakTracking();
   }
   runApp(const MainFrame());
 
-  final AudioController audioController = Get.find<AudioController>();
+  final AudioController audioController = AudioController.instance;
 
   WidgetsBinding.instance.addPostFrameCallback((_) async {
     // 异步进行缓存清理，不阻塞启动
@@ -347,7 +344,7 @@ void _initLeakTracking() {
 }
 
 Future<void> initStream(AudioController audioController) async {
-  final LyricController lyricController = Get.find<LyricController>();
+  final LyricController lyricController = LyricController.instance;
   await _audioEventSub?.cancel();
   await _progressSub?.cancel();
   await _smtcSub?.cancel();
@@ -519,9 +516,6 @@ class _DiagonalSlideState extends State<_DiagonalSlide> {
   }
 }
 
-final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
-  debugLabel: 'root',
-);
 final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'shell',
 );
@@ -575,7 +569,7 @@ CustomTransitionPage<void> _buildPlayPage({
 }
 
 final GoRouter _router = GoRouter(
-  navigatorKey: _rootNavigatorKey,
+  navigatorKey: rootNavigatorKey,
   initialLocation: AppRoutes.home,
   routes: [
     ShellRoute(
@@ -680,7 +674,7 @@ final GoRouter _router = GoRouter(
     ),
 
     GoRoute(
-      parentNavigatorKey: _rootNavigatorKey,
+      parentNavigatorKey: rootNavigatorKey,
       path: AppRoutes.playPage,
       name: AppRoutes.playPage,
       pageBuilder: (context, state) => _buildPlayPage(
@@ -699,8 +693,8 @@ class MainFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeService themeService = ThemeService.instance;
     final SettingController settingController = SettingController.instance;
-    return Obx(
-      () => MaterialApp.router(
+    return SignalBuilder(
+      builder: (context) => MaterialApp.router(
         routerConfig: _router,
         theme: themeService.lightTheme,
         darkTheme: themeService.darkTheme,

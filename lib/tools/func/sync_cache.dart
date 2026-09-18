@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
 import 'package:path/path.dart' as p;
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
@@ -105,8 +104,8 @@ Future<Map<String, MusicCache>> _fetchMetadataBatch(
 /// 同步本地音乐缓存
 Future<void> syncCache() async {
   final settingCtrl = SettingController.instance;
-  final musicCacheCtrl = Get.find<MusicCacheController>();
-  final audioCtrl = Get.find<AudioController>();
+  final musicCacheCtrl = MusicCacheController.instance;
+  final audioCtrl = AudioController.instance;
   final musicBox = HiveBox.musicCacheBox;
 
   final scannedPaths = await scanAudioPaths(settingCtrl.folders, settingCtrl);

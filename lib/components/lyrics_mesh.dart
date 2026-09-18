@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:mesh_gradient/mesh_gradient.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 
 final AnimatedMeshGradientOptions _meshOptions = AnimatedMeshGradientOptions(
@@ -12,14 +12,14 @@ final AnimatedMeshGradientOptions _meshOptions = AnimatedMeshGradientOptions(
 
 final Widget _meshChild = Container();
 
-class LyricsMesh extends GetView<AudioController> {
+class LyricsMesh extends StatelessWidget {
   const LyricsMesh({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => AnimatedMeshGradient(
-        colors: controller.coverPalette.value,
+    return SignalBuilder(
+      builder: (context) => AnimatedMeshGradient(
+        colors: AudioController.instance.coverPalette.value,
         options: _meshOptions,
         child: _meshChild,
       ),

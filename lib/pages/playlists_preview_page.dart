@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/field/app_routes.dart';
@@ -13,7 +13,7 @@ import '../field/operate_area.dart';
 const double _itemHeight = 64.0;
 const BorderRadius _borderRadius = BorderRadius.all(Radius.circular(4));
 
-class PlayListPreviewPage extends GetView<UserPlayListController> {
+class PlayListPreviewPage extends StatelessWidget {
   const PlayListPreviewPage({super.key});
 
   Future<String?> _showInputDialog(
@@ -126,7 +126,11 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
           spacing: 16,
           children: [
             _buildHeader(context),
-            Expanded(child: Obx(() => _buildListView(context))),
+            Expanded(
+              child: SignalBuilder(
+                builder: (context) => _buildListView(context),
+              ),
+            ),
           ],
         ),
       ),
@@ -134,6 +138,7 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final c = UserPlayListController.instance;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -149,9 +154,9 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
                 weight: FontWeight.w600,
               ),
             ),
-            Obx(
-              () => Text(
-                '共${controller.items.length}个歌单',
+            SignalBuilder(
+              builder: (context) => Text(
+                '共${c.items.length}个歌单',
                 style: generalTextStyle(ctx: context, size: 'md'),
               ),
             ),
@@ -162,7 +167,7 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
           fn: () async {
             final result = await _showInputDialog(context, title: '新建歌单');
             if (result != null && result.trim().isNotEmpty) {
-              controller.createPlayList(userKey: result);
+              c.createPlayList(userKey: result);
             }
           },
           label: "新建歌单",
@@ -178,13 +183,13 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
   Widget _buildListView(BuildContext context) {
     final textStyle1 = generalTextStyle(ctx: context, size: 'md');
     final textStyle2 = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-
+    final c = UserPlayListController.instance;
     return ListView.builder(
       scrollCacheExtent: const ScrollCacheExtent.pixels(_itemHeight),
-      itemCount: controller.items.length,
+      itemCount: c.items.length,
       itemExtent: _itemHeight,
       itemBuilder: (context, index) {
-        final item = controller.items[index];
+        final item = c.items[index];
         final displayName = item.userKey.split('_')[0];
 
         return TextButton(
@@ -230,10 +235,7 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
                   if (result != null &&
                       result.trim().isNotEmpty &&
                       result != displayName) {
-                    controller.renamePlayList(
-                      oldKey: item.userKey,
-                      newKey: result,
-                    );
+                    c.renamePlayList(oldKey: item.userKey, newKey: result);
                   }
                 },
                 btnHeight: 48,
@@ -250,7 +252,7 @@ class PlayListPreviewPage extends GetView<UserPlayListController> {
                     displayName,
                   );
                   if (confirm) {
-                    controller.removePlayList(userKey: item.userKey);
+                    c.removePlayList(userKey: item.userKey);
                   }
                 },
                 btnHeight: 48,

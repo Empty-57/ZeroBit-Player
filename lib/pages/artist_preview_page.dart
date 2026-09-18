@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:zerobit_player/components/sorted_list_view.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 
-class ArtistPreviewPage extends GetView<MusicCacheController> {
+class ArtistPreviewPage extends StatelessWidget {
   const ArtistPreviewPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final c = controller;
+    final c = MusicCacheController.instance;
     return SortedListView(
       title: '艺术家',
       subTitle: '共${c.artistItemsDict.length}位艺术家',

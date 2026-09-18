@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/get_snack_bar.dart';
 import 'package:zerobit_player/controller/window_ctrl.dart';
 import 'package:zerobit_player/field/operate_area.dart';
@@ -23,34 +23,34 @@ import 'audio_ctrl.dart';
 class SettingController {
   SettingController._();
   static final instance = SettingController._();
-  MyWindowListener get _myWindowListener => Get.find<MyWindowListener>();
+  WindowController get _myWindowListener => WindowController.instance;
   DesktopLyricsSever get _desktopLyricsSever => DesktopLyricsSever.instance;
-  AudioController get _audioController => Get.find<AudioController>();
+  AudioController get _audioController => AudioController.instance;
 
   // UI & 偏好设置状态
-  final themeMode = 'dark'.obs;
-  final themeColor = 0xff27272a.obs;
-  final dynamicThemeColor = true.obs;
-  final fontFamily = "Microsoft YaHei Light".obs;
-  final useBlur = true.obs;
-  final useMesh = true.obs;
-  final useSpringScroll = true.obs;
-  final close2Tray = false.obs;
-  final showTranslate = true.obs;
-  final showRoma = false.obs;
-  final backgroundImagePath = '1'.obs;
-  final backgroundImageOpacity = 0.5.obs; // 0-1
-  final backgroundImageBlur = 4.0.obs; // 0-36
-  final useTransparencyBackground = false.obs;
-  final useAutoUpdate = true.obs;
+  final themeMode = signal('dark');
+  final themeColor = signal(0xff27272a);
+  final dynamicThemeColor = signal(true);
+  final fontFamily = signal("Microsoft YaHei Light");
+  final useBlur = signal(true);
+  final useMesh = signal(true);
+  final useSpringScroll = signal(true);
+  final close2Tray = signal(false);
+  final showTranslate = signal(true);
+  final showRoma = signal(false);
+  final backgroundImagePath = signal('1');
+  final backgroundImageOpacity = signal(0.5); // 0-1
+  final backgroundImageBlur = signal(4.0); // 0-36
+  final useTransparencyBackground = signal(false);
+  final useAutoUpdate = signal(true);
 
   // 歌词状态
-  final lrcAlignment = 0.obs;
-  final lrcFontSize = 32.obs; // 24-48
-  final lrcFontWeight = 5.obs; // 0-8 w100-w900
-  final autoDownloadLrc = true.obs;
-  final showDesktopLyrics = false.obs;
-  final autoGetLyrics = true.obs;
+  final lrcAlignment = signal(0);
+  final lrcFontSize = signal(32); // 24-48
+  final lrcFontWeight = signal(5); // 0-8 w100-w900
+  final autoDownloadLrc = signal(true);
+  final showDesktopLyrics = signal(false);
+  final autoGetLyrics = signal(true);
 
   static const int lrcFontSizeMax = 48;
   static const int lrcFontSizeMin = 24;
@@ -59,14 +59,14 @@ class SettingController {
   static const Map<int, String> lrcAlignmentMap = {0: '左对齐', 1: '居中', 2: '右对齐'};
 
   // 音频与播放状态
-  final apiIndex = 0.obs;
-  final volume = 1.0.obs;
-  final playMode = 0.obs;
-  final useExclusiveMode = false.obs;
-  final showSpectrogram = false.obs;
-  final equalizerGains = List.generate(10, (_) => 0.0).toList().obs;
-  final useReplayGain = false.obs;
-  final useTaskBarCtrl = true.obs;
+  final apiIndex = signal(0);
+  final volume = signal(1.0);
+  final playMode = signal(0);
+  final useExclusiveMode = signal(false);
+  final showSpectrogram = signal(false);
+  final equalizerGains = listSignal(List.generate(10, (_) => 0.0).toList());
+  final useReplayGain = signal(false);
+  final useTaskBarCtrl = signal(true);
 
   static const minGain = -12.0;
   static const maxGain = 12.0;
@@ -113,10 +113,10 @@ class SettingController {
   static const Map<int, String> playModeMap = {0: '单曲循环', 1: '列表循环', 2: '随机播放'};
 
   // 文件与列表状态
-  final folders = <String>[].obs;
-  final sortMap = <dynamic, dynamic>{}.obs;
-  final viewModeMap = <dynamic, dynamic>{}.obs;
-  final isReverse = false.obs; // 以后将分别应用到每个列表视图
+  final folders = listSignal(<String>[]);
+  final sortMap = mapSignal(<dynamic, dynamic>{});
+  final viewModeMap = mapSignal(<dynamic, dynamic>{});
+  final isReverse = signal(false); // 以后将分别应用到每个列表视图
 
   static const _defaultSortMap = {
     OperateArea.allMusic: SortType.title,
@@ -175,24 +175,21 @@ class SettingController {
   };
 
   // 快捷键状态
-  final hotKeyScope =
-      false.obs; //false : HotKeyScope.inapp.obs true: HotKeyScope.system.obs
-  final hotKeyToggle = HotKey(
-    key: PhysicalKeyboardKey.space,
-    scope: HotKeyScope.inapp,
-  ).obs;
-  final hotKeyNext = HotKey(
-    key: PhysicalKeyboardKey.arrowRight,
-    scope: HotKeyScope.inapp,
-  ).obs;
-  final hotKeyPrevious = HotKey(
-    key: PhysicalKeyboardKey.arrowLeft,
-    scope: HotKeyScope.inapp,
-  ).obs;
-  final hotKeyFullScreen = HotKey(
-    key: PhysicalKeyboardKey.f1,
-    scope: HotKeyScope.inapp,
-  ).obs;
+  final hotKeyScope = signal(
+    false,
+  ); //false : HotKeyScope.inapp true: HotKeyScope.system
+  final hotKeyToggle = signal(
+    HotKey(key: PhysicalKeyboardKey.space, scope: HotKeyScope.inapp),
+  );
+  final hotKeyNext = signal(
+    HotKey(key: PhysicalKeyboardKey.arrowRight, scope: HotKeyScope.inapp),
+  );
+  final hotKeyPrevious = signal(
+    HotKey(key: PhysicalKeyboardKey.arrowLeft, scope: HotKeyScope.inapp),
+  );
+  final hotKeyFullScreen = signal(
+    HotKey(key: PhysicalKeyboardKey.f1, scope: HotKeyScope.inapp),
+  );
 
   List<int> modifierToggleHidList = [];
   List<int> modifierNextHidList = [];
@@ -233,20 +230,22 @@ class SettingController {
     final scalableCache = _scalableSettingCacheBox.get(key: _scalableKey);
 
     if (cache != null) {
-      themeMode.value = cache.themeMode;
-      apiIndex.value = cache.apiIndex;
-      volume.value = cache.volume;
-      folders.value = [...cache.folders];
-      isReverse.value = cache.isReverse;
-      themeColor.value = cache.themeColor;
-      playMode.value = cache.playMode;
-      dynamicThemeColor.value = cache.dynamicThemeColor;
-      fontFamily.value = cache.fontFamily;
-      lrcAlignment.value = cache.lrcAlignment;
-      lrcFontSize.value = cache.lrcFontSize;
-      lrcFontWeight.value = cache.lrcFontWeight;
-      autoDownloadLrc.value = cache.autoDownloadLrc;
-      useBlur.value = cache.useBlur;
+      batch(() {
+        themeMode.value = cache.themeMode;
+        apiIndex.value = cache.apiIndex;
+        volume.value = cache.volume;
+        folders.value = [...cache.folders];
+        isReverse.value = cache.isReverse;
+        themeColor.value = cache.themeColor;
+        playMode.value = cache.playMode;
+        dynamicThemeColor.value = cache.dynamicThemeColor;
+        fontFamily.value = cache.fontFamily;
+        lrcAlignment.value = cache.lrcAlignment;
+        lrcFontSize.value = cache.lrcFontSize;
+        lrcFontWeight.value = cache.lrcFontWeight;
+        autoDownloadLrc.value = cache.autoDownloadLrc;
+        useBlur.value = cache.useBlur;
+      });
 
       sortMap.value = Map.of(_defaultSortMap)
         ..addAll(cache.sortMap.cast<dynamic, dynamic>());
@@ -256,8 +255,10 @@ class SettingController {
         ..addAll(cache.viewModeMap.cast<dynamic, dynamic>());
       if (viewModeMap.length > cache.viewModeMap.length) await putCache();
     } else {
-      sortMap.value = Map.of(_defaultSortMap);
-      viewModeMap.value = Map.of(_defaultViewModeMap);
+      batch(() {
+        sortMap.value = Map.of(_defaultSortMap);
+        viewModeMap.value = Map.of(_defaultViewModeMap);
+      });
     }
 
     if (scalableCache != null && scalableCache.config.isNotEmpty) {
@@ -277,10 +278,12 @@ class SettingController {
         );
       }
 
-      showSpectrogram.value =
-          config[ScalableConfigKeys.showSpectrogramKey] ?? false;
-      showDesktopLyrics.value =
-          config[ScalableConfigKeys.showDesktopLyricsKey] ?? false;
+      batch(() {
+        showSpectrogram.value =
+            config[ScalableConfigKeys.showSpectrogramKey] ?? false;
+        showDesktopLyrics.value =
+            config[ScalableConfigKeys.showDesktopLyricsKey] ?? false;
+      });
     }
 
     await setVolume(vol: volume.value);
@@ -291,32 +294,35 @@ class SettingController {
 
   Future<void> _initPrefs() async {
     prefs = await SharedPreferences.getInstance();
-
-    showTranslate.value =
-        prefs?.getBool(SharedPreferencesKey.showTranslate) ?? true;
-    showRoma.value = prefs?.getBool(SharedPreferencesKey.showRoma) ?? false;
-    hotKeyScope.value =
-        prefs?.getBool(SharedPreferencesKey.hotKeyScope) ?? false;
-    useMesh.value = prefs?.getBool(SharedPreferencesKey.useMesh) ?? true;
-    useExclusiveMode.value =
-        prefs?.getBool(SharedPreferencesKey.useExclusiveMode) ?? false;
-    useSpringScroll.value =
-        prefs?.getBool(SharedPreferencesKey.useSpringScroll) ?? true;
-    close2Tray.value = prefs?.getBool(SharedPreferencesKey.close2Tray) ?? false;
-    useReplayGain.value =
-        prefs?.getBool(SharedPreferencesKey.useReplayGain) ?? false;
-    autoGetLyrics.value =
-        prefs?.getBool(SharedPreferencesKey.autoGetLyrics) ?? true;
-    backgroundImageOpacity.value =
-        prefs?.getDouble(SharedPreferencesKey.backgroundImageOpacity) ?? 0.5;
-    backgroundImageBlur.value =
-        prefs?.getDouble(SharedPreferencesKey.backgroundImageBlur) ?? 4.0;
-    backgroundImagePath.value =
-        prefs?.getString(SharedPreferencesKey.backgroundImagePath) ?? '';
-    useAutoUpdate.value =
-        prefs?.getBool(SharedPreferencesKey.useAutoUpdate) ?? true;
-    useTransparencyBackground.value =
-        prefs?.getBool(SharedPreferencesKey.useTransparencyBackground) ?? false;
+    batch(() {
+      showTranslate.value =
+          prefs?.getBool(SharedPreferencesKey.showTranslate) ?? true;
+      showRoma.value = prefs?.getBool(SharedPreferencesKey.showRoma) ?? false;
+      hotKeyScope.value =
+          prefs?.getBool(SharedPreferencesKey.hotKeyScope) ?? false;
+      useMesh.value = prefs?.getBool(SharedPreferencesKey.useMesh) ?? true;
+      useExclusiveMode.value =
+          prefs?.getBool(SharedPreferencesKey.useExclusiveMode) ?? false;
+      useSpringScroll.value =
+          prefs?.getBool(SharedPreferencesKey.useSpringScroll) ?? true;
+      close2Tray.value =
+          prefs?.getBool(SharedPreferencesKey.close2Tray) ?? false;
+      useReplayGain.value =
+          prefs?.getBool(SharedPreferencesKey.useReplayGain) ?? false;
+      autoGetLyrics.value =
+          prefs?.getBool(SharedPreferencesKey.autoGetLyrics) ?? true;
+      backgroundImageOpacity.value =
+          prefs?.getDouble(SharedPreferencesKey.backgroundImageOpacity) ?? 0.5;
+      backgroundImageBlur.value =
+          prefs?.getDouble(SharedPreferencesKey.backgroundImageBlur) ?? 4.0;
+      backgroundImagePath.value =
+          prefs?.getString(SharedPreferencesKey.backgroundImagePath) ?? '';
+      useAutoUpdate.value =
+          prefs?.getBool(SharedPreferencesKey.useAutoUpdate) ?? true;
+      useTransparencyBackground.value =
+          prefs?.getBool(SharedPreferencesKey.useTransparencyBackground) ??
+          false;
+    });
 
     // 提取快捷键解析逻辑，消除冗余
     _loadKeyConfig(SharedPreferencesKey.toggleHidString, hotKeyToggleHid, (
@@ -385,26 +391,28 @@ class SettingController {
   Future<void> initHotKey() async {
     final scope = HotKeyScope.inapp; //目前只在应用范围内生效
     // final scope=hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp;
-    hotKeyToggle.value = HotKey(
-      modifiers: _getModifier(modifierToggleHidList),
-      key: PhysicalKeyboardKey(hotKeyToggleHid),
-      scope: scope,
-    );
-    hotKeyNext.value = HotKey(
-      modifiers: _getModifier(modifierNextHidList),
-      key: PhysicalKeyboardKey(hotKeyNextHid),
-      scope: scope,
-    );
-    hotKeyPrevious.value = HotKey(
-      modifiers: _getModifier(modifierPreviousHidList),
-      key: PhysicalKeyboardKey(hotKeyPreviousHid),
-      scope: scope,
-    );
-    hotKeyFullScreen.value = HotKey(
-      modifiers: _getModifier(modifierFullScreenHidList),
-      key: PhysicalKeyboardKey(hotKeyFullScreenHid),
-      scope: scope,
-    );
+    batch(() {
+      hotKeyToggle.value = HotKey(
+        modifiers: _getModifier(modifierToggleHidList),
+        key: PhysicalKeyboardKey(hotKeyToggleHid),
+        scope: scope,
+      );
+      hotKeyNext.value = HotKey(
+        modifiers: _getModifier(modifierNextHidList),
+        key: PhysicalKeyboardKey(hotKeyNextHid),
+        scope: scope,
+      );
+      hotKeyPrevious.value = HotKey(
+        modifiers: _getModifier(modifierPreviousHidList),
+        key: PhysicalKeyboardKey(hotKeyPreviousHid),
+        scope: scope,
+      );
+      hotKeyFullScreen.value = HotKey(
+        modifiers: _getModifier(modifierFullScreenHidList),
+        key: PhysicalKeyboardKey(hotKeyFullScreenHid),
+        scope: scope,
+      );
+    });
 
     await hotKeyManager.unregisterAll();
 
@@ -465,13 +473,17 @@ class SettingController {
   }
 
   // 辅助方法：保存 Bool 到 SharedPreferences
-  void _setBoolPref(String key, RxBool rxBool, {bool? overrideValue}) {
+  void _setBoolPref(
+    String key,
+    Signal<bool> boolSignal, {
+    bool? overrideValue,
+  }) {
     if (overrideValue != null) {
-      rxBool.value = overrideValue;
+      boolSignal.value = overrideValue;
     } else {
-      rxBool.toggle();
+      boolSignal.value = !boolSignal.value;
     }
-    prefs?.setBool(key, rxBool.value);
+    prefs?.setBool(key, boolSignal.value);
   }
 
   void setShowTranslate() =>
@@ -621,7 +633,7 @@ class SettingController {
     if (value != null) {
       showDesktopLyrics.value = value;
     } else {
-      showDesktopLyrics.toggle();
+      showDesktopLyrics.value = !showDesktopLyrics.value;
     }
 
     await putScalableCache();

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
@@ -64,20 +64,23 @@ class FloatingButton extends StatefulWidget {
 }
 
 class _FloatingButtonState extends State<FloatingButton> {
-  final AudioController _audioController = Get.find<AudioController>();
-  late final Worker _jumpWorker;
+  final AudioController _audioController = AudioController.instance;
+  late final EffectCleanup _jumpWorker;
 
   @override
   void initState() {
     super.initState();
-    _jumpWorker = ever(_audioController.currentPath, (_) {
-      _jumpToCurrent(useAnimate: false, scrollOnVisible: false);
+    _jumpWorker = effect(() {
+      _audioController.currentPath.value;
+      untracked(() {
+        _jumpToCurrent(useAnimate: false, scrollOnVisible: false);
+      });
     });
   }
 
   @override
   void dispose() {
-    _jumpWorker.dispose();
+    _jumpWorker.call();
     super.dispose();
   }
 

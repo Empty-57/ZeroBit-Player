@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
@@ -9,50 +9,55 @@ import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 
-class DetailsPageController extends GetxController
-    with DetailsPageControllerBase {
+class DetailsPageController with DetailsPageControllerBase {
   final List<String> pathList;
   final String operateArea;
 
   DetailsPageController({required this.pathList, required this.operateArea});
 
   MusicCacheController get _musicCacheController =>
-      Get.find<MusicCacheController>();
+      MusicCacheController.instance;
 
   UserPlayListController get _userPlayListController =>
-      Get.find<UserPlayListController>();
+      UserPlayListController.instance;
 
   @override
-  final items = <MusicCache>[].obs; // 也许可以去除Rx
+  final items = listSignal(<MusicCache>[]); // 也许可以去除Rx
 
   @override
-  final Rx<Uint8List> headCover = kTransparentImage.obs;
+  final Signal<Uint8List> headCover = signal(kTransparentImage);
 
-  Worker? _syncSongEditedWorker;
-  Worker? _syncRemoveWorker;
+  EffectCleanup? _syncSongEditedWorker;
+  EffectCleanup? _syncRemoveWorker;
 
-  @override
-  void onInit() {
-    super.onInit();
-
-    _syncSongEditedWorker = ever(_musicCacheController.songUpdatedSignal, (
-      MusicCache? updatedSong,
-    ) {
+  void init() {
+    _syncSongEditedWorker = effect(() {
+      final MusicCache? updatedSong =
+          _musicCacheController.songUpdatedSignal.value;
       if (updatedSong == null) return;
-      final index = items.indexWhere((m) => m.path == updatedSong.path);
-      if (index != -1) {
-        items[index] = updatedSong;
-      }
+      untracked(() {
+        final index = items.indexWhere((m) => m.path == updatedSong.path);
+        if (index != -1) {
+          items[index] = updatedSong;
+        }
+      });
     });
 
-    _syncRemoveWorker = ever(_userPlayListController.songDeletedSignal, (
-      List<String> removeList,
-    ) {
+    bool isFirstSongDeleted = true;
+    _syncRemoveWorker = effect(() {
+      final List<String> removeList =
+          _userPlayListController.songDeletedSignal.value;
+      if (isFirstSongDeleted) {
+        isFirstSongDeleted = false;
+        return;
+      }
       if (removeList.isEmpty) {
         return;
       }
 
-      items.removeWhere((v) => removeList.contains(v.path));
+      untracked(() {
+        items.removeWhere((v) => removeList.contains(v.path));
+      });
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -60,11 +65,11 @@ class DetailsPageController extends GetxController
     });
   }
 
-  @override
-  void onClose() {
-    _syncSongEditedWorker?.dispose();
-    _syncRemoveWorker?.dispose();
-    super.onClose();
+  void dispose() {
+    _syncSongEditedWorker?.call();
+    _syncRemoveWorker?.call();
+    items.dispose();
+    headCover.dispose();
   }
 
   Future<void> _loadDetailsData(

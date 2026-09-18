@@ -1,26 +1,22 @@
-import 'package:flutter/cupertino.dart';
-import 'package:get/get.dart';
+import 'package:flutter/foundation.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/desktop_lyrics_sever.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
 
-class MyWindowListener extends GetxController with WindowListener {
-  final isMaximized = false.obs;
-  final isFullScreen = false.obs;
+class WindowController with WindowListener {
+  WindowController._();
+  static final WindowController instance = WindowController._();
+
+  final isMaximized = signal(false);
+  final isFullScreen = signal(false);
+
   final DesktopLyricsSever _desktopLyricsSever = DesktopLyricsSever.instance;
-  final SettingController _settingController = SettingController.instance;
+  SettingController get _settingController => SettingController.instance;
 
-  @override
-  void onInit() {
+  void init() {
     windowManager.addListener(this);
-    super.onInit();
-  }
-
-  @override
-  void onClose() {
-    windowManager.removeListener(this);
-    super.onClose();
   }
 
   void toggleMaximize() async {
@@ -34,9 +30,9 @@ class MyWindowListener extends GetxController with WindowListener {
   }
 
   void toggleFullScreen() async {
-    final isFullScreen = await windowManager.isFullScreen();
-    await windowManager.setFullScreen(!isFullScreen);
-    this.isFullScreen.value = !isFullScreen;
+    final isFullScreen_ = await windowManager.isFullScreen();
+    await windowManager.setFullScreen(!isFullScreen_);
+    isFullScreen.value = !isFullScreen_;
   }
 
   Future<void> closeAndClean() async {
@@ -47,6 +43,8 @@ class MyWindowListener extends GetxController with WindowListener {
       debugPrint('Error on closeClean: $e');
     } finally {
       windowManager.removeListener(this);
+      isMaximized.dispose();
+      isFullScreen.dispose();
       await windowManager.close();
     }
   }
@@ -56,7 +54,7 @@ class MyWindowListener extends GetxController with WindowListener {
     isMaximized.value = true;
     _settingController.lastWindowInfo[SettingController
             .lastWindowIsMaximizedKey] =
-        isMaximized.value;
+        true;
     _settingController.putScalableCache();
   }
 
@@ -65,7 +63,7 @@ class MyWindowListener extends GetxController with WindowListener {
     isMaximized.value = false;
     _settingController.lastWindowInfo[SettingController
             .lastWindowIsMaximizedKey] =
-        isMaximized.value;
+        false;
     _settingController.putScalableCache();
   }
 

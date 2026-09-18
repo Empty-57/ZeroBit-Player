@@ -4,9 +4,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/lyric_text.dart';
 import 'package:zerobit_player/components/spring_list_view.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
@@ -646,10 +646,10 @@ class LyricsRender extends StatefulWidget {
 }
 
 class _LyricsRenderState extends State<LyricsRender> {
-  final AudioController _audioController = Get.find<AudioController>();
+  final AudioController _audioController = AudioController.instance;
   final SettingController _settingController = SettingController.instance;
-  final LyricController _lyricController = Get.find<LyricController>();
-  final _isHover = false.obs;
+  final LyricController _lyricController = LyricController.instance;
+  final _isHover = signal(false);
   final _LyricsStyle lrcStylePackage = _LyricsStyle();
 
   @override
@@ -658,7 +658,7 @@ class _LyricsRenderState extends State<LyricsRender> {
     // 首次进入页面时，跳转到当前行
 
     if (_settingController.useSpringScroll.value) {
-      Get.put(SpringListController());
+      _lyricController.springController = SpringListController();
     }
 
     _lyricController.lrcViewScrollController = ItemScrollController();
@@ -672,11 +672,8 @@ class _LyricsRenderState extends State<LyricsRender> {
   @override
   void dispose() {
     _lyricController.lrcViewScrollController = null;
-    _isHover.close();
-
-    if (Get.isRegistered<SpringListController>()) {
-      Get.delete<SpringListController>();
-    }
+    _lyricController.springController = null;
+    _isHover.dispose();
     super.dispose();
   }
 
@@ -705,9 +702,11 @@ class _LyricsRenderState extends State<LyricsRender> {
               behavior: ScrollConfiguration.of(
                 context,
               ).copyWith(scrollbars: false),
-              child: GetBuilder<AudioController>(
-                id: GetBuilderId.lyricRender,
-                builder: (c) {
+              child: SignalBuilder(
+                builder: (context) {
+                  final c = _audioController;
+                  // 读取渲染版本号以接收手动刷新信号，等价于原 GetBuilder 的定向 update
+                  c.lyricRenderRevision.value;
                   // 将 style 定义在Obx内以接收样式更改信号
                   final lyricsStyle = lrcStylePackage.lyricStyle;
                   final tsLyricStyle = lrcStylePackage.tsLyricStyle;
@@ -792,6 +791,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                           key: ValueKey(c.currentPath.value),
                           lineDuration: c.lineDurationList,
                           length: c.lineTextList.length,
+                          controller: _lyricController.springController!,
                           itemBuilder: (int index) {
                             return creatLyricItem(index);
                           },
@@ -800,6 +800,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                           canRequestFocus: false,
                           descendantsAreFocusable: false,
                           child: ScrollablePositionedList.builder(
+                            key: ValueKey(c.currentPath.value),
                             itemCount: c.lineTextList.length,
                             initialScrollIndex: 0,
                             initialAlignment: 0.4,
@@ -828,8 +829,8 @@ class _LyricsRenderState extends State<LyricsRender> {
             Positioned(
               bottom: 100,
               right: 0,
-              child: Obx(
-                () => AnimatedOpacity(
+              child: SignalBuilder(
+                builder: (context) => AnimatedOpacity(
                   opacity: _isHover.value ? 1.0 : 0.0,
                   duration: 150.ms,
                   child: Column(
@@ -843,13 +844,14 @@ class _LyricsRenderState extends State<LyricsRender> {
                         size: _ctrlBtnMinSize,
                         color: mixColor,
                         fn: () {
-                          _settingController.setShowTranslate();
-                          _audioController.update([GetBuilderId.lyricRender]);
-                          if (Get.isRegistered<SpringListController>()) {
-                            Get.find<SpringListController>()
-                                    .cachedScreenHeight =
-                                0.0; // 重置缓存
-                          }
+                          batch(() {
+                            _settingController.setShowTranslate();
+                            _audioController.lyricRenderRevision.value++;
+                          });
+                          _lyricController
+                                  .springController
+                                  ?.cachedScreenHeight =
+                              0.0; // 重置缓存
                         },
                       ),
                       GenIconBtn(
@@ -860,13 +862,14 @@ class _LyricsRenderState extends State<LyricsRender> {
                         size: _ctrlBtnMinSize,
                         color: mixColor,
                         fn: () {
-                          _settingController.setShowRoma();
-                          _audioController.update([GetBuilderId.lyricRender]);
-                          if (Get.isRegistered<SpringListController>()) {
-                            Get.find<SpringListController>()
-                                    .cachedScreenHeight =
-                                0.0; // 重置缓存
-                          }
+                          batch(() {
+                            _settingController.setShowRoma();
+                            _audioController.lyricRenderRevision.value++;
+                          });
+                          _lyricController
+                                  .springController
+                                  ?.cachedScreenHeight =
+                              0.0; // 重置缓存
                         },
                       ),
                     ],
@@ -962,114 +965,116 @@ class _StaggeredLyricItem extends StatelessWidget {
     final useBlur = settingController.useBlur.value;
     final useSpring = settingController.useSpringScroll.value;
 
-    return Obx(() {
-      final int currentLineIndex = lyricController.currentLineIndex.value;
-      final int distance = (currentLineIndex - index).abs();
-      final renderWidget = distance <= lyricController.visibleItemCount;
+    return SignalBuilder(
+      builder: (context) {
+        final int currentLineIndex = lyricController.currentLineIndex.value;
+        final int distance = (currentLineIndex - index).abs();
+        final renderWidget = distance <= lyricController.visibleItemCount;
 
-      final isPointerScrolling = lyricController.isPointerScroll.value;
-      if (!renderWidget && useSpring && !isPointerScrolling) {
-        return const SizedBox.shrink(); // ?
-      }
+        final isPointerScrolling = lyricController.isPointerScroll.value;
+        if (!renderWidget && useSpring && !isPointerScrolling) {
+          return const SizedBox.shrink(); // ?
+        }
 
-      final isCurrent = index == currentLineIndex;
-      final bool isPrevLine = (currentLineIndex - index == 1);
-      final int blurSigma =
-          !useBlur ||
-              isCurrent ||
-              (index == 0 && currentLineIndex <= 0) ||
-              isPointerScrolling ||
-              !renderWidget
-          ? 0
-          : distance.clamp(0, 4);
+        final isCurrent = index == currentLineIndex;
+        final bool isPrevLine = (currentLineIndex - index == 1);
+        final int blurSigma =
+            !useBlur ||
+                isCurrent ||
+                (index == 0 && currentLineIndex <= 0) ||
+                isPointerScrolling ||
+                !renderWidget
+            ? 0
+            : distance.clamp(0, 4);
 
-      final content = SizedBox(
-        width: double.infinity,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: _lrcCrossAlignment[lrcAlignment],
-          children: [
-            if (index == 0)
-              _InterludeWidget(
-                lyricController: lyricController,
-                lrcAlignment: lrcAlignment,
-                interludeLyricStyle: interludeLyricStyle,
-                strutStyle: strutStyle,
-                isCurrent: currentLineIndex < 0,
-              ),
-            if (lrcType == LyricFormat.lrc)
-              _createAnimatedScaleWidget(
+        final content = SizedBox(
+          width: double.infinity,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: _lrcCrossAlignment[lrcAlignment],
+            children: [
+              if (index == 0)
+                _InterludeWidget(
+                  lyricController: lyricController,
+                  lrcAlignment: lrcAlignment,
+                  interludeLyricStyle: interludeLyricStyle,
+                  strutStyle: strutStyle,
+                  isCurrent: currentLineIndex < 0,
+                ),
+              if (lrcType == LyricFormat.lrc)
+                _createAnimatedScaleWidget(
+                  child: _LrcLyricWidget(
+                    text: lineText as String,
+                    style: lyricStyle,
+                    isCurrent: isCurrent,
+                    textAlign: textAlign,
+                    blurSigma: blurSigma,
+                  ),
+                  isCurrent: isCurrent,
+                )
+              else
+                _createAnimatedScaleWidget(
+                  child: _KaraOkLyricWidget(
+                    text: lineText as List<WordEntry>,
+                    style: lyricStyle,
+                    isCurrentLine: isCurrent,
+                    isPrevLine: isPrevLine,
+                    lrcAlignmentIndex: lrcAlignment,
+                    lyricController: lyricController,
+                    strutStyle: strutStyle,
+                    blurSigma: blurSigma,
+                  ),
+                  isCurrent: isCurrent,
+                ),
+
+              _createAnimatedSizeWidget(
+                show: romaText.isNotEmpty && showRoma,
                 child: _LrcLyricWidget(
-                  text: lineText as String,
-                  style: lyricStyle,
+                  text: romaText,
+                  style: romaLyricStyle,
                   isCurrent: isCurrent,
                   textAlign: textAlign,
+                  highLightAlpha: _currentAlpha,
                   blurSigma: blurSigma,
                 ),
-                isCurrent: isCurrent,
-              )
-            else
-              _createAnimatedScaleWidget(
-                child: _KaraOkLyricWidget(
-                  text: lineText as List<WordEntry>,
-                  style: lyricStyle,
-                  isCurrentLine: isCurrent,
-                  isPrevLine: isPrevLine,
-                  lrcAlignmentIndex: lrcAlignment,
+              ),
+
+              _createAnimatedSizeWidget(
+                show: translateText.isNotEmpty && showTranslate,
+                child: _LrcLyricWidget(
+                  text: translateText,
+                  style: tsLyricStyle,
+                  isCurrent: isCurrent,
+                  textAlign: textAlign,
+                  highLightAlpha: _currentAlpha,
+                  blurSigma: blurSigma,
+                ),
+              ),
+              if (isCurrent || isPrevLine)
+                _InterludeWidget(
                   lyricController: lyricController,
+                  lrcAlignment: lrcAlignment,
+                  interludeLyricStyle: interludeLyricStyle,
                   strutStyle: strutStyle,
-                  blurSigma: blurSigma,
+                  isCurrent: isCurrent,
                 ),
-                isCurrent: isCurrent,
-              ),
+            ],
+          ),
+        );
 
-            _createAnimatedSizeWidget(
-              show: romaText.isNotEmpty && showRoma,
-              child: _LrcLyricWidget(
-                text: romaText,
-                style: romaLyricStyle,
-                isCurrent: isCurrent,
-                textAlign: textAlign,
-                highLightAlpha: _currentAlpha,
-                blurSigma: blurSigma,
-              ),
-            ),
-
-            _createAnimatedSizeWidget(
-              show: translateText.isNotEmpty && showTranslate,
-              child: _LrcLyricWidget(
-                text: translateText,
-                style: tsLyricStyle,
-                isCurrent: isCurrent,
-                textAlign: textAlign,
-                highLightAlpha: _currentAlpha,
-                blurSigma: blurSigma,
-              ),
-            ),
-            if (isCurrent || isPrevLine)
-              _InterludeWidget(
-                lyricController: lyricController,
-                lrcAlignment: lrcAlignment,
-                interludeLyricStyle: interludeLyricStyle,
-                strutStyle: strutStyle,
-                isCurrent: isCurrent,
-              ),
-          ],
-        ),
-      );
-
-      return TextButton(
-        onPressed: () {
-          audioController.throttledSeek(startTime);
-        },
-        style: TextButton.styleFrom(
-          shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
-          padding: lrcPadding,
-          overlayColor: hoverColor,
-        ),
-        child: content,
-      );
-    });
+        return TextButton(
+          onPressed: () {
+            audioController.throttledSeek(startTime);
+          },
+          style: TextButton.styleFrom(
+            shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
+            padding: lrcPadding,
+            overlayColor: hoverColor,
+          ),
+          child: content,
+        );
+      },
+    );
   }
 }
 
@@ -1180,39 +1185,41 @@ class _InterludeWidget extends StatelessWidget {
       baseColor,
     ];
 
-    return Obx(() {
-      final bool show = lyricController.showInterlude.value;
-      final bool isVisible = isCurrent && show;
+    return SignalBuilder(
+      builder: (context) {
+        final bool show = lyricController.showInterlude.value;
+        final bool isVisible = isCurrent && show;
 
-      return AnimatedSwitcher(
-        duration: const Duration(milliseconds: 500),
-        transitionBuilder: (Widget child, Animation<double> animation) {
-          return _InterludeTransition(
-            animation: animation,
-            scaleAlignment: _lrcScaleAlignment[lrcAlignment],
-            child: child,
-          );
-        },
-        child: isVisible
-            ? Row(
-                key: const ValueKey('interlude_visible'),
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: _lrcMainAlignment[lrcAlignment],
-                children: [
-                  RepaintBoundary(
-                    child: _BreathingDots(
-                      lyricController: lyricController,
-                      interludeLyricStyle: interludeLyricStyle,
-                      strutStyle: strutStyle,
-                      gradientColors: gradientColors,
-                      lrcAlignment: lrcAlignment,
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 500),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return _InterludeTransition(
+              animation: animation,
+              scaleAlignment: _lrcScaleAlignment[lrcAlignment],
+              child: child,
+            );
+          },
+          child: isVisible
+              ? Row(
+                  key: const ValueKey('interlude_visible'),
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: _lrcMainAlignment[lrcAlignment],
+                  children: [
+                    RepaintBoundary(
+                      child: _BreathingDots(
+                        lyricController: lyricController,
+                        interludeLyricStyle: interludeLyricStyle,
+                        strutStyle: strutStyle,
+                        gradientColors: gradientColors,
+                        lrcAlignment: lrcAlignment,
+                      ),
                     ),
-                  ),
-                ],
-              )
-            : const SizedBox.shrink(key: ValueKey('interlude_hidden')),
-      );
-    });
+                  ],
+                )
+              : const SizedBox.shrink(key: ValueKey('interlude_hidden')),
+        );
+      },
+    );
   }
 }
 

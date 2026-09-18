@@ -1,36 +1,40 @@
 import 'dart:async';
-
 import 'package:flutter/cupertino.dart';
-import 'package:get/get.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/spring_list_view.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
 import 'audio_ctrl.dart';
 
-class LyricController extends GetxController {
-  final ValueNotifier<double> currentMs20Notifier = ValueNotifier<double>(0.0);
-  ItemScrollController? lrcViewScrollController;
-  final isPointerScroll = false.obs;
-  final AudioController _audioController = Get.find<AudioController>();
-  SpringListController get _springConntroller =>
-      Get.find<SpringListController>();
+class LyricController {
+  LyricController._();
+  static final LyricController instance = LyricController._();
+
+  final AudioController _audioController = AudioController.instance;
   final SettingController _settingController = SettingController.instance;
+  SpringListController? springController;
 
-  final currentLineIndex = (-1).obs;
+  final ValueNotifier<double> currentMs20Notifier = ValueNotifier<double>(0.0);
   final ValueNotifier<int> currentWordIndexNotifier = ValueNotifier<int>(0);
-
   final ValueNotifier<double> wordProgress = ValueNotifier<double>(0.0);
-  double _wordProgressIncrement = 0;
-
-  final showInterlude = false.obs;
-
   final ValueNotifier<double> interludeProcess = ValueNotifier<double>(0.0);
 
-  double _interval = 0; // 歌词行间隔值
+  final currentLineIndex = signal(-1);
+  final isPointerScroll = signal(false);
+  final showInterlude = signal(false);
 
+  ItemScrollController? lrcViewScrollController;
+
+  double _wordProgressIncrement = 0;
+  double _interval = 0; // 歌词行间隔值
   int _wordsLen = 0; // 当前行长度
+  List<WordEntry>? _currentLine; // 当前行信息
+  int visibleItemCount = 10;
+
+  Timer? _debounceTimer;
+  Timer? _delayTimer;
 
   static const double _showIntervalLowLimit =
       0.95; // 间奏进度下限, 最后一个词过渡到 95% 就开始显示间奏, 给出场动画稍微预留一些时间
@@ -39,23 +43,18 @@ class LyricController extends GetxController {
   static const int _intervalThreshold = 4; // 间奏阈值, 超过此秒数则为间奏
   static const double _loopTime = 0.02;
 
-  int visibleItemCount = 10;
-
-  List<WordEntry>? _currentLine; // 当前行信息
-
-  Timer? _debounceTimer; // 防抖计时器
-  Timer? _delayTimer;
-
-  @override
-  void onClose() {
+  void dispose() {
     currentMs20Notifier.dispose();
     currentWordIndexNotifier.dispose();
     wordProgress.dispose();
     interludeProcess.dispose();
+    isPointerScroll.dispose();
+    currentLineIndex.dispose();
+    showInterlude.dispose();
     _debounceTimer?.cancel();
     _delayTimer?.cancel();
     _currentLine = null;
-    super.onClose();
+    lrcViewScrollController = null;
   }
 
   // 更新 _currentWord, _currentLine, _interval, _threshold
@@ -175,11 +174,9 @@ class LyricController extends GetxController {
       currentWordIndexNotifier.value = -1;
       wordProgress.value = 0;
 
-      if (Get.isRegistered<SpringListController>()) {
-        visibleItemCount = newLineIndex <= 0
-            ? 20
-            : _springConntroller.getVisibleItemCount();
-      }
+      visibleItemCount = newLineIndex <= 0
+          ? 20
+          : springController?.getVisibleItemCount() ?? 20;
       currentLineIndex.value = newLineIndex;
       _updateLyricsInfo(updateLineOnly: true);
       if (!isPointerScroll.value) {
@@ -229,9 +226,7 @@ class LyricController extends GetxController {
   }
 
   void springScrollToCenter() {
-    if (Get.isRegistered<SpringListController>()) {
-      _springConntroller.nextLyric(currentLineIndex.value);
-    }
+    springController?.nextLyric(currentLineIndex.value);
   }
 
   void scrollToCenter() {
@@ -250,7 +245,7 @@ class LyricController extends GetxController {
             0,
             (_audioController.currentLyrics.value?.parsedLrc?.length ?? 1) - 1,
           ),
-          duration: Duration(milliseconds: 500),
+          duration: const Duration(milliseconds: 500),
           alignment: 0.4,
           curve: Curves.easeInOut,
         );
@@ -265,13 +260,11 @@ class LyricController extends GetxController {
     required List<TimedEntry>? lyrics,
     required int hint,
   }) {
-    if (lyrics == null) {
-      return -1;
-    }
+    if (lyrics == null) return -1;
     final n = lyrics.length;
     if (n == 0) return -1;
 
-    // 1. 先判断 hint 自身或 hint+1 是否命中
+    // 先判断 hint 自身或 hint+1 是否命中
     if (hint >= 0 && hint < n) {
       final seg = lyrics[hint];
       if (time >= seg.start && time < seg.nextTime) {
@@ -286,7 +279,7 @@ class LyricController extends GetxController {
       }
     }
 
-    // 2. 二分搜索
+    // 二分搜索
     int low = 0, high = n - 1;
     while (low <= high) {
       final mid = (low + high) >> 1;

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/music_list_tool.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/statistics_ctrl.dart';
@@ -81,7 +81,7 @@ class StatisticsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final AudioController audioController = Get.find<AudioController>();
+    final AudioController audioController = AudioController.instance;
 
     final statisticsTextStyle = generalTextStyle(ctx: context, size: 'md');
 
@@ -154,43 +154,43 @@ class StatisticsPage extends StatelessWidget {
               mainAxisSpacing: 8,
               mainAxisExtent: 64,
               children: [
-                Obx(
-                  () => _DataCard(
+                SignalBuilder(
+                  builder: (context) => _DataCard(
                     title: StatisticsController.instance.totalPlayedCount.value,
                     subTitle: '累计播放数',
                     icon: PhosphorIconsRegular.play,
                   ),
                 ),
-                Obx(
-                  () => _DataCard(
+                SignalBuilder(
+                  builder: (context) => _DataCard(
                     title: StatisticsController.instance.totalPlayedTime.value,
                     subTitle: '累计播放时长',
                     icon: PhosphorIconsRegular.timer,
                   ),
                 ),
-                Obx(
-                  () => _DataCard(
+                SignalBuilder(
+                  builder: (context) => _DataCard(
                     title: StatisticsController.instance.totalTime.value,
                     subTitle: '曲库总时长',
                     icon: PhosphorIconsRegular.clock,
                   ),
                 ),
-                Obx(
-                  () => _DataCard(
+                SignalBuilder(
+                  builder: (context) => _DataCard(
                     title: StatisticsController.instance.totalSize.value,
                     subTitle: '曲库总大小',
                     icon: PhosphorIconsRegular.hardDrives,
                   ),
                 ),
-                Obx(
-                  () => _DataCard(
+                SignalBuilder(
+                  builder: (context) => _DataCard(
                     title: StatisticsController.instance.albumArtist.value,
                     subTitle: '专辑 / 艺术家',
                     icon: PhosphorIconsRegular.vinylRecord,
                   ),
                 ),
-                Obx(
-                  () => _DataCard(
+                SignalBuilder(
+                  builder: (context) => _DataCard(
                     title: StatisticsController.instance.totalSongCount.value,
                     subTitle: '总曲目',
                     icon: PhosphorIconsRegular.musicNotes,
@@ -209,41 +209,43 @@ class StatisticsPage extends StatelessWidget {
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      return Obx(() {
-                        final top30List =
-                            StatisticsController.instance.artistTop30;
-                        if (top30List.isEmpty) {
-                          return Center(
-                            child: Text('暂无数据', style: subTitleStyle),
-                          );
-                        }
-
-                        return ListView.builder(
-                          scrollCacheExtent: const ScrollCacheExtent.pixels(
-                            _itemHeight * 4,
-                          ),
-                          itemCount: top30List.length,
-                          itemExtent: _itemHeight,
-                          addRepaintBoundaries: true,
-                          addAutomaticKeepAlives: false,
-                          addSemanticIndexes: false,
-                          itemBuilder: (_, index) {
-                            final item = top30List.entries.toList()[index];
-                            final rank = index + 1;
-
-                            return _StatisticsArtistTile(
-                              textStyle: statisticsTextStyle,
-                              subTextStyle: statisticsSubTextStyle,
-                              rank: rank,
-                              pathList: item.value.pathList,
-                              artist: item.key,
-                              playedCount: item.value.playedCount,
-                              playedTime: item.value.playedTime,
-                              maxWidth: constraints.maxWidth,
+                      return SignalBuilder(
+                        builder: (context) {
+                          final top30List =
+                              StatisticsController.instance.artistTop30;
+                          if (top30List.isEmpty) {
+                            return Center(
+                              child: Text('暂无数据', style: subTitleStyle),
                             );
-                          },
-                        );
-                      });
+                          }
+
+                          return ListView.builder(
+                            scrollCacheExtent: const ScrollCacheExtent.pixels(
+                              _itemHeight * 4,
+                            ),
+                            itemCount: top30List.length,
+                            itemExtent: _itemHeight,
+                            addRepaintBoundaries: true,
+                            addAutomaticKeepAlives: false,
+                            addSemanticIndexes: false,
+                            itemBuilder: (_, index) {
+                              final item = top30List.entries.toList()[index];
+                              final rank = index + 1;
+
+                              return _StatisticsArtistTile(
+                                textStyle: statisticsTextStyle,
+                                subTextStyle: statisticsSubTextStyle,
+                                rank: rank,
+                                pathList: item.value.pathList,
+                                artist: item.key,
+                                playedCount: item.value.playedCount,
+                                playedTime: item.value.playedTime,
+                                maxWidth: constraints.maxWidth,
+                              );
+                            },
+                          );
+                        },
+                      );
                     },
                   ),
                 ),
@@ -257,37 +259,42 @@ class StatisticsPage extends StatelessWidget {
               children: [
                 Text('播放榜 Top50', style: subTitleStyle),
                 Expanded(
-                  child: Obx(() {
-                    final top50List = StatisticsController.instance.playedTop50;
-                    if (top50List.isEmpty) {
-                      return Center(child: Text('暂无数据', style: subTitleStyle));
-                    }
-
-                    return ListView.builder(
-                      scrollCacheExtent: const ScrollCacheExtent.pixels(
-                        _itemHeight * 4,
-                      ),
-                      itemCount: top50List.length,
-                      itemExtent: _itemHeight,
-                      padding: const EdgeInsets.only(bottom: _itemHeight * 2),
-                      addRepaintBoundaries: true,
-                      addAutomaticKeepAlives: false,
-                      addSemanticIndexes: false,
-                      itemBuilder: (_, index) {
-                        final item = top50List[index];
-                        final rank = index + 1;
-
-                        return StatisticsMusicTile(
-                          metadata: item.metadata,
-                          textStyle: statisticsTextStyle,
-                          subTextStyle: statisticsSubTextStyle,
-                          audioController: audioController,
-                          rank: rank,
-                          playStatistics: item.statistics,
+                  child: SignalBuilder(
+                    builder: (context) {
+                      final top50List =
+                          StatisticsController.instance.playedTop50;
+                      if (top50List.isEmpty) {
+                        return Center(
+                          child: Text('暂无数据', style: subTitleStyle),
                         );
-                      },
-                    );
-                  }),
+                      }
+
+                      return ListView.builder(
+                        scrollCacheExtent: const ScrollCacheExtent.pixels(
+                          _itemHeight * 4,
+                        ),
+                        itemCount: top50List.length,
+                        itemExtent: _itemHeight,
+                        padding: const EdgeInsets.only(bottom: _itemHeight * 2),
+                        addRepaintBoundaries: true,
+                        addAutomaticKeepAlives: false,
+                        addSemanticIndexes: false,
+                        itemBuilder: (_, index) {
+                          final item = top50List[index];
+                          final rank = index + 1;
+
+                          return StatisticsMusicTile(
+                            metadata: item.metadata,
+                            textStyle: statisticsTextStyle,
+                            subTextStyle: statisticsSubTextStyle,
+                            audioController: audioController,
+                            rank: rank,
+                            playStatistics: item.statistics,
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
               ],
             ),

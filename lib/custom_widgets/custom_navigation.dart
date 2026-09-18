@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';
@@ -14,7 +14,7 @@ import 'package:zerobit_player/tools/paint_cache.dart';
 
 class SidebarNavState {
   static Offset beginOffset = const Offset(0.1, 0.1);
-  static final currentNavigationIndex = 0.obs;
+  static final currentNavigationIndex = signal(0);
 }
 
 int _oldIndex = 0;
@@ -33,7 +33,7 @@ final _playQueueScrollController = ScrollController();
 const double _itemHeight = 64;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 
-class CustomNavigationBtn extends GetView<AudioController> {
+class CustomNavigationBtn extends StatelessWidget {
   final String label;
   final IconData icon;
   final int localIndex;
@@ -49,111 +49,114 @@ class CustomNavigationBtn extends GetView<AudioController> {
   Widget build(BuildContext context) {
     final backgroundColor = Theme.of(context).colorScheme.secondaryContainer;
     final width = MediaQuery.sizeOf(context).width;
+    final c = AudioController.instance;
     return SizedBox(
       width: _navigationBtnWidth,
       height: _navigationBtnHeight,
-      child: Obx(() {
-        final index = SidebarNavState.currentNavigationIndex.value;
-        return TextButton(
-          onPressed: index != localIndex
-              ? () {
-                  _oldIndex = index;
-                  SidebarNavState.beginOffset = _oldIndex >= localIndex
-                      ? const Offset(0.1, 0.1)
-                      : const Offset(-0.1, -0.1);
-                  context.push(_mainRoutes[localIndex]);
-                }
-              : null,
-          style: TextButton.styleFrom(
-            alignment: Alignment.centerLeft,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4),
+      child: SignalBuilder(
+        builder: (context) {
+          final index = SidebarNavState.currentNavigationIndex.value;
+          return TextButton(
+            onPressed: index != localIndex
+                ? () {
+                    _oldIndex = index;
+                    SidebarNavState.beginOffset = _oldIndex >= localIndex
+                        ? const Offset(0.1, 0.1)
+                        : const Offset(-0.1, -0.1);
+                    context.push(_mainRoutes[localIndex]);
+                  }
+                : null,
+            style: TextButton.styleFrom(
+              alignment: Alignment.centerLeft,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+              backgroundColor: index == localIndex
+                  ? backgroundColor
+                  : backgroundColor.withValues(alpha: 0),
+              padding: const EdgeInsets.only(
+                left: 12,
+                right: 0,
+                top: 8,
+                bottom: 8,
+              ),
             ),
-            backgroundColor: index == localIndex
-                ? backgroundColor
-                : backgroundColor.withValues(alpha: 0),
-            padding: const EdgeInsets.only(
-              left: 12,
-              right: 0,
-              top: 8,
-              bottom: 8,
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  spacing: 8,
-                  children: [
-                    Tooltip(
-                      message: width > _resViewThresholds
-                          ? controller.navigationIsExtend.value
-                                ? ""
-                                : label
-                          : label,
-                      child: Icon(
-                        icon,
-                        color: Theme.of(context).colorScheme.onSurface,
-                        size: getIconSize(size: 'md'),
-                      ),
-                    ),
-                    Expanded(
-                      child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeOutCubic,
-                        opacity:
-                            (width > _resViewThresholds &&
-                                controller.navigationIsExtend.value)
-                            ? 1.0
-                            : 0.0,
-                        child: Text(
-                          label,
-                          style: generalTextStyle(ctx: context, size: 'md'),
-                          softWrap: false,
-                          overflow: TextOverflow.clip,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    spacing: 8,
+                    children: [
+                      Tooltip(
+                        message: width > _resViewThresholds
+                            ? c.navigationIsExtend.value
+                                  ? ""
+                                  : label
+                            : label,
+                        child: Icon(
+                          icon,
+                          color: Theme.of(context).colorScheme.onSurface,
+                          size: getIconSize(size: 'md'),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                    width: 4,
-                    height: _navigationBtnHeight - 8,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(2),
-                      color: index == localIndex
-                          ? Theme.of(
-                              context,
-                            ).colorScheme.primary.withValues(alpha: 0.8)
-                          : Colors.transparent,
-                    ),
-                  )
-                  .animate()
-                  .moveX(duration: 0.ms, end: 8)
-                  .animate(target: index == localIndex ? 1 : 0)
-                  .fade(duration: 500.ms)
-                  .moveY(
-                    duration: 300.ms,
-                    begin: _oldIndex >= localIndex
-                        ? _navigationBtnHeight
-                        : -_navigationBtnHeight,
-                    end: 0,
-                    curve: Curves.easeOutBack,
+                      Expanded(
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeOutCubic,
+                          opacity:
+                              (width > _resViewThresholds &&
+                                  c.navigationIsExtend.value)
+                              ? 1.0
+                              : 0.0,
+                          child: Text(
+                            label,
+                            style: generalTextStyle(ctx: context, size: 'md'),
+                            softWrap: false,
+                            overflow: TextOverflow.clip,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-            ],
-          ),
-        );
-      }),
+                ),
+                Container(
+                      width: 4,
+                      height: _navigationBtnHeight - 8,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(2),
+                        color: index == localIndex
+                            ? Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.8)
+                            : Colors.transparent,
+                      ),
+                    )
+                    .animate()
+                    .moveX(duration: 0.ms, end: 8)
+                    .animate(target: index == localIndex ? 1 : 0)
+                    .fade(duration: 500.ms)
+                    .moveY(
+                      duration: 300.ms,
+                      begin: _oldIndex >= localIndex
+                          ? _navigationBtnHeight
+                          : -_navigationBtnHeight,
+                      end: 0,
+                      curve: Curves.easeOutBack,
+                    ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }
 
-class CustomNavigation extends GetView<AudioController> {
+class CustomNavigation extends StatelessWidget {
   const CustomNavigation({super.key, required this.btnList});
 
   final List<Widget> btnList;
@@ -173,174 +176,254 @@ class CustomNavigation extends GetView<AudioController> {
       color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
     );
 
-    final c = controller;
+    final c = AudioController.instance;
 
-    return Obx(() {
-      final height = MediaQuery.sizeOf(context).height;
-      final width = MediaQuery.sizeOf(context).width;
-      final isExtend = c.navigationIsExtend.value;
-      final targetWidth = width > _resViewThresholds
-          ? isExtend
-                ? _navigationWidth
-                : _navigationWidthSmall
-          : _navigationWidthSmall;
+    return SignalBuilder(
+      builder: (context) {
+        final height = MediaQuery.sizeOf(context).height;
+        final width = MediaQuery.sizeOf(context).width;
+        final isExtend = c.navigationIsExtend.value;
+        final targetWidth = width > _resViewThresholds
+            ? isExtend
+                  ? _navigationWidth
+                  : _navigationWidthSmall
+            : _navigationWidthSmall;
 
-      return ClipRRect(
-        borderRadius: const BorderRadius.all(Radius.circular(8)),
-        child: BackdropFilter(
-          enabled:
-              SettingController.instance.backgroundImagePath.value.isNotEmpty ||
-              SettingController.instance.useTransparencyBackground.value,
-          filter: ImageFilterCache.imageFilter(sigma: 16),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOutCubic,
-            width: targetWidth,
-            clipBehavior: Clip.hardEdge,
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-            decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.surfaceContainer.withValues(alpha: 0.4),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 6.0,
-              children:
-                  btnList +
-                  <Widget>[
-                    const Spacer(),
-                    MenuAnchor(
-                      consumeOutsideTap: true,
-                      menuChildren: [
-                        Container(
-                          height: height - 200,
-                          width: width / 2,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.surfaceContainerHigh,
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            spacing: 8.0,
-                            children: [
-                              Text(
-                                "播放队列",
-                                style: generalTextStyle(
-                                  ctx: context,
-                                  size: 'xl',
-                                  weight: FontWeight.w600,
+        return ClipRRect(
+          borderRadius: const BorderRadius.all(Radius.circular(8)),
+          child: BackdropFilter(
+            enabled:
+                SettingController
+                    .instance
+                    .backgroundImagePath
+                    .value
+                    .isNotEmpty ||
+                SettingController.instance.useTransparencyBackground.value,
+            filter: ImageFilterCache.imageFilter(sigma: 16),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              width: targetWidth,
+              clipBehavior: Clip.hardEdge,
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainer.withValues(alpha: 0.4),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 6.0,
+                children:
+                    btnList +
+                    <Widget>[
+                      const Spacer(),
+                      MenuAnchor(
+                        consumeOutsideTap: true,
+                        menuChildren: [
+                          Container(
+                            height: height - 200,
+                            width: width / 2,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHigh,
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              spacing: 8.0,
+                              children: [
+                                Text(
+                                  "播放队列",
+                                  style: generalTextStyle(
+                                    ctx: context,
+                                    size: 'xl',
+                                    weight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Obx(() {
-                                  return ListView.builder(
-                                    scrollCacheExtent:
-                                        const ScrollCacheExtent.pixels(
-                                          _itemHeight * 1,
+                                Expanded(
+                                  flex: 1,
+                                  child: SignalBuilder(
+                                    builder: (context) {
+                                      return ListView.builder(
+                                        scrollCacheExtent:
+                                            const ScrollCacheExtent.pixels(
+                                              _itemHeight * 1,
+                                            ),
+                                        itemCount: c.playListCacheItems.length,
+                                        itemExtent: _itemHeight,
+                                        controller: _playQueueScrollController,
+                                        padding: const EdgeInsets.only(
+                                          bottom: _itemHeight * 2,
                                         ),
-                                    itemCount: c.playListCacheItems.length,
-                                    itemExtent: _itemHeight,
-                                    controller: _playQueueScrollController,
-                                    padding: const EdgeInsets.only(
-                                      bottom: _itemHeight * 2,
-                                    ),
-                                    itemBuilder: (context, index) {
-                                      final items = c.playListCacheItems[index];
-                                      return TextButton(
-                                        onPressed: () async {
-                                          await c.audioPlay(metadata: items);
-                                        }.throttle(ms: 300),
-                                        style: TextButton.styleFrom(
-                                          shape: const RoundedRectangleBorder(
-                                            borderRadius: _borderRadius,
-                                          ),
-                                        ),
-                                        child: SizedBox.expand(
-                                          child: Obx(() {
-                                            final isCurrent =
-                                                c.currentPath.value ==
-                                                items.path;
-                                            final subTextStyle = !isCurrent
-                                                ? subStyle
-                                                : highLightSubStyle;
-                                            final textStyle = !isCurrent
-                                                ? titleStyle
-                                                : highLightTitleStyle;
+                                        itemBuilder: (context, index) {
+                                          final items =
+                                              c.playListCacheItems[index];
+                                          return TextButton(
+                                            onPressed: () async {
+                                              await c.audioPlay(
+                                                metadata: items,
+                                              );
+                                            }.throttle(ms: 300),
+                                            style: TextButton.styleFrom(
+                                              shape:
+                                                  const RoundedRectangleBorder(
+                                                    borderRadius: _borderRadius,
+                                                  ),
+                                            ),
+                                            child: SizedBox.expand(
+                                              child: SignalBuilder(
+                                                builder: (context) {
+                                                  final isCurrent =
+                                                      c.currentPath.value ==
+                                                      items.path;
+                                                  final subTextStyle =
+                                                      !isCurrent
+                                                      ? subStyle
+                                                      : highLightSubStyle;
+                                                  final textStyle = !isCurrent
+                                                      ? titleStyle
+                                                      : highLightTitleStyle;
 
-                                            return Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  items.title,
-                                                  style: textStyle,
-                                                  softWrap: true,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  maxLines: 1,
-                                                ),
-                                                Text(
-                                                  "${items.artist} - ${items.album}",
-                                                  style: subTextStyle,
-                                                  softWrap: true,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  maxLines: 1,
-                                                ),
-                                              ],
-                                            );
-                                          }),
-                                        ),
+                                                  return Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        items.title,
+                                                        style: textStyle,
+                                                        softWrap: true,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        maxLines: 1,
+                                                      ),
+                                                      Text(
+                                                        "${items.artist} - ${items.album}",
+                                                        style: subTextStyle,
+                                                        softWrap: true,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        maxLines: 1,
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          );
+                                        },
                                       );
                                     },
-                                  );
-                                }),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        onOpen: () {
+                          SchedulerBinding.instance.addPostFrameCallback((_) {
+                            _playQueueScrollController.jumpTo(
+                              (_itemHeight * c.currentIndex.value).clamp(
+                                0.0,
+                                _playQueueScrollController
+                                    .position
+                                    .maxScrollExtent,
                               ),
-                            ],
+                            );
+                          });
+                        },
+                        style: const MenuStyle(alignment: Alignment.topRight),
+                        controller: _playQueueController,
+                        child: SizedBox(
+                          width: _navigationBtnWidth,
+                          height: _navigationBtnHeight,
+                          child: TextButton(
+                            onPressed: () {
+                              if (_playQueueController.isOpen) {
+                                _playQueueController.close();
+                              } else {
+                                _playQueueController.open();
+                              }
+                            },
+                            style: TextButton.styleFrom(
+                              alignment: Alignment.centerLeft,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              padding: const EdgeInsets.only(
+                                left: 12,
+                                right: 0,
+                                top: 8,
+                                bottom: 8,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              spacing: 8,
+                              children: [
+                                Tooltip(
+                                  message: width > _resViewThresholds
+                                      ? isExtend
+                                            ? ""
+                                            : "播放列表"
+                                      : "播放列表",
+                                  child: Icon(
+                                    PhosphorIconsLight.queue,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
+                                    size: getIconSize(size: 'md'),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: AnimatedOpacity(
+                                    duration: const Duration(milliseconds: 250),
+                                    curve: Curves.easeOutCubic,
+                                    opacity:
+                                        (width > _resViewThresholds && isExtend)
+                                        ? 1.0
+                                        : 0.0,
+                                    child: Text(
+                                      "播放队列",
+                                      style: generalTextStyle(
+                                        ctx: context,
+                                        size: 'md',
+                                      ),
+                                      softWrap: false,
+                                      overflow: TextOverflow.clip,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ],
-                      onOpen: () {
-                        SchedulerBinding.instance.addPostFrameCallback((_) {
-                          _playQueueScrollController.jumpTo(
-                            (_itemHeight * c.currentIndex.value).clamp(
-                              0.0,
-                              _playQueueScrollController
-                                  .position
-                                  .maxScrollExtent,
-                            ),
-                          );
-                        });
-                      },
-                      style: const MenuStyle(alignment: Alignment.topRight),
-                      controller: _playQueueController,
-                      child: SizedBox(
+                      ),
+                      SizedBox(
                         width: _navigationBtnWidth,
                         height: _navigationBtnHeight,
                         child: TextButton(
-                          onPressed: () {
-                            if (_playQueueController.isOpen) {
-                              _playQueueController.close();
-                            } else {
-                              _playQueueController.open();
-                            }
-                          },
+                          onPressed: width > _resViewThresholds
+                              ? () {
+                                  c.navigationIsExtend.value = !isExtend;
+                                }
+                              : null,
                           style: TextButton.styleFrom(
                             alignment: Alignment.centerLeft,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
-                            ),
                             padding: const EdgeInsets.only(
                               left: 12,
                               right: 0,
                               top: 8,
                               bottom: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
                             ),
                           ),
                           child: Row(
@@ -349,13 +432,17 @@ class CustomNavigation extends GetView<AudioController> {
                             spacing: 8,
                             children: [
                               Tooltip(
-                                message: width > _resViewThresholds
-                                    ? isExtend
-                                          ? ""
-                                          : "播放列表"
-                                    : "播放列表",
+                                message: isExtend
+                                    ? width > _resViewThresholds
+                                          ? "收起"
+                                          : "空间不足"
+                                    : width > _resViewThresholds
+                                    ? "展开"
+                                    : "空间不足",
                                 child: Icon(
-                                  PhosphorIconsLight.queue,
+                                  isExtend && width > _resViewThresholds
+                                      ? PhosphorIconsLight.caretLeft
+                                      : PhosphorIconsLight.caretRight,
                                   color: Theme.of(
                                     context,
                                   ).colorScheme.onSurface,
@@ -371,7 +458,7 @@ class CustomNavigation extends GetView<AudioController> {
                                       ? 1.0
                                       : 0.0,
                                   child: Text(
-                                    "播放队列",
+                                    isExtend ? "收起侧栏" : "",
                                     style: generalTextStyle(
                                       ctx: context,
                                       size: 'md',
@@ -385,77 +472,12 @@ class CustomNavigation extends GetView<AudioController> {
                           ),
                         ),
                       ),
-                    ),
-                    SizedBox(
-                      width: _navigationBtnWidth,
-                      height: _navigationBtnHeight,
-                      child: TextButton(
-                        onPressed: width > _resViewThresholds
-                            ? () {
-                                c.navigationIsExtend.value = !isExtend;
-                              }
-                            : null,
-                        style: TextButton.styleFrom(
-                          alignment: Alignment.centerLeft,
-                          padding: const EdgeInsets.only(
-                            left: 12,
-                            right: 0,
-                            top: 8,
-                            bottom: 8,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          spacing: 8,
-                          children: [
-                            Tooltip(
-                              message: isExtend
-                                  ? width > _resViewThresholds
-                                        ? "收起"
-                                        : "空间不足"
-                                  : width > _resViewThresholds
-                                  ? "展开"
-                                  : "空间不足",
-                              child: Icon(
-                                isExtend && width > _resViewThresholds
-                                    ? PhosphorIconsLight.caretLeft
-                                    : PhosphorIconsLight.caretRight,
-                                color: Theme.of(context).colorScheme.onSurface,
-                                size: getIconSize(size: 'md'),
-                              ),
-                            ),
-                            Expanded(
-                              child: AnimatedOpacity(
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeOutCubic,
-                                opacity:
-                                    (width > _resViewThresholds && isExtend)
-                                    ? 1.0
-                                    : 0.0,
-                                child: Text(
-                                  isExtend ? "收起侧栏" : "",
-                                  style: generalTextStyle(
-                                    ctx: context,
-                                    size: 'md',
-                                  ),
-                                  softWrap: false,
-                                  overflow: TextOverflow.clip,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                    ],
+              ),
             ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }

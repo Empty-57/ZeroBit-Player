@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:get/get.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zerobit_player/components/get_snack_bar.dart';
 import 'package:zerobit_player/controller/desktop_lyrics_setting_ctrl.dart';
@@ -37,12 +37,12 @@ const String _reportUrl =
 
 const String _repoSiteUrl = "https://empty-57.github.io/ZeroBit-Player/";
 
-class _FolderManagerDialog extends GetView<MusicCacheController> {
+class _FolderManagerDialog extends StatelessWidget {
   const _FolderManagerDialog();
 
   @override
   Widget build(BuildContext context) {
-    final musicCacheController = controller;
+    final musicCacheController = MusicCacheController.instance;
     final height = MediaQuery.sizeOf(context).height;
     final width = MediaQuery.sizeOf(context).width;
     return CustomBtn(
@@ -77,58 +77,60 @@ class _FolderManagerDialog extends GetView<MusicCacheController> {
                     children: [
                       Expanded(
                         flex: 1,
-                        child: Obx(() {
-                          return ListView.builder(
-                            scrollCacheExtent: const ScrollCacheExtent.pixels(
-                              36 * 1,
-                            ),
-                            itemCount: _settingController.folders.length,
-                            itemExtent: 36,
-                            itemBuilder: (context, index) {
-                              return Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Expanded(
-                                    flex: 1,
-                                    child: Text(
-                                      _settingController.folders[index],
-                                      style: generalTextStyle(
-                                        ctx: context,
-                                        size: 'md',
-                                      ),
-                                      softWrap: false,
-                                      overflow: TextOverflow.fade,
-                                      maxLines: 1,
-                                    ),
-                                  ),
-                                  Tooltip(
-                                    message: "删除",
-                                    child: TextButton(
-                                      onPressed: () {
-                                        _settingController.folders.remove(
-                                          _settingController.folders[index],
-                                        );
-                                      },
-                                      style: TextButton.styleFrom(
-                                        shape: const CircleBorder(),
-                                      ),
-                                      child: Icon(
-                                        PhosphorIconsLight.trash,
-                                        size: getIconSize(size: 'lg'),
-                                        color: Colors.red,
+                        child: SignalBuilder(
+                          builder: (context) {
+                            return ListView.builder(
+                              scrollCacheExtent: const ScrollCacheExtent.pixels(
+                                36 * 1,
+                              ),
+                              itemCount: _settingController.folders.length,
+                              itemExtent: 36,
+                              itemBuilder: (context, index) {
+                                return Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Expanded(
+                                      flex: 1,
+                                      child: Text(
+                                        _settingController.folders[index],
+                                        style: generalTextStyle(
+                                          ctx: context,
+                                          size: 'md',
+                                        ),
+                                        softWrap: false,
+                                        overflow: TextOverflow.fade,
+                                        maxLines: 1,
                                       ),
                                     ),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        }),
+                                    Tooltip(
+                                      message: "删除",
+                                      child: TextButton(
+                                        onPressed: () {
+                                          _settingController.folders.remove(
+                                            _settingController.folders[index],
+                                          );
+                                        },
+                                        style: TextButton.styleFrom(
+                                          shape: const CircleBorder(),
+                                        ),
+                                        child: Icon(
+                                          PhosphorIconsLight.trash,
+                                          size: getIconSize(size: 'lg'),
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
                       ),
-                      Obx(
-                        () => Visibility(
+                      SignalBuilder(
+                        builder: (context) => Visibility(
                           visible:
                               musicCacheController.currentScanAudio.value == ''
                               ? false
@@ -143,8 +145,8 @@ class _FolderManagerDialog extends GetView<MusicCacheController> {
                         ),
                       ),
 
-                      Obx(
-                        () => Visibility(
+                      SignalBuilder(
+                        builder: (context) => Visibility(
                           visible:
                               musicCacheController.currentScanAudio.value == ''
                               ? true
@@ -270,8 +272,8 @@ class _ApiDropMenu extends StatelessWidget {
       menuChildren: apiMenuList,
       controller: menuController,
       consumeOutsideTap: true,
-      child: Obx(
-        () => CustomBtn(
+      child: SignalBuilder(
+        builder: (context) => CustomBtn(
           fn: () {
             if (menuController.isOpen) {
               menuController.close();
@@ -299,15 +301,15 @@ Widget _getColorPicker(
   void Function(int color) fn, [
   bool enableAlpha = false,
 ]) {
-  final RxInt themeColor_ = initColor.obs;
+  final Signal<int> themeColor_ = signal(initColor);
 
   return Row(
     mainAxisAlignment: MainAxisAlignment.center,
     crossAxisAlignment: CrossAxisAlignment.center,
     spacing: 16,
     children: [
-      Obx(
-        () => Container(
+      SignalBuilder(
+        builder: (context) => Container(
           width: 32,
           height: 32,
           decoration: BoxDecoration(
@@ -347,7 +349,7 @@ Widget _getColorPicker(
 }
 
 class _ColorPickerDialog extends StatefulWidget {
-  final RxInt themeColor;
+  final Signal<int> themeColor;
   final bool enableAlpha;
 
   const _ColorPickerDialog({
@@ -661,8 +663,8 @@ class _LrcFontSizeDropMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final menuController = MenuController();
-    return Obx(
-      () => _getMenuAnchorButton(
+    return SignalBuilder(
+      builder: (context) => _getMenuAnchorButton(
         menuController,
         context,
         '${_settingController.lrcFontSize.value}',
@@ -682,8 +684,8 @@ class _LrcFontWeightDropMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final menuController = MenuController();
-    return Obx(
-      () => _getMenuAnchorButton(
+    return SignalBuilder(
+      builder: (context) => _getMenuAnchorButton(
         menuController,
         context,
         (_settingController.lrcFontWeight.value * 100 + 100).toString(),
@@ -791,8 +793,8 @@ class _DesktopLrcFontSizeDropMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final menuController = MenuController();
-    return Obx(
-      () => _getMenuAnchorButton(
+    return SignalBuilder(
+      builder: (context) => _getMenuAnchorButton(
         menuController,
         context,
         '${_desktopLyricsSettingController.fontSize.value}',
@@ -815,8 +817,8 @@ class _DesktopLrcFontWeightDropMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final menuController = MenuController();
-    return Obx(
-      () => _getMenuAnchorButton(
+    return SignalBuilder(
+      builder: (context) => _getMenuAnchorButton(
         menuController,
         context,
         '${_desktopLyricsSettingController.fontWeight.value * 100 + 100}',
@@ -840,8 +842,8 @@ class _DesktopLrcFontOpacitySlider extends StatelessWidget {
         data: SliderTheme.of(
           context,
         ).copyWith(showValueIndicator: ShowValueIndicator.onDrag),
-        child: Obx(
-          () => Row(
+        child: SignalBuilder(
+          builder: (context) => Row(
             children: [
               Text(
                 _desktopLyricsSettingController.fontOpacity.value
@@ -906,8 +908,8 @@ class _DesktopLyricsFontFamilyDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => _getFontFamilyDialog(
+    return SignalBuilder(
+      builder: (context) => _getFontFamilyDialog(
         context,
         _desktopLyricsSettingController.fontFamily.value,
         (index) {
@@ -928,8 +930,8 @@ class _DesktopLyricsAlignmentRadio extends StatelessWidget {
     final alignment = [0, 1, 2, 3];
     return Material(
       color: Colors.transparent,
-      child: Obx(
-        () => RadioGroup<int>(
+      child: SignalBuilder(
+        builder: (context) => RadioGroup<int>(
           groupValue: _desktopLyricsSettingController.lrcAlignment.value,
           onChanged: (int? v) {
             _desktopLyricsSettingController.setLrcAlignment(alignment: v ?? 1);
@@ -967,8 +969,8 @@ class _LyricsSwitchAnimateModeRadio extends StatelessWidget {
     final alignment = [0, 1, 2, 3];
     return Material(
       color: Colors.transparent,
-      child: Obx(
-        () => RadioGroup<int>(
+      child: SignalBuilder(
+        builder: (context) => RadioGroup<int>(
           groupValue:
               _desktopLyricsSettingController.lyricsSwitchAnimateMode.value,
           onChanged: (int? v) {
@@ -1004,12 +1006,21 @@ class _LyricsSwitchAnimateModeRadio extends StatelessWidget {
 
 Widget _createHotKeyItem(
   BuildContext context, {
-  required Rx<HotKey> myHotkey,
+  required Signal<HotKey> myHotkey,
   required String prefKey,
   required Future<void> Function(HotKey) fn,
 }) {
   final prev = myHotkey.value;
   final hotKey_ = myHotkey;
+  final hotKeyLabel = computed(
+    () => [
+      ...(hotKey_.value.modifiers ?? []).map((e) {
+        final firstPhysicalKey = e.physicalKeys.first;
+        return firstPhysicalKey.keyLabel;
+      }),
+      hotKey_.value.key.keyLabel,
+    ].join(' + '),
+  );
   final height = MediaQuery.sizeOf(context).height;
   final width = MediaQuery.sizeOf(context).width;
   return Row(
@@ -1017,15 +1028,9 @@ Widget _createHotKeyItem(
     crossAxisAlignment: CrossAxisAlignment.center,
     spacing: 16,
     children: [
-      Obx(
-        () => Text(
-          [
-            ...(hotKey_.value.modifiers ?? []).map((e) {
-              final firstPhysicalKey = e.physicalKeys.first;
-              return firstPhysicalKey.keyLabel;
-            }),
-            hotKey_.value.key.keyLabel,
-          ].join(' + '),
+      SignalBuilder(
+        builder: (context) => Text(
+          hotKeyLabel.value,
           style: generalTextStyle(ctx: context, size: 'md'),
         ),
       ),
@@ -1047,16 +1052,8 @@ Widget _createHotKeyItem(
                   size: 'xl',
                   weight: FontWeight.w600,
                 ),
-                content: Obx(
-                  () => Text(
-                    [
-                      ...(hotKey_.value.modifiers ?? []).map((e) {
-                        final firstPhysicalKey = e.physicalKeys.first;
-                        return firstPhysicalKey.keyLabel;
-                      }),
-                      hotKey_.value.key.keyLabel,
-                    ].join(' + '),
-                  ),
+                content: SignalBuilder(
+                  builder: (context) => Text(hotKeyLabel.value),
                 ),
                 contentTextStyle: generalTextStyle(
                   ctx: context,
@@ -1078,8 +1075,8 @@ Widget _createHotKeyItem(
                       child: Transform.scale(
                         scale: 1.5,
                         filterQuality: FilterQuality.high,
-                        child: Obx(
-                          () => HotKeyRecorder(
+                        child: SignalBuilder(
+                          builder: (context) => HotKeyRecorder(
                             initalHotKey: hotKey_.value,
                             onHotKeyRecorded: (hotKey) async {
                               hotKey_.value = hotKey;
@@ -1215,8 +1212,8 @@ class _BackgroundImagePathPicker extends StatelessWidget {
     return Row(
       spacing: 8,
       children: [
-        Obx(
-          () => SizedBox(
+        SignalBuilder(
+          builder: (context) => SizedBox(
             width: 200,
             child: Text(
               p.basename(_settingController.backgroundImagePath.value),
@@ -1282,8 +1279,8 @@ class _BackgroundImageOpacitySlider extends StatelessWidget {
         data: SliderTheme.of(
           context,
         ).copyWith(showValueIndicator: ShowValueIndicator.onDrag),
-        child: Obx(
-          () => Row(
+        child: SignalBuilder(
+          builder: (context) => Row(
             children: [
               Text(
                 _settingController.backgroundImageOpacity.value.toStringAsFixed(
@@ -1323,8 +1320,8 @@ class _BackgroundImageBlurSlider extends StatelessWidget {
         data: SliderTheme.of(
           context,
         ).copyWith(showValueIndicator: ShowValueIndicator.onDrag),
-        child: Obx(
-          () => Row(
+        child: SignalBuilder(
+          builder: (context) => Row(
             children: [
               Text(
                 _settingController.backgroundImageBlur.value.toStringAsFixed(2),
@@ -1544,7 +1541,7 @@ class _SettingItem extends StatelessWidget {
 /// 开关设置项封装
 class _SettingSwitchItem extends StatelessWidget {
   final String text;
-  final RxBool value;
+  final Signal<bool> value;
   final ValueChanged<bool> onChanged;
   final String? tooltip;
 
@@ -1563,8 +1560,8 @@ class _SettingSwitchItem extends StatelessWidget {
       tooltip: tooltip,
       child: Material(
         color: Colors.transparent,
-        child: Obx(
-          () => Switch(
+        child: SignalBuilder(
+          builder: (context) => Switch(
             value: value.value,
             trackColor: WidgetStateProperty<Color?>.fromMap({
               WidgetState.selected: theme.colorScheme.primary,
@@ -1709,41 +1706,43 @@ class _LyricsTab extends StatelessWidget {
             ),
             FractionallySizedBox(
               widthFactor: 1,
-              child: Obx(() {
-                final isDark = _settingController.themeMode.value == 'dark';
-                final lyricStyle = generalTextStyle(
-                  ctx: context,
-                  size: _settingController.lrcFontSize.value,
-                  color: Theme.of(context).colorScheme.onSecondaryContainer
-                      .withValues(alpha: isDark ? 0.2 : 0.3),
-                  weight:
-                      FontWeight.values[_settingController.lrcFontWeight.value],
-                );
-                final strutStyle = StrutStyle(
-                  fontSize: _settingController.lrcFontSize.value.toDouble(),
-                  forceStrutHeight: true,
-                );
+              child: SignalBuilder(
+                builder: (context) {
+                  final isDark = _settingController.themeMode.value == 'dark';
+                  final lyricStyle = generalTextStyle(
+                    ctx: context,
+                    size: _settingController.lrcFontSize.value,
+                    color: Theme.of(context).colorScheme.onSecondaryContainer
+                        .withValues(alpha: isDark ? 0.2 : 0.3),
+                    weight: FontWeight
+                        .values[_settingController.lrcFontWeight.value],
+                  );
+                  final strutStyle = StrutStyle(
+                    fontSize: _settingController.lrcFontSize.value.toDouble(),
+                    forceStrutHeight: true,
+                  );
 
-                return Column(
-                  children: [
-                    Transform.scale(
-                      scale: 1.1,
-                      child: Text(
-                        '预览 Preview プレビューです 123',
-                        style: lyricStyle.copyWith(
-                          color: lyricStyle.color?.withValues(alpha: 0.8),
+                  return Column(
+                    children: [
+                      Transform.scale(
+                        scale: 1.1,
+                        child: Text(
+                          '预览 Preview プレビューです 123',
+                          style: lyricStyle.copyWith(
+                            color: lyricStyle.color?.withValues(alpha: 0.8),
+                          ),
+                          strutStyle: strutStyle,
                         ),
+                      ),
+                      Text(
+                        '预览 Preview プレビューです 123',
+                        style: lyricStyle,
                         strutStyle: strutStyle,
                       ),
-                    ),
-                    Text(
-                      '预览 Preview プレビューです 123',
-                      style: lyricStyle,
-                      strutStyle: strutStyle,
-                    ),
-                  ],
-                );
-              }),
+                    ],
+                  );
+                },
+              ),
             ),
           ],
         ),

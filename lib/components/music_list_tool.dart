@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/field/operate_area.dart';
@@ -26,8 +26,8 @@ class MusicTile extends StatelessWidget {
   final TextStyle highLightSubStyle;
   final String audioSource;
   final String operateArea;
-  final RxBool isMulSelect;
-  final RxList<MusicCache> selectedList;
+  final Signal<bool> isMulSelect;
+  final ListSignal<MusicCache> selectedList;
   final bool viewMode;
   final DetailsPageControllerBase baseController;
 
@@ -63,81 +63,85 @@ class MusicTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final Widget cover = AsyncCover(music: metadata);
 
-    return Obx(() {
-      final isPlaying =
-          baseController.audioController.currentPath.value == metadata.path;
-      final isSelected = selectedList.any((v) => v.path == metadata.path);
+    return SignalBuilder(
+      builder: (context) {
+        final isPlaying =
+            baseController.audioController.currentPath.value == metadata.path;
+        final isSelected = selectedList.any((v) => v.path == metadata.path);
 
-      final subTextStyle = isPlaying ? highLightSubStyle : subStyle;
-      final textStyle = isPlaying ? highLightTitleStyle : titleStyle;
+        final subTextStyle = isPlaying ? highLightSubStyle : subStyle;
+        final textStyle = isPlaying ? highLightTitleStyle : titleStyle;
 
-      return TextButton(
-        onPressed: _onTileTapped.throttle(ms: isMulSelect.value ? 10 : 500),
-        style: TextButton.styleFrom(
-          shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
-          backgroundColor: isSelected
-              ? Theme.of(context).colorScheme.secondaryContainer
-              : null,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          spacing: _itemSpacing,
-          children: [
-            if (operateArea == OperateArea.albumDetails)
-              Text(
-                metadata.trackNumber.toString().padLeft(2, '0'),
-                style: subTextStyle,
-              ),
-            cover,
-            Expanded(
-              flex: 1,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    metadata.title,
-                    softWrap: false,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                    style: textStyle,
-                  ),
-                  Text(
-                    metadata.artist,
-                    softWrap: false,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                    style: subTextStyle,
-                  ),
-                ],
-              ),
-            ),
-            if (viewMode)
+        return TextButton(
+          onPressed: _onTileTapped.throttle(ms: isMulSelect.value ? 10 : 500),
+          style: TextButton.styleFrom(
+            shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
+            backgroundColor: isSelected
+                ? Theme.of(context).colorScheme.secondaryContainer
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: _itemSpacing,
+            children: [
+              if (operateArea == OperateArea.albumDetails)
+                Text(
+                  metadata.trackNumber.toString().padLeft(2, '0'),
+                  style: subTextStyle,
+                ),
+              cover,
               Expanded(
-                flex: 2,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: _itemSpacing),
-                  child: Text(
-                    metadata.album,
-                    softWrap: false,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                    style: subTextStyle,
-                  ),
+                flex: 1,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      metadata.title,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: textStyle,
+                    ),
+                    Text(
+                      metadata.artist,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: subTextStyle,
+                    ),
+                  ],
                 ),
               ),
-            Text(
-              formatTime(totalSeconds: metadata.duration),
-              softWrap: false,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-              style: subTextStyle,
-            ),
-          ],
-        ),
-      );
-    });
+              if (viewMode)
+                Expanded(
+                  flex: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: _itemSpacing,
+                    ),
+                    child: Text(
+                      metadata.album,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: subTextStyle,
+                    ),
+                  ),
+                ),
+              Text(
+                formatTime(totalSeconds: metadata.duration),
+                softWrap: false,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                style: subTextStyle,
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 

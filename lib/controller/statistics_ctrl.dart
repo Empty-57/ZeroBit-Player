@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 
-import 'package:get/get.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
@@ -16,27 +16,27 @@ class StatisticsController {
   static final instance = StatisticsController._();
 
   final MusicCacheController _musicCacheController =
-      Get.find<MusicCacheController>();
+      MusicCacheController.instance;
 
-  final AudioController _audioController = Get.find<AudioController>();
+  final AudioController _audioController = AudioController.instance;
 
   final _statisticsCacheBox = HiveBox.statisticsCacheBox;
 
-  final totalTime = '0 M'.obs;
-  final totalSize = '0 B'.obs;
-  final albumArtist = '0 / 0'.obs;
-  final totalSongCount = '0'.obs;
+  final totalTime = signal('0 M');
+  final totalSize = signal('0 B');
+  final albumArtist = signal('0 / 0');
+  final totalSongCount = signal('0');
 
   double totalPlayedTimeRaw = 0;
   int totalPlayedCountRaw = 0;
 
-  final totalPlayedTime = '0 M'.obs;
-  final totalPlayedCount = '0'.obs;
+  final totalPlayedTime = signal('0 M');
+  final totalPlayedCount = signal('0');
 
   List<StatisticsCache> playedStatisticsList = [];
 
-  final playedTop50 = <_RankedMusicItem>[].obs;
-  final artistTop30 = <String, _RankedArtistItem>{}.obs;
+  final playedTop50 = listSignal(<_RankedMusicItem>[]);
+  final artistTop30 = mapSignal(<String, _RankedArtistItem>{});
 
   String? _lastTitle; // 上次统计对应的歌曲标题
   num _lastSec = 0; // 上次统计时的播放进度
@@ -54,23 +54,25 @@ class StatisticsController {
     updateStatistics();
     totalTime.value = _getTotalTime();
     totalSize.value = await _getTotalSize();
-    albumArtist.value =
-        '${_musicCacheController.albumItemsDict.length} / ${_musicCacheController.artistItemsDict.length}';
-    totalSongCount.value = _musicCacheController.items.length.toString();
+    batch(() {
+      albumArtist.value =
+          '${_musicCacheController.albumItemsDict.length} / ${_musicCacheController.artistItemsDict.length}';
+      totalSongCount.value = _musicCacheController.items.length.toString();
 
-    totalPlayedCountRaw = playedStatisticsList.fold(
-      0,
-      (sum, item) => sum + item.playedCount,
-    );
+      totalPlayedCountRaw = playedStatisticsList.fold(
+        0,
+        (sum, item) => sum + item.playedCount,
+      );
 
-    totalPlayedCount.value = totalPlayedCountRaw.toString();
+      totalPlayedCount.value = totalPlayedCountRaw.toString();
 
-    totalPlayedTimeRaw = playedStatisticsList.fold(
-      0.0,
-      (sum, item) => sum + item.playedTime,
-    );
+      totalPlayedTimeRaw = playedStatisticsList.fold(
+        0.0,
+        (sum, item) => sum + item.playedTime,
+      );
 
-    totalPlayedTime.value = formatTimeDHMS(totalPlayedTimeRaw.toInt());
+      totalPlayedTime.value = formatTimeDHMS(totalPlayedTimeRaw.toInt());
+    });
   }
 
   void updateStatistics() {
@@ -124,13 +126,15 @@ class StatisticsController {
       );
     }
 
-    totalPlayedTimeRaw += delta;
-    totalPlayedTime.value = formatTimeDHMS(totalPlayedTimeRaw.toInt());
+    batch(() {
+      totalPlayedTimeRaw += delta;
+      totalPlayedTime.value = formatTimeDHMS(totalPlayedTimeRaw.toInt());
 
-    if (isRecordCount) {
-      totalPlayedCountRaw++;
-      totalPlayedCount.value = totalPlayedCountRaw.toString();
-    }
+      if (isRecordCount) {
+        totalPlayedCountRaw++;
+        totalPlayedCount.value = totalPlayedCountRaw.toString();
+      }
+    });
 
     _rankDirty = true;
     sortList();
@@ -159,8 +163,9 @@ class StatisticsController {
   }
 
   Future<String> _getTotalSize() async {
+    // 先转成普通 List，避免把 signal 对象带进 Isolate
     final totalSBytes = await _getFoldersTotalSize(
-      SettingController.instance.folders,
+      SettingController.instance.folders.toList(),
     );
     return _formatBytes(totalSBytes);
   }
@@ -231,44 +236,46 @@ class StatisticsController {
         .nonNulls
         .toList(); // 过滤null
 
-    playedTop50.value = temp.take(50).toList();
+    batch(() {
+      playedTop50.value = temp.take(50).toList();
 
-    final artistTop30Temp = <String, _RankedArtistItem>{};
+      final artistTop30Temp = <String, _RankedArtistItem>{};
 
-    for (final item in temp) {
-      final artists = item.metadata.artist.split('/');
-      for (var ar in artists) {
-        if (ar.trim().isEmpty) continue;
-        artistTop30Temp.update(
-          ar,
-          (existing) => _RankedArtistItem(
-            pathList: existing.pathList,
-            playedCount: existing.playedCount + item.statistics.playedCount,
-            playedTime: existing.playedTime + item.statistics.playedTime,
-          ),
-          ifAbsent: () {
-            final dictKey = _musicCacheController.getLetter(str: ar) + ar;
-            final pathList =
-                _musicCacheController.artistItemsDict[dictKey] ?? [];
+      for (final item in temp) {
+        final artists = item.metadata.artist.split('/');
+        for (var ar in artists) {
+          if (ar.trim().isEmpty) continue;
+          artistTop30Temp.update(
+            ar,
+            (existing) => _RankedArtistItem(
+              pathList: existing.pathList,
+              playedCount: existing.playedCount + item.statistics.playedCount,
+              playedTime: existing.playedTime + item.statistics.playedTime,
+            ),
+            ifAbsent: () {
+              final dictKey = _musicCacheController.getLetter(str: ar) + ar;
+              final pathList =
+                  _musicCacheController.artistItemsDict[dictKey] ?? [];
 
-            return _RankedArtistItem(
-              pathList: pathList,
-              playedCount: item.statistics.playedCount,
-              playedTime: item.statistics.playedTime,
-            );
-          },
-        );
+              return _RankedArtistItem(
+                pathList: pathList,
+                playedCount: item.statistics.playedCount,
+                playedTime: item.statistics.playedTime,
+              );
+            },
+          );
+        }
       }
-    }
 
-    final sortedArtists = artistTop30Temp.entries.toList()
-      ..sort((a, b) {
-        final countComp = b.value.playedCount.compareTo(a.value.playedCount);
-        if (countComp != 0) return countComp;
-        return b.value.playedTime.compareTo(a.value.playedTime);
-      });
+      final sortedArtists = artistTop30Temp.entries.toList()
+        ..sort((a, b) {
+          final countComp = b.value.playedCount.compareTo(a.value.playedCount);
+          if (countComp != 0) return countComp;
+          return b.value.playedTime.compareTo(a.value.playedTime);
+        });
 
-    artistTop30.assignAll(Map.fromEntries(sortedArtists.take(30)));
+      artistTop30.set(Map.fromEntries(sortedArtists.take(30)), force: true);
+    });
   }
 }
 

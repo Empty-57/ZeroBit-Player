@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/lyrics_mesh.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/theme_manager.dart';
@@ -19,7 +19,7 @@ final LinearGradient _maskGradient = LinearGradient(
 final GradientShaderCache _gradientShaderCache = GradientShaderCache();
 
 class BlurWithCoverBackground extends StatelessWidget {
-  final Rx<Uint8List> cover;
+  final Signal<Uint8List> cover;
   final Widget child;
   final double sigma;
   final double coverScale;
@@ -73,54 +73,56 @@ class BlurWithCoverBackground extends StatelessWidget {
               return const SizedBox.shrink();
             }
 
-            return Obx(() {
-              final String themeMode = _settingController.themeMode.value;
-              final Uint8List coverBytes = cover.value;
+            return SignalBuilder(
+              builder: (context) {
+                final String themeMode = _settingController.themeMode.value;
+                final Uint8List coverBytes = cover.value;
 
-              final rawCover = Transform.scale(
-                scale: coverScale,
-                child: SizedBox.expand(
-                  child: Image.memory(
-                    coverBytes,
-                    cacheWidth: _coverBigRenderSize,
-                    cacheHeight: _coverBigRenderSize,
-                    fit: BoxFit.cover,
-                    gaplessPlayback: true,
-                  ),
-                ),
-              );
-
-              return Opacity(
-                opacity: isPlayPage
-                    ? 1.0
-                    : themeMode == 'dark'
-                    ? 0.9
-                    : 0.6,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(radius),
-                  ),
-                  child: ImageFiltered(
-                    imageFilter: ImageFilterCache.imageFilter(
-                      sigma: sigma,
-                      tileMode: TileMode.clamp,
+                final rawCover = Transform.scale(
+                  scale: coverScale,
+                  child: SizedBox.expand(
+                    child: Image.memory(
+                      coverBytes,
+                      cacheWidth: _coverBigRenderSize,
+                      cacheHeight: _coverBigRenderSize,
+                      fit: BoxFit.cover,
+                      gaplessPlayback: true,
                     ),
-                    child: useGradient
-                        ? ShaderMask(
-                            blendMode: BlendMode.modulate,
-                            shaderCallback: (Rect bounds) {
-                              return _gradientShaderCache.shader(
-                                gradient: _maskGradient,
-                                rect: bounds,
-                              );
-                            },
-                            child: rawCover,
-                          )
-                        : rawCover,
                   ),
-                ),
-              );
-            });
+                );
+
+                return Opacity(
+                  opacity: isPlayPage
+                      ? 1.0
+                      : themeMode == 'dark'
+                      ? 0.9
+                      : 0.6,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(radius),
+                    ),
+                    child: ImageFiltered(
+                      imageFilter: ImageFilterCache.imageFilter(
+                        sigma: sigma,
+                        tileMode: TileMode.clamp,
+                      ),
+                      child: useGradient
+                          ? ShaderMask(
+                              blendMode: BlendMode.modulate,
+                              shaderCallback: (Rect bounds) {
+                                return _gradientShaderCache.shader(
+                                  gradient: _maskGradient,
+                                  rect: bounds,
+                                );
+                              },
+                              child: rawCover,
+                            )
+                          : rawCover,
+                    ),
+                  ),
+                );
+              },
+            );
           }(),
         ),
 

@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
@@ -57,8 +56,8 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
   late final TextEditingController _genreCtrl;
 
   late final MusicCacheController _musicCacheController =
-      Get.find<MusicCacheController>();
-  late final AudioController _audioController = Get.find<AudioController>();
+      MusicCacheController.instance;
+  late final AudioController _audioController = AudioController.instance;
 
   static const _inputBorder = OutlineInputBorder();
 

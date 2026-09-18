@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/field/sort_type.dart';
 
@@ -76,10 +76,10 @@ List<MusicCache> _sortPairs2((List<MusicCache>, int, bool) args) {
 }
 
 mixin DetailsPageControllerBase {
-  RxList<MusicCache> get items;
-  Rx<Uint8List> get headCover => kTransparentImage.obs;
+  ListSignal<MusicCache> get items;
+  Signal<Uint8List> get headCover => signal(kTransparentImage);
   final SettingController _settingController = SettingController.instance;
-  AudioController get audioController => Get.find<AudioController>();
+  AudioController get audioController => AudioController.instance;
 
   void play(String audioSource, {MusicCache? metadata}) {
     final audioCtrl = audioController;

@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
@@ -155,7 +155,7 @@ class AudioCtrlWidget {
   Widget get changeMode => _PlayModeBtn(size: size, color: color);
 
   Widget get seekSlide =>
-      _SeekSlideWidget(audioController: Get.find<AudioController>());
+      _SeekSlideWidget(audioController: AudioController.instance);
 
   Widget get equalizerSet => _EqualizerBtn(size: size, color: color);
 }
@@ -167,33 +167,35 @@ class _SpeedSetBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AudioController audioController = Get.find<AudioController>();
+    final AudioController audioController = AudioController.instance;
     final menuController = MenuController();
 
     final speedList = List.generate(16, (index) => index + 5).map((i) {
       final speed = i / 10;
-      return Obx(() {
-        final isCurrent = audioController.currentSpeed.value == speed;
-        return CustomBtn(
-          fn: () async {
-            await setSpeed(speed: speed);
-            audioController.currentSpeed.value = speed;
-            menuController.close();
-          },
-          btnWidth: 72,
-          btnHeight: 36,
-          label: speed.toString(),
-          icon: isCurrent ? PhosphorIconsLight.check : null,
-          iconSize: 'xs',
-          contentColor: Theme.of(context).colorScheme.onSecondaryContainer,
-          mainAxisAlignment: isCurrent
-              ? MainAxisAlignment.spaceBetween
-              : MainAxisAlignment.end,
-          spacing: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          backgroundColor: Colors.transparent,
-        );
-      });
+      return SignalBuilder(
+        builder: (context) {
+          final isCurrent = audioController.currentSpeed.value == speed;
+          return CustomBtn(
+            fn: () async {
+              await setSpeed(speed: speed);
+              audioController.currentSpeed.value = speed;
+              menuController.close();
+            },
+            btnWidth: 72,
+            btnHeight: 36,
+            label: speed.toString(),
+            icon: isCurrent ? PhosphorIconsLight.check : null,
+            iconSize: 'xs',
+            contentColor: Theme.of(context).colorScheme.onSecondaryContainer,
+            mainAxisAlignment: isCurrent
+                ? MainAxisAlignment.spaceBetween
+                : MainAxisAlignment.end,
+            spacing: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            backgroundColor: Colors.transparent,
+          );
+        },
+      );
     }).toList();
 
     final height = MediaQuery.sizeOf(context).height;
@@ -239,15 +241,15 @@ class _VolumeSetBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AudioController audioController = Get.find<AudioController>();
+    final AudioController audioController = AudioController.instance;
     final SettingController settingController = SettingController.instance;
     final menuController = MenuController();
 
     return MenuAnchor(
       controller: menuController,
       menuChildren: [
-        Obx(
-          () => Column(
+        SignalBuilder(
+          builder: (context) => Column(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Text(
@@ -303,8 +305,8 @@ class _VolumeSetBtn extends StatelessWidget {
               }
             }
           },
-          child: Obx(
-            () => GenIconBtn(
+          child: SignalBuilder(
+            builder: (context) => GenIconBtn(
               tooltip:
                   "音量：${(settingController.volume.value * 100).toStringAsFixed(0)}",
               icon: PhosphorIconsFill.speakerHigh,
@@ -327,7 +329,7 @@ class _SkipBackBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AudioController audioController = Get.find<AudioController>();
+    final AudioController audioController = AudioController.instance;
     return GenIconBtn(
       tooltip: "上一首",
       icon: PhosphorIconsFill.skipBack,
@@ -345,18 +347,20 @@ class _PlayToggleBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AudioController audioController = Get.find<AudioController>();
-    return Obx(() {
-      final isPlaying =
-          audioController.currentState.value == AudioState.playing;
-      return GenIconBtn(
-        tooltip: isPlaying ? "暂停" : "播放",
-        icon: isPlaying ? PhosphorIconsFill.pause : PhosphorIconsFill.play,
-        size: size,
-        color: color,
-        fn: audioController.audioToggle.throttle(ms: 300),
-      );
-    });
+    final AudioController audioController = AudioController.instance;
+    return SignalBuilder(
+      builder: (context) {
+        final isPlaying =
+            audioController.currentState.value == AudioState.playing;
+        return GenIconBtn(
+          tooltip: isPlaying ? "暂停" : "播放",
+          icon: isPlaying ? PhosphorIconsFill.pause : PhosphorIconsFill.play,
+          size: size,
+          color: color,
+          fn: audioController.audioToggle.throttle(ms: 300),
+        );
+      },
+    );
   }
 }
 
@@ -367,7 +371,7 @@ class _SkipForwardBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AudioController audioController = Get.find<AudioController>();
+    final AudioController audioController = AudioController.instance;
     return GenIconBtn(
       tooltip: "下一首",
       icon: PhosphorIconsFill.skipForward,
@@ -385,18 +389,20 @@ class _PlayModeBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AudioController audioController = Get.find<AudioController>();
+    final AudioController audioController = AudioController.instance;
     final SettingController settingController = SettingController.instance;
-    return Obx(() {
-      final mode = settingController.playMode.value;
-      return GenIconBtn(
-        tooltip: SettingController.playModeMap[mode] ?? "单曲循环",
-        icon: _playModeIcons[mode],
-        size: size,
-        color: color,
-        fn: () => audioController.changePlayMode(),
-      );
-    });
+    return SignalBuilder(
+      builder: (context) {
+        final mode = settingController.playMode.value;
+        return GenIconBtn(
+          tooltip: SettingController.playModeMap[mode] ?? "单曲循环",
+          icon: _playModeIcons[mode],
+          size: size,
+          color: color,
+          fn: () => audioController.changePlayMode(),
+        );
+      },
+    );
   }
 }
 
@@ -440,8 +446,8 @@ class _EqualizerBtn extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           spacing: 6,
           children: [
-            Obx(
-              () => Text(
+            SignalBuilder(
+              builder: (context) => Text(
                 '${settingController.equalizerGains[v.$1].toStringAsFixed(1)}db',
                 style: fontStyle,
               ),
@@ -456,8 +462,8 @@ class _EqualizerBtn extends StatelessWidget {
                     verticalDiagonal: 16,
                   ),
                 ),
-                child: Obx(
-                  () => RotatedBox(
+                child: SignalBuilder(
+                  builder: (context) => RotatedBox(
                     quarterTurns: 3,
                     child: Slider(
                       min: SettingController.minGain,
@@ -515,47 +521,51 @@ class _EqualizerBtn extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 16,
                 children: [
-                  Obx(() {
-                    final equalizerGains = settingController.equalizerGains;
-                    return Wrap(
-                      spacing: 2,
-                      runSpacing: 2,
-                      children: SettingController.equalizerGainPresets.entries
-                          .map((entry) {
-                            final isEqual = listEquals(
-                              equalizerGains,
-                              entry.value,
-                            );
-                            return CustomBtn(
-                              fn: () async {
-                                settingController.equalizerGains.value =
-                                    entry.value;
-                                await settingController.putScalableCache();
-                                for (final v in entry.value.indexed) {
-                                  await setEqParams(
-                                    freCenterIndex: v.$1,
-                                    gain: v.$2,
-                                  );
-                                }
-                              },
-                              label: SettingController
-                                  .equalizerGainPresetsText[entry.key],
-                              backgroundColor: isEqual
-                                  ? backgroundColor
-                                  : Theme.of(context)
-                                        .colorScheme
-                                        .secondaryContainer
-                                        .withValues(alpha: 0.2),
-                              contentColor: isEqual
-                                  ? Theme.of(context).colorScheme.onPrimary
-                                  : backgroundColor,
-                              btnWidth: 96,
-                              btnHeight: 36,
-                            );
-                          })
-                          .toList(),
-                    );
-                  }),
+                  SignalBuilder(
+                    builder: (context) {
+                      // 显式读取 .value 建立依赖，避免预设为空时不产生任何读取
+                      final equalizerGains =
+                          settingController.equalizerGains.value;
+                      return Wrap(
+                        spacing: 2,
+                        runSpacing: 2,
+                        children: SettingController.equalizerGainPresets.entries
+                            .map((entry) {
+                              final isEqual = listEquals(
+                                equalizerGains,
+                                entry.value,
+                              );
+                              return CustomBtn(
+                                fn: () async {
+                                  settingController.equalizerGains.value =
+                                      entry.value;
+                                  await settingController.putScalableCache();
+                                  for (final v in entry.value.indexed) {
+                                    await setEqParams(
+                                      freCenterIndex: v.$1,
+                                      gain: v.$2,
+                                    );
+                                  }
+                                },
+                                label: SettingController
+                                    .equalizerGainPresetsText[entry.key],
+                                backgroundColor: isEqual
+                                    ? backgroundColor
+                                    : Theme.of(context)
+                                          .colorScheme
+                                          .secondaryContainer
+                                          .withValues(alpha: 0.2),
+                                contentColor: isEqual
+                                    ? Theme.of(context).colorScheme.onPrimary
+                                    : backgroundColor,
+                                btnWidth: 96,
+                                btnHeight: 36,
+                              );
+                            })
+                            .toList(),
+                      );
+                    },
+                  ),
                   Expanded(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

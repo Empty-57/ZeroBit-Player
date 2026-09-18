@@ -1,4 +1,4 @@
-import 'package:get/get.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/get_snack_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/field/operate_area.dart';
@@ -6,18 +6,19 @@ import 'package:zerobit_player/hive_manager/hive_box.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/user_playlist_model.dart';
 
-class UserPlayListController extends GetxController {
-  final items = <UserPlayListCache>[].obs;
+class UserPlayListController {
+  UserPlayListController._();
+  static final UserPlayListController instance = UserPlayListController._();
+
+  final items = listSignal(<UserPlayListCache>[]);
   final _userPlayListCacheBox = HiveBox.userPlayListCacheBox;
-  AudioController get _audioController => Get.find<AudioController>();
+  AudioController get _audioController => AudioController.instance;
 
   List<String> get allUserKey => items.map((e) => e.userKey).toList();
 
-  final songDeletedSignal = <String>[].obs;
+  final songDeletedSignal = signal(<String>[]);
 
-  @override
-  void onInit() {
-    super.onInit();
+  void init() {
     _loadData();
   }
 
@@ -113,7 +114,7 @@ class UserPlayListController extends GetxController {
     }
 
     targetList.pathList.add(metadata.path);
-    items[index] = targetList; // 触发 Obx 刷新
+    items[index] = targetList; // 触发 SignalBuilder 刷新
 
     await _userPlayListCacheBox.put(data: targetList, key: userKey);
 
@@ -203,8 +204,10 @@ class UserPlayListController extends GetxController {
       final targetList = items[index];
       targetList.pathList.remove(metadata.path);
 
-      items[index] = targetList;
-      songDeletedSignal.value = [metadata.path];
+      batch(() {
+        items[index] = targetList;
+        songDeletedSignal.value = [metadata.path];
+      });
 
       await _userPlayListCacheBox.put(data: targetList, key: userKey);
 
@@ -243,8 +246,10 @@ class UserPlayListController extends GetxController {
 
     targetList.pathList.removeWhere((path) => removePathSet.contains(path));
 
-    items[index] = targetList;
-    songDeletedSignal.value = removeList.map((v) => v.path).toList();
+    batch(() {
+      items[index] = targetList;
+      songDeletedSignal.value = removeList.map((v) => v.path).toList();
+    });
 
     await _userPlayListCacheBox.put(data: targetList, key: userKey);
 

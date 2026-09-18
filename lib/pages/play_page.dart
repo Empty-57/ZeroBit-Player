@@ -7,9 +7,9 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/components/audio_ctrl_btn.dart';
 import 'package:zerobit_player/components/blur_background.dart';
@@ -46,9 +46,9 @@ const _lrcAlignmentIcons = [
   PhosphorIconsLight.textAlignCenter,
   PhosphorIconsLight.textAlignRight,
 ];
-final _isBarHover = false.obs;
+final _isBarHover = signal(false);
 // 0: 默认（封面+歌词）, 1: 封面完全居中, 2: 封面+详情
-final _coverViewMode = 0.obs;
+final _coverViewMode = signal(0);
 const double _menuBtnWidth = 180;
 const double _menuBtnHeight = 48;
 const double _menuBtnRadius = 0;
@@ -73,62 +73,71 @@ final GradientShaderCache _lyricsFadeShaderCache = GradientShaderCache(
 
 // --- 歌词搜索控制器 ---
 class _LrcSearchController {
-  final AudioController _audioController = Get.find<AudioController>();
-  final currentNetLrc = <SearchLrcModel?>[].obs;
-  final currentNetLrcOffest = 0.obs;
-  final searchText = "".obs;
-  final isLoading = false.obs;
+  final AudioController _audioController = AudioController.instance;
+  final SettingController _settingController = SettingController.instance;
 
-  late final Worker _debounceWorker;
-  late final Worker _everWorker;
-  bool _isClosed = false;
+  final currentNetLrcOffset = signal(0);
+  final _queryText = signal("");
 
-  void init() {
-    searchText.value =
+  late final _searchParams = computed<({String query, int offset})>(
+    () => (query: _queryText.value, offset: currentNetLrcOffset.value),
+  );
+
+  Timer? _debounceTimer;
+
+  late final searchResults = computedAsync<List<SearchLrcModel>>(
+    () async {
+      final params = _searchParams.peek();
+      final query = params.query.trim();
+      final offset = params.offset;
+
+      if (query.isEmpty) return const [];
+
+      final result = await getLrcBySearch(
+        text: query,
+        offset: offset,
+        limit: 5,
+      );
+      return result
+          .whereType<SearchLrcModel>()
+          .where(
+            (v) =>
+                v.lyric != null &&
+                (v.lyric!.lrc != null || v.lyric!.verbatimLrc != null),
+          )
+          .toList();
+    },
+    options: AsyncSignalOptions(
+      dependencies: [_searchParams, _settingController.apiIndex],
+    ),
+  );
+
+  void setInitialQuery() {
+    _debounceTimer?.cancel();
+    final text =
         "${_audioController.currentMetadata.value.title} - ${_audioController.currentMetadata.value.artist}";
-
-    _debounceWorker = debounce(searchText, (_) async {
-      currentNetLrcOffest.value = 0;
-      await search();
-    }, time: const Duration(milliseconds: 500));
-
-    _everWorker = ever(currentNetLrcOffest, (_) async {
-      await search();
+    batch(() {
+      currentNetLrcOffset.value = 0;
+      _queryText.value = text;
     });
   }
 
-  void close() {
-    _isClosed = true;
-    _debounceWorker.dispose();
-    _everWorker.dispose();
-    currentNetLrc.clear();
-    currentNetLrc.close();
-    currentNetLrcOffest.close();
-    searchText.close();
-    isLoading.close();
+  void onInputChanged(String text) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      batch(() {
+        currentNetLrcOffset.value = 0;
+        _queryText.value = text;
+      });
+    });
   }
 
-  Future<void> search() async {
-    if (isLoading.value) return;
-    try {
-      isLoading.value = true;
-      final result = await getLrcBySearch(
-        text: searchText.value,
-        offset: currentNetLrcOffest.value,
-        limit: 5,
-      );
-      if (_isClosed) return;
-      currentNetLrc.value = result;
-
-      currentNetLrc.removeWhere(
-        (v) =>
-            (v == null ||
-            v.lyric == null ||
-            (v.lyric!.lrc == null && v.lyric!.verbatimLrc == null)),
-      );
-    } finally {
-      if (!_isClosed) isLoading.value = false;
-    }
+  void dispose() {
+    _debounceTimer?.cancel();
+    searchResults.dispose();
+    _searchParams.dispose();
+    _queryText.dispose();
+    currentNetLrcOffset.dispose(); // 最后释放被依赖的signals
   }
 }
 
@@ -284,8 +293,11 @@ class _SearchResultItem extends StatelessWidget {
             type: type,
           );
         }
-        audioController.loadLyrics('', changed: true);
-        audioController.update([GetBuilderId.lyricRender]);
+        // 歌词加载与渲染版本号的写入合并为一次通知
+        batch(() {
+          audioController.loadLyrics('', changed: true);
+          audioController.lyricRenderRevision.value++;
+        });
 
         if (settingController.autoDownloadLrc.value) {
           saveLyrics(path: audioController.currentPath.value, lrcData: v.lyric);
@@ -358,63 +370,76 @@ class _SearchResultItem extends StatelessWidget {
   }
 }
 
-// --- 网络歌词弹窗 ---
-class _NetLrcDialog extends StatefulWidget {
+class _NetLrcDialog extends StatelessWidget {
   final Color? color;
   const _NetLrcDialog({required this.color});
 
   @override
-  State<_NetLrcDialog> createState() => _NetLrcDialogState();
+  Widget build(BuildContext context) {
+    return GenIconBtn(
+      tooltip: '网络歌词',
+      icon: PhosphorIconsLight.article,
+      size: _ctrlBtnMinSize,
+      color: color,
+      fn: () {
+        showDialog(
+          barrierDismissible: true,
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("选择歌词"),
+            titleTextStyle: generalTextStyle(
+              ctx: context,
+              size: 'xl',
+              weight: FontWeight.w600,
+            ),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(4)),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            actionsAlignment: MainAxisAlignment.end,
+            content: _NetLrcDialogContent(color: color),
+          ),
+        );
+      },
+    );
+  }
 }
 
-class _NetLrcDialogState extends State<_NetLrcDialog> {
-  late final _LrcSearchController _lrcSearchController;
-  final TextEditingController _textEditingController = TextEditingController();
+class _NetLrcDialogContent extends StatefulWidget {
+  final Color? color;
+  const _NetLrcDialogContent({required this.color});
 
-  late final AudioController _audioController = Get.find<AudioController>();
+  @override
+  State<_NetLrcDialogContent> createState() => _NetLrcDialogContentState();
+}
+
+class _NetLrcDialogContentState extends State<_NetLrcDialogContent> {
+  // 在弹窗打开时才创建 Controller，此时自动立即执行初次搜索！
+  late final _LrcSearchController _controller;
+  late final TextEditingController _textEditingController;
+
+  late final AudioController _audioController = AudioController.instance;
   late final SettingController _settingController = SettingController.instance;
 
   @override
   void initState() {
     super.initState();
-    _lrcSearchController = _LrcSearchController()..init();
+    _controller = _LrcSearchController()..setInitialQuery();
+    _textEditingController = TextEditingController(
+      text:
+          "${_audioController.currentMetadata.value.title} - ${_audioController.currentMetadata.value.artist}",
+    );
   }
 
   @override
   void dispose() {
     _textEditingController.dispose();
-    _lrcSearchController.close();
+    _controller.dispose();
     super.dispose();
   }
 
-  void _showLrcDialog() {
-    _lrcSearchController.searchText.value =
-        "${_audioController.currentMetadata.value.title} - ${_audioController.currentMetadata.value.artist}";
-    _textEditingController.text = _lrcSearchController.searchText.value;
-    _lrcSearchController.search();
-    showDialog(
-      barrierDismissible: true,
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("选择歌词"),
-          titleTextStyle: generalTextStyle(
-            ctx: context,
-            size: 'xl',
-            weight: FontWeight.w600,
-          ),
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(4)),
-          ),
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          actionsAlignment: MainAxisAlignment.end,
-          content: _buildDialogContent(),
-        );
-      },
-    );
-  }
-
-  Widget _buildDialogContent() {
+  @override
+  Widget build(BuildContext context) {
     final textStyle = generalTextStyle(ctx: context, size: 'md');
     final bgColor = Theme.of(
       context,
@@ -440,8 +465,7 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
                     border: OutlineInputBorder(),
                     labelText: '搜索歌词',
                   ),
-                  onChanged: (text) =>
-                      _lrcSearchController.searchText.value = text,
+                  onChanged: _controller.onInputChanged,
                 ),
               ),
               GenIconBtn(
@@ -451,8 +475,8 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
                 color: widget.color,
                 backgroundColor: bgColor,
                 fn: () {
-                  if (_lrcSearchController.currentNetLrcOffest.value > 0) {
-                    _lrcSearchController.currentNetLrcOffest.value--;
+                  if (_controller.currentNetLrcOffset.value > 0) {
+                    _controller.currentNetLrcOffset.value--;
                   }
                 },
               ),
@@ -462,7 +486,7 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
                 size: _ctrlBtnMinSize * 1.5,
                 color: widget.color,
                 backgroundColor: bgColor,
-                fn: () => _lrcSearchController.currentNetLrcOffest.value++,
+                fn: () => _controller.currentNetLrcOffset.value++,
               ),
             ],
           ),
@@ -470,11 +494,10 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
             spacing: 8,
             children: [
               for (final key in SettingController.apiMap.keys) ...[
-                Obx(
-                  () => TextButton(
-                    onPressed: () async {
+                SignalBuilder(
+                  builder: (context) => TextButton(
+                    onPressed: () {
                       _settingController.apiIndex.value = key;
-                      await _lrcSearchController.search();
                     },
                     style: TextButton.styleFrom(
                       backgroundColor: _settingController.apiIndex.value == key
@@ -498,39 +521,35 @@ class _NetLrcDialogState extends State<_NetLrcDialog> {
             ],
           ),
           Expanded(
-            child: Obx(() {
-              if (_lrcSearchController.isLoading.value) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (_lrcSearchController.currentNetLrc.isEmpty) {
-                return const Center(child: Text("网络错误或没有找到歌词"));
-              }
-              return ListView.builder(
-                itemCount: _lrcSearchController.currentNetLrc.length,
-                itemBuilder: (context, index) {
-                  return _SearchResultItem(
-                    lyricInfo: _lrcSearchController.currentNetLrc[index]!,
-                    textStyle: textStyle,
-                    audioController: _audioController,
-                    settingController: _settingController,
-                  );
-                },
-              );
-            }),
+            child: SignalBuilder(
+              builder: (context) {
+                return _controller.searchResults.value.map(
+                  data: (data) {
+                    if (data.isEmpty) {
+                      return Center(child: Text("没有找到歌词", style: textStyle));
+                    }
+                    return ListView.builder(
+                      itemCount: data.length,
+                      itemBuilder: (context, index) {
+                        return _SearchResultItem(
+                          lyricInfo: data[index],
+                          textStyle: textStyle,
+                          audioController: _audioController,
+                          settingController: _settingController,
+                        );
+                      },
+                    );
+                  },
+                  error: (_) =>
+                      Center(child: Text("网络错误或没有找到歌词", style: textStyle)),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                );
+              },
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GenIconBtn(
-      tooltip: '网络歌词',
-      icon: PhosphorIconsLight.article,
-      size: _ctrlBtnMinSize,
-      color: widget.color,
-      fn: _showLrcDialog,
     );
   }
 }
@@ -605,7 +624,7 @@ class _CoverSideState extends State<_CoverSide> {
 
   @override
   Widget build(BuildContext context) {
-    final AudioController audioController = Get.find<AudioController>();
+    final AudioController audioController = AudioController.instance;
     final cacheResolution = (widget.coverSize * _dpr).round();
     final titleStrut = StrutStyle(
       fontSize: widget.titleStyle.fontSize,
@@ -641,31 +660,36 @@ class _CoverSideState extends State<_CoverSide> {
                 child: GestureDetector(
                   onTap: () =>
                       _coverViewMode.value = (_coverViewMode.value + 1) % 3,
-                  child: Obx(() {
-                    final mode = _coverViewMode.value;
-                    final tip = mode == 0
-                        ? '切换居中模式'
-                        : mode == 1
-                        ? '展开详情'
-                        : '切换歌词模式';
-                    final cover = audioController.currentCover.value;
-                    return Tooltip(
-                      message: tip,
-                      mouseCursor: SystemMouseCursors.click,
-                      verticalOffset: -widget.coverSize / 2 - 32,
-                      child: AnimatedSwitcher(
-                        duration: 300.ms,
-                        transitionBuilder: (child, anim) =>
-                            FadeTransition(opacity: anim, child: child),
-                        child: _CoverMemoryImage(
-                          key: ObjectKey(cover),
-                          bytes: cover,
-                          cacheResolution: cacheResolution,
-                          size: widget.coverSize,
+                  child: SignalBuilder(
+                    builder: (context) {
+                      final mode = _coverViewMode.value;
+                      final tip = mode == 0
+                          ? '切换居中模式'
+                          : mode == 1
+                          ? '展开详情'
+                          : '切换歌词模式';
+                      final cover = audioController.currentCover.value;
+                      return Tooltip(
+                        message: tip,
+                        mouseCursor: SystemMouseCursors.click,
+                        verticalOffset: -widget.coverSize / 2 - 32,
+                        child: AnimatedSwitcher(
+                          duration: 300.ms,
+                          transitionBuilder: (child, anim) =>
+                              FadeTransition(opacity: anim, child: child),
+                          child: Image.memory(
+                            cover,
+                            width: widget.coverSize,
+                            height: widget.coverSize,
+                            fit: BoxFit.cover,
+                            gaplessPlayback: true,
+                            cacheWidth: cacheResolution,
+                            cacheHeight: cacheResolution,
+                          ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
@@ -680,113 +704,53 @@ class _CoverSideState extends State<_CoverSide> {
               onExit: (_) {
                 if (mounted) setState(() => _isHeadHover = false);
               },
-              child: Obx(() {
-                final title = audioController.currentMetadata.value.title;
-                final artistAndAlbum =
-                    "${audioController.currentMetadata.value.artist} - ${audioController.currentMetadata.value.album}";
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 2,
-                  children: [
-                    _isHeadHover
-                        ? _ScrollTextWidget(
-                            text: title,
-                            style: widget.titleStyle,
-                            strutStyle: titleStrut,
-                          )
-                        : Text(
-                            title,
-                            style: widget.titleStyle,
-                            softWrap: false,
-                            strutStyle: titleStrut,
-                            overflow: TextOverflow.fade,
-                            maxLines: 1,
-                            textAlign: TextAlign.left,
-                          ),
-                    _isHeadHover
-                        ? _ScrollTextWidget(
-                            text: artistAndAlbum,
-                            style: widget.subTitleStyle,
-                            strutStyle: subTitleStrut,
-                          )
-                        : Text(
-                            artistAndAlbum,
-                            style: widget.subTitleStyle,
-                            softWrap: false,
-                            strutStyle: subTitleStrut,
-                            overflow: TextOverflow.fade,
-                            maxLines: 1,
-                            textAlign: TextAlign.left,
-                          ),
-                  ],
-                );
-              }),
+              child: SignalBuilder(
+                builder: (context) {
+                  final title = audioController.currentMetadata.value.title;
+                  final artistAndAlbum =
+                      "${audioController.currentMetadata.value.artist} - ${audioController.currentMetadata.value.album}";
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 2,
+                    children: [
+                      _isHeadHover
+                          ? _ScrollTextWidget(
+                              text: title,
+                              style: widget.titleStyle,
+                              strutStyle: titleStrut,
+                            )
+                          : Text(
+                              title,
+                              style: widget.titleStyle,
+                              softWrap: false,
+                              strutStyle: titleStrut,
+                              overflow: TextOverflow.fade,
+                              maxLines: 1,
+                              textAlign: TextAlign.left,
+                            ),
+                      _isHeadHover
+                          ? _ScrollTextWidget(
+                              text: artistAndAlbum,
+                              style: widget.subTitleStyle,
+                              strutStyle: subTitleStrut,
+                            )
+                          : Text(
+                              artistAndAlbum,
+                              style: widget.subTitleStyle,
+                              softWrap: false,
+                              strutStyle: subTitleStrut,
+                              overflow: TextOverflow.fade,
+                              maxLines: 1,
+                              textAlign: TextAlign.left,
+                            ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _CoverMemoryImage extends StatefulWidget {
-  final Uint8List bytes;
-  final int cacheResolution;
-  final double size;
-
-  const _CoverMemoryImage({
-    super.key,
-    required this.bytes,
-    required this.cacheResolution,
-    required this.size,
-  });
-
-  @override
-  State<_CoverMemoryImage> createState() => _CoverMemoryImageState();
-}
-
-class _CoverMemoryImageState extends State<_CoverMemoryImage> {
-  late ImageProvider _imageProvider;
-
-  ImageProvider _createProvider() {
-    return ResizeImage.resizeIfNeeded(
-      widget.cacheResolution,
-      widget.cacheResolution,
-      MemoryImage(widget.bytes),
-    );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _imageProvider = _createProvider();
-  }
-
-  @override
-  void didUpdateWidget(_CoverMemoryImage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.cacheResolution != widget.cacheResolution ||
-        !identical(oldWidget.bytes, widget.bytes)) {
-      _imageProvider.evict();
-      _imageProvider = _createProvider();
-    }
-  }
-
-  @override
-  void dispose() {
-    // 退场动画结束后清掉大封面的解码缓存，压缩字节仍由播放器持有。
-    _imageProvider.evict();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Image(
-      image: _imageProvider,
-      height: widget.size,
-      width: widget.size,
-      fit: BoxFit.cover,
-      gaplessPlayback: true,
     );
   }
 }
@@ -810,7 +774,7 @@ class _PlayQueueItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AudioController audioController = Get.find<AudioController>();
+    final AudioController audioController = AudioController.instance;
     return TextButton(
       onPressed: () async {
         await audioController.audioPlay(metadata: item);
@@ -819,33 +783,35 @@ class _PlayQueueItem extends StatelessWidget {
         shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
       ),
       child: SizedBox.expand(
-        child: Obx(() {
-          final isCurrent = audioController.currentPath.value == item.path;
-          final currentTitleStyle = isCurrent
-              ? highLightTitleStyle
-              : titleStyle;
-          final currentSubStyle = isCurrent ? highLightSubStyle : subStyle;
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item.title,
-                style: currentTitleStyle,
-                softWrap: true,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-              Text(
-                "${item.artist} - ${item.album}",
-                style: currentSubStyle,
-                softWrap: true,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ],
-          );
-        }),
+        child: SignalBuilder(
+          builder: (context) {
+            final isCurrent = audioController.currentPath.value == item.path;
+            final currentTitleStyle = isCurrent
+                ? highLightTitleStyle
+                : titleStyle;
+            final currentSubStyle = isCurrent ? highLightSubStyle : subStyle;
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  style: currentTitleStyle,
+                  softWrap: true,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                Text(
+                  "${item.artist} - ${item.album}",
+                  style: currentSubStyle,
+                  softWrap: true,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -872,7 +838,7 @@ class _ControlBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AudioController audioController = Get.find<AudioController>();
+    final AudioController audioController = AudioController.instance;
     final SettingController settingController = SettingController.instance;
 
     final audioCtrlWidget = AudioCtrlWidget(
@@ -959,8 +925,8 @@ class _ControlBar extends StatelessWidget {
                       width: width * 0.25,
                       height: _audioCtrlBarHeight - 24,
                       child: RepaintBoundary(
-                        child: Obx(
-                          () => Column(
+                        child: SignalBuilder(
+                          builder: (context) => Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -984,8 +950,8 @@ class _ControlBar extends StatelessWidget {
                       ),
                     ),
                     Expanded(
-                      child: Obx(
-                        () => AnimatedOpacity(
+                      child: SignalBuilder(
+                        builder: (context) => AnimatedOpacity(
                           opacity: _isBarHover.value ? 1.0 : 0.0,
                           duration: 150.ms,
                           child: Row(
@@ -1010,8 +976,8 @@ class _ControlBar extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.end,
                         spacing: 8,
                         children: [
-                          Obx(
-                            () => GenIconBtn(
+                          SignalBuilder(
+                            builder: (context) => GenIconBtn(
                               tooltip:
                                   SettingController
                                       .lrcAlignmentMap[settingController
@@ -1051,34 +1017,37 @@ class _ControlBar extends StatelessWidget {
                                     ),
                                     Expanded(
                                       flex: 1,
-                                      child: Obx(() {
-                                        final itemsList =
-                                            audioController.playListCacheItems;
-                                        return ListView.builder(
-                                          scrollCacheExtent:
-                                              const ScrollCacheExtent.pixels(
-                                                itemHeight * 1,
-                                              ),
-                                          itemCount: itemsList.length,
-                                          itemExtent: itemHeight,
-                                          controller: playQueueScrollController,
-                                          padding: const EdgeInsets.only(
-                                            bottom: itemHeight * 2,
-                                          ),
-                                          itemBuilder: (context, index) {
-                                            return _PlayQueueItem(
-                                              item: itemsList[index],
-                                              itemHeight: itemHeight,
-                                              titleStyle: titleStyle,
-                                              highLightTitleStyle:
-                                                  highLightTitleStyle,
-                                              subStyle: subStyle,
-                                              highLightSubStyle:
-                                                  highLightSubStyle,
-                                            );
-                                          },
-                                        );
-                                      }),
+                                      child: SignalBuilder(
+                                        builder: (context) {
+                                          final itemsList = audioController
+                                              .playListCacheItems;
+                                          return ListView.builder(
+                                            scrollCacheExtent:
+                                                const ScrollCacheExtent.pixels(
+                                                  itemHeight * 1,
+                                                ),
+                                            itemCount: itemsList.length,
+                                            itemExtent: itemHeight,
+                                            controller:
+                                                playQueueScrollController,
+                                            padding: const EdgeInsets.only(
+                                              bottom: itemHeight * 2,
+                                            ),
+                                            itemBuilder: (context, index) {
+                                              return _PlayQueueItem(
+                                                item: itemsList[index],
+                                                itemHeight: itemHeight,
+                                                titleStyle: titleStyle,
+                                                highLightTitleStyle:
+                                                    highLightTitleStyle,
+                                                subStyle: subStyle,
+                                                highLightSubStyle:
+                                                    highLightSubStyle,
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -1123,8 +1092,8 @@ class _ControlBar extends StatelessWidget {
                               },
                             ),
                           ),
-                          Obx(
-                            () => GenIconBtn(
+                          SignalBuilder(
+                            builder: (context) => GenIconBtn(
                               tooltip: '频谱图',
                               icon: settingController.showSpectrogram.value
                                   ? PhosphorIconsFill.waveTriangle
@@ -1132,13 +1101,14 @@ class _ControlBar extends StatelessWidget {
                               size: _ctrlBtnMinSize,
                               color: mixColor,
                               fn: () {
-                                settingController.showSpectrogram.toggle();
+                                settingController.showSpectrogram.value =
+                                    !settingController.showSpectrogram.value;
                                 settingController.putScalableCache();
                               },
                             ),
                           ),
-                          Obx(
-                            () => GenIconBtn(
+                          SignalBuilder(
+                            builder: (context) => GenIconBtn(
                               tooltip: '桌面歌词',
                               icon: settingController.showDesktopLyrics.value
                                   ? PhosphorIconsFill.creditCard
@@ -1178,12 +1148,12 @@ class _PlayPageState extends State<PlayPage> {
   late final MenuController _playQueueMenuController;
 
   ThemeService get _themeService => ThemeService.instance;
-  AudioController get _audioController => Get.find<AudioController>();
+  AudioController get _audioController => AudioController.instance;
   SettingController get _settingController => SettingController.instance;
   MusicCacheController get _musicCacheController =>
-      Get.find<MusicCacheController>();
+      MusicCacheController.instance;
   UserPlayListController get _userPlayListController =>
-      Get.find<UserPlayListController>();
+      UserPlayListController.instance;
 
   @override
   void initState() {
@@ -1316,7 +1286,7 @@ class _PlayPageState extends State<PlayPage> {
   List<Widget> _getMenuItem(
     MenuController menuController,
     ColorScheme darkColorScheme,
-    Rx<MusicCache> currentMetadata,
+    Signal<MusicCache> currentMetadata,
   ) {
     final Widget divider = Divider(
       color: darkColorScheme.primary.withValues(alpha: 0.8),
@@ -1328,140 +1298,148 @@ class _PlayPageState extends State<PlayPage> {
     final audioController = _audioController;
 
     return [
-      Obx(
-        () => _createInfoBar(
+      SignalBuilder(
+        builder: (context) => _createInfoBar(
           text: "字号 ${settingController.lrcFontSize.value}",
           darkColorScheme: darkColorScheme,
           addFn: () {
             if (settingController.lrcFontSize.value <
                 SettingController.lrcFontSizeMax) {
-              settingController.lrcFontSize.value++;
-              audioController.update([GetBuilderId.lyricRender]);
+              // 字号与渲染版本号的写入合并为一次通知
+              batch(() {
+                settingController.lrcFontSize.value++;
+                audioController.lyricRenderRevision.value++;
+              });
               settingController.putCache(isSaveFolders: false);
             }
           },
           decFn: () {
             if (settingController.lrcFontSize.value >
                 SettingController.lrcFontSizeMin) {
-              settingController.lrcFontSize.value--;
-              audioController.update([GetBuilderId.lyricRender]);
+              // 字号与渲染版本号的写入合并为一次通知
+              batch(() {
+                settingController.lrcFontSize.value--;
+                audioController.lyricRenderRevision.value++;
+              });
               settingController.putCache(isSaveFolders: false);
             }
           },
         ),
       ),
-      Obx(
-        () => _createInfoBar(
+      SignalBuilder(
+        builder: (context) => _createInfoBar(
           text: "字重 ${settingController.lrcFontWeight.value * 100 + 100}",
           darkColorScheme: darkColorScheme,
           addFn: () {
             if (settingController.lrcFontWeight.value <
                 SettingController.lrcFontWeightMax) {
-              settingController.lrcFontWeight.value++;
-              audioController.update([GetBuilderId.lyricRender]);
+              // 字重与渲染版本号的写入合并为一次通知
+              batch(() {
+                settingController.lrcFontWeight.value++;
+                audioController.lyricRenderRevision.value++;
+              });
               settingController.putCache(isSaveFolders: false);
             }
           },
           decFn: () {
             if (settingController.lrcFontWeight.value >
                 SettingController.lrcFontWeightMin) {
-              settingController.lrcFontWeight.value--;
-              audioController.update([GetBuilderId.lyricRender]);
+              // 字重与渲染版本号的写入合并为一次通知
+              batch(() {
+                settingController.lrcFontWeight.value--;
+                audioController.lyricRenderRevision.value++;
+              });
               settingController.putCache(isSaveFolders: false);
             }
           },
         ),
       ),
       divider,
-      Obx(() {
-        final album = currentMetadata.value.album;
-        final albumWithLetter =
-            musicCacheController.getLetter(str: album) + album;
-        return _createMenuBtn(
-          fn: () {
-            menuController.close();
-            context.pop();
-            SchedulerBinding.instance.addPostFrameCallback((_) {
-              context.push(
-                AppRoutes.details,
-                extra: {
-                  'pathList':
-                      musicCacheController.albumItemsDict[albumWithLetter],
-                  'title': album,
-                  'operateArea': OperateArea.albumDetails,
-                },
-              );
-            });
-          },
-          text: album,
-          icon: PhosphorIconsLight.vinylRecord,
-          toolTip: '跳转到 "$album"',
-        );
-      }),
-      Obx(() {
-        final artistList = currentMetadata.value.artist.split('/');
-        final artistFirst = artistList.first;
-        final artistFirstWithLetter =
-            musicCacheController.getLetter(str: artistFirst) + artistFirst;
-
-        if (artistList.length == 1) {
+      SignalBuilder(
+        builder: (context) {
+          final album = currentMetadata.value.album;
+          final albumWithLetter =
+              musicCacheController.getLetter(str: album) + album;
+          final router = GoRouter.of(context);
           return _createMenuBtn(
             fn: () {
+              final extra = {
+                'pathList':
+                    musicCacheController.albumItemsDict[albumWithLetter],
+                'title': album,
+                'operateArea': OperateArea.albumDetails,
+              };
               menuController.close();
-              context.pop();
               SchedulerBinding.instance.addPostFrameCallback((_) {
-                context.push(
-                  AppRoutes.details,
-                  extra: {
-                    'pathList': musicCacheController
-                        .artistItemsDict[artistFirstWithLetter],
-                    'title': artistFirst,
-                    'operateArea': OperateArea.artistDetails,
-                  },
-                );
+                router.replace(AppRoutes.details, extra: extra);
               });
             },
-            text: artistFirst,
-            icon: PhosphorIconsLight.userFocus,
-            toolTip: '跳转到 "$artistFirst"',
+            text: album,
+            icon: PhosphorIconsLight.vinylRecord,
+            toolTip: '跳转到 "$album"',
           );
-        }
-        if (artistList.length > 1) {
-          return _createdSubmenuBtn(
-            text: '查看艺术家',
-            darkColorScheme: darkColorScheme,
-            leadingIcon: Icon(
-              PhosphorIconsLight.userFocus,
-              size: getIconSize(size: 'md'),
-            ),
-            menuChildren: artistList.map((v) {
-              return MenuItemButton(
-                onPressed: () {
-                  menuController.close();
-                  context.pop();
-                  SchedulerBinding.instance.addPostFrameCallback((_) {
-                    context.push(
-                      AppRoutes.details,
-                      extra: {
-                        'pathList':
-                            musicCacheController
-                                .artistItemsDict[musicCacheController.getLetter(
-                                  str: v,
-                                ) +
-                                v],
-                        'title': v,
-                        'operateArea': OperateArea.artistDetails,
-                      },
-                    );
-                  });
-                },
-                child: Center(child: Text(v)),
-              );
-            }).toList(),
-          );
-        }
-        return const SizedBox.shrink();
-      }),
+        },
+      ),
+      SignalBuilder(
+        builder: (context) {
+          final artistList = currentMetadata.value.artist.split('/');
+          final artistFirst = artistList.first;
+          final artistFirstWithLetter =
+              musicCacheController.getLetter(str: artistFirst) + artistFirst;
+          final router = GoRouter.of(context);
+          if (artistList.length == 1) {
+            return _createMenuBtn(
+              fn: () {
+                final extra = {
+                  'pathList': musicCacheController
+                      .artistItemsDict[artistFirstWithLetter],
+                  'title': artistFirst,
+                  'operateArea': OperateArea.artistDetails,
+                };
+                menuController.close();
+                SchedulerBinding.instance.addPostFrameCallback((_) {
+                  router.replace(AppRoutes.details, extra: extra);
+                });
+              },
+              text: artistFirst,
+              icon: PhosphorIconsLight.userFocus,
+              toolTip: '跳转到 "$artistFirst"',
+            );
+          }
+          if (artistList.length > 1) {
+            return _createdSubmenuBtn(
+              text: '查看艺术家',
+              darkColorScheme: darkColorScheme,
+              leadingIcon: Icon(
+                PhosphorIconsLight.userFocus,
+                size: getIconSize(size: 'md'),
+              ),
+              menuChildren: artistList.map((v) {
+                return MenuItemButton(
+                  onPressed: () {
+                    final extra = {
+                      'pathList':
+                          musicCacheController
+                              .artistItemsDict[musicCacheController.getLetter(
+                                str: v,
+                              ) +
+                              v],
+                      'title': v,
+                      'operateArea': OperateArea.artistDetails,
+                    };
+                    menuController.close();
+                    SchedulerBinding.instance.addPostFrameCallback((_) {
+                      router.replace(AppRoutes.details, extra: extra);
+                    });
+                  },
+                  child: Center(child: Text(v)),
+                );
+              }).toList(),
+            );
+          }
+          return const SizedBox.shrink();
+        },
+      ),
       divider,
       _createdSubmenuBtn(
         text: '添加到歌单',
@@ -1612,8 +1590,8 @@ class _PlayPageState extends State<PlayPage> {
                             child: Stack(
                               children: [
                                 // --- 歌词侧 ---
-                                Obx(
-                                  () => AnimatedPositioned(
+                                SignalBuilder(
+                                  builder: (context) => AnimatedPositioned(
                                     duration: 300.ms,
                                     curve: Curves.fastOutSlowIn,
                                     right: _coverViewMode.value == 0
@@ -1632,8 +1610,8 @@ class _PlayPageState extends State<PlayPage> {
                                   ),
                                 ),
                                 // --- 封面侧 ---
-                                Obx(
-                                  () => AnimatedPositioned(
+                                SignalBuilder(
+                                  builder: (context) => AnimatedPositioned(
                                     duration: 300.ms,
                                     curve: Curves.fastOutSlowIn,
                                     left: _coverViewMode.value == 0
@@ -1653,100 +1631,104 @@ class _PlayPageState extends State<PlayPage> {
                                   ),
                                 ),
                                 // --- 详情侧 ---
-                                Obx(() {
-                                  final textStyle_ = titleStyle.copyWith(
-                                    fontWeight: FontWeight.w100,
-                                    fontSize: titleStyle.fontSize! - 3,
-                                  );
-                                  final metadata =
-                                      _audioController.currentMetadata.value;
-                                  return AnimatedPositioned(
-                                    duration: 300.ms,
-                                    curve: Curves.fastOutSlowIn,
-                                    left: _coverViewMode.value == 2
-                                        ? (halfWidth - 100) / 4
-                                        : (-halfWidth),
-                                    width: halfWidth - 100, // 水平约束
-                                    top: 0, // 垂直约束
-                                    bottom: 0, // 垂直约束
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      spacing: 10,
-                                      children: [
-                                        Text(
-                                          "标题：${metadata.title}",
-                                          style: textStyle_,
-                                        ),
-                                        Text(
-                                          "艺术家：${metadata.artist}",
-                                          style: textStyle_,
-                                        ),
-                                        Text(
-                                          "专辑：${metadata.album}",
-                                          style: textStyle_,
-                                        ),
-                                        Text(
-                                          "流派：${metadata.genre}",
-                                          style: textStyle_,
-                                        ),
-                                        Text(
-                                          "时长：${formatTime(totalSeconds: metadata.duration)}",
-                                          style: textStyle_,
-                                        ),
-                                        Text(
-                                          "比特率：${metadata.bitrate ?? "UNKNOWN"}kbps",
-                                          style: textStyle_,
-                                        ),
-                                        Text(
-                                          "采样率：${metadata.sampleRate ?? "UNKNOWN"}hz",
-                                          style: textStyle_,
-                                        ),
-                                        Text(
-                                          "音轨号：${metadata.trackNumber}",
-                                          style: textStyle_,
-                                        ),
-                                        Text(
-                                          "位深度：${metadata.bitDepth}",
-                                          style: textStyle_,
-                                        ),
-                                        Text(
-                                          "通道数：${metadata.channels}",
-                                          style: textStyle_,
-                                        ),
-                                        Text(
-                                          "路径：${metadata.path}",
-                                          style: textStyle_,
-                                          maxLines: 5,
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }),
+                                SignalBuilder(
+                                  builder: (context) {
+                                    final textStyle_ = titleStyle.copyWith(
+                                      fontWeight: FontWeight.w100,
+                                      fontSize: titleStyle.fontSize! - 3,
+                                    );
+                                    final metadata =
+                                        _audioController.currentMetadata.value;
+                                    return AnimatedPositioned(
+                                      duration: 300.ms,
+                                      curve: Curves.fastOutSlowIn,
+                                      left: _coverViewMode.value == 2
+                                          ? (halfWidth - 100) / 4
+                                          : (-halfWidth),
+                                      width: halfWidth - 100, // 水平约束
+                                      top: 0, // 垂直约束
+                                      bottom: 0, // 垂直约束
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        spacing: 10,
+                                        children: [
+                                          Text(
+                                            "标题：${metadata.title}",
+                                            style: textStyle_,
+                                          ),
+                                          Text(
+                                            "艺术家：${metadata.artist}",
+                                            style: textStyle_,
+                                          ),
+                                          Text(
+                                            "专辑：${metadata.album}",
+                                            style: textStyle_,
+                                          ),
+                                          Text(
+                                            "流派：${metadata.genre}",
+                                            style: textStyle_,
+                                          ),
+                                          Text(
+                                            "时长：${formatTime(totalSeconds: metadata.duration)}",
+                                            style: textStyle_,
+                                          ),
+                                          Text(
+                                            "比特率：${metadata.bitrate ?? "UNKNOWN"}kbps",
+                                            style: textStyle_,
+                                          ),
+                                          Text(
+                                            "采样率：${metadata.sampleRate ?? "UNKNOWN"}hz",
+                                            style: textStyle_,
+                                          ),
+                                          Text(
+                                            "音轨号：${metadata.trackNumber}",
+                                            style: textStyle_,
+                                          ),
+                                          Text(
+                                            "位深度：${metadata.bitDepth}",
+                                            style: textStyle_,
+                                          ),
+                                          Text(
+                                            "通道数：${metadata.channels}",
+                                            style: textStyle_,
+                                          ),
+                                          Text(
+                                            "路径：${metadata.path}",
+                                            style: textStyle_,
+                                            maxLines: 5,
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
                                 // --- 频谱图 ---
                                 Positioned(
                                   left: 0,
                                   bottom: 0,
-                                  child: Obx(() {
-                                    if (!settingController
-                                        .showSpectrogram
-                                        .value) {
-                                      return const SizedBox.shrink();
-                                    }
-                                    return _SpectrogramWidget(
-                                      key: ValueKey(
-                                        _settingController
-                                            .showSpectrogram
-                                            .value,
-                                      ),
-                                      gradient: spectrogramBarGradient,
-                                      lenth: spectrogramBarLength,
-                                      barWidth: spectrogramBarWidth,
-                                      paddingWidth: spectrogramPaddingWidth,
-                                    );
-                                  }),
+                                  child: SignalBuilder(
+                                    builder: (context) {
+                                      if (!settingController
+                                          .showSpectrogram
+                                          .value) {
+                                        return const SizedBox.shrink();
+                                      }
+                                      return _SpectrogramWidget(
+                                        key: ValueKey(
+                                          _settingController
+                                              .showSpectrogram
+                                              .value,
+                                        ),
+                                        gradient: spectrogramBarGradient,
+                                        lenth: spectrogramBarLength,
+                                        barWidth: spectrogramBarWidth,
+                                        paddingWidth: spectrogramPaddingWidth,
+                                      );
+                                    },
+                                  ),
                                 ),
                               ],
                             ),
@@ -1793,7 +1775,7 @@ class _SpectrogramWidget extends StatefulWidget {
 
 class _SpectrogramWidgetState extends State<_SpectrogramWidget>
     with SingleTickerProviderStateMixin {
-  final AudioController _audioController = Get.find<AudioController>();
+  final AudioController _audioController = AudioController.instance;
 
   // 颜色缓存，颜色变化的时候更新painter
   Color? _cachedColor;

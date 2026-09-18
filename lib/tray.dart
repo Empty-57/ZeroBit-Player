@@ -1,28 +1,36 @@
 import 'dart:io';
-
-import 'package:flutter_single_instance/flutter_single_instance.dart';
-import 'package:get/get.dart';
+import 'package:flutter/foundation.dart';
 import 'package:tray_manager/tray_manager.dart';
+import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/controller/window_ctrl.dart';
 
-class Tray extends GetxController with TrayListener {
-  AudioController get _audioController => Get.find<AudioController>();
-  SettingController get _settingController => SettingController.instance;
-  MyWindowListener get _windowListener => Get.find<MyWindowListener>();
+class TrayManagerService with TrayListener {
+  TrayManagerService._();
+  static final TrayManagerService instance = TrayManagerService._();
 
-  @override
-  void onInit() async {
-    super.onInit();
-    await _init();
-    await _updateTrayMenu();
+  AudioController get _audioController => AudioController.instance;
+  SettingController get _settingController => SettingController.instance;
+  WindowController get _windowListener => WindowController.instance;
+
+  Future<void> init() async {
+    try {
+      await trayManager.setIcon(
+        Platform.isWindows ? 'assets/app_icon.ico' : 'assets/app_icon.png',
+      );
+      await trayManager.setToolTip("ZeroBit Player");
+      trayManager.addListener(this);
+
+      await _updateTrayMenu();
+    } catch (e) {
+      debugPrint('Tray init failed: $e');
+    }
   }
 
-  @override
-  void dispose() {
+  Future<void> destroy() async {
     trayManager.removeListener(this);
-    super.dispose();
+    await trayManager.destroy();
   }
 
   @override
@@ -42,7 +50,7 @@ class Tray extends GetxController with TrayListener {
 
   // 更新Menu
   Future<void> _updateTrayMenu() async {
-    Menu menu = Menu(
+    final Menu menu = Menu(
       items: [
         MenuItem(
           key: 'toggle',
@@ -75,21 +83,12 @@ class Tray extends GetxController with TrayListener {
           key: 'exit',
           label: '退出ZeroBit Player',
           onClick: (_) async {
-            if (Get.isRegistered<MyWindowListener>()) {
-              await _windowListener.closeAndClean();
-            }
+            await destroy();
+            await _windowListener.closeAndClean();
           },
         ),
       ],
     );
     await trayManager.setContextMenu(menu);
-  }
-
-  Future<void> _init() async {
-    await trayManager.setIcon(
-      Platform.isWindows ? 'assets/app_icon.ico' : 'assets/app_icon.png',
-    );
-    await trayManager.setToolTip("ZeroBit Player");
-    trayManager.addListener(this);
   }
 }

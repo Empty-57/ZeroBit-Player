@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:zerobit_player/components/audio_gen_pages.dart';
 import 'package:zerobit_player/components/blur_background.dart';
 import 'package:zerobit_player/controller/details_page_ctrl.dart';
@@ -12,11 +11,11 @@ class UniDetailsPage extends StatefulWidget {
 }
 
 class _UniDetailsPageState extends State<UniDetailsPage> {
-  late DetailsPageController detailsController;
-  late String ctrlTag;
-  late String title;
-  late String operateArea;
-  late String userKey;
+  late final DetailsPageController detailsController;
+  late final String audioSourceTag;
+  late final String title;
+  late final String operateArea;
+  late final String userKey;
 
   bool _isInit = false;
 
@@ -28,27 +27,27 @@ class _UniDetailsPageState extends State<UniDetailsPage> {
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ??
           {};
 
-      final pathList = args['pathList'] ?? [];
+      final pathList =
+          (args['pathList'] as List<dynamic>?)?.cast<String>() ?? [];
       title = args['title'] ?? '未知详情页';
-
-      operateArea = args['operateArea'];
-
+      operateArea = args['operateArea'] ?? '';
       userKey = args['userKey'] ?? '';
 
       final uniqueId = DateTime.now().millisecondsSinceEpoch;
-      ctrlTag = '${title}_${operateArea}_$uniqueId';
+      audioSourceTag = '${title}_${operateArea}_$uniqueId';
 
-      detailsController = Get.put(
-        DetailsPageController(pathList: pathList, operateArea: operateArea),
-        tag: ctrlTag,
-      );
+      detailsController = DetailsPageController(
+        pathList: pathList,
+        operateArea: operateArea,
+      )..init();
+
       _isInit = true;
     }
   }
 
   @override
   void dispose() {
-    Get.delete<DetailsPageController>(tag: ctrlTag);
+    detailsController.dispose();
     super.dispose();
   }
 
@@ -59,7 +58,7 @@ class _UniDetailsPageState extends State<UniDetailsPage> {
       child: AudioGenPages(
         title: title,
         operateArea: operateArea,
-        audioSource: ctrlTag,
+        audioSource: audioSourceTag,
         controller: detailsController,
         userKey: userKey,
       ),

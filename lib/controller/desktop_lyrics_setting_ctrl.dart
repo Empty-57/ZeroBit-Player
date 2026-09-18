@@ -1,5 +1,5 @@
-import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/desktop_lyrics_sever.dart';
 import 'package:zerobit_player/tools/websocket_model.dart';
 
@@ -7,31 +7,31 @@ class DesktopLyricsSettingController {
   DesktopLyricsSettingController._();
   static final instance = DesktopLyricsSettingController._();
   final DesktopLyricsSever _desktopLyricsSever = DesktopLyricsSever.instance;
-  final fontFamily = "Microsoft YaHei Light".obs;
-  final fontSize = 24.obs; // 16-36
-  final fontWeight = 5.obs; // 0-8  w100-w900
-  final overlayColor = 0xffff0000.obs;
-  final underColor = 0xff0000ff.obs;
-  final fontOpacity = 1.0.obs;
+  final fontFamily = signal("Microsoft YaHei Light");
+  final fontSize = signal(24); // 16-36
+  final fontWeight = signal(5); // 0-8  w100-w900
+  final overlayColor = signal(0xffff0000);
+  final underColor = signal(0xff0000ff);
+  final fontOpacity = signal(1.0);
 
   double windowDx = 50.0;
   double windowDy = 50.0;
   double windowWidth = 450.0;
   double windowHeight = 150.0;
-  final isIgnoreMouseEvents = false.obs;
+  final isIgnoreMouseEvents = signal(false);
 
-  final lrcAlignment = 1.obs;
-  final useVerticalDisplayMode = false.obs;
+  final lrcAlignment = signal(1);
+  final useVerticalDisplayMode = signal(false);
 
-  final useStroke = true.obs;
+  final useStroke = signal(true);
 
-  final strokeColor = 0xff000000.obs;
+  final strokeColor = signal(0xff000000);
 
-  final showDoubleLine = false.obs;
+  final showDoubleLine = signal(false);
 
-  final useDynamicOverlayColor = false.obs;
+  final useDynamicOverlayColor = signal(false);
 
-  final lyricsSwitchAnimateMode = 1.obs; // 0 无动画 1 淡入淡出 2滑动 3 缩放
+  final lyricsSwitchAnimateMode = signal(1); // 0 无动画 1 淡入淡出 2滑动 3 缩放
 
   static const Map<int, String> lrcAlignmentMap = {
     0: '左对齐',
@@ -54,27 +54,30 @@ class DesktopLyricsSettingController {
 
   void init() async {
     prefs = await SharedPreferences.getInstance();
-    fontSize.value = prefs!.getInt('fontSize') ?? 24;
-    fontWeight.value = prefs!.getInt('fontWeight') ?? 5;
-    fontFamily.value =
-        prefs!.getString('fontFamily') ?? 'Microsoft YaHei Light';
-    overlayColor.value = prefs!.getInt('overlayColor') ?? 0xffff0000;
-    underColor.value = prefs!.getInt('underColor') ?? 0xff0000ff;
-    fontOpacity.value = prefs!.getDouble('fontOpacity') ?? 1.0;
-    windowDx = prefs!.getDouble('dx') ?? 50.0;
-    windowDy = prefs!.getDouble('dy') ?? 50.0;
-    windowWidth = prefs!.getDouble('windowWidth') ?? 450.0;
-    windowHeight = prefs!.getDouble('windowHeight') ?? 150.0;
-    isIgnoreMouseEvents.value = prefs!.getBool('isIgnoreMouseEvents') ?? false;
-    lrcAlignment.value = prefs!.getInt('lrcAlignment') ?? 1;
-    useVerticalDisplayMode.value = prefs!.getBool('displayMode') ?? false;
-    useStroke.value = prefs!.getBool('useStroke') ?? true;
-    strokeColor.value = prefs!.getInt('strokeColor') ?? 0xff000000;
-    showDoubleLine.value = prefs!.getBool('showDoubleLine') ?? false;
-    useDynamicOverlayColor.value =
-        prefs!.getBool('useDynamicOverlayColor') ?? false;
-    lyricsSwitchAnimateMode.value =
-        prefs!.getInt('lyricsSwitchAnimateMode') ?? 1;
+    batch(() {
+      fontSize.value = prefs!.getInt('fontSize') ?? 24;
+      fontWeight.value = prefs!.getInt('fontWeight') ?? 5;
+      fontFamily.value =
+          prefs!.getString('fontFamily') ?? 'Microsoft YaHei Light';
+      overlayColor.value = prefs!.getInt('overlayColor') ?? 0xffff0000;
+      underColor.value = prefs!.getInt('underColor') ?? 0xff0000ff;
+      fontOpacity.value = prefs!.getDouble('fontOpacity') ?? 1.0;
+      windowDx = prefs!.getDouble('dx') ?? 50.0;
+      windowDy = prefs!.getDouble('dy') ?? 50.0;
+      windowWidth = prefs!.getDouble('windowWidth') ?? 450.0;
+      windowHeight = prefs!.getDouble('windowHeight') ?? 150.0;
+      isIgnoreMouseEvents.value =
+          prefs!.getBool('isIgnoreMouseEvents') ?? false;
+      lrcAlignment.value = prefs!.getInt('lrcAlignment') ?? 1;
+      useVerticalDisplayMode.value = prefs!.getBool('displayMode') ?? false;
+      useStroke.value = prefs!.getBool('useStroke') ?? true;
+      strokeColor.value = prefs!.getInt('strokeColor') ?? 0xff000000;
+      showDoubleLine.value = prefs!.getBool('showDoubleLine') ?? false;
+      useDynamicOverlayColor.value =
+          prefs!.getBool('useDynamicOverlayColor') ?? false;
+      lyricsSwitchAnimateMode.value =
+          prefs!.getInt('lyricsSwitchAnimateMode') ?? 1;
+    });
   }
 
   void setFontSize({required int size}) {

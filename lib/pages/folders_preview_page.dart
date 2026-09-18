@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
@@ -14,7 +14,10 @@ const _borderRadius = BorderRadius.all(Radius.circular(4));
 class FoldersPreviewPage extends StatelessWidget {
   const FoldersPreviewPage({super.key});
 
-  void createMap(SettingController c, RxMap<String, List<String>> map) async {
+  void createMap(
+    SettingController c,
+    MapSignal<String, List<String>> map,
+  ) async {
     for (String folder in c.folders) {
       map[folder] = (await scanAudioPaths([folder], c)).toList();
     }
@@ -22,7 +25,7 @@ class FoldersPreviewPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final folderPathMap = <String, List<String>>{}.obs; // 每次重新扫描
+    final folderPathMap = mapSignal(<String, List<String>>{}); // 每次重新扫描
     final textStyle1 = generalTextStyle(ctx: context, size: 'md');
     final textStyle2 = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
     final settingController = SettingController.instance;
@@ -49,8 +52,8 @@ class FoldersPreviewPage extends StatelessWidget {
                   weight: FontWeight.w600,
                 ),
               ),
-              Obx(
-                () => Text(
+              SignalBuilder(
+                builder: (context) => Text(
                   '共${settingController.folders.length}个文件夹',
                   style: generalTextStyle(ctx: context, size: 'md'),
                 ),
@@ -59,66 +62,71 @@ class FoldersPreviewPage extends StatelessWidget {
           ),
           Expanded(
             flex: 1,
-            child: Obx(() {
-              final folders = folderPathMap.keys.toList();
-              return ListView.builder(
-                scrollCacheExtent: const ScrollCacheExtent.pixels(
-                  _itemHeight * 1,
-                ),
-                itemCount: settingController.folders.length,
-                itemExtent: _itemHeight,
-                itemBuilder: (context, index) {
-                  if (folders.isEmpty || index > folders.length - 1) {
-                    return const SizedBox.shrink();
-                  }
+            child: SignalBuilder(
+              builder: (context) {
+                final folders = folderPathMap.keys.toList();
+                return ListView.builder(
+                  scrollCacheExtent: const ScrollCacheExtent.pixels(
+                    _itemHeight * 1,
+                  ),
+                  itemCount: settingController.folders.length,
+                  itemExtent: _itemHeight,
+                  itemBuilder: (context, index) {
+                    if (folders.isEmpty || index > folders.length - 1) {
+                      return const SizedBox.shrink();
+                    }
 
-                  final folder = folders[index];
-                  final pathList = folderPathMap[folder] ?? [];
+                    final folder = folders[index];
+                    final pathList = folderPathMap[folder] ?? [];
 
-                  return TextButton(
-                    onPressed: () {
-                      context.push(
-                        AppRoutes.details,
-                        extra: {
-                          'pathList': pathList,
-                          'title': folder,
-                          'operateArea': OperateArea.foldersDetails,
-                        },
-                      );
-                    },
-                    style: TextButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: _borderRadius,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      spacing: 8,
-                      children: [
-                        Expanded(
-                          flex: 1,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                folder,
-                                style: textStyle1,
-                                softWrap: true,
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                              Text("共${pathList.length}首音乐", style: textStyle2),
-                            ],
-                          ),
+                    return TextButton(
+                      onPressed: () {
+                        context.push(
+                          AppRoutes.details,
+                          extra: {
+                            'pathList': pathList,
+                            'title': folder,
+                            'operateArea': OperateArea.foldersDetails,
+                          },
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: _borderRadius,
                         ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            }),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        spacing: 8,
+                        children: [
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  folder,
+                                  style: textStyle1,
+                                  softWrap: true,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                                Text(
+                                  "共${pathList.length}首音乐",
+                                  style: textStyle2,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),

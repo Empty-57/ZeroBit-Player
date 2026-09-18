@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
-import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -159,6 +158,9 @@ class VersionChecker {
     BuildContext context,
     AppReleaseInfo repoInfo,
   ) async {
+    final height = MediaQuery.sizeOf(context).height;
+    final width = MediaQuery.sizeOf(context).width;
+
     return showDialog(
       barrierDismissible: true,
       context: context,
@@ -177,8 +179,8 @@ class VersionChecker {
           actionsAlignment: MainAxisAlignment.end,
           actions: <Widget>[
             SizedBox(
-              width: ctx.width / 2,
-              height: ctx.height / 2,
+              width: width / 2,
+              height: height / 2,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 8,

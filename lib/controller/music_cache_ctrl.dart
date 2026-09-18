@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
-import 'package:get/get.dart';
 import 'package:pinyin/pinyin.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/hive_box.dart';
@@ -11,10 +12,12 @@ import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 
-class MusicCacheController extends GetxController
-    with DetailsPageControllerBase {
+class MusicCacheController with DetailsPageControllerBase {
+  MusicCacheController._();
+  static final MusicCacheController instance = MusicCacheController._();
+
   @override
-  final items = <MusicCache>[].obs;
+  final items = listSignal(<MusicCache>[]);
 
   SplayTreeMap<String, List<String>> artistItemsDict =
       SplayTreeMap<String, List<String>>((a, b) => a.compareTo(b));
@@ -30,49 +33,50 @@ class MusicCacheController extends GetxController
 
   final _musicCacheBox = HiveBox.musicCacheBox;
 
-  final currentScanAudio = ''.obs;
-  final searchText = ''.obs;
-  final searchResult = <MusicCache>[].obs;
+  final currentScanAudio = signal('');
+  final _searchText = signal('');
 
-  static final _alphaRegex = RegExp(r'[A-Z]');
-
-  // 用于通知  DetailsPageBaseController 进行数据更改
-  final songUpdatedSignal = Rx<MusicCache?>(null);
-
-  void _search({
-    required List<MusicCache> searchResult,
-    required List<MusicCache> items,
-    required String searchText,
-  }) {
-    final query = searchText.trim();
-    searchResult.clear();
+  late final searchResult = computed<List<MusicCache>>(() {
+    final query = _searchText.value.trim();
     if (query.isEmpty) {
-      return;
+      return const [];
     }
     final escaped = RegExp.escape(query);
     final regex = RegExp(escaped, caseSensitive: false);
 
-    searchResult
-      ..clear()
-      ..addAll(
-        items.where((v) {
-          final fields = [v.title, v.artist, v.album];
+    return items.where((v) {
+      final fields = [v.title, v.artist, v.album];
 
-          return fields.any((value) => regex.hasMatch(value));
-        }),
-      );
+      return fields.any((value) => regex.hasMatch(value));
+    }).toList();
+  });
+
+  static final _alphaRegex = RegExp(r'[A-Z]');
+
+  // 用于通知  DetailsPageBaseController 进行数据更改
+  final songUpdatedSignal = signal<MusicCache?>(null);
+
+  Timer? _debounceTimer;
+
+  void resetSearch() {
+    _debounceTimer?.cancel();
+    _searchText.value = '';
   }
 
-  @override
-  void onInit() {
-    super.onInit();
-    debounce(searchText, (_) {
-      _search(
-        searchResult: searchResult,
-        items: items,
-        searchText: searchText.value,
-      );
-    }, time: const Duration(milliseconds: 500));
+  void onInputChanged(String text) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      _searchText.value = text;
+    });
+  }
+
+  void dispose() {
+    _debounceTimer?.cancel();
+    currentScanAudio.dispose();
+    _searchText.dispose();
+    searchResult.dispose();
+    songUpdatedSignal.dispose();
+    items.dispose();
   }
 
   void loadData() {
@@ -109,7 +113,9 @@ class MusicCacheController extends GetxController
         final key = letter + name;
 
         artistItemsDict.putIfAbsent(key, () => []).add(v.path);
-        artistHasLetter.addIf(!artistHasLetter.contains(letter), letter);
+        if (!artistHasLetter.contains(letter)) {
+          artistHasLetter.add(letter);
+        }
       }
 
       // 处理专辑
@@ -118,7 +124,9 @@ class MusicCacheController extends GetxController
       final albumKey = albumLetter + album;
 
       albumItemsDict.putIfAbsent(albumKey, () => []).add(v.path);
-      albumHasLetter.addIf(!albumHasLetter.contains(albumLetter), albumLetter);
+      if (!albumHasLetter.contains(albumLetter)) {
+        albumHasLetter.add(albumLetter);
+      }
     }
     artistHasLetter.sort();
     albumHasLetter.sort();

@@ -1,8 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/diamond_silder_thumb.dart';
 import 'package:zerobit_player/custom_widgets/rect_value_indicator.dart';
@@ -31,12 +31,12 @@ const double _ctrlBtnMinSize = 40.0;
 
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 
-class _ProgressBar extends GetView<AudioController> {
+class _ProgressBar extends StatelessWidget {
   const _ProgressBar();
 
   @override
   Widget build(BuildContext context) {
-    final c = controller;
+    final c = AudioController.instance;
     final progressColor = Theme.of(
       context,
     ).colorScheme.secondaryContainer.withValues(alpha: 0.8);
@@ -82,9 +82,9 @@ class _ProgressPainter extends CustomPainter {
   }
 }
 
-final _isBarHover = false.obs;
+final _isBarHover = signal(false);
 
-class PlayBar extends GetView<AudioController> {
+class PlayBar extends StatelessWidget {
   const PlayBar({super.key});
 
   @override
@@ -95,35 +95,39 @@ class PlayBar extends GetView<AudioController> {
     );
     final width = MediaQuery.sizeOf(context).width;
 
-    return Obx(() {
-      final screenWidth = width;
-      final rightOffset =
-          (screenWidth -
-                  (screenWidth > _resViewThresholds
-                      ? controller.navigationIsExtend.value
-                            ? _navigationWidth
-                            : _navigationWidthSmall
-                      : _navigationWidthSmall)) /
-              2 -
-          _barWidthHalf;
-      return AnimatedPositioned(
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-        bottom: _bottom,
-        right: rightOffset,
-        child: ClipRRect(
-          borderRadius: _coverBorderRadius,
-          child: ExcludeSemantics(
-            child: Column(
-              children: [
-                _buildSlider(context, audioCtrlWidget),
-                _buildPlayBarBody(context, audioCtrlWidget),
-              ],
+    final c = AudioController.instance;
+
+    return SignalBuilder(
+      builder: (context) {
+        final screenWidth = width;
+        final rightOffset =
+            (screenWidth -
+                    (screenWidth > _resViewThresholds
+                        ? c.navigationIsExtend.value
+                              ? _navigationWidth
+                              : _navigationWidthSmall
+                        : _navigationWidthSmall)) /
+                2 -
+            _barWidthHalf;
+        return AnimatedPositioned(
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          bottom: _bottom,
+          right: rightOffset,
+          child: ClipRRect(
+            borderRadius: _coverBorderRadius,
+            child: ExcludeSemantics(
+              child: Column(
+                children: [
+                  _buildSlider(context, audioCtrlWidget),
+                  _buildPlayBarBody(context, audioCtrlWidget),
+                ],
+              ),
             ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 
   // 构建 Slider 部分
@@ -178,7 +182,7 @@ class PlayBar extends GetView<AudioController> {
       color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
     );
 
-    final c = controller;
+    final c = AudioController.instance;
 
     return Stack(
       children: [
@@ -264,19 +268,19 @@ class PlayBar extends GetView<AudioController> {
     );
 
     final cacheResolution = (_coverSize * _dpr).round();
-
+    final c = AudioController.instance;
     return Expanded(
       child: Row(
         spacing: 8,
         children: [
-          Obx(
-            () => Hero(
+          SignalBuilder(
+            builder: (context) => Hero(
               tag: 'playingCover',
               child: ClipRRect(
                 borderRadius: _coverBorderRadius,
                 child: Image.memory(
-                  controller.currentSmallCover.value,
-                  key: ValueKey(controller.currentSmallCover.value.hashCode),
+                  c.currentSmallCover.value,
+                  key: ValueKey(c.currentSmallCover.value.hashCode),
                   cacheWidth: cacheResolution,
                   cacheHeight: cacheResolution,
                   height: _coverSize,
@@ -293,40 +297,42 @@ class PlayBar extends GetView<AudioController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 4,
               children: [
-                Obx(() {
-                  final title =
-                      controller.currentMetadata.value.title.isNotEmpty
-                      ? controller.currentMetadata.value.title
-                      : "ZeroBit Player";
-                  return _isBarHover.value
-                      ? _buildScrollText(title, titleStyle, titleStrut)
-                      : Text(
-                          title,
-                          softWrap: false,
-                          overflow: TextOverflow.fade,
-                          strutStyle: titleStrut,
-                          maxLines: 1,
-                          style: titleStyle,
-                          textAlign: TextAlign.left,
-                        );
-                }),
-                Obx(() {
-                  final artist =
-                      controller.currentMetadata.value.artist.isNotEmpty
-                      ? controller.currentMetadata.value.artist
-                      : "39";
-                  return _isBarHover.value
-                      ? _buildScrollText(artist, timeTextStyle, subTitleStrut)
-                      : Text(
-                          artist,
-                          softWrap: false,
-                          overflow: TextOverflow.fade,
-                          strutStyle: subTitleStrut,
-                          maxLines: 1,
-                          style: timeTextStyle,
-                          textAlign: TextAlign.left,
-                        );
-                }),
+                SignalBuilder(
+                  builder: (context) {
+                    final title = c.currentMetadata.value.title.isNotEmpty
+                        ? c.currentMetadata.value.title
+                        : "ZeroBit Player";
+                    return _isBarHover.value
+                        ? _buildScrollText(title, titleStyle, titleStrut)
+                        : Text(
+                            title,
+                            softWrap: false,
+                            overflow: TextOverflow.fade,
+                            strutStyle: titleStrut,
+                            maxLines: 1,
+                            style: titleStyle,
+                            textAlign: TextAlign.left,
+                          );
+                  },
+                ),
+                SignalBuilder(
+                  builder: (context) {
+                    final artist = c.currentMetadata.value.artist.isNotEmpty
+                        ? c.currentMetadata.value.artist
+                        : "39";
+                    return _isBarHover.value
+                        ? _buildScrollText(artist, timeTextStyle, subTitleStrut)
+                        : Text(
+                            artist,
+                            softWrap: false,
+                            overflow: TextOverflow.fade,
+                            strutStyle: subTitleStrut,
+                            maxLines: 1,
+                            style: timeTextStyle,
+                            textAlign: TextAlign.left,
+                          );
+                  },
+                ),
               ],
             ),
           ),
@@ -337,8 +343,8 @@ class PlayBar extends GetView<AudioController> {
 
   // 构建可显隐的控制按钮
   Widget _buildControlButtons(AudioCtrlWidget audioCtrlWidget) {
-    return Obx(
-      () => AnimatedOpacity(
+    return SignalBuilder(
+      builder: (context) => AnimatedOpacity(
         opacity: _isBarHover.value ? 1.0 : 0.0,
         duration: const Duration(milliseconds: 200),
         // 即使透明，也不让它接收点击事件
@@ -373,13 +379,15 @@ class PlayBar extends GetView<AudioController> {
       width: maxWidth,
       child: RepaintBoundary(
         child: Center(
-          child: Obx(() {
-            final duration = c.currentDuration.value > 0
-                ? formatTime(totalSeconds: c.currentDuration.value)
-                : "--:--";
-            final currentSec = formatTime(totalSeconds: c.currentSec.value);
-            return Text("$currentSec / $duration", style: timeTextStyle);
-          }),
+          child: SignalBuilder(
+            builder: (context) {
+              final duration = c.currentDuration.value > 0
+                  ? formatTime(totalSeconds: c.currentDuration.value)
+                  : "--:--";
+              final currentSec = formatTime(totalSeconds: c.currentSec.value);
+              return Text("$currentSec / $duration", style: timeTextStyle);
+            },
+          ),
         ),
       ),
     );

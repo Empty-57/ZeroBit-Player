@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import 'controller/setting_ctrl.dart';
 
@@ -63,11 +62,5 @@ class ThemeService {
         _settingController.themeMode.value == 'dark' ? 'light' : 'dark';
 
     _settingController.putCache();
-
-    Get.changeThemeMode(
-      _settingController.themeMode.value == 'dark'
-          ? ThemeMode.dark
-          : ThemeMode.light,
-    );
   }
 }
