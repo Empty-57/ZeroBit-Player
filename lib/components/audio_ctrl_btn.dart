@@ -26,7 +26,9 @@ class GenIconBtn extends StatelessWidget {
   final double size;
   final Color? color;
   final Color backgroundColor;
+  final double iconSize;
   final VoidCallback? fn;
+  final double? verticalOffset;
 
   const GenIconBtn({
     super.key,
@@ -35,13 +37,16 @@ class GenIconBtn extends StatelessWidget {
     required this.size,
     this.color,
     this.backgroundColor = Colors.transparent,
+    this.iconSize = 22,
     required this.fn,
+    this.verticalOffset,
   });
   @override
   Widget build(BuildContext context) {
     return Tooltip(
       excludeFromSemantics: true,
       waitDuration: const Duration(milliseconds: 100),
+      verticalOffset: verticalOffset,
       message: tooltip,
       child: TextButton(
         onPressed: fn,
@@ -55,11 +60,7 @@ class GenIconBtn extends StatelessWidget {
             borderRadius: BorderRadius.circular(_radius),
           ),
         ),
-        child: Icon(
-          icon,
-          size: getIconSize(size: 'lg'),
-          color: color,
-        ),
+        child: Icon(icon, size: iconSize, color: color),
       ),
     );
   }

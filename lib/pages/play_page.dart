@@ -46,9 +46,6 @@ const _lrcAlignmentIcons = [
   PhosphorIconsLight.textAlignCenter,
   PhosphorIconsLight.textAlignRight,
 ];
-final _isBarHover = signal(false);
-// 0: 默认（封面+歌词）, 1: 封面完全居中, 2: 封面+详情
-final _coverViewMode = signal(0);
 const double _menuBtnWidth = 180;
 const double _menuBtnHeight = 48;
 const double _menuBtnRadius = 0;
@@ -569,13 +566,7 @@ class _LyricsSide extends StatelessWidget {
           );
         },
         blendMode: BlendMode.dstIn,
-        child: SizedBox(
-          width: width / 2,
-          child: const Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: LyricsRender(),
-          ),
-        ),
+        child: SizedBox(width: width / 2, child: const LyricsRender()),
       ),
     );
   }
@@ -620,7 +611,13 @@ class _CoverSide extends StatefulWidget {
 }
 
 class _CoverSideState extends State<_CoverSide> {
-  bool _isHeadHover = false;
+  final _isHeadHover = signal(false);
+
+  @override
+  void dispose() {
+    _isHeadHover.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -657,47 +654,32 @@ class _CoverSideState extends State<_CoverSide> {
               ),
               child: ClipRRect(
                 borderRadius: _borderRadius,
-                child: GestureDetector(
-                  onTap: () =>
-                      _coverViewMode.value = (_coverViewMode.value + 1) % 3,
-                  child: SignalBuilder(
-                    builder: (context) {
-                      final mode = _coverViewMode.value;
-                      final tip = mode == 0
-                          ? '切换居中模式'
-                          : mode == 1
-                          ? '展开详情'
-                          : '切换歌词模式';
-                      final cover = audioController.currentCover.value;
-                      return Tooltip(
-                        message: tip,
-                        mouseCursor: SystemMouseCursors.click,
-                        verticalOffset: -widget.coverSize / 2 - 32,
-                        child: AnimatedSwitcher(
-                          duration: 300.ms,
-                          switchInCurve: Curves.easeOutCubic,
-                          switchOutCurve: Curves.easeInCubic,
-                          transitionBuilder: (child, anim) => FadeTransition(
-                            opacity: Tween(begin: 0.5, end: 1.0).animate(anim),
-                            child: ScaleTransition(
-                              scale: Tween(begin: 1.15, end: 1.0).animate(anim),
-                              child: child,
-                            ),
-                          ),
-                          child: Image.memory(
-                            cover,
-                            key: ValueKey(cover),
-                            width: widget.coverSize,
-                            height: widget.coverSize,
-                            fit: BoxFit.cover,
-                            gaplessPlayback: true,
-                            cacheWidth: cacheResolution,
-                            cacheHeight: cacheResolution,
-                          ),
+                child: SignalBuilder(
+                  builder: (context) {
+                    final cover = audioController.currentCover.value;
+                    return AnimatedSwitcher(
+                      duration: 300.ms,
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, anim) => FadeTransition(
+                        opacity: Tween(begin: 0.5, end: 1.0).animate(anim),
+                        child: ScaleTransition(
+                          scale: Tween(begin: 1.15, end: 1.0).animate(anim),
+                          child: child,
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                      child: Image.memory(
+                        cover,
+                        key: ValueKey(cover),
+                        width: widget.coverSize,
+                        height: widget.coverSize,
+                        fit: BoxFit.cover,
+                        gaplessPlayback: true,
+                        cacheWidth: cacheResolution,
+                        cacheHeight: cacheResolution,
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -707,10 +689,10 @@ class _CoverSideState extends State<_CoverSide> {
             margin: const EdgeInsets.only(top: 24),
             child: MouseRegion(
               onEnter: (_) {
-                if (mounted) setState(() => _isHeadHover = true);
+                if (mounted) _isHeadHover.value = true;
               },
               onExit: (_) {
-                if (mounted) setState(() => _isHeadHover = false);
+                if (mounted) _isHeadHover.value = false;
               },
               child: SignalBuilder(
                 builder: (context) {
@@ -721,7 +703,7 @@ class _CoverSideState extends State<_CoverSide> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 2,
                     children: [
-                      _isHeadHover
+                      _isHeadHover.value
                           ? _ScrollTextWidget(
                               text: title,
                               style: widget.titleStyle,
@@ -736,7 +718,7 @@ class _CoverSideState extends State<_CoverSide> {
                               maxLines: 1,
                               textAlign: TextAlign.left,
                             ),
-                      _isHeadHover
+                      _isHeadHover.value
                           ? _ScrollTextWidget(
                               text: artistAndAlbum,
                               style: widget.subTitleStyle,
@@ -833,6 +815,7 @@ class _ControlBar extends StatelessWidget {
   final TextStyle timeTotalStyle;
   final ScrollController playQueueScrollController;
   final MenuController playQueueMenuController;
+  final Signal<bool> isBarHover;
 
   const _ControlBar({
     required this.mixColor,
@@ -842,6 +825,7 @@ class _ControlBar extends StatelessWidget {
     required this.timeTotalStyle,
     required this.playQueueScrollController,
     required this.playQueueMenuController,
+    required this.isBarHover,
   });
 
   @override
@@ -875,8 +859,8 @@ class _ControlBar extends StatelessWidget {
     final width = MediaQuery.sizeOf(context).width;
 
     return MouseRegion(
-      onEnter: (_) => _isBarHover.value = true,
-      onExit: (_) => _isBarHover.value = false,
+      onEnter: (_) => isBarHover.value = true,
+      onExit: (_) => isBarHover.value = false,
       child: SizedBox(
         height: _audioCtrlBarHeight,
         child: Column(
@@ -960,7 +944,7 @@ class _ControlBar extends StatelessWidget {
                     Expanded(
                       child: SignalBuilder(
                         builder: (context) => AnimatedOpacity(
-                          opacity: _isBarHover.value ? 1.0 : 0.0,
+                          opacity: isBarHover.value ? 1.0 : 0.0,
                           duration: 150.ms,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -1163,6 +1147,10 @@ class _PlayPageState extends State<PlayPage> {
   UserPlayListController get _userPlayListController =>
       UserPlayListController.instance;
 
+  // 0: 默认（封面+歌词）, 1: 仅封面, 2: 封面+详情, 3: 仅歌词
+  final _coverViewMode = signal(0);
+  final _isBarHover = signal(false);
+
   @override
   void initState() {
     super.initState();
@@ -1176,6 +1164,8 @@ class _PlayPageState extends State<PlayPage> {
     _menuController.close();
     _playQueueMenuController.close();
     _playQueueScrollController.dispose();
+    _coverViewMode.dispose();
+    _isBarHover.dispose();
     super.dispose();
   }
 
@@ -1471,6 +1461,46 @@ class _PlayPageState extends State<PlayPage> {
     ];
   }
 
+  // 0: 默认（封面+歌词）, 1: 仅封面, 2: 封面+详情, 3: 仅歌词
+  Widget _buildBtn(String tip, IconData icon, int id, Color? mixColor) {
+    return GenIconBtn(
+      tooltip: tip,
+      icon: icon,
+      size: 36,
+      iconSize: 20,
+      color: mixColor,
+      fn: () {
+        _coverViewMode.value = id;
+      },
+    );
+  }
+
+  Widget _buildMetadataColumn(MusicCache metadata, TextStyle style) {
+    final items = [
+      "标题：${metadata.title}",
+      "艺术家：${metadata.artist}",
+      "专辑：${metadata.album}",
+      "流派：${metadata.genre}",
+      "时长：${formatTime(totalSeconds: metadata.duration)}",
+      "比特率：${metadata.bitrate ?? "UNKNOWN"}kbps",
+      "采样率：${metadata.sampleRate ?? "UNKNOWN"}hz",
+      "音轨号：${metadata.trackNumber}",
+      "位深度：${metadata.bitDepth}",
+      "通道数：${metadata.channels}",
+      "路径：${metadata.path}",
+    ];
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 10,
+      children: [
+        for (final text in items)
+          Text(text, style: style, maxLines: text.startsWith("路径") ? 5 : 1),
+      ],
+    );
+  }
+
   KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
     if (event is KeyDownEvent &&
         event.logicalKey == LogicalKeyboardKey.escape) {
@@ -1483,6 +1513,7 @@ class _PlayPageState extends State<PlayPage> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
+    final height = MediaQuery.sizeOf(context).height;
     double coverSize = (width * 0.3).clamp(300, 500);
     final halfWidth = width / 2;
     final darkColorScheme = _themeService.darkTheme.colorScheme;
@@ -1597,122 +1628,153 @@ class _PlayPageState extends State<PlayPage> {
                             ),
                             child: Stack(
                               children: [
-                                // --- 歌词侧 ---
-                                SignalBuilder(
-                                  builder: (context) => AnimatedPositioned(
-                                    duration: 300.ms,
-                                    curve: Curves.fastOutSlowIn,
-                                    right: _coverViewMode.value == 0
-                                        ? 0
-                                        : (-halfWidth),
-                                    width: halfWidth, // 水平约束
-                                    top: 0, // 垂直约束
-                                    bottom: 0, // 垂直约束
-                                    child: AnimatedOpacity(
-                                      opacity: _coverViewMode.value == 0
-                                          ? 1.0
-                                          : 0.0,
-                                      duration: 100.ms,
-                                      child: const _LyricsSide(),
-                                    ),
-                                  ),
-                                ),
-                                // --- 封面侧 ---
-                                SignalBuilder(
-                                  builder: (context) => AnimatedPositioned(
-                                    duration: 300.ms,
-                                    curve: Curves.fastOutSlowIn,
-                                    left: _coverViewMode.value == 0
-                                        ? (halfWidth - coverSize) / 2
-                                        : _coverViewMode.value == 1
-                                        ? (width - coverSize) / 2
-                                        : halfWidth +
-                                              (halfWidth - coverSize) / 2,
-                                    width: coverSize,
-                                    top: 0,
-                                    bottom: 0,
-                                    child: _CoverSide(
-                                      coverSize: coverSize,
-                                      titleStyle: titleStyle,
-                                      subTitleStyle: subTitleStyle,
-                                    ),
-                                  ),
-                                ),
-                                // --- 详情侧 ---
                                 SignalBuilder(
                                   builder: (context) {
-                                    final textStyle_ = titleStyle.copyWith(
+                                    final mode = _coverViewMode.value;
+                                    final metadata =
+                                        _audioController.currentMetadata.value;
+
+                                    final coverOffsetInHalf =
+                                        (halfWidth - coverSize) / 2;
+                                    final detailWidth = halfWidth - 100;
+
+                                    final (
+                                      lyricsRight,
+                                      lyricsOpacity,
+                                    ) = switch (mode) {
+                                      0 || 3 => (0.0, 1.0),
+                                      _ => (-halfWidth, 0.0),
+                                    };
+
+                                    final coverLeft = switch (mode) {
+                                      0 => coverOffsetInHalf, // 居中于左半区
+                                      1 => (width - coverSize) / 2, // 居中于全屏
+                                      3 => -halfWidth, // 移出左侧屏幕
+                                      _ =>
+                                        halfWidth + coverOffsetInHalf, // 居中于右半区
+                                    };
+
+                                    final detailLeft = (mode == 2)
+                                        ? detailWidth / 4
+                                        : -halfWidth;
+
+                                    final lyricsWidth = (mode == 3)
+                                        ? width
+                                        : halfWidth;
+
+                                    Widget buildAnimatedSide({
+                                      double? left,
+                                      double? right,
+                                      required double width,
+                                      required Widget child,
+                                    }) {
+                                      return AnimatedPositioned(
+                                        duration: 300.ms,
+                                        curve: Curves.fastOutSlowIn,
+                                        top: 0,
+                                        bottom: 0,
+                                        left: left,
+                                        right: right,
+                                        width: width,
+                                        child: child,
+                                      );
+                                    }
+
+                                    final detailTextStyle = titleStyle.copyWith(
                                       fontWeight: FontWeight.w100,
                                       fontSize: titleStyle.fontSize! - 3,
                                     );
-                                    final metadata =
-                                        _audioController.currentMetadata.value;
-                                    return AnimatedPositioned(
-                                      duration: 300.ms,
-                                      curve: Curves.fastOutSlowIn,
-                                      left: _coverViewMode.value == 2
-                                          ? (halfWidth - 100) / 4
-                                          : (-halfWidth),
-                                      width: halfWidth - 100, // 水平约束
-                                      top: 0, // 垂直约束
-                                      bottom: 0, // 垂直约束
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        spacing: 10,
-                                        children: [
-                                          Text(
-                                            "标题：${metadata.title}",
-                                            style: textStyle_,
+
+                                    return Stack(
+                                      children: [
+                                        // --- 歌词侧 ---
+                                        buildAnimatedSide(
+                                          right: lyricsRight,
+                                          width: lyricsWidth,
+                                          child: AnimatedOpacity(
+                                            opacity: lyricsOpacity,
+                                            duration: 100.ms,
+                                            child: const _LyricsSide(),
                                           ),
-                                          Text(
-                                            "艺术家：${metadata.artist}",
-                                            style: textStyle_,
+                                        ),
+
+                                        // --- 封面侧 ---
+                                        buildAnimatedSide(
+                                          left: coverLeft,
+                                          width: coverSize,
+                                          child: _CoverSide(
+                                            coverSize: coverSize,
+                                            titleStyle: titleStyle,
+                                            subTitleStyle: subTitleStyle,
                                           ),
-                                          Text(
-                                            "专辑：${metadata.album}",
-                                            style: textStyle_,
+                                        ),
+
+                                        // --- 详情侧 ---
+                                        buildAnimatedSide(
+                                          left: detailLeft,
+                                          width: detailWidth,
+                                          child: _buildMetadataColumn(
+                                            metadata,
+                                            detailTextStyle,
                                           ),
-                                          Text(
-                                            "流派：${metadata.genre}",
-                                            style: textStyle_,
-                                          ),
-                                          Text(
-                                            "时长：${formatTime(totalSeconds: metadata.duration)}",
-                                            style: textStyle_,
-                                          ),
-                                          Text(
-                                            "比特率：${metadata.bitrate ?? "UNKNOWN"}kbps",
-                                            style: textStyle_,
-                                          ),
-                                          Text(
-                                            "采样率：${metadata.sampleRate ?? "UNKNOWN"}hz",
-                                            style: textStyle_,
-                                          ),
-                                          Text(
-                                            "音轨号：${metadata.trackNumber}",
-                                            style: textStyle_,
-                                          ),
-                                          Text(
-                                            "位深度：${metadata.bitDepth}",
-                                            style: textStyle_,
-                                          ),
-                                          Text(
-                                            "通道数：${metadata.channels}",
-                                            style: textStyle_,
-                                          ),
-                                          Text(
-                                            "路径：${metadata.path}",
-                                            style: textStyle_,
-                                            maxLines: 5,
-                                          ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     );
                                   },
                                 ),
+
+                                Positioned(
+                                  left: 0,
+                                  top: height / 2 - 36 * 4,
+                                  child: Padding(
+                                    padding: const EdgeInsetsGeometry.only(
+                                      left: 8,
+                                    ),
+                                    child: SignalBuilder(
+                                      builder: (_) {
+                                        return Column(
+                                          children: [
+                                            _buildBtn(
+                                              '封面+歌词',
+                                              _coverViewMode.value == 0
+                                                  ? PhosphorIconsFill.textbox
+                                                  : PhosphorIconsLight.textbox,
+                                              0,
+                                              mixColor,
+                                            ),
+                                            _buildBtn(
+                                              '仅封面',
+                                              _coverViewMode.value == 1
+                                                  ? PhosphorIconsFill.image
+                                                  : PhosphorIconsLight.image,
+                                              1,
+                                              mixColor,
+                                            ),
+                                            _buildBtn(
+                                              '详情',
+                                              _coverViewMode.value == 2
+                                                  ? PhosphorIconsFill.note
+                                                  : PhosphorIconsLight.note,
+                                              2,
+                                              mixColor,
+                                            ),
+                                            _buildBtn(
+                                              '仅歌词',
+                                              _coverViewMode.value == 3
+                                                  ? PhosphorIconsFill
+                                                        .articleNyTimes
+                                                  : PhosphorIconsLight
+                                                        .articleNyTimes,
+                                              3,
+                                              mixColor,
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+
                                 // --- 频谱图 ---
                                 Positioned(
                                   left: 0,
@@ -1751,6 +1813,7 @@ class _PlayPageState extends State<PlayPage> {
                         timeTotalStyle: timeTotalStyle,
                         playQueueScrollController: _playQueueScrollController,
                         playQueueMenuController: _playQueueMenuController,
+                        isBarHover: _isBarHover,
                       ),
                     ],
                   ),

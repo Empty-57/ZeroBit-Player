@@ -92,6 +92,7 @@ class PlayBar extends StatelessWidget {
     final audioCtrlWidget = AudioCtrlWidget(
       context: context,
       size: _ctrlBtnMinSize,
+      color: Theme.of(context).colorScheme.primary,
     );
     final width = MediaQuery.sizeOf(context).width;
 

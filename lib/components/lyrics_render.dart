@@ -829,7 +829,7 @@ class _LyricsRenderState extends State<LyricsRender> {
 
             Positioned(
               bottom: 100,
-              right: 0,
+              right: 8,
               child: SignalBuilder(
                 builder: (context) => AnimatedOpacity(
                   opacity: _isHover.value ? 1.0 : 0.0,
