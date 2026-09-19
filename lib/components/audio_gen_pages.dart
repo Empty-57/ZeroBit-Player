@@ -355,7 +355,19 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         spacing: 16,
         children: [
           RepaintBoundary(child: _buildHeader()),
-          Expanded(child: _buildMusicList()),
+          Expanded(
+            child: Stack(
+              children: [
+                _buildMusicList(),
+                FloatingButton(
+                  scrollControllerList: _scrollControllerList,
+                  scrollControllerGrid: _scrollControllerGrid,
+                  operateArea: widget.operateArea,
+                  controller: widget.controller,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -725,81 +737,70 @@ class _AudioGenPagesState extends State<AudioGenPages> {
           ),
         );
       },
-      child: Stack(
-        children: [
-          NotificationListener<ScrollEndNotification>(
-            onNotification: (notification) {
-              widget.rwScrollOffset?.call(
-                route: widget.operateArea == OperateArea.allMusic
-                    ? AppRoutes.home
-                    : '',
-                rw: false,
-                offset: notification.metrics.pixels,
-              );
-              // false = 继续冒泡
-              return false;
-            },
-            child: SignalBuilder(
-              builder: (context) {
-                final viewMode =
-                    _settingController.viewModeMap[widget.operateArea];
-                final extent = const ScrollCacheExtent.pixels(_itemHeight * 4);
-                final padding = const EdgeInsets.only(bottom: _itemHeight * 2);
-                return viewMode!
-                    ? ListView.builder(
-                        scrollCacheExtent: extent,
-                        controller: _scrollControllerList,
-                        itemCount: widget.controller.items.length,
-                        itemExtent: _itemHeight,
-                        padding: padding,
-                        addRepaintBoundaries: true,
-                        addAutomaticKeepAlives: false,
-                        addSemanticIndexes: false,
-                        itemBuilder: (context, index) => _buildMusicTile(
-                          context,
-                          index,
-                          _titleStyle,
-                          _highLightTitleStyle,
-                          _subStyle,
-                          _highLightSubStyle,
-                          viewMode,
-                        ),
-                      )
-                    : GridView.builder(
-                        scrollCacheExtent: extent,
-                        controller: _scrollControllerGrid,
-                        itemCount: widget.controller.items.length,
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: width < resViewThresholds ? 3 : 4,
-                          mainAxisSpacing: 4.0,
-                          crossAxisSpacing: 8.0,
-                          childAspectRatio: 1.0,
-                          mainAxisExtent: _itemHeight,
-                        ),
-                        padding: padding,
-                        addRepaintBoundaries: true,
-                        addAutomaticKeepAlives: false,
-                        addSemanticIndexes: false,
-                        itemBuilder: (context, index) => _buildMusicTile(
-                          context,
-                          index,
-                          _titleStyle,
-                          _highLightTitleStyle,
-                          _subStyle,
-                          _highLightSubStyle,
-                          viewMode,
-                        ),
-                      );
-              },
-            ),
-          ),
-          FloatingButton(
-            scrollControllerList: _scrollControllerList,
-            scrollControllerGrid: _scrollControllerGrid,
-            operateArea: widget.operateArea,
-            controller: widget.controller,
-          ),
-        ],
+      child: NotificationListener<ScrollEndNotification>(
+        onNotification: (notification) {
+          widget.rwScrollOffset?.call(
+            route: widget.operateArea == OperateArea.allMusic
+                ? AppRoutes.home
+                : '',
+            rw: false,
+            offset: notification.metrics.pixels,
+          );
+          // false = 继续冒泡
+          return false;
+        },
+        child: SignalBuilder(
+          builder: (context) {
+            final viewMode = _settingController.viewModeMap[widget.operateArea];
+            final extent = const ScrollCacheExtent.pixels(_itemHeight * 4);
+            final padding = const EdgeInsets.only(bottom: _itemHeight * 2);
+            return viewMode!
+                ? ListView.builder(
+                    scrollCacheExtent: extent,
+                    controller: _scrollControllerList,
+                    itemCount: widget.controller.items.length,
+                    itemExtent: _itemHeight,
+                    padding: padding,
+                    addRepaintBoundaries: true,
+                    addAutomaticKeepAlives: false,
+                    addSemanticIndexes: false,
+                    itemBuilder: (context, index) => _buildMusicTile(
+                      context,
+                      index,
+                      _titleStyle,
+                      _highLightTitleStyle,
+                      _subStyle,
+                      _highLightSubStyle,
+                      viewMode,
+                    ),
+                  )
+                : GridView.builder(
+                    scrollCacheExtent: extent,
+                    controller: _scrollControllerGrid,
+                    itemCount: widget.controller.items.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: width < resViewThresholds ? 3 : 4,
+                      mainAxisSpacing: 4.0,
+                      crossAxisSpacing: 8.0,
+                      childAspectRatio: 1.0,
+                      mainAxisExtent: _itemHeight,
+                    ),
+                    padding: padding,
+                    addRepaintBoundaries: true,
+                    addAutomaticKeepAlives: false,
+                    addSemanticIndexes: false,
+                    itemBuilder: (context, index) => _buildMusicTile(
+                      context,
+                      index,
+                      _titleStyle,
+                      _highLightTitleStyle,
+                      _subStyle,
+                      _highLightSubStyle,
+                      viewMode,
+                    ),
+                  );
+          },
+        ),
       ),
     );
   }

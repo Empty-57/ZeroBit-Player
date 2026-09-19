@@ -60,3 +60,6 @@ Future<void> setEqParams({required int freCenterIndex, required double gain}) =>
 
 Future<Float32List?> getChanData() =>
     RustLib.instance.api.crateApiBassGetChanData();
+
+Future<void> setUseFade({required bool value}) =>
+    RustLib.instance.api.crateApiBassSetUseFade(value: value);

@@ -1629,6 +1629,11 @@ class _GeneralTab extends StatelessWidget {
           onChanged: (val) => _settingController.setUseReplayGain(value: val),
         ),
         _SettingSwitchItem(
+          text: '使用音量过渡',
+          value: _settingController.useVolumeFade,
+          onChanged: (val) => _settingController.setUseVolumeFade(value: val),
+        ),
+        _SettingSwitchItem(
           text: '使用任务栏缩略图工具栏控制播放',
           value: _settingController.useTaskBarCtrl,
           onChanged: (val) => _settingController.setUseTaskBarCtrl(value: val),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
@@ -45,7 +47,7 @@ class SettingController {
   final useAutoUpdate = signal(true);
 
   // 歌词状态
-  final lrcAlignment = signal(0);
+  final lrcAlignment = signal(0); // 012 左中右
   final lrcFontSize = signal(32); // 24-48
   final lrcFontWeight = signal(5); // 0-8 w100-w900
   final autoDownloadLrc = signal(true);
@@ -67,6 +69,7 @@ class SettingController {
   final equalizerGains = listSignal(List.generate(10, (_) => 0.0).toList());
   final useReplayGain = signal(false);
   final useTaskBarCtrl = signal(true);
+  final useVolumeFade = signal(true);
 
   static const minGain = -12.0;
   static const maxGain = 12.0;
@@ -286,9 +289,9 @@ class SettingController {
       });
     }
 
-    await setVolume(vol: volume.value);
+    unawaited(setVolume(vol: volume.value));
     for (final v in equalizerGains.indexed) {
-      await setEqParams(freCenterIndex: v.$1, gain: v.$2);
+      unawaited(setEqParams(freCenterIndex: v.$1, gain: v.$2));
     }
   }
 
@@ -322,7 +325,11 @@ class SettingController {
       useTransparencyBackground.value =
           prefs?.getBool(SharedPreferencesKey.useTransparencyBackground) ??
           false;
+      useVolumeFade.value =
+          prefs?.getBool(SharedPreferencesKey.useVolumeFade) ?? true;
     });
+
+    unawaited(setUseFade(value: useVolumeFade.value));
 
     // 提取快捷键解析逻辑，消除冗余
     _loadKeyConfig(SharedPreferencesKey.toggleHidString, hotKeyToggleHid, (
@@ -704,6 +711,15 @@ class SettingController {
     useTransparencyBackground,
     overrideValue: value,
   );
+
+  void setUseVolumeFade({required bool value}) {
+    _setBoolPref(
+      SharedPreferencesKey.useVolumeFade,
+      useVolumeFade,
+      overrideValue: value,
+    );
+    unawaited(setUseFade(value: useVolumeFade.value));
+  }
 
   void setExclusiveMode({required bool use}) async {
     final prev = useExclusiveMode.value;

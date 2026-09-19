@@ -1141,3 +1141,8 @@ pub fn get_chan_data() -> Option<Vec<f32>> {
     }
     None
 }
+
+#[flutter_rust_bridge::frb]
+pub fn set_use_fade(value: bool) {
+    USE_FADE.store(value, Ordering::Relaxed);
+}

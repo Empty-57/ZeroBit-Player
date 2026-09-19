@@ -73,7 +73,11 @@ class _FloatingButtonState extends State<FloatingButton> {
     _jumpWorker = effect(() {
       _audioController.currentPath.value;
       untracked(() {
-        _jumpToCurrent(useAnimate: false, scrollOnVisible: false);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _jumpToCurrent(useAnimate: false, scrollOnVisible: false);
+          }
+        });
       });
     });
   }
@@ -85,6 +89,9 @@ class _FloatingButtonState extends State<FloatingButton> {
   }
 
   bool _isOffsetVisible(ScrollController controller, double targetOffset) {
+    if (!controller.hasClients || !controller.position.hasContentDimensions) {
+      return false;
+    }
     final current = controller.offset; // 当前滚动位置
     final viewport = controller.position.viewportDimension; // 可视区域高度
 
@@ -98,11 +105,12 @@ class _FloatingButtonState extends State<FloatingButton> {
   }
 
   void _scrollTo(ScrollController ctrl, double to, [bool useAnimate = true]) {
+    if (!ctrl.hasClients) return;
     if (useAnimate) {
       ctrl.animateTo(
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
         to,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
       );
     } else {
       ctrl.jumpTo(to);

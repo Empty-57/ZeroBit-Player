@@ -1150,6 +1150,7 @@ class _PlayPageState extends State<PlayPage> {
   // 0: 默认（封面+歌词）, 1: 仅封面, 2: 封面+详情, 3: 仅歌词
   final _coverViewMode = signal(0);
   final _isBarHover = signal(false);
+  final _isCoverViewModeBarHover = signal(false);
 
   @override
   void initState() {
@@ -1166,6 +1167,7 @@ class _PlayPageState extends State<PlayPage> {
     _playQueueScrollController.dispose();
     _coverViewMode.dispose();
     _isBarHover.dispose();
+    _isCoverViewModeBarHover.dispose();
     super.dispose();
   }
 
@@ -1726,51 +1728,69 @@ class _PlayPageState extends State<PlayPage> {
                                 Positioned(
                                   left: 0,
                                   top: height / 2 - 36 * 4,
-                                  child: Padding(
-                                    padding: const EdgeInsetsGeometry.only(
-                                      left: 8,
-                                    ),
-                                    child: SignalBuilder(
-                                      builder: (_) {
-                                        return Column(
-                                          children: [
-                                            _buildBtn(
-                                              '封面+歌词',
-                                              _coverViewMode.value == 0
-                                                  ? PhosphorIconsFill.textbox
-                                                  : PhosphorIconsLight.textbox,
-                                              0,
-                                              mixColor,
+                                  child: MouseRegion(
+                                    onEnter: (_) =>
+                                        _isCoverViewModeBarHover.value = true,
+                                    onExit: (_) =>
+                                        _isCoverViewModeBarHover.value = false,
+                                    child: Padding(
+                                      padding: const EdgeInsetsGeometry.only(
+                                        left: 8,
+                                      ),
+                                      child: SignalBuilder(
+                                        builder: (_) {
+                                          return AnimatedOpacity(
+                                            opacity:
+                                                _isCoverViewModeBarHover.value
+                                                ? 1.0
+                                                : 0.0,
+                                            duration: const Duration(
+                                              milliseconds: 100,
                                             ),
-                                            _buildBtn(
-                                              '仅封面',
-                                              _coverViewMode.value == 1
-                                                  ? PhosphorIconsFill.image
-                                                  : PhosphorIconsLight.image,
-                                              1,
-                                              mixColor,
+                                            child: Column(
+                                              children: [
+                                                _buildBtn(
+                                                  '封面+歌词',
+                                                  _coverViewMode.value == 0
+                                                      ? PhosphorIconsFill
+                                                            .textbox
+                                                      : PhosphorIconsLight
+                                                            .textbox,
+                                                  0,
+                                                  mixColor,
+                                                ),
+                                                _buildBtn(
+                                                  '仅封面',
+                                                  _coverViewMode.value == 1
+                                                      ? PhosphorIconsFill.image
+                                                      : PhosphorIconsLight
+                                                            .image,
+                                                  1,
+                                                  mixColor,
+                                                ),
+                                                _buildBtn(
+                                                  '详情',
+                                                  _coverViewMode.value == 2
+                                                      ? PhosphorIconsFill.note
+                                                      : PhosphorIconsLight.note,
+                                                  2,
+                                                  mixColor,
+                                                ),
+                                                _buildBtn(
+                                                  '仅歌词',
+                                                  _coverViewMode.value == 3
+                                                      ? PhosphorIconsFill
+                                                            .articleNyTimes
+                                                      : PhosphorIconsLight
+                                                            .articleNyTimes,
+                                                  3,
+                                                  mixColor,
+                                                ),
+                                              ],
                                             ),
-                                            _buildBtn(
-                                              '详情',
-                                              _coverViewMode.value == 2
-                                                  ? PhosphorIconsFill.note
-                                                  : PhosphorIconsLight.note,
-                                              2,
-                                              mixColor,
-                                            ),
-                                            _buildBtn(
-                                              '仅歌词',
-                                              _coverViewMode.value == 3
-                                                  ? PhosphorIconsFill
-                                                        .articleNyTimes
-                                                  : PhosphorIconsLight
-                                                        .articleNyTimes,
-                                              3,
-                                              mixColor,
-                                            ),
-                                          ],
-                                        );
-                                      },
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ),
                                 ),

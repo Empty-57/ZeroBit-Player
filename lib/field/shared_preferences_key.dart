@@ -18,4 +18,5 @@ abstract class SharedPreferencesKey {
   static const backgroundImagePath = 'backgroundImagePath';
   static const useAutoUpdate = 'useAutoUpdate';
   static const useTransparencyBackground = 'useTransparencyBackground';
+  static const useVolumeFade = 'useVolumeFade';
 }
