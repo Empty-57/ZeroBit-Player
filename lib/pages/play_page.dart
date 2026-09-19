@@ -675,10 +675,18 @@ class _CoverSideState extends State<_CoverSide> {
                         verticalOffset: -widget.coverSize / 2 - 32,
                         child: AnimatedSwitcher(
                           duration: 300.ms,
-                          transitionBuilder: (child, anim) =>
-                              FadeTransition(opacity: anim, child: child),
+                          switchInCurve: Curves.easeOutCubic,
+                          switchOutCurve: Curves.easeInCubic,
+                          transitionBuilder: (child, anim) => FadeTransition(
+                            opacity: Tween(begin: 0.5, end: 1.0).animate(anim),
+                            child: ScaleTransition(
+                              scale: Tween(begin: 1.15, end: 1.0).animate(anim),
+                              child: child,
+                            ),
+                          ),
                           child: Image.memory(
                             cover,
+                            key: ValueKey(cover),
                             width: widget.coverSize,
                             height: widget.coverSize,
                             fit: BoxFit.cover,

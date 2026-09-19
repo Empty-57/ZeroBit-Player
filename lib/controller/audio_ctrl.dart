@@ -3,11 +3,11 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:material_color_utilities/material_color_utilities.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:tray_manager/tray_manager.dart';
+import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/components/get_snack_bar.dart';
 import 'package:zerobit_player/controller/lyric_ctrl.dart';
@@ -35,7 +35,7 @@ class AudioController {
   AudioController._();
   static final AudioController instance = AudioController._();
 
-  int _metadataGeneration = 0; // 防异步竞态ID
+  int _metadataGeneration = 0; // 防异步竞态版本号
 
   final currentPath = signal('');
   final currentIndex = signal(-1);
@@ -65,7 +65,6 @@ class AudioController {
   );
 
   final currentDuration = signal(0.0);
-
   final currentState = signal(AudioState.stop);
 
   SettingController get _settingController => SettingController.instance;
@@ -83,18 +82,12 @@ class AudioController {
 
   final currentSpeed = signal(1.0);
 
-  bool _isSyncing = false;
-
   final currentLyrics = signal<ParsedLyricModel?>(null);
-
   final ValueNotifier<List<double>> audioFFT = ValueNotifier<List<double>>([]);
-
   final _defaultFFT = List<double>.generate(bassDataFFT512, (i) => 0.0);
-
   static const bassDataFFT512 = 256;
 
   final _unplayedIndex = <int>[];
-
   final navigationIsExtend = signal(true);
 
   final coverPalette = listSignal(<Color>[
@@ -104,8 +97,7 @@ class AudioController {
     Colors.grey,
   ]);
 
-  /// 封面调色板缓存，key 为音频文件路径。
-  /// 缓存后来回切歌不必重复计算。
+  /// 封面调色板缓存（key 为 path）
   final Map<String, List<Color>> _paletteCache = {};
   static const int _paletteCacheMaxSize = 64;
 
@@ -119,48 +111,258 @@ class AudioController {
   List<double> lineDurationList = [];
 
   bool showLyricRender = false;
-
   String currentlyricType = LyricFormat.lrc;
-
   bool _isFftCleared = true;
-
   String currentAudioSource = AudioSource.allMusic;
 
   LyricController get _lyricController => LyricController.instance;
-
   DesktopLyricsSettingController get _desktopLyricsSettingController =>
       DesktopLyricsSettingController.instance;
 
   late final void Function(double pos) throttledSeek =
       ((double pos) => audioSetPositon(pos: pos)).throttleArgs(ms: 500);
 
-  /// currentMetadata 变更监听的清理回调
   EffectCleanup? _metadataCleanup;
 
   void init() {
     _metadataCleanup = effect(() {
       final metadata = currentMetadata.value;
-      if (metadata.path.isEmpty) {
-        _isSyncing = false;
-        return;
-      }
+      if (metadata.path.isEmpty) return;
+
       untracked(() async {
         final generation = ++_metadataGeneration;
-        try {
-          await _syncInfo();
-        } catch (e) {
-          debugPrint(e.toString());
-          _isSyncing = false;
-        }
-        if (generation != _metadataGeneration) return;
-        _settingController.lastAudioInfo[SettingController
-                .lastAudioMetadataKey] =
-            metadata;
-        await _settingController.putScalableCache();
-        if (generation != _metadataGeneration) return;
-        await loadLyrics(metadata.path);
+        await _handleResourceUpdate(metadata, generation);
       });
     });
+  }
+
+  /// 原子化资源更新
+  Future<void> _handleResourceUpdate(
+    MusicCache metadata,
+    int generation,
+  ) async {
+    try {
+      final path = metadata.path;
+
+      final durationFuture = getLen().catchError((_) => 999.0);
+      final localCoverFuture = _loadLocalCovers(path); // 先获取本地封面和歌词
+      final lyricFuture = getParsedLyric(filePath: path);
+
+      final results = await Future.wait([
+        durationFuture,
+        localCoverFuture,
+        lyricFuture,
+      ]);
+      if (generation != _metadataGeneration) return;
+
+      currentDuration.value = results[0] as double;
+      final localCovers = results[1] as (Uint8List?, Uint8List?);
+      var lyrics = results[2] as ParsedLyricModel?;
+
+      Uint8List? bigCover = localCovers.$1;
+      Uint8List smallCover = localCovers.$2 ?? kTransparentImage;
+
+      // 更新系统UI
+      final title = metadata.title;
+      final artist =
+          (metadata.artist.isNotEmpty && metadata.artist != 'UNKNOWN')
+          ? ' - ${metadata.artist}'
+          : '';
+      final fullTitle = title + artist;
+      unawaited(windowManager.setTitle(fullTitle).catchError((_) {}));
+      unawaited(trayManager.setToolTip(fullTitle).catchError((_) {}));
+      if (_settingController.useTaskBarCtrl.value) {
+        unawaited(
+          WindowsTaskbarThumbnail.setThumbnail(smallCover).catchError((_) {}),
+        );
+      }
+
+      List<Color>? palette;
+      palette = await _computePalette(path, smallCover, generation);
+
+      if (bigCover == null || bigCover.isEmpty) {
+        // 无大图则从网络后台获取
+        _fetchNetworkCoverInBackground(metadata, path, generation);
+        bigCover = smallCover;
+      }
+      //更新SMTC
+      unawaited(
+        smtcUpdateMetadata(
+          title: metadata.title,
+          artist: metadata.artist,
+          album: metadata.album,
+          coverSrc: bigCover,
+        ).catchError((_) async {
+          await smtcClear();
+          await initSmtc();
+        }),
+      );
+
+      if (generation != _metadataGeneration) return;
+
+      // 歌词解析
+      lyrics = await _checkAndGetLyrics4Net(lyrics, metadata);
+      if (generation != _metadataGeneration) return;
+
+      _parseLyricLists(lyrics);
+
+      // 原子提交
+      batch(() {
+        currentCover.value = bigCover!;
+        currentSmallCover.value = smallCover;
+        if (palette != null) {
+          _applyCoverPalette(palette);
+        }
+
+        currentLyrics.value = lyrics;
+        lyricRenderRevision.value++; // 触发构建
+      });
+
+      _settingController.lastAudioInfo[SettingController.lastAudioMetadataKey] =
+          metadata;
+      unawaited(_settingController.putScalableCache());
+    } catch (e) {
+      debugPrint("切歌流程异常: $e");
+    }
+  }
+
+  /// 读本地封面
+  Future<(Uint8List?, Uint8List?)> _loadLocalCovers(String path) async {
+    Uint8List? smallCover = CoverLRUCache.get(path);
+
+    final bigFuture = getCover(path: path, sizeFlag: 1);
+    final smallFuture = smallCover != null
+        ? Future.value(smallCover)
+        : getCover(path: path, sizeFlag: 0);
+
+    final results = await Future.wait([bigFuture, smallFuture]);
+    return (results[0], results[1]);
+  }
+
+  /// 后台静默下载网络封面
+  void _fetchNetworkCoverInBackground(
+    MusicCache metadata,
+    String songPath,
+    int generation,
+  ) {
+    unawaited(() async {
+      try {
+        final netSrc = await saveCoverByText(
+          text: "${metadata.title} - ${metadata.artist}",
+          songPath: songPath,
+          saveCover: false,
+        );
+
+        // await后校验 generation
+        if (generation != _metadataGeneration ||
+            netSrc == null ||
+            netSrc.isEmpty) {
+          return;
+        }
+        currentCover.value = Uint8List.fromList(netSrc);
+      } catch (e) {
+        debugPrint("网络封面下载失败: $e");
+      }
+    }());
+  }
+
+  /// 提取歌词文本解析逻辑
+  void _parseLyricLists(ParsedLyricModel? lyrics) {
+    final parsedLrc = lyrics?.parsedLrc;
+    showLyricRender = parsedLrc?.isNotEmpty ?? false;
+    if (showLyricRender) {
+      currentlyricType = lyrics!.type;
+      lineTextList = parsedLrc!.map((v) => v.lyricText).toList();
+      translateList = parsedLrc.map((v) => v.translate).toList();
+      startTime = parsedLrc.map((v) => v.start).toList();
+      romaList = parsedLrc.map((v) => v.roma).toList();
+      lineDurationList = parsedLrc.map((v) => v.nextTime - v.start).toList();
+    } else {
+      currentlyricType = LyricFormat.lrc;
+      lineTextList.clear();
+      translateList.clear();
+      startTime.clear();
+      romaList.clear();
+      lineDurationList.clear();
+    }
+    _lyricController.springController?.clearState();
+  }
+
+  /// 计算调色板
+  Future<List<Color>?> _computePalette(
+    String path,
+    Uint8List coverBytes,
+    int generation,
+  ) async {
+    if (path.isEmpty ||
+        (!_settingController.dynamicThemeColor.value &&
+            !_settingController.useMesh.value)) {
+      return null;
+    }
+
+    // 命中缓存直接复用
+    if (_paletteCache[path] case final cached?) {
+      return List<Color>.of(cached);
+    }
+
+    ui.Codec? codec;
+    ui.Image? image;
+    try {
+      // 裁剪为112*112大小
+      codec = await ui.instantiateImageCodec(
+        coverBytes,
+        targetWidth: 112,
+        targetHeight: 112,
+      );
+      final frameInfo = await codec.getNextFrame();
+      image = frameInfo.image;
+      // 按RGBA格式转为字节数组
+      final byteData = await image.toByteData(
+        format: ui.ImageByteFormat.rawRgba,
+      );
+      if (byteData == null || generation != _metadataGeneration) return null;
+
+      // 将RGBA格式转为Material支持的ARGB格式
+      final rgbaBytes = byteData.buffer.asUint8List();
+      final pixelCount = rgbaBytes.length >> 2;
+      final argbPixels = Int32List(pixelCount);
+
+      for (int p = 0, i = 0; p < pixelCount; p++, i += 4) {
+        // 合成 32 位 ARGB 整数
+        argbPixels[p] =
+            (rgbaBytes[i + 3] << 24) |
+            (rgbaBytes[i] << 16) |
+            (rgbaBytes[i + 1] << 8) |
+            rgbaBytes[i + 2];
+      }
+
+      // 量化，评分，把最合适的颜色排在前面
+      final quantizerResult = await QuantizerCelebi().quantize(argbPixels, 128);
+      final rankedColors = Score.score(quantizerResult.colorToCount);
+      // 转换格式，填充并更新 coverPalette
+      final extractedColors = rankedColors.map((c) => Color(c)).toList();
+
+      final palette = extractedColors.length >= 4
+          ? extractedColors.sublist(0, 4)
+          : (List<Color>.from(extractedColors)..addAll(
+              [
+                Colors.black12,
+                Colors.white24,
+                Colors.white,
+                Colors.grey,
+              ].sublist(0, 4 - extractedColors.length),
+            ));
+
+      if (_paletteCache.length >= _paletteCacheMaxSize) _paletteCache.clear();
+      _paletteCache[path] = List<Color>.unmodifiable(palette);
+      return palette;
+    } catch (e) {
+      debugPrint("调色板计算出错: $e");
+      return [const Color(0xff27272a)];
+    } finally {
+      image?.dispose();
+      codec?.dispose();
+    }
   }
 
   void dispose() {
@@ -185,7 +387,7 @@ class AudioController {
   }
 
   /// 获取音频FFT数据
-  void getAudioFFt() async {
+  Future<void> getAudioFFt() async {
     if (currentState.value == AudioState.pause ||
         currentState.value == AudioState.stop) {
       if (!_isFftCleared) {
@@ -196,7 +398,7 @@ class AudioController {
     }
 
     final fft = await getChanData();
-    if (fft != null) {
+    if (fft != null && currentState.value == AudioState.playing) {
       audioFFT.value = fft;
       _isFftCleared = false;
     }
@@ -221,8 +423,12 @@ class AudioController {
       final lastMetadata =
           _settingController.lastAudioInfo[SettingController
                   .lastAudioMetadataKey]
-              as MusicCache;
-      if (playListCacheItems.isEmpty || lastMetadata.path.isEmpty) return;
+              as MusicCache?;
+      if (lastMetadata == null ||
+          playListCacheItems.isEmpty ||
+          lastMetadata.path.isEmpty) {
+        return;
+      }
 
       await setVolume(vol: 0.0);
       await audioPlay(metadata: lastMetadata);
@@ -234,8 +440,8 @@ class AudioController {
       final lastPlayPathList =
           _settingController.lastAudioInfo[SettingController
                   .lastAudioPlayPathListKey]
-              as List<String>;
-      if (lastPlayPathList.isNotEmpty) {
+              as List<String>?;
+      if (lastPlayPathList != null && lastPlayPathList.isNotEmpty) {
         final pathSet = lastPlayPathList.toSet();
         playListCacheItems.value = _musicCacheController.items
             .where((v) => pathSet.contains(v.path))
@@ -256,18 +462,14 @@ class AudioController {
       return localLyrics;
     }
 
-    final searchText = "${metadata.title} - ${metadata.artist}";
-
     try {
       final searchedLyric = await getLrcBySearch(
-        text: searchText,
+        text: "${metadata.title} - ${metadata.artist}",
         offset: 1,
         limit: 1,
       );
 
-      if (searchedLyric.isEmpty) {
-        return localLyrics;
-      }
+      if (searchedLyric.isEmpty) return localLyrics;
 
       final lyricInfo = searchedLyric.first?.lyric;
       if (lyricInfo == null) return localLyrics;
@@ -290,29 +492,20 @@ class AudioController {
         );
       }
 
-      if (parsedResult == null || parsedResult.isEmpty) {
-        return localLyrics;
-      }
-
-      debugPrint('AutoGetLyrics4Net ↑↑');
+      if (parsedResult == null || parsedResult.isEmpty) return localLyrics;
 
       if (_settingController.autoDownloadLrc.value) {
-        _saveLyricsSilently(path: metadata.path, lrcData: lyricInfo);
+        unawaited(
+          saveLyrics(path: metadata.path, lrcData: lyricInfo).catchError((e) {
+            debugPrint('Failed to save lyrics: $e');
+          }),
+        );
       }
       return ParsedLyricModel(parsedLrc: parsedResult, type: type);
     } catch (e, stackTrace) {
       debugPrint('Error getting lyrics: $e\n$stackTrace');
       return localLyrics;
     }
-  }
-
-  void _saveLyricsSilently({
-    required String path,
-    required Get4NetLrcModel? lrcData,
-  }) {
-    saveLyrics(path: path, lrcData: lrcData).catchError((error) {
-      debugPrint('Failed to save lyrics to disk: $error');
-    });
   }
 
   Future<void> loadLyrics(String path, {bool changed = false}) async {
@@ -324,10 +517,17 @@ class AudioController {
         ? currentLyrics.value
         : await getParsedLyric(filePath: requestPath);
 
+    // await后确认路径未变化
+    if (currentMetadata.value.path != requestPath) return;
+
     lyrics = await _checkAndGetLyrics4Net(lyrics, metadata);
+
+    // await后再次确认路径未变化
+    if (currentMetadata.value.path != requestPath) return;
 
     final parsedLrc = lyrics?.parsedLrc;
     showLyricRender = parsedLrc?.isNotEmpty ?? false;
+
     if (showLyricRender) {
       currentlyricType = lyrics!.type;
       lineTextList = parsedLrc!.map((v) => v.lyricText).toList();
@@ -343,6 +543,7 @@ class AudioController {
       romaList.clear();
       lineDurationList.clear();
     }
+
     _lyricController.springController?.clearState();
     batch(() {
       currentLyrics.value = lyrics;
@@ -350,79 +551,9 @@ class AudioController {
     });
   }
 
-  Future<void> _syncInfo() async {
-    if (_isSyncing) return;
-    _isSyncing = true;
-    final metadata = currentMetadata.value;
-    try {
-      try {
-        currentDuration.value = await getLen();
-      } catch (_) {
-        currentDuration.value = 999;
-      }
-
-      final title = metadata.title;
-      final artist =
-          (metadata.artist.isNotEmpty && metadata.artist != 'UNKNOWN')
-          ? ' - ${metadata.artist}'
-          : '';
-
-      if (await getCover(path: currentPath.value, sizeFlag: 1) case final src?
-          when src.isNotEmpty) {
-        currentCover.value = src;
-      } else {
-        if (await saveCoverByText(
-              text: title + artist,
-              songPath: metadata.path,
-              saveCover: false,
-            )
-            case final netSrc? when netSrc.isNotEmpty) {
-          currentCover.value = Uint8List.fromList(netSrc);
-        } else {
-          currentCover.value = kTransparentImage;
-        }
-      }
-
-      currentSmallCover.value =
-          CoverLRUCache.get(currentPath.value) ??
-          await getCover(path: currentPath.value, sizeFlag: 0) ??
-          kTransparentImage;
-
-      try {
-        if (_settingController.useTaskBarCtrl.value) {
-          await WindowsTaskbarThumbnail.setThumbnail(currentSmallCover.value);
-        }
-      } catch (_) {}
-
-      await _setThemeColor4Cover();
-
-      await windowManager.setTitle(title + artist);
-      try {
-        await trayManager.setToolTip(title + artist);
-      } catch (_) {}
-
-      try {
-        await smtcUpdateMetadata(
-          title: metadata.title,
-          artist: metadata.artist,
-          album: metadata.album,
-          coverSrc: currentCover.value,
-        );
-      } catch (_) {
-        await smtcClear();
-        await initSmtc();
-      }
-    } catch (e) {
-      debugPrint("syncErr: $e");
-    } finally {
-      _isSyncing = false;
-    }
-  }
-
   void _setThemeColor({required int color}) {
-    if (!_settingController.dynamicThemeColor.value) {
-      return;
-    }
+    if (!_settingController.dynamicThemeColor.value) return;
+
     _settingController.themeColor.value = color;
     if (_desktopLyricsSettingController.useDynamicOverlayColor.value) {
       _desktopLyricsSettingController.setDynamicOverlayColor(color);
@@ -430,108 +561,8 @@ class AudioController {
     _settingController.putCache();
   }
 
-  Future<void> _setThemeColor4Cover() async {
-    if (currentMetadata.value.path.isEmpty ||
-        (!_settingController.dynamicThemeColor.value &&
-            !_settingController.useMesh.value)) {
-      return;
-    }
-
-    final String cacheKey = currentMetadata.value.path;
-
-    // 命中缓存直接复用
-    final List<Color>? cachedPalette = _paletteCache[cacheKey];
-    if (cachedPalette != null) {
-      _applyCoverPalette(List<Color>.of(cachedPalette));
-      return;
-    }
-
-    final src =
-        CoverLRUCache.get(currentPath.value) ??
-        await getCover(path: currentMetadata.value.path, sizeFlag: 0) ??
-        kTransparentImage;
-
-    ui.Codec? codec;
-    ui.Image? image;
-    try {
-      // 裁剪为112*112大小
-      codec = await ui.instantiateImageCodec(
-        src,
-        targetWidth: 112,
-        targetHeight: 112,
-      );
-      final ui.FrameInfo frameInfo = await codec.getNextFrame();
-      image = frameInfo.image;
-
-      // 按RGBA格式转为字节数组
-      final ByteData? byteData = await image.toByteData(
-        format: ui.ImageByteFormat.rawRgba,
-      );
-
-      // 释放资源
-      image.dispose();
-      image = null;
-      codec.dispose();
-      codec = null;
-
-      if (byteData == null) return;
-
-      // 将RGBA格式转为Material支持的ARGB格式
-      final Uint8List rgbaBytes = byteData.buffer.asUint8List();
-      final int pixelCount = rgbaBytes.length >> 2;
-      final Int32List argbPixels = Int32List(pixelCount);
-
-      for (int p = 0, i = 0; p < pixelCount; p++, i += 4) {
-        // 合成 32 位 ARGB 整数
-        argbPixels[p] =
-            (rgbaBytes[i + 3] << 24) |
-            (rgbaBytes[i] << 16) |
-            (rgbaBytes[i + 1] << 8) |
-            rgbaBytes[i + 2];
-      }
-
-      // 量化，评分，把最合适的颜色排在前面
-      final quantizerResult = await QuantizerCelebi().quantize(argbPixels, 128);
-
-      final Map<int, int> colorToCount = quantizerResult.colorToCount;
-      final List<int> rankedColors = Score.score(colorToCount);
-
-      // 转换格式，填充并更新 coverPalette
-      final List<Color> extractedColors = rankedColors
-          .map((c) => Color(c))
-          .toList();
-
-      final List<Color> palette;
-      if (extractedColors.length >= 4) {
-        palette = extractedColors.sublist(0, 4);
-      } else {
-        palette = List<Color>.from(extractedColors)
-          ..addAll(
-            [
-              Colors.black12,
-              Colors.white24,
-              Colors.white,
-              Colors.grey,
-            ].sublist(0, 4 - extractedColors.length),
-          );
-      }
-
-      if (_paletteCache.length >= _paletteCacheMaxSize) _paletteCache.clear();
-      _paletteCache[cacheKey] = List<Color>.unmodifiable(palette);
-
-      _applyCoverPalette(palette);
-    } catch (e) {
-      debugPrint("使用 material_color_utilities 提取封面主题色出错: $e");
-      _setThemeColor(color: 0xff27272a);
-    } finally {
-      image?.dispose();
-      codec?.dispose();
-    }
-  }
-
   void _applyCoverPalette(List<Color> palette) {
     coverPalette.value = palette;
-
     if (palette.isNotEmpty) {
       // 第一个颜色即为主题色
       _setThemeColor(color: palette.first.toARGB32());
@@ -549,7 +580,7 @@ class AudioController {
   Future<void> audioPlay({required MusicCache metadata}) async {
     final prevMetadata = currentMetadata.value;
     try {
-      await smtcUpdateState(state: SMTCState.playing);
+      unawaited(smtcUpdateState(state: SMTCState.playing).catchError((_) {}));
 
       if (_settingController.useReplayGain.value) {
         await setReplayGain(
@@ -567,19 +598,16 @@ class AudioController {
       batch(() {
         currentPath.value = metadata.path;
         currentMetadata.value = metadata;
+        if (!playListCacheItems.any((v) => v.path == metadata.path)) {
+          playListCacheItems.add(metadata);
+        }
+        syncCurrentIndex();
       });
 
-      if (!playListCacheItems.any((v) => v.path == metadata.path)) {
-        playListCacheItems.add(metadata);
-      }
-
-      syncCurrentIndex();
       reTryCount = 0;
     } catch (e) {
       showSnackBar(title: "ERR:", msg: 'playingERR | $e');
-      if (reTryCount > 4) {
-        return;
-      }
+      if (reTryCount > 4 || prevMetadata.path.isEmpty) return;
       reTryCount++;
       await audioPlay(metadata: prevMetadata);
     }
@@ -593,7 +621,7 @@ class AudioController {
       return;
     }
     try {
-      await smtcUpdateState(state: SMTCState.playing);
+      unawaited(smtcUpdateState(state: SMTCState.playing).catchError((_) {}));
       await resume();
     } catch (e) {
       currentState.value = AudioState.stop;
@@ -601,7 +629,7 @@ class AudioController {
     }
   }
 
-  /// 暂停
+  /// 暂停播放
   Future<void> audioPause() async {
     if (currentMetadata.value.path.isEmpty ||
         playListCacheItems.isEmpty ||
@@ -609,7 +637,7 @@ class AudioController {
       return;
     }
     try {
-      await smtcUpdateState(state: SMTCState.paused);
+      unawaited(smtcUpdateState(state: SMTCState.paused).catchError((_) {}));
       await pause();
     } catch (e) {
       currentState.value = AudioState.stop;
@@ -624,7 +652,7 @@ class AudioController {
       currentIndex.value = -1;
     });
     try {
-      await smtcUpdateState(state: SMTCState.paused);
+      unawaited(smtcUpdateState(state: SMTCState.paused).catchError((_) {}));
       await stop();
     } catch (e) {
       showSnackBar(title: "ERR", msg: 'stopERR | $e');
@@ -638,10 +666,12 @@ class AudioController {
     }
     try {
       await toggle();
-      await smtcUpdateState(
-        state: currentState.value == AudioState.playing
-            ? SMTCState.playing
-            : SMTCState.paused,
+      unawaited(
+        smtcUpdateState(
+          state: currentState.value == AudioState.playing
+              ? SMTCState.playing
+              : SMTCState.paused,
+        ).catchError((_) {}),
       );
     } catch (e) {
       currentState.value = AudioState.stop;
@@ -670,9 +700,7 @@ class AudioController {
 
   /// 跳转进度条
   Future<void> audioSetPositon({required double pos}) async {
-    if (currentMetadata.value.path.isEmpty) {
-      return;
-    }
+    if (currentMetadata.value.path.isEmpty) return;
     try {
       await setPosition(pos: pos);
       await audioResume();
@@ -697,14 +725,17 @@ class AudioController {
   }
 
   void _pickNextRandomIndex() {
-    if (_unplayedIndex.isEmpty ||
-        currentIndex.value >= playListCacheItems.length) {
+    final length = playListCacheItems.length;
+    if (length == 0) return;
+
+    if (_unplayedIndex.isEmpty || currentIndex.value >= length) {
       _unplayedIndex.clear();
-      _unplayedIndex.addAll(
-        List.generate(playListCacheItems.length, (i) => i)
-          ..remove(currentIndex.value), // 避免连续播同一首
-      );
-      _unplayedIndex.shuffle();
+      final pool = List.generate(length, (i) => i);
+      if (length > 1) {
+        pool.remove(currentIndex.value); // 避免连续随机到同一首
+      }
+      pool.shuffle();
+      _unplayedIndex.addAll(pool);
     }
     currentIndex.value = _unplayedIndex.removeLast();
   }
@@ -733,9 +764,7 @@ class AudioController {
 
   /// 上一首播放
   Future<void> audioToPrevious() async {
-    if (playListCacheItems.isEmpty) {
-      return;
-    }
+    if (playListCacheItems.isEmpty) return;
 
     if (_settingController.playMode.value != 2) {
       if (currentIndex.value > 0 &&
@@ -751,9 +780,7 @@ class AudioController {
 
   /// 下一首播放
   Future<void> audioToNext() async {
-    if (playListCacheItems.isEmpty) {
-      return;
-    }
+    if (playListCacheItems.isEmpty) return;
 
     if (_settingController.playMode.value != 2) {
       if (currentIndex.value < playListCacheItems.length - 1 &&
@@ -769,9 +796,8 @@ class AudioController {
 
   /// 自动播放
   Future<void> audioAutoPlay() async {
-    if (playListCacheItems.isEmpty) {
-      return;
-    }
+    if (playListCacheItems.isEmpty) return;
+
     switch (_settingController.playMode.value) {
       case 0:
         await audioPlay(metadata: currentMetadata.value);
@@ -785,33 +811,37 @@ class AudioController {
     }
   }
 
-  /// 插入到下一首
+  /// 插入下一首
   void insertNext({required MusicCache metadata}) {
     if (currentMetadata.value.path.isEmpty ||
         currentMetadata.value.path == metadata.path) {
       showSnackBar(
         title: "WARNING",
         msg: "无效操作！",
-        duration: Duration(milliseconds: 1500),
+        duration: const Duration(milliseconds: 1500),
       );
       return;
     }
-    playListCacheItems.remove(metadata);
-    final toIndex =
-        (playListCacheItems.indexWhere((v) => v.path == currentPath.value) + 1)
-            .clamp(0, playListCacheItems.length);
-    playListCacheItems.insert(toIndex, metadata);
 
-    syncCurrentIndex();
+    batch(() {
+      playListCacheItems.remove(metadata);
+      final toIndex =
+          (playListCacheItems.indexWhere((v) => v.path == currentPath.value) +
+                  1)
+              .clamp(0, playListCacheItems.length);
+      playListCacheItems.insert(toIndex, metadata);
+      syncCurrentIndex();
+    });
+
     showSnackBar(
       title: "OK",
       msg: "已将 ${metadata.title} 添加到下一首播放",
-      duration: Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1500),
     );
     _hasNextAudioMetadata = metadata;
   }
 
-  /// 用于同步元数据更改
+  /// 同步元数据更改
   Future<void> audioListSyncMetadata({
     required String path,
     required MusicCache newCache,
@@ -820,14 +850,17 @@ class AudioController {
       return;
     }
     if (currentState.value == AudioState.playing) {
-      audioSetPositon(pos: currentMs100.value);
+      unawaited(audioSetPositon(pos: currentMs100.value));
     }
 
+    final targetIdx = playListCacheItems.indexWhere((v) => v.path == path);
     batch(() {
-      playListCacheItems[playListCacheItems.indexWhere((v) => v.path == path)] =
-          newCache;
+      if (targetIdx != -1) {
+        playListCacheItems[targetIdx] = newCache;
+      }
       currentMetadata.value = newCache;
     });
+
     currentCover.value =
         await getCover(path: currentPath.value, sizeFlag: 1) ??
         kTransparentImage;

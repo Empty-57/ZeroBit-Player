@@ -703,11 +703,10 @@ class _LyricsRenderState extends State<LyricsRender> {
                 context,
               ).copyWith(scrollbars: false),
               child: SignalBuilder(
+                dependencies: [_audioController.lyricRenderRevision],
                 builder: (context) {
                   final c = _audioController;
-                  // 读取渲染版本号以接收手动刷新信号，等价于原 GetBuilder 的定向 update
-                  c.lyricRenderRevision.value;
-                  // 将 style 定义在Obx内以接收样式更改信号
+                  // 将 style 定义在SignalBuilder内以接收样式更改信号
                   final lyricsStyle = lrcStylePackage.lyricStyle;
                   final tsLyricStyle = lrcStylePackage.tsLyricStyle;
                   final romaLyricStyle = lrcStylePackage.romaLyricStyle;
@@ -754,6 +753,8 @@ class _LyricsRenderState extends State<LyricsRender> {
                       ? TextAlign.center
                       : TextAlign.right;
 
+                  final currentSongPath = c.currentPath.peek();
+
                   Widget creatLyricItem(int index) {
                     if (index < 0 ||
                         (c.currentlyricType == LyricFormat.lrc &&
@@ -762,7 +763,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                       return const SizedBox.shrink();
                     }
                     return _StaggeredLyricItem(
-                      key: ValueKey('${c.currentPath.value}_$index'),
+                      key: ValueKey('${currentSongPath}_$index'),
                       index: index,
                       lyricController: _lyricController,
                       audioController: _audioController,
@@ -788,7 +789,7 @@ class _LyricsRenderState extends State<LyricsRender> {
 
                   return useSpringscroll
                       ? SpringListView(
-                          key: ValueKey(c.currentPath.value),
+                          key: ValueKey(currentSongPath),
                           lineDuration: c.lineDurationList,
                           length: c.lineTextList.length,
                           controller: _lyricController.springController!,
@@ -800,7 +801,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                           canRequestFocus: false,
                           descendantsAreFocusable: false,
                           child: ScrollablePositionedList.builder(
-                            key: ValueKey(c.currentPath.value),
+                            key: ValueKey(currentSongPath),
                             itemCount: c.lineTextList.length,
                             initialScrollIndex: 0,
                             initialAlignment: 0.4,
