@@ -460,13 +460,11 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         SignalBuilder(
           builder: (context) => CustomBtn(
             fn: () {
-              batch(() {
-                _settingController.isReverse.value =
-                    !_settingController.isReverse.value;
-                _settingController.putCache();
-                widget.controller.itemReverse();
-                _audioController.syncCurrentIndex();
-              });
+              _settingController.isReverse.value =
+                  !_settingController.isReverse.value;
+              widget.controller.itemReverse();
+              _settingController.putCache();
+              _audioController.syncCurrentIndex();
             },
             icon: _settingController.isReverse.value
                 ? PhosphorIconsLight.arrowDown
@@ -597,28 +595,28 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       ],
     };
 
-    return CustomDropdownMenu(
-      itemMap: itemMap,
-      fn: (entry) {
-        batch(() {
+    return SignalBuilder(
+      builder: (_) => CustomDropdownMenu(
+        itemMap: itemMap,
+        fn: (entry) {
           _settingController.sortMap[widget.operateArea] = entry.key;
-          _settingController.putCache();
           widget.controller.itemReSort(operateArea: widget.operateArea);
+          _settingController.putCache();
           _audioController.syncCurrentIndex();
-        });
-      },
-      label:
-          SettingController.sortType[_settingController.sortMap[widget
-                  .operateArea]
-              as int] ??
-          "未指定",
-      btnWidth: 148,
-      btnHeight: btnHeight,
-      itemWidth: 128,
-      itemHeight: btnHeight,
-      btnIcon: PhosphorIconsLight.funnelSimple,
-      mainAxisAlignment: MainAxisAlignment.start,
-      spacing: 6,
+        },
+        label:
+            SettingController.sortType[_settingController.sortMap[widget
+                    .operateArea]
+                as int] ??
+            "未指定",
+        btnWidth: 148,
+        btnHeight: btnHeight,
+        itemWidth: 128,
+        itemHeight: btnHeight,
+        btnIcon: PhosphorIconsLight.funnelSimple,
+        mainAxisAlignment: MainAxisAlignment.start,
+        spacing: 6,
+      ),
     );
   }
 
