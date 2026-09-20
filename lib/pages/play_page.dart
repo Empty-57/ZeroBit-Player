@@ -1,3 +1,8 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:ui';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -103,19 +108,129 @@ const double _coverEase = 0.18;
 /// 缓动到这个阈值内就认为动画结束，停掉 ticker
 const double _coverSettleEpsilon = 0.002;
 
+/// 高光贴图相对封面的放大倍数。
+///
+/// 高光要能滑过整个封面，贴图就必须比封面大：柔光中心最大位移是 0.45×封面，
+/// 光带是 0.28×封面，2 倍边长足够盖住、不会在边缘露空。
+const double _glareScale = 2.0;
+
+/// 柔光渐变，烘成贴图的底稿。
+///
+/// 半径按放大倍数换算，落到封面上仍然是原来的 1.1。
+///
+/// 峰值透明度是 0.12 而不是原来的 0.225。这层原先是 overlay 混合，提亮量是
+/// 0.225 × min(b, 1-b)：暗部和亮部几乎不动，中间调提得最多。换成普通叠加后提亮量
+/// 变成 a × (1-b)，重心整个挪到暗部，同样的 0.225 会糊上一层明显的白雾。取 0.12
+/// 让最大提亮量和原来持平，代价是暗部比原来白一点、中间调只有原来的一半。
+final BoxDecoration _glareGlow = BoxDecoration(
+  gradient: RadialGradient(
+    radius: 1.1 / _glareScale,
+    colors: [
+      Colors.white.withValues(alpha: 0.12),
+      Colors.white.withValues(alpha: 0),
+    ],
+  ),
+);
+
+/// 镜面光带渐变，烘成贴图的底稿。
+///
+/// 原来是 stops = [0, band-.13, band-.04, band+.04, band+.13, 1]，band 随指针
+/// 在 0.22~0.78 之间扫。这里把 band 固定成 0.5，再把每个 stop 按
+/// (s + (_glareScale - 1) / 2) / _glareScale 映射进放大盒子，扫描改由平移实现。
+final BoxDecoration _glareBand = BoxDecoration(
+  gradient: LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Colors.white.withValues(alpha: 0),
+      Colors.white.withValues(alpha: 0),
+      Colors.white.withValues(alpha: 0),
+      Colors.white.withValues(alpha: 0.275),
+      Colors.white.withValues(alpha: 0.275),
+      Colors.white.withValues(alpha: 0),
+      Colors.white.withValues(alpha: 0),
+      Colors.white.withValues(alpha: 0),
+    ],
+    stops: const [0, 0.25, 0.435, 0.48, 0.52, 0.565, 0.75, 1],
+  ),
+);
+
+/// 把一个装饰渲染成贴图。
+///
+/// 渐变只在这里求值一次，之后每帧都只是 drawImage。
+Future<ui.Image> _bakeGlare(BoxDecoration decoration, double size) {
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
+  decoration
+      .createBoxPainter()
+      .paint(canvas, Offset.zero, ImageConfiguration(size: Size(size, size)));
+  return recorder.endRecording().toImage(size.round(), size.round());
+}
+
+/// 封面静态阴影。刻意不跟随 hover 逐帧变化：boxShadow 的模糊每帧都要重算，
+/// 而倾斜本身已经足够表达"抬起来"了。
+final BoxDecoration _coverDecoration = BoxDecoration(
+  borderRadius: _borderRadius,
+  boxShadow: [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.2),
+      offset: const Offset(0, 2),
+      blurRadius: 8,
+    ),
+  ],
+);
+
+/// 封面倾斜状态。不可变值对象，配合 ValueNotifier 使用。
+///
+/// 实现 == 是为了让 ValueNotifier 在状态没变时不触发重建。
+@immutable
+class _CoverTilt {
+  const _CoverTilt(this.x, this.y, this.hover);
+
+  /// 指针归一化位置，(-1,-1) 左上角 ~ (1,1) 右下角
+  final double x;
+  final double y;
+
+  /// 悬停强度 0~1
+  final double hover;
+
+  static const _CoverTilt idle = _CoverTilt(0, 0, 0);
+
+  bool get isIdle => hover == 0;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _CoverTilt &&
+      other.x == x &&
+      other.y == y &&
+      other.hover == hover;
+
+  @override
+  int get hashCode => Object.hash(x, y, hover);
+}
+
 /// 带 Steam 风格金属 3D 效果的封面。
 ///
 /// 鼠标悬停时封面朝指针方向做透视倾斜，同时一层金属高光
-/// （跟随指针的柔光 + 斜向镜面光带 + 边缘反光）扫过表面，
-/// 移开后自动回正。未悬停时变换为单位矩阵、ticker 不运行，开销为零。
+/// （跟随指针的柔光 + 斜向镜面光带 + 边缘反光）扫过表面，移开后自动回正。
+///
+/// 静止时不产生任何额外开销：变换是纯 identity（Transform 会退化成平移、
+/// 不推图层），高光层完全不进树，ticker 也不运行。
 class _MetalCover extends StatefulWidget {
-  const _MetalCover({required this.size, required this.cacheResolution});
+  const _MetalCover({
+    required this.size,
+    required this.cacheResolution,
+    required this.enabled,
+  });
 
   /// 封面边长（逻辑像素）
   final double size;
 
   /// 解码分辨率，避免大图占内存
   final int cacheResolution;
+
+  /// 是否启用金属 3D 效果（设置项开关）
+  final bool enabled;
 
   @override
   State<_MetalCover> createState() => _MetalCoverState();
@@ -126,27 +241,87 @@ class _MetalCoverState extends State<_MetalCover>
   /// 指针移动是离散事件，直接跟随会一跳一跳，用 ticker 做指数缓动
   late final Ticker _ticker;
 
+  /// 当前渲染用的倾斜状态，逐帧更新。
+  /// 用 ValueNotifier 而不是 setState，是为了把逐帧重建限制在"倾斜 + 高光"
+  /// 这一层：封面子树通过 ValueListenableBuilder 的 child 传入，widget 实例
+  /// 不变，Flutter 会整棵跳过重建，不会每帧去重新解析 ImageProvider。
+  final _tilt = ValueNotifier<_CoverTilt>(_CoverTilt.idle);
+
   /// 指针在封面内的归一化位置，(-1,-1) 左上角 ~ (1,1) 右下角
-  Offset _pointer = Offset.zero;
+  double _x = 0;
+  double _y = 0;
 
-  /// 指针目标位置，_pointer 向它缓动
-  Offset _target = Offset.zero;
-
-  /// 悬停强度 0~1，驱动高光和阴影的淡入淡出
+  /// 悬停强度 0~1，驱动倾斜和高光的淡入淡出
   double _hover = 0;
 
+  /// 指针目标位置，缓动终点
+  Offset _target = Offset.zero;
+
   bool _isHovering = false;
+
+  /// 高光贴图。渐变烘一次就固定了，之后每帧只 drawImage。
+  ui.Image? _glowTexture;
+  ui.Image? _bandTexture;
+
+  /// 已烘焙贴图对应的封面尺寸。窗口缩放会让 coverSize 变化，需要重烘。
+  double? _textureSize;
 
   @override
   void initState() {
     super.initState();
     _ticker = createTicker(_onTick);
+    _ensureTextures();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MetalCover oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.enabled != oldWidget.enabled || widget.size != oldWidget.size) {
+      _ensureTextures();
+    }
   }
 
   @override
   void dispose() {
     _ticker.dispose();
+    _tilt.dispose();
+    _releaseTextures();
     super.dispose();
+  }
+
+  void _ensureTextures() {
+    if (!widget.enabled) {
+      _textureSize = null;
+      _releaseTextures();
+      return;
+    }
+    if (_textureSize == widget.size) return;
+    _textureSize = widget.size;
+    _bakeTextures(widget.size);
+  }
+
+  Future<void> _bakeTextures(double size) async {
+    final box = size * _glareScale;
+    final glow = await _bakeGlare(_glareGlow, box);
+    final band = await _bakeGlare(_glareBand, box);
+    // 烘焙是异步的，期间尺寸可能又变了、或者组件已经销毁，那就丢掉这次结果
+    if (!mounted || _textureSize != size) {
+      glow.dispose();
+      band.dispose();
+      return;
+    }
+    _releaseTextures();
+    setState(() {
+      _glowTexture = glow;
+      _bandTexture = band;
+    });
+  }
+
+  void _releaseTextures() {
+    _glowTexture?.dispose();
+    _bandTexture?.dispose();
+    _glowTexture = null;
+    _bandTexture = null;
   }
 
   void _keepTicking() {
@@ -155,19 +330,22 @@ class _MetalCoverState extends State<_MetalCover>
 
   void _onTick(Duration _) {
     final targetHover = _isHovering ? 1.0 : 0.0;
-    final targetPointer = _isHovering ? _target : Offset.zero;
+    final targetX = _isHovering ? _target.dx : 0.0;
+    final targetY = _isHovering ? _target.dy : 0.0;
 
     final nextHover = _hover + (targetHover - _hover) * _coverEase;
-    final nextPointer = Offset.lerp(_pointer, targetPointer, _coverEase)!;
+    final nextX = _x + (targetX - _x) * _coverEase;
+    final nextY = _y + (targetY - _y) * _coverEase;
 
     final settled =
         (nextHover - targetHover).abs() < _coverSettleEpsilon &&
-        (nextPointer - targetPointer).distance < _coverSettleEpsilon;
+        (nextX - targetX).abs() < _coverSettleEpsilon &&
+        (nextY - targetY).abs() < _coverSettleEpsilon;
 
-    setState(() {
-      _hover = settled ? targetHover : nextHover;
-      _pointer = settled ? targetPointer : nextPointer;
-    });
+    _hover = settled ? targetHover : nextHover;
+    _x = settled ? targetX : nextX;
+    _y = settled ? targetY : nextY;
+    _tilt.value = _CoverTilt(_x, _y, _hover);
 
     if (settled) _ticker.stop();
   }
@@ -181,14 +359,54 @@ class _MetalCoverState extends State<_MetalCover>
   @override
   Widget build(BuildContext context) {
     final AudioController audioController = AudioController.instance;
-    final nx = _pointer.dx;
-    final ny = _pointer.dy;
 
-    // 指针所在的那一侧朝观察者抬起，形成「卡片跟着鼠标转」的透视感
-    final transform = Matrix4.identity()
-      ..setEntry(3, 2, 0.0012)
-      ..rotateX(ny * _coverMaxTilt * _hover)
-      ..rotateY(-nx * _coverMaxTilt * _hover);
+    // 封面图子树只在这里构建一次，之后作为 child 传给 ValueListenableBuilder。
+    // 逐帧倾斜时 child 的 widget 实例不变，Flutter 会整棵跳过重建，
+    // 不会每帧重新创建 MemoryImage / 重新解析 ImageProvider。
+    final cover = SignalBuilder(
+      builder: (context) {
+        final bytes = audioController.currentCover.value;
+        return AnimatedSwitcher(
+          duration: 300.ms,
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          transitionBuilder: (child, anim) => FadeTransition(
+            opacity: Tween(begin: 0.5, end: 1.0).animate(anim),
+            child: ScaleTransition(
+              scale: Tween(begin: 1.15, end: 1.0).animate(anim),
+              child: child,
+            ),
+          ),
+          // 显式给宽高：AnimatedSwitcher 内部的 Stack 是 loose 约束，
+          // 不给尺寸的话小封面图不会铺满
+          child: Image.memory(
+            bytes,
+            key: ValueKey(bytes),
+            width: widget.size,
+            height: widget.size,
+            fit: BoxFit.cover,
+            gaplessPlayback: true,
+            cacheWidth: widget.cacheResolution,
+            cacheHeight: widget.cacheResolution,
+          ),
+        );
+      },
+    );
+
+    // 关掉效果时回到最初的静态结构，完全不引入倾斜和高光
+    if (!widget.enabled) {
+      return DecoratedBox(
+        decoration: _coverDecoration,
+        child: ClipRRect(
+          borderRadius: _borderRadius,
+          child: SizedBox(
+            width: widget.size,
+            height: widget.size,
+            child: cover,
+          ),
+        ),
+      );
+    }
 
     return MouseRegion(
       onEnter: (_) => _setHovering(true),
@@ -201,134 +419,145 @@ class _MetalCoverState extends State<_MetalCover>
         );
         _keepTicking();
       },
-      child: Transform(
-        transform: transform,
-        alignment: Alignment.center,
-        child: Transform.scale(
-          scale: 1 + (_coverHoverScale - 1) * _hover,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: _borderRadius,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2 + 0.25 * _hover),
-                  offset: Offset(0, 2 + 10 * _hover),
-                  blurRadius: 8 + 24 * _hover,
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: _borderRadius,
-              child: SizedBox(
-                width: widget.size,
-                height: widget.size,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    SignalBuilder(
-                      builder: (context) {
-                        final cover = audioController.currentCover.value;
-                        return AnimatedSwitcher(
-                          duration: 300.ms,
-                          switchInCurve: Curves.easeOutCubic,
-                          switchOutCurve: Curves.easeInCubic,
-                          transitionBuilder: (child, anim) => FadeTransition(
-                            opacity: Tween(begin: 0.5, end: 1.0).animate(anim),
-                            child: ScaleTransition(
-                              scale: Tween(begin: 1.15, end: 1.0).animate(anim),
-                              child: child,
-                            ),
+      child: ValueListenableBuilder<_CoverTilt>(
+        valueListenable: _tilt,
+        child: cover,
+        builder: (context, tilt, child) {
+          // 静止时必须是纯 identity —— 一旦带上透视项，Transform 就再也不能
+          // 退化成平移，会一直多推一个图层出来
+          final transform = tilt.isIdle
+              ? Matrix4.identity()
+              : (Matrix4.identity()
+                ..setEntry(3, 2, 0.0012)
+                // 指针所在的那一侧朝观察者抬起，形成「卡片跟着鼠标转」的透视感
+                ..rotateX(tilt.y * _coverMaxTilt * tilt.hover)
+                ..rotateY(-tilt.x * _coverMaxTilt * tilt.hover));
+
+          final glow = _glowTexture;
+          final band = _bandTexture;
+          final glare = (glow == null || band == null)
+              ? null
+              : _MetalGlare(
+                  size: widget.size,
+                  pointer: Offset(tilt.x, tilt.y),
+                  intensity: tilt.hover,
+                  glow: glow,
+                  band: band,
+                );
+
+          return Transform(
+            transform: transform,
+            alignment: Alignment.center,
+            child: Transform.scale(
+              scale: 1 + (_coverHoverScale - 1) * tilt.hover,
+              child: DecoratedBox(
+                decoration: _coverDecoration,
+                child: ClipRRect(
+                  borderRadius: _borderRadius,
+                  child: SizedBox(
+                    width: widget.size,
+                    height: widget.size,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        child!,
+                        // 静止时高光层完全不进树；贴图还没烘好时也不进
+                        if (!tilt.isIdle && glare != null)
+                          IgnorePointer(
+                            // 只有淡入淡出那十几帧才套 Opacity：RenderOpacity
+                            // 即使在 1.0 也会推一个图层出来，而稳定悬停是常态，
+                            // 必须让它彻底不进树
+                            child: tilt.hover >= 1.0
+                                ? glare
+                                : Opacity(opacity: tilt.hover, child: glare),
                           ),
-                          // 显式给宽高：AnimatedSwitcher 内部的 Stack 是 loose
-                          // 约束，不给尺寸的话小封面图不会铺满
-                          child: Image.memory(
-                            cover,
-                            key: ValueKey(cover),
-                            width: widget.size,
-                            height: widget.size,
-                            fit: BoxFit.cover,
-                            gaplessPlayback: true,
-                            cacheWidth: widget.cacheResolution,
-                            cacheHeight: widget.cacheResolution,
-                          ),
-                        );
-                      },
+                      ],
                     ),
-                    IgnorePointer(
-                      child: _MetalGlare(pointer: _pointer, intensity: _hover),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
 }
 
-/// 金属高光层，叠在封面之上，靠混合模式做出反光质感。
+/// 金属高光层，叠在封面之上，两层都按普通 srcOver 画。
+///
+/// 两层渐变在渲染之前就烘成贴图了，这里每帧只做 drawImage + 平移。之所以要这样
+/// 绕一圈：实测「每帧让 Skia 求值一个渐变着色器」的开销和渐变被光栅化的面积成正
+/// 比，封面大小的两层渐变就能吃掉近 1GB 提交内存；换成贴图后同样的动画里内存
+/// 完全不涨（贴图绘制和纯平移都是零额外开销）。
+///
+/// 混合模式全部去掉了，这是省内存的关键一步。柔光原来是 overlay，实测「贴图 +
+/// overlay/screen」比「只有贴图」多占约 170MB——overlay 不是 Skia 的系数混合模式，
+/// 得走着色器回退。光带的 screen 去掉则分毫不变：screen(b, 1) = 1，展开成
+/// (1-a)·b + a·1，和普通叠加逐通道相同，所以白源 + alpha 的 screen 本来就等于叠加。
 class _MetalGlare extends StatelessWidget {
-  const _MetalGlare({required this.pointer, required this.intensity});
+  const _MetalGlare({
+    required this.size,
+    required this.pointer,
+    required this.intensity,
+    required this.glow,
+    required this.band,
+  });
+
+  /// 封面边长（逻辑像素）
+  final double size;
 
   /// 指针归一化位置，(-1,-1) ~ (1,1)
   final Offset pointer;
 
-  /// 悬停强度 0~1，为 0 时整层不可见
+  /// 悬停强度 0~1，只用于调边缘反光的亮度
   final double intensity;
+
+  /// 预烘焙的柔光贴图
+  final ui.Image glow;
+
+  /// 预烘焙的镜面光带贴图
+  final ui.Image band;
 
   @override
   Widget build(BuildContext context) {
     final nx = pointer.dx;
     final ny = pointer.dy;
-    final a = intensity;
 
-    // 镜面光带沿左上→右下扫动，指针越靠右下，光带越靠右下
-    final band = (0.5 + (nx + ny) * 0.25).clamp(0.22, 0.78);
+    final box = size * _glareScale;
+    final inset = (size - box) / 2;
+
+    // 柔光中心原本是 Alignment(n * 0.9)，换算成封面上 n * 0.9 * size / 2 的位移
+    final glowShift = Offset(nx, ny) * (0.9 * size / 2);
+
+    // 光带沿左上→右下扫动，指针越靠右下，光带越靠右下。
+    // 盒子平移 u 会让盒子内的渐变参数变化 -u / box，反解出 u = -(band - 0.5) * size。
+    final bandPos = (0.5 + (nx + ny) * 0.25).clamp(0.22, 0.78);
+    final bandShift = -(bandPos - 0.5) * size;
 
     return Stack(
       fit: StackFit.expand,
       children: [
-        // 柔光：跟着指针走的大范围高光，overlay 让亮处更亮、暗处更沉
-        DecoratedBox(
-          decoration: BoxDecoration(
-            backgroundBlendMode: BlendMode.overlay,
-            gradient: RadialGradient(
-              center: Alignment(nx * 0.9, ny * 0.9),
-              radius: 1.1,
-              colors: [
-                Colors.white.withValues(alpha: 0.45 * a),
-                Colors.white.withValues(alpha: 0),
-              ],
-            ),
-          ),
+        // 柔光：跟着指针走的大范围高光
+        _GlareLayer(
+          image: glow,
+          inset: inset,
+          box: box,
+          translation: glowShift,
         ),
-        // 镜面光带：一道窄亮带，screen 叠出金属特有的高光条
-        DecoratedBox(
-          decoration: BoxDecoration(
-            backgroundBlendMode: BlendMode.screen,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withValues(alpha: 0),
-                Colors.white.withValues(alpha: 0),
-                Colors.white.withValues(alpha: 0.55 * a),
-                Colors.white.withValues(alpha: 0.55 * a),
-                Colors.white.withValues(alpha: 0),
-                Colors.white.withValues(alpha: 0),
-              ],
-              stops: [0, band - 0.13, band - 0.04, band + 0.04, band + 0.13, 1],
-            ),
-          ),
+        // 镜面光带：一道窄亮带，扫出金属特有的高光条
+        _GlareLayer(
+          image: band,
+          inset: inset,
+          box: box,
+          translation: Offset(bandShift, bandShift),
         ),
         // 边缘反光：让封面看起来是一块有厚度的金属牌
         DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: _borderRadius,
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.08 + 0.22 * a),
+              color: Colors.white.withValues(alpha: 0.04 + 0.11 * intensity),
               width: 1.2,
             ),
           ),
@@ -336,6 +565,41 @@ class _MetalGlare extends StatelessWidget {
       ],
     );
   }
+}
+
+/// 把贴图摆到放大盒子里（超出的部分由外层 ClipRRect 裁掉），再整体平移到目标位置。
+///
+/// 纯平移不会让 Transform 推图层，贴图绘制也不评估着色器，所以每帧几乎没有成本。
+class _GlareLayer extends StatelessWidget {
+  const _GlareLayer({
+    required this.image,
+    required this.inset,
+    required this.box,
+    required this.translation,
+  });
+
+  final ui.Image image;
+  final double inset;
+  final double box;
+  final Offset translation;
+
+  @override
+  Widget build(BuildContext context) => Positioned(
+    left: inset,
+    top: inset,
+    width: box,
+    height: box,
+    child: Transform.translate(
+      offset: translation,
+      child: RawImage(
+        image: image,
+        width: box,
+        height: box,
+        fit: BoxFit.fill,
+        filterQuality: FilterQuality.low,
+      ),
+    ),
+  );
 }
 
 class _CoverSide extends StatefulWidget {
@@ -355,6 +619,8 @@ class _CoverSide extends StatefulWidget {
 
 class _CoverSideState extends State<_CoverSide> {
   final _isHeadHover = signal(false);
+
+  SettingController get _settingController => SettingController.instance;
 
   @override
   void dispose() {
@@ -383,9 +649,12 @@ class _CoverSideState extends State<_CoverSide> {
         children: [
           Hero(
             tag: 'playingCover',
-            child: _MetalCover(
-              size: widget.coverSize,
-              cacheResolution: cacheResolution,
+            child: SignalBuilder(
+              builder: (context) => _MetalCover(
+                size: widget.coverSize,
+                cacheResolution: cacheResolution,
+                enabled: _settingController.useCoverMetalEffect.value,
+              ),
             ),
           ),
           Container(

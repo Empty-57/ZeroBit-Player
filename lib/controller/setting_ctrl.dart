@@ -45,6 +45,7 @@ class SettingController {
   final backgroundImageBlur = signal(4.0); // 0-36
   final useTransparencyBackground = signal(false);
   final useAutoUpdate = signal(true);
+  final useCoverMetalEffect = signal(false);
 
   // 歌词状态
   final lrcAlignment = signal(0); // 012 左中右
@@ -335,6 +336,8 @@ class SettingController {
           false;
       useVolumeFade.value =
           prefs?.getBool(SharedPreferencesKey.useVolumeFade) ?? true;
+      useCoverMetalEffect.value =
+          prefs?.getBool(SharedPreferencesKey.useCoverMetalEffect) ?? true;
     });
 
     // 提取快捷键解析逻辑，消除冗余
@@ -715,6 +718,12 @@ class SettingController {
   void setUseTransparencyBackground({required bool value}) => _setBoolPref(
     SharedPreferencesKey.useTransparencyBackground,
     useTransparencyBackground,
+    overrideValue: value,
+  );
+
+  void setUseCoverMetalEffect({required bool value}) => _setBoolPref(
+    SharedPreferencesKey.useCoverMetalEffect,
+    useCoverMetalEffect,
     overrideValue: value,
   );
 

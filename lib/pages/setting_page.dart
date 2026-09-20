@@ -1686,6 +1686,13 @@ class _AppearanceTab extends StatelessWidget {
           text: '背景图片模糊值',
           child: _BackgroundImageBlurSlider(),
         ),
+        _SettingSwitchItem(
+          text: '封面金属 3D 效果(吃性能)',
+          tooltip: '播放界面里鼠标悬停到封面时跟随倾斜并反光，移开后自动回正',
+          value: _settingController.useCoverMetalEffect,
+          onChanged: (val) =>
+              _settingController.setUseCoverMetalEffect(value: val),
+        ),
       ],
     );
   }
