@@ -89,6 +89,255 @@ class _ScrollTextWidget extends StatelessWidget {
   }
 }
 
+// --- 封面金属 3D 效果 ---
+
+/// 最大倾斜角（弧度），约 9°
+const double _coverMaxTilt = 0.16;
+
+/// 悬停时封面的放大比例
+const double _coverHoverScale = 1.03;
+
+/// 倾斜/高光的缓动系数，越大越跟手
+const double _coverEase = 0.18;
+
+/// 缓动到这个阈值内就认为动画结束，停掉 ticker
+const double _coverSettleEpsilon = 0.002;
+
+/// 带 Steam 风格金属 3D 效果的封面。
+///
+/// 鼠标悬停时封面朝指针方向做透视倾斜，同时一层金属高光
+/// （跟随指针的柔光 + 斜向镜面光带 + 边缘反光）扫过表面，
+/// 移开后自动回正。未悬停时变换为单位矩阵、ticker 不运行，开销为零。
+class _MetalCover extends StatefulWidget {
+  const _MetalCover({required this.size, required this.cacheResolution});
+
+  /// 封面边长（逻辑像素）
+  final double size;
+
+  /// 解码分辨率，避免大图占内存
+  final int cacheResolution;
+
+  @override
+  State<_MetalCover> createState() => _MetalCoverState();
+}
+
+class _MetalCoverState extends State<_MetalCover>
+    with SingleTickerProviderStateMixin {
+  /// 指针移动是离散事件，直接跟随会一跳一跳，用 ticker 做指数缓动
+  late final Ticker _ticker;
+
+  /// 指针在封面内的归一化位置，(-1,-1) 左上角 ~ (1,1) 右下角
+  Offset _pointer = Offset.zero;
+
+  /// 指针目标位置，_pointer 向它缓动
+  Offset _target = Offset.zero;
+
+  /// 悬停强度 0~1，驱动高光和阴影的淡入淡出
+  double _hover = 0;
+
+  bool _isHovering = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = createTicker(_onTick);
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    super.dispose();
+  }
+
+  void _keepTicking() {
+    if (!_ticker.isActive) _ticker.start();
+  }
+
+  void _onTick(Duration _) {
+    final targetHover = _isHovering ? 1.0 : 0.0;
+    final targetPointer = _isHovering ? _target : Offset.zero;
+
+    final nextHover = _hover + (targetHover - _hover) * _coverEase;
+    final nextPointer = Offset.lerp(_pointer, targetPointer, _coverEase)!;
+
+    final settled =
+        (nextHover - targetHover).abs() < _coverSettleEpsilon &&
+        (nextPointer - targetPointer).distance < _coverSettleEpsilon;
+
+    setState(() {
+      _hover = settled ? targetHover : nextHover;
+      _pointer = settled ? targetPointer : nextPointer;
+    });
+
+    if (settled) _ticker.stop();
+  }
+
+  void _setHovering(bool value) {
+    if (_isHovering == value) return;
+    _isHovering = value;
+    _keepTicking();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AudioController audioController = AudioController.instance;
+    final nx = _pointer.dx;
+    final ny = _pointer.dy;
+
+    // 指针所在的那一侧朝观察者抬起，形成「卡片跟着鼠标转」的透视感
+    final transform = Matrix4.identity()
+      ..setEntry(3, 2, 0.0012)
+      ..rotateX(ny * _coverMaxTilt * _hover)
+      ..rotateY(-nx * _coverMaxTilt * _hover);
+
+    return MouseRegion(
+      onEnter: (_) => _setHovering(true),
+      onExit: (_) => _setHovering(false),
+      onHover: (event) {
+        final half = widget.size / 2;
+        _target = Offset(
+          ((event.localPosition.dx - half) / half).clamp(-1.0, 1.0),
+          ((event.localPosition.dy - half) / half).clamp(-1.0, 1.0),
+        );
+        _keepTicking();
+      },
+      child: Transform(
+        transform: transform,
+        alignment: Alignment.center,
+        child: Transform.scale(
+          scale: 1 + (_coverHoverScale - 1) * _hover,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: _borderRadius,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2 + 0.25 * _hover),
+                  offset: Offset(0, 2 + 10 * _hover),
+                  blurRadius: 8 + 24 * _hover,
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: _borderRadius,
+              child: SizedBox(
+                width: widget.size,
+                height: widget.size,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    SignalBuilder(
+                      builder: (context) {
+                        final cover = audioController.currentCover.value;
+                        return AnimatedSwitcher(
+                          duration: 300.ms,
+                          switchInCurve: Curves.easeOutCubic,
+                          switchOutCurve: Curves.easeInCubic,
+                          transitionBuilder: (child, anim) => FadeTransition(
+                            opacity: Tween(begin: 0.5, end: 1.0).animate(anim),
+                            child: ScaleTransition(
+                              scale: Tween(begin: 1.15, end: 1.0).animate(anim),
+                              child: child,
+                            ),
+                          ),
+                          // 显式给宽高：AnimatedSwitcher 内部的 Stack 是 loose
+                          // 约束，不给尺寸的话小封面图不会铺满
+                          child: Image.memory(
+                            cover,
+                            key: ValueKey(cover),
+                            width: widget.size,
+                            height: widget.size,
+                            fit: BoxFit.cover,
+                            gaplessPlayback: true,
+                            cacheWidth: widget.cacheResolution,
+                            cacheHeight: widget.cacheResolution,
+                          ),
+                        );
+                      },
+                    ),
+                    IgnorePointer(
+                      child: _MetalGlare(pointer: _pointer, intensity: _hover),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 金属高光层，叠在封面之上，靠混合模式做出反光质感。
+class _MetalGlare extends StatelessWidget {
+  const _MetalGlare({required this.pointer, required this.intensity});
+
+  /// 指针归一化位置，(-1,-1) ~ (1,1)
+  final Offset pointer;
+
+  /// 悬停强度 0~1，为 0 时整层不可见
+  final double intensity;
+
+  @override
+  Widget build(BuildContext context) {
+    final nx = pointer.dx;
+    final ny = pointer.dy;
+    final a = intensity;
+
+    // 镜面光带沿左上→右下扫动，指针越靠右下，光带越靠右下
+    final band = (0.5 + (nx + ny) * 0.25).clamp(0.22, 0.78);
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // 柔光：跟着指针走的大范围高光，overlay 让亮处更亮、暗处更沉
+        DecoratedBox(
+          decoration: BoxDecoration(
+            backgroundBlendMode: BlendMode.overlay,
+            gradient: RadialGradient(
+              center: Alignment(nx * 0.9, ny * 0.9),
+              radius: 1.1,
+              colors: [
+                Colors.white.withValues(alpha: 0.45 * a),
+                Colors.white.withValues(alpha: 0),
+              ],
+            ),
+          ),
+        ),
+        // 镜面光带：一道窄亮带，screen 叠出金属特有的高光条
+        DecoratedBox(
+          decoration: BoxDecoration(
+            backgroundBlendMode: BlendMode.screen,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withValues(alpha: 0),
+                Colors.white.withValues(alpha: 0),
+                Colors.white.withValues(alpha: 0.55 * a),
+                Colors.white.withValues(alpha: 0.55 * a),
+                Colors.white.withValues(alpha: 0),
+                Colors.white.withValues(alpha: 0),
+              ],
+              stops: [0, band - 0.13, band - 0.04, band + 0.04, band + 0.13, 1],
+            ),
+          ),
+        ),
+        // 边缘反光：让封面看起来是一块有厚度的金属牌
+        DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: _borderRadius,
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.08 + 0.22 * a),
+              width: 1.2,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _CoverSide extends StatefulWidget {
   final double coverSize;
   final TextStyle titleStyle;
@@ -134,42 +383,9 @@ class _CoverSideState extends State<_CoverSide> {
         children: [
           Hero(
             tag: 'playingCover',
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: PlayPageConstant.borderRadius,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    offset: const Offset(0, 2),
-                    blurRadius: 8,
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: PlayPageConstant.borderRadius,
-                child: SignalBuilder(
-                  builder: (context) {
-                    return AnimatedSwitcher(
-                      duration: 300.ms,
-                      switchInCurve: Curves.easeOutCubic,
-                      switchOutCurve: Curves.easeInCubic,
-                      transitionBuilder: (child, anim) => FadeTransition(
-                        opacity: Tween(begin: 0.5, end: 1.0).animate(anim),
-                        child: ScaleTransition(
-                          scale: Tween(begin: 1.15, end: 1.0).animate(anim),
-                          child: child,
-                        ),
-                      ),
-                      child: LoadU8Cover(
-                        data: audioController.currentCover,
-                        coverResolutionFlag: CoverResolutionFlag.big,
-                        key: ValueKey(audioController.coverRevision.value),
-                        size: widget.coverSize,
-                      ),
-                    );
-                  },
-                ),
-              ),
+            child: _MetalCover(
+              size: widget.coverSize,
+              cacheResolution: cacheResolution,
             ),
           ),
           Container(
