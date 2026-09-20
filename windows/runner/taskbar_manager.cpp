@@ -10,6 +10,222 @@ using namespace Gdiplus;
 #define IDM_THUMBBUTTON_TOGGLE 102
 #define IDM_THUMBBUTTON_NEXT 103
 
+#ifndef PW_RENDERFULLCONTENT
+#define PW_RENDERFULLCONTENT 0x00000002
+#endif
+#ifndef WM_DWMSENDICONICLIVEPREVIEWBITMAP
+#define WM_DWMSENDICONICLIVEPREVIEWBITMAP 0x0326
+#endif
+
+namespace
+{
+    // 创建 32bpp 自顶向下的 DIB Section，像素初始为全 0（即全透明）。
+    HBITMAP CreateTopDownDib(int width, int height, void **outBits)
+    {
+        BITMAPINFO bmi = {};
+        bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bmi.bmiHeader.biWidth = width;
+        bmi.bmiHeader.biHeight = -height; // 负高度表示自顶向下排列
+        bmi.bmiHeader.biPlanes = 1;
+        bmi.bmiHeader.biBitCount = 32;
+        bmi.bmiHeader.biCompression = BI_RGB;
+
+        void *bits = nullptr;
+        HBITMAP hBmp = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &bits, nullptr, 0);
+        if (!hBmp || !bits)
+        {
+            if (hBmp)
+                DeleteObject(hBmp);
+            return nullptr;
+        }
+        if (outBits)
+            *outBits = bits;
+        return hBmp;
+    }
+
+    // 把封面缩放铺满整张 DIB。先铺一层不透明黑底，保证 alpha 通道有效，
+    // 否则 DWM 会按逐像素 alpha 把整张图合成为透明
+    HBITMAP RenderCoverToDib(Gdiplus::Bitmap *cover, int width, int height)
+    {
+        if (!cover || width <= 0 || height <= 0)
+            return nullptr;
+
+        void *bits = nullptr;
+        HBITMAP hBmp = CreateTopDownDib(width, height, &bits);
+        if (!hBmp)
+            return nullptr;
+
+        {
+            // 直接以 DIB 的像素缓冲区作画，省掉一次中转拷贝
+            Gdiplus::Bitmap canvas(width, height, width * 4, PixelFormat32bppARGB,
+                                   static_cast<BYTE *>(bits));
+            Gdiplus::Graphics g(&canvas);
+            g.Clear(Gdiplus::Color(255, 0, 0, 0));
+            g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+            g.DrawImage(cover, 0, 0, width, height);
+        }
+
+        GdiFlush();
+        return hBmp;
+    }
+
+    // 最小化时抓不到真实画面，用封面居中合成一张预览，
+    HBITMAP ComposeCoverPreviewDib(Gdiplus::Bitmap *cover, int width, int height)
+    {
+        if (width <= 0 || height <= 0)
+            return nullptr;
+
+        void *bits = nullptr;
+        HBITMAP hBmp = CreateTopDownDib(width, height, &bits);
+        if (!hBmp)
+            return nullptr;
+
+        {
+            Gdiplus::Bitmap canvas(width, height, width * 4, PixelFormat32bppARGB,
+                                   static_cast<BYTE *>(bits));
+            Gdiplus::Graphics g(&canvas);
+            g.Clear(Gdiplus::Color(255, 32, 32, 32)); // 不透明深色背景
+            if (cover)
+            {
+                g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+                float imgW = static_cast<float>(cover->GetWidth());
+                float imgH = static_cast<float>(cover->GetHeight());
+                if (imgW > 0.0f && imgH > 0.0f)
+                {
+                    // 封面按短边的 40% 等比居中显示
+                    float box = static_cast<float>((std::min)(width, height)) * 0.4f;
+                    float scale = (std::min)(box / imgW, box / imgH);
+                    int dw = (std::max)(1, static_cast<int>(imgW * scale));
+                    int dh = (std::max)(1, static_cast<int>(imgH * scale));
+                    g.DrawImage(cover, (width - dw) / 2, (height - dh) / 2, dw, dh);
+                }
+            }
+        }
+
+        GdiFlush();
+        return hBmp;
+    }
+
+    // 校正抓取结果的 alpha 通道；返回 false 表示整张位图为空，即实际没抓到内容。
+    bool NormalizeCapturedAlpha(void *bits, int width, int height)
+    {
+        BYTE *p = static_cast<BYTE *>(bits);
+        const size_t count = static_cast<size_t>(width) * static_cast<size_t>(height);
+
+        bool hasAlpha = false;
+        bool hasColor = false;
+        for (size_t i = 0; i < count; ++i)
+        {
+            const BYTE *px = p + i * 4;
+            if (px[3] != 0)
+            {
+                hasAlpha = true;
+                break;
+            }
+            if (!hasColor && (px[0] | px[1] | px[2]) != 0)
+                hasColor = true;
+        }
+
+        if (hasAlpha)
+            return true; // alpha 已经有效，保持原样
+        if (!hasColor)
+            return false; // 全透明且全黑，说明根本没抓到画面
+
+        for (size_t i = 0; i < count; ++i)
+            p[i * 4 + 3] = 255;
+        return true;
+    }
+
+    // 抓取窗口的真实画面，返回 32bpp 自顶向下 DIB（调用方负责 DeleteObject）
+    HBITMAP CaptureWindowToDib(HWND hwnd)
+    {
+        RECT winRect = {};
+        if (!GetWindowRect(hwnd, &winRect))
+            return nullptr;
+
+        const int fullW = winRect.right - winRect.left;
+        const int fullH = winRect.bottom - winRect.top;
+        if (fullW <= 0 || fullH <= 0)
+            return nullptr;
+
+        // GetWindowRect 会把窗口四周不可见的拖拽边框也算进来，
+        // 用 DWM 的实际可见边界裁掉，预览图才不会多出一圈透明边
+        int cropX = 0;
+        int cropY = 0;
+        int cropW = fullW;
+        int cropH = fullH;
+        RECT frameRect = {};
+        if (SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS, &frameRect, sizeof(frameRect))))
+        {
+            const int x = frameRect.left - winRect.left;
+            const int y = frameRect.top - winRect.top;
+            const int w = frameRect.right - frameRect.left;
+            const int h = frameRect.bottom - frameRect.top;
+            if (x >= 0 && y >= 0 && w > 0 && h > 0 && x + w <= fullW && y + h <= fullH)
+            {
+                cropX = x;
+                cropY = y;
+                cropW = w;
+                cropH = h;
+            }
+        }
+
+        HDC screenDc = GetDC(nullptr);
+        if (!screenDc)
+            return nullptr;
+        HDC memDc = CreateCompatibleDC(screenDc);
+        ReleaseDC(nullptr, screenDc);
+        if (!memDc)
+            return nullptr;
+
+        void *fullBits = nullptr;
+        HBITMAP fullBmp = CreateTopDownDib(fullW, fullH, &fullBits);
+        if (!fullBmp)
+        {
+            DeleteDC(memDc);
+            return nullptr;
+        }
+
+        HGDIOBJ oldObj = SelectObject(memDc, fullBmp);
+        // PW_RENDERFULLCONTENT 让 DWM 直接输出合成后的画面，
+        // 否则抓不到 Flutter(ANGLE/D3D) 硬件渲染的内容，只会得到一片空白
+        const BOOL captured = PrintWindow(hwnd, memDc, PW_RENDERFULLCONTENT);
+        SelectObject(memDc, oldObj);
+        DeleteDC(memDc);
+        GdiFlush();
+
+        if (!captured || !NormalizeCapturedAlpha(fullBits, fullW, fullH))
+        {
+            DeleteObject(fullBmp);
+            return nullptr;
+        }
+
+        if (cropW == fullW && cropH == fullH)
+            return fullBmp;
+
+        void *cropBits = nullptr;
+        HBITMAP cropBmp = CreateTopDownDib(cropW, cropH, &cropBits);
+        if (!cropBmp)
+            return fullBmp; // 裁剪失败就直接用整窗画面兜底
+
+        // 逐行拷贝：BitBlt 在 32bpp 之间不保证保留 alpha 通道
+        const BYTE *src = static_cast<const BYTE *>(fullBits) +
+                          (static_cast<size_t>(cropY) * static_cast<size_t>(fullW) +
+                           static_cast<size_t>(cropX)) *
+                              4;
+        BYTE *dst = static_cast<BYTE *>(cropBits);
+        for (int row = 0; row < cropH; ++row)
+        {
+            memcpy(dst, src, static_cast<size_t>(cropW) * 4);
+            src += static_cast<size_t>(fullW) * 4;
+            dst += static_cast<size_t>(cropW) * 4;
+        }
+
+        DeleteObject(fullBmp);
+        return cropBmp;
+    }
+} // namespace
+
 TaskbarManager::TaskbarManager()
 {
     GdiplusStartupInput gdiplusStartupInput;
@@ -288,6 +504,42 @@ void TaskbarManager::ResetAll()
     ResetThumbnail();
 }
 
+void TaskbarManager::SendIconicLivePreview(HWND hwnd)
+{
+    HBITMAP hBmp = nullptr;
+
+    // 窗口可见时直接抓真实画面
+    if (!IsIconic(hwnd) && IsWindowVisible(hwnd))
+    {
+        hBmp = CaptureWindowToDib(hwnd);
+    }
+
+    if (!hBmp)
+    {
+        // 最小化 / 抓取失败：按窗口还原后的尺寸用封面合成一张预览
+        RECT rc = {};
+        WINDOWPLACEMENT placement = {};
+        placement.length = sizeof(WINDOWPLACEMENT);
+        if (GetWindowPlacement(hwnd, &placement))
+        {
+            rc = placement.rcNormalPosition;
+        }
+        else if (!GetWindowRect(hwnd, &rc))
+        {
+            return;
+        }
+
+        hBmp = ComposeCoverPreviewDib(custom_thumbnail_bitmap_,
+                                      rc.right - rc.left, rc.bottom - rc.top);
+    }
+
+    if (!hBmp)
+        return;
+
+    DwmSetIconicLivePreviewBitmap(hwnd, hBmp, nullptr, 0);
+    DeleteObject(hBmp);
+}
+
 std::optional<LRESULT> TaskbarManager::HandleWindowMessage(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
     // 任务栏重启或刚准备就绪时自动重新应用按钮
@@ -343,13 +595,7 @@ std::optional<LRESULT> TaskbarManager::HandleWindowMessage(HWND hwnd, UINT messa
             int target_w = (std::max)(1, static_cast<int>(img_w * scale));
             int target_h = (std::max)(1, static_cast<int>(img_h * scale));
 
-            Bitmap scaledBitmap(target_w, target_h, PixelFormat32bppARGB);
-            Graphics g(&scaledBitmap);
-            g.SetInterpolationMode(InterpolationModeHighQualityBicubic);
-            g.DrawImage(custom_thumbnail_bitmap_, 0, 0, target_w, target_h);
-
-            HBITMAP hBmp = nullptr;
-            scaledBitmap.GetHBITMAP(Color(0, 0, 0), &hBmp);
+            HBITMAP hBmp = RenderCoverToDib(custom_thumbnail_bitmap_, target_w, target_h);
             if (hBmp)
             {
                 DwmSetIconicThumbnail(hwnd, hBmp, 0);
@@ -358,6 +604,11 @@ std::optional<LRESULT> TaskbarManager::HandleWindowMessage(HWND hwnd, UINT messa
             return 0;
         }
         break;
+    }
+    case WM_DWMSENDICONICLIVEPREVIEWBITMAP:
+    { // 系统请求 AeroPeek 预览图
+        SendIconicLivePreview(hwnd);
+        return 0;
     }
     }
     return std::nullopt;

@@ -31,6 +31,9 @@ private:
     void ResetAll();
     void RecreateIcons(bool isPlaying);
 
+    // 响应系统的 AeroPeek 请求：把窗口预览图交给 DWM
+    void SendIconicLivePreview(HWND hwnd);
+
     HICON CreateButtonIcon(int type, bool isPlaying);
 
     HWND hwnd_ = nullptr;
