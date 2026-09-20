@@ -30,13 +30,9 @@ class SpringListController {
   static const int _defaultVisibleItemCount = 10;
   int _visibleItemCount = _defaultVisibleItemCount; // 可视区域歌词行的数量的一半
 
-  static int _centerOffset = 0; // 这个常量作用是将滚动开始的中心向上/下偏移，实现弹簧从上/下拉的效果
-  static const double _durationMax = 1.5; // sec
-  static const int _delayMax = 60; // ms
-  int _delay = _delayMax; // ms
-  double _duration = _durationMax; // sec
+  // 步进延迟，每行之间动画的间隔
+  static const int _defaultStepDelay = 26; // ms
 
-  // 加入容差，防止像素抖动
   static const Tolerance _springTolerance = Tolerance(
     distance: 0.5, // 离目标位置还有 0.5 逻辑像素时，直接掐断动画设为0
     velocity: 0.1, // 速度极慢时停止
@@ -48,26 +44,13 @@ class SpringListController {
   int? _cachedVisibleItemCount;
   double cachedScreenHeight = 0.0;
 
-  /// 更新动画速率与延迟参数
-  void updateDurationAndDelay(int index, List<double> lineDuration) {
-    if (index >= 0 && index < lineDuration.length) {
-      // 原式: controller.delay = lineDuration[index] *1000 / SpringController.durationMax *SpringController.delayMax
-      _delay = (lineDuration[index] * 50)
-          .clamp(_delayMax * 0.2, _delayMax.toDouble())
-          .toInt();
-      _duration = lineDuration[index];
-    } else {
-      _duration = _durationMax;
-      _delay = _delayMax;
-    }
-  }
-
   int getVisibleItemCount() {
     final scrollBox = _scrollAreaKey.currentContext?.findRenderObject();
     if (scrollBox is! RenderBox ||
         !scrollBox.hasSize ||
         scrollBox.size.height <= 0 ||
         _totalLength <= 0) {
+      cachedScreenHeight = 0.0;
       return _defaultVisibleItemCount;
     }
 
@@ -77,20 +60,19 @@ class SpringListController {
     if (_cachedVisibleItemCount != null &&
         (cachedScreenHeight - currentHeight).abs() < 0.1) {
       _visibleItemCount = _cachedVisibleItemCount!;
-      // _centerOffset = _cachedVisibleItemCount!;
       debugPrint('visibleLine> $_visibleItemCount | hitCache');
-      return _cachedVisibleItemCount!;
+      return _visibleItemCount;
     }
 
     cachedScreenHeight = currentHeight;
 
-    double totalHeight = 0.0;
-    int measuredCount = 0;
-
-    // 只测量距当前行前后5行数据
+    // 只测量距当前行前后5行数据，忽略前面几行
     final int currIndex = _currentIndex.value;
-    final int start = (currIndex - 5).clamp(0, _totalLength - 1);
-    final int end = (currIndex + 5).clamp(0, _totalLength - 1);
+    final int safeIndex = _totalLength > 5 ? 5 : 0;
+    final int start = max(safeIndex, currIndex - 5);
+    final int end = (start + 10).clamp(0, _totalLength - 1);
+
+    double minHeights = 999;
 
     for (int i = start; i <= end; i++) {
       final key = _boxKeys[i];
@@ -99,51 +81,21 @@ class SpringListController {
       final renderObject = key.currentContext?.findRenderObject();
       if (renderObject is RenderBox &&
           renderObject.hasSize &&
-          renderObject.size.height.isFinite &&
-          renderObject.size.height > 0) {
-        totalHeight += renderObject.size.height;
-        measuredCount++;
-      }
-    }
-
-    // 降级方案
-    if (measuredCount == 0) {
-      for (final key in _boxKeys.values) {
-        final renderObject = key.currentContext?.findRenderObject();
-        if (renderObject is RenderBox &&
-            renderObject.hasSize &&
-            renderObject.size.height.isFinite &&
-            renderObject.size.height > 0) {
-          totalHeight += renderObject.size.height;
-          measuredCount++;
-          if (measuredCount >= _defaultVisibleItemCount) {
-            break; // 只测量_defaultVisibleItemCount次
-          }
+          renderObject.size.height.isFinite) {
+        final double h = renderObject.size.height;
+        if (h > 36) {
+          minHeights = min(minHeights, h); // 取最小值保底显示
         }
       }
     }
 
-    if (measuredCount == 0) {
-      _cachedVisibleItemCount = _defaultVisibleItemCount;
-      _visibleItemCount = _defaultVisibleItemCount;
-      return _defaultVisibleItemCount;
+    if (minHeights < 999) {
+      final visibleLineCount = (cachedScreenHeight / minHeights).ceil();
+      _visibleItemCount = max((visibleLineCount ~/ 2) + 1, 2);
+      _cachedVisibleItemCount = _visibleItemCount;
+      debugPrint('visibleLine> $_visibleItemCount | calc');
     }
-
-    final averageItemHeight = (totalHeight / measuredCount).clamp(
-      48.0,
-      double.infinity,
-    );
-
-    final visibleLineCount = (currentHeight / averageItemHeight).ceil();
-    final visibleItemCount = max((visibleLineCount ~/ 2) + 1, 2);
-
-    _cachedVisibleItemCount = visibleItemCount;
-    _visibleItemCount = visibleItemCount;
-
-    // _centerOffset = _visibleItemCount;
-
-    debugPrint('visibleLine> $_visibleItemCount | calc');
-    return visibleItemCount;
+    return _visibleItemCount;
   }
 
   void nextLyric(int nextIndex) {
@@ -203,7 +155,6 @@ class SpringListController {
 
 class SpringListView extends StatelessWidget {
   final int length;
-  final List<double> lineDuration;
   final Widget Function(int index) itemBuilder;
   final SpringListController controller;
 
@@ -211,7 +162,6 @@ class SpringListView extends StatelessWidget {
     super.key,
     required this.length,
     required this.itemBuilder,
-    required this.lineDuration,
     required this.controller,
   });
 
@@ -260,8 +210,6 @@ class SpringListView extends StatelessWidget {
                     child: ValueListenableBuilder<int>(
                       valueListenable: controller._currentIndex,
                       builder: (_, index, _) {
-                        controller.updateDurationAndDelay(index, lineDuration);
-
                         Key? centerKey;
                         if (controller._totalLength > 0) {
                           final int effectiveIndex = index.clamp(
@@ -354,26 +302,42 @@ class _SpringItemState extends State<_SpringItem>
     _delayTimer?.cancel();
     final currentTriggerId = ++_animTriggerId;
 
-    final int relativeIndex =
-        widget.index -
-        widget.controller._currentIndex.value +
-        SpringListController._centerOffset; //计算相对索引
+    final int targetIndex = widget.controller._currentIndex.value;
+    final int halfVisible = widget.controller._visibleItemCount;
+    final int totalLength = widget.controller._totalLength;
 
-    final int relativeIndexAbs = relativeIndex.abs();
+    // 计算当前视窗可见区域大致的起始与结束索引
+    // 锚点在 _anchorPercentage 处，所以当前行上方约占 _anchorPercentageb比例行数，下方占 1- _anchorPercentage
+    final int linesAbove =
+        (halfVisible * 2 * SpringListController._anchorPercentage).ceil();
+    final int linesBelow =
+        (halfVisible * 2 * (1.0 - SpringListController._anchorPercentage))
+            .ceil();
 
-    // 在屏幕外的元素不执行动画，直接归位
+    final int topVisibleIndex = max(0, targetIndex - linesAbove);
+    final int bottomVisibleIndex = min(
+      totalLength - 1,
+      targetIndex + linesBelow,
+    );
+
+    // 屏幕外的元素直接归位，不消耗动画资源
     if (deltaY == 0 ||
-        relativeIndexAbs >
-            (widget.controller._visibleItemCount +
-                SpringListController._centerOffset)) {
+        widget.index < topVisibleIndex - 1 ||
+        widget.index > bottomVisibleIndex + 1) {
       _animController?.value = 0.0;
       return;
     }
 
+    // 当向上/下滚动（deltaY > 0）时：
+    // 最上/下方的可见行（topVisibleIndex/bottomVisibleIndex）最先开始弹动（delay = 0），
+    // 动态delay，越往下/上的行，delay逐步增加 (stepIndex递增)
+    final bool isForward = deltaY >= 0;
+    final int stepIndex = isForward
+        ? (widget.index - topVisibleIndex)
+        : (bottomVisibleIndex - widget.index);
+
     final int delayMs =
-        (relativeIndex < 0 && SpringListController._centerOffset != 0)
-        ? 0
-        : (relativeIndexAbs + 1) * widget.controller._delay;
+        max(0, stepIndex) * SpringListController._defaultStepDelay;
 
     // 动画准备阶段：瞬间将元素偏移到 deltaY 的位置
     final needsBuilder = _animController == null;
@@ -385,38 +349,38 @@ class _SpringItemState extends State<_SpringItem>
     }
     controller.value = deltaY;
 
+    // 每句歌词行在可视区的位置比例 [0.0,1.0]
+    final double positionRatio =
+        ((widget.index - topVisibleIndex) /
+                max(1, bottomVisibleIndex - topVisibleIndex))
+            .clamp(0.0, 1.0);
+
     if (delayMs > 0) {
       _delayTimer = Timer(Duration(milliseconds: delayMs), () {
         if (mounted && currentTriggerId == _animTriggerId) {
-          _startSimulation(deltaY);
+          _startSimulation(deltaY, positionRatio);
         }
       });
     } else {
-      _startSimulation(deltaY);
+      _startSimulation(deltaY, positionRatio);
     }
   }
 
-  void _startSimulation(double deltaY) {
-    // 动态计算刚度 (决定运动快慢)
+  void _startSimulation(double deltaY, double positionRatio) {
+    // 动态计算刚度(决定回弹的速度)
     // 弹簧振子的周期公式 T=2*pi*sqrt(m/k)
     // m: 质量 ,k: 刚度 ,T: duration
-    final double durationSq =
-        widget.controller._duration * widget.controller._duration;
-    final double stiffness = (200.0 / (durationSq > 0 ? durationSq : 1.0))
-        .clamp(100.0, 200.0);
+    // 越往下的行，刚度越小
+    final double stiffness = (175.0 - (20.0 * positionRatio));
 
-    // 动态计算弹性,duration越大越有弹性
-    final double durationProgress =
-        (widget.controller._duration / SpringListController._durationMax).clamp(
-          0.0,
-          1.0,
-        );
-    final double springRatio = 1.0 - (0.3 * durationProgress); // 区间 [0.7,1.0
+    // 动态计算阻尼比(决定弹性)
+    // 越往下的行阻尼越小
+    final double dampingRatio = 0.86 - (0.08 * positionRatio);
 
     final springDesc = SpringDescription.withDampingRatio(
       mass: 1.0,
       stiffness: stiffness,
-      ratio: springRatio,
+      ratio: dampingRatio,
     );
 
     // 创建弹簧物理仿真 (从当前的 deltaY 运动到 0，初始速度为 0)

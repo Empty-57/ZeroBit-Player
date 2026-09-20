@@ -790,7 +790,6 @@ class _LyricsRenderState extends State<LyricsRender> {
                   return useSpringscroll
                       ? SpringListView(
                           key: ValueKey(currentSongPath),
-                          lineDuration: c.lineDurationList,
                           length: c.lineTextList.length,
                           controller: _lyricController.springController!,
                           itemBuilder: (int index) {

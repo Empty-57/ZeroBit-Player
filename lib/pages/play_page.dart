@@ -290,11 +290,7 @@ class _SearchResultItem extends StatelessWidget {
             type: type,
           );
         }
-        // 歌词加载与渲染版本号的写入合并为一次通知
-        batch(() {
-          audioController.loadLyrics('', changed: true);
-          audioController.lyricRenderRevision.value++;
-        });
+        audioController.refreshLyrics();
 
         if (settingController.autoDownloadLrc.value) {
           saveLyrics(path: audioController.currentPath.value, lrcData: v.lyric);

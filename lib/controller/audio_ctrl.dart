@@ -108,7 +108,6 @@ class AudioController {
   List<String> translateList = [];
   List<double> startTime = [];
   List<String> romaList = [];
-  List<double> lineDurationList = [];
 
   bool showLyricRender = false;
   String currentlyricType = LyricFormat.lrc;
@@ -157,7 +156,7 @@ class AudioController {
 
       currentDuration.value = results[0] as double;
       final localCovers = results[1] as (Uint8List?, Uint8List?);
-      var lyrics = results[2] as ParsedLyricModel?;
+      ParsedLyricModel? lyrics = results[2] as ParsedLyricModel?;
 
       Uint8List? bigCover = localCovers.$1;
       Uint8List smallCover = localCovers.$2 ?? kTransparentImage;
@@ -276,14 +275,12 @@ class AudioController {
       translateList = parsedLrc.map((v) => v.translate).toList();
       startTime = parsedLrc.map((v) => v.start).toList();
       romaList = parsedLrc.map((v) => v.roma).toList();
-      lineDurationList = parsedLrc.map((v) => v.nextTime - v.start).toList();
     } else {
       currentlyricType = LyricFormat.lrc;
       lineTextList.clear();
       translateList.clear();
       startTime.clear();
       romaList.clear();
-      lineDurationList.clear();
     }
     _lyricController.springController?.clearState();
   }
@@ -508,47 +505,9 @@ class AudioController {
     }
   }
 
-  Future<void> loadLyrics(String path, {bool changed = false}) async {
-    final metadata = currentMetadata.value;
-    final requestPath = changed ? metadata.path : path;
-    if (requestPath != metadata.path) return;
-
-    var lyrics = changed
-        ? currentLyrics.value
-        : await getParsedLyric(filePath: requestPath);
-
-    // await后确认路径未变化
-    if (currentMetadata.value.path != requestPath) return;
-
-    lyrics = await _checkAndGetLyrics4Net(lyrics, metadata);
-
-    // await后再次确认路径未变化
-    if (currentMetadata.value.path != requestPath) return;
-
-    final parsedLrc = lyrics?.parsedLrc;
-    showLyricRender = parsedLrc?.isNotEmpty ?? false;
-
-    if (showLyricRender) {
-      currentlyricType = lyrics!.type;
-      lineTextList = parsedLrc!.map((v) => v.lyricText).toList();
-      translateList = parsedLrc.map((v) => v.translate).toList();
-      startTime = parsedLrc.map((v) => v.start).toList();
-      romaList = parsedLrc.map((v) => v.roma).toList();
-      lineDurationList = parsedLrc.map((v) => v.nextTime - v.start).toList();
-    } else {
-      currentlyricType = LyricFormat.lrc;
-      lineTextList.clear();
-      translateList.clear();
-      startTime.clear();
-      romaList.clear();
-      lineDurationList.clear();
-    }
-
-    _lyricController.springController?.clearState();
-    batch(() {
-      currentLyrics.value = lyrics;
-      lyricRenderRevision.value++;
-    });
+  void refreshLyrics() {
+    _parseLyricLists(currentLyrics.value);
+    lyricRenderRevision.value++;
   }
 
   void _setThemeColor({required int color}) {

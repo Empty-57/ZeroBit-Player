@@ -224,7 +224,20 @@ class SettingController {
   void init() async {
     await _initHive();
     await _initPrefs();
+    _initBassSet();
     await initHotKey();
+  }
+
+  void _initBassSet() {
+    unawaited(() async {
+      await setVolume(vol: volume.value);
+
+      for (final v in equalizerGains.indexed) {
+        await setEqParams(freCenterIndex: v.$1, gain: v.$2);
+      }
+
+      await setUseFade(value: useVolumeFade.value);
+    }());
   }
 
   // 初始化逻辑
@@ -288,11 +301,6 @@ class SettingController {
             config[ScalableConfigKeys.showDesktopLyricsKey] ?? false;
       });
     }
-
-    unawaited(setVolume(vol: volume.value));
-    for (final v in equalizerGains.indexed) {
-      unawaited(setEqParams(freCenterIndex: v.$1, gain: v.$2));
-    }
   }
 
   Future<void> _initPrefs() async {
@@ -328,8 +336,6 @@ class SettingController {
       useVolumeFade.value =
           prefs?.getBool(SharedPreferencesKey.useVolumeFade) ?? true;
     });
-
-    unawaited(setUseFade(value: useVolumeFade.value));
 
     // 提取快捷键解析逻辑，消除冗余
     _loadKeyConfig(SharedPreferencesKey.toggleHidString, hotKeyToggleHid, (
