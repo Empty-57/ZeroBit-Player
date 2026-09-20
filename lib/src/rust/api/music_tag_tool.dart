@@ -11,11 +11,13 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 Future<AudioMetadata> getMetadata({required String path}) =>
     RustLib.instance.api.crateApiMusicTagToolGetMetadata(path: path);
 
-Future<Uint8List?> getCover({required String path, required int sizeFlag}) =>
-    RustLib.instance.api.crateApiMusicTagToolGetCover(
-      path: path,
-      sizeFlag: sizeFlag,
-    );
+Future<Uint8List?> getCover({
+  required String path,
+  required CoverQuality sizeFlag,
+}) => RustLib.instance.api.crateApiMusicTagToolGetCover(
+  path: path,
+  sizeFlag: sizeFlag,
+);
 
 Future<void> editTags({required String path, required EditableMetadata data}) =>
     RustLib.instance.api.crateApiMusicTagToolEditTags(path: path, data: data);
@@ -98,6 +100,8 @@ class AudioMetadata {
           trackPeak == other.trackPeak &&
           path == other.path;
 }
+
+enum CoverQuality { low, middle, high }
 
 class EditableMetadata {
   final String? title;

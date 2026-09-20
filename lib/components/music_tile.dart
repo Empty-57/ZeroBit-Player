@@ -1,20 +1,15 @@
-import 'dart:async';
-import 'dart:typed_data';
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/API/apis.dart';
+import 'package:zerobit_player/components/covers.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/statistics_cache_model.dart';
-import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
-import 'package:zerobit_player/tools/cover_lru_cache.dart';
 import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
 
+const double _coverSize = 48.0;
 const double _itemSpacing = 16.0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 
@@ -61,7 +56,7 @@ class MusicTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Widget cover = AsyncCover(music: metadata);
+    final Widget cover = LoadLocalOrNetCover(music: metadata, size: _coverSize);
 
     return SignalBuilder(
       builder: (context) {
@@ -169,7 +164,7 @@ class StatisticsMusicTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Widget cover = AsyncCover(music: metadata);
+    final Widget cover = LoadLocalOrNetCover(music: metadata, size: _coverSize);
 
     final primaryColor = Theme.of(context).colorScheme.primary;
     final tertiaryColor = Theme.of(context).colorScheme.tertiary;
@@ -237,126 +232,6 @@ class StatisticsMusicTile extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-const double _coverSize = 48.0;
-const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
-final double _dpr = PlatformDispatcher.instance.views.first.devicePixelRatio;
-
-class AsyncCover extends StatefulWidget {
-  final MusicCache music;
-  final double size;
-  const AsyncCover({super.key, required this.music, this.size = _coverSize});
-
-  @override
-  State<AsyncCover> createState() => _AsyncCoverState();
-}
-
-class _AsyncCoverState extends State<AsyncCover> {
-  Uint8List? _imageData;
-  late final int _cacheResolution;
-  Timer? _debounceTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _cacheResolution = (widget.size * _dpr).round();
-    _triggerLoad(isInit: true);
-  }
-
-  @override
-  void didUpdateWidget(AsyncCover oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.music.path != oldWidget.music.path) {
-      _imageData = null;
-      _triggerLoad();
-    }
-  }
-
-  @override
-  void dispose() {
-    _debounceTimer?.cancel();
-    super.dispose();
-  }
-
-  void _triggerLoad({bool isInit = false}) {
-    _debounceTimer?.cancel();
-
-    final cachedData = CoverLRUCache.get(widget.music.path);
-    if (cachedData != null) {
-      if (isInit) {
-        _imageData = cachedData;
-      } else {
-        setState(() => _imageData = cachedData);
-      }
-      return;
-    }
-
-    _debounceTimer = Timer(const Duration(milliseconds: 150), () {
-      if (mounted) _loadCoverAndSave();
-    });
-  }
-
-  Future<void> _loadCoverAndSave() async {
-    final targetPath = widget.music.path;
-    final coverData = await getCover(path: targetPath, sizeFlag: 0);
-
-    if (!mounted || widget.music.path != targetPath) return;
-
-    Uint8List? finalData;
-
-    if (coverData == null) {
-      final title = widget.music.title;
-      final artist =
-          (widget.music.artist.isNotEmpty && widget.music.artist != 'UNKNOWN')
-          ? ' - ${widget.music.artist}'
-          : '';
-      final generatedData = await saveCoverByText(
-        text: title + artist,
-        songPath: targetPath,
-      );
-
-      if (!mounted || widget.music.path != targetPath) return;
-
-      if (generatedData != null && generatedData.isNotEmpty) {
-        finalData = Uint8List.fromList(generatedData);
-      }
-    } else {
-      finalData = coverData;
-    }
-
-    if (finalData != null) {
-      CoverLRUCache.put(targetPath, finalData);
-      setState(() => _imageData = finalData);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final data = _imageData;
-    if (data != null) {
-      return ClipRRect(
-        borderRadius: _coverBorderRadius,
-        child: Image.memory(
-          data,
-          width: widget.size,
-          height: widget.size,
-          fit: BoxFit.cover,
-          cacheWidth: _cacheResolution,
-          cacheHeight: _cacheResolution,
-          gaplessPlayback: true,
-        ),
-      );
-    }
-    return Container(
-      height: widget.size,
-      width: widget.size,
-      decoration: BoxDecoration(
-        color: const Color(0x1A808080),
-        borderRadius: _coverBorderRadius,
       ),
     );
   }

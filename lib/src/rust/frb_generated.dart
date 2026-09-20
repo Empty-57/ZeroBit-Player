@@ -105,7 +105,7 @@ abstract class RustLibApi extends BaseApi {
 
   Future<Uint8List?> crateApiMusicTagToolGetCover({
     required String path,
-    required int sizeFlag,
+    required CoverQuality sizeFlag,
   });
 
   Future<String?> crateApiMusicTagToolGetEmbeddedLyric({required String path});
@@ -395,14 +395,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @override
   Future<Uint8List?> crateApiMusicTagToolGetCover({
     required String path,
-    required int sizeFlag,
+    required CoverQuality sizeFlag,
   }) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(path, serializer);
-          sse_encode_u_8(sizeFlag, serializer);
+          sse_encode_cover_quality(sizeFlag, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -1284,6 +1284,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CoverQuality dco_decode_cover_quality(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return CoverQuality.values[raw as int];
+  }
+
+  @protected
   EditableMetadata dco_decode_editable_metadata(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -1518,6 +1524,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_u_32(deserializer));
+  }
+
+  @protected
+  CoverQuality sse_decode_cover_quality(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return CoverQuality.values[inner];
   }
 
   @protected
@@ -1793,6 +1806,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_u_32(self, serializer);
+  }
+
+  @protected
+  void sse_encode_cover_quality(CoverQuality self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected

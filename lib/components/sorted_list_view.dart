@@ -2,7 +2,7 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
-import 'package:zerobit_player/components/music_list_tool.dart';
+import 'package:zerobit_player/components/covers.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
@@ -15,7 +15,6 @@ const double _itemWidth = 180.0;
 const double _itemHeight_2 = 72.0;
 const double _itemWidth_2 = 240.0;
 
-const double _coverSize = _itemWidth;
 const BorderRadius _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 const BorderRadius _borderRadius = BorderRadius.all(Radius.circular(4));
 const double _itemSpacing = 12.0;
@@ -368,7 +367,11 @@ class _SortedListViewState extends State<SortedListView> {
             AspectRatio(
               aspectRatio: 1,
               child: item.coverMusic != null
-                  ? AsyncCover(music: item.coverMusic!, size: _coverSize)
+                  ? LoadLocalOrNetCover(
+                      music: item.coverMusic!,
+                      coverResolutionFlag: CoverResolutionFlag.middle,
+                      size: _itemWidth,
+                    )
                   : const SizedBox.shrink(),
             ),
             const SizedBox(height: 3),
@@ -409,7 +412,10 @@ class _SortedListViewState extends State<SortedListView> {
             SizedBox.square(
               dimension: _itemHeight_2,
               child: item.coverMusic != null
-                  ? AsyncCover(music: item.coverMusic!, size: _itemHeight_2)
+                  ? LoadLocalOrNetCover(
+                      music: item.coverMusic!,
+                      size: _itemHeight_2,
+                    )
                   : const SizedBox.shrink(),
             ),
             const SizedBox(width: 2),

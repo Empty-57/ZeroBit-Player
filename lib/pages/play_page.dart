@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -13,6 +12,7 @@ import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/components/audio_ctrl_btn.dart';
 import 'package:zerobit_player/components/blur_background.dart';
+import 'package:zerobit_player/components/covers.dart';
 import 'package:zerobit_player/components/lyrics_render.dart';
 import 'package:zerobit_player/components/window_ctrl_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
@@ -49,8 +49,6 @@ const _lrcAlignmentIcons = [
 const double _menuBtnWidth = 180;
 const double _menuBtnHeight = 48;
 const double _menuBtnRadius = 0;
-
-final double _dpr = PlatformDispatcher.instance.views.first.devicePixelRatio;
 
 const LinearGradient _lyricsFadeGradient = LinearGradient(
   begin: Alignment.topCenter,
@@ -618,7 +616,6 @@ class _CoverSideState extends State<_CoverSide> {
   @override
   Widget build(BuildContext context) {
     final AudioController audioController = AudioController.instance;
-    final cacheResolution = (widget.coverSize * _dpr).round();
     final titleStrut = StrutStyle(
       fontSize: widget.titleStyle.fontSize,
       forceStrutHeight: true,
@@ -664,15 +661,11 @@ class _CoverSideState extends State<_CoverSide> {
                           child: child,
                         ),
                       ),
-                      child: Image.memory(
-                        cover,
+                      child: LoadU8Cover(
+                        data: cover,
+                        coverResolutionFlag: CoverResolutionFlag.big,
                         key: ValueKey(cover),
-                        width: widget.coverSize,
-                        height: widget.coverSize,
-                        fit: BoxFit.cover,
-                        gaplessPlayback: true,
-                        cacheWidth: cacheResolution,
-                        cacheHeight: cacheResolution,
+                        size: widget.coverSize,
                       ),
                     );
                   },
@@ -1305,6 +1298,7 @@ class _PlayPageState extends State<PlayPage> {
               batch(() {
                 settingController.lrcFontSize.value++;
                 audioController.lyricRenderRevision.value++;
+                // ?
               });
               settingController.putCache(isSaveFolders: false);
             }

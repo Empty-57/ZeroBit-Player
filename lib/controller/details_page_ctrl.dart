@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:signals/signals_flutter.dart';
@@ -21,12 +23,6 @@ class DetailsPageController with DetailsPageControllerBase {
   UserPlayListController get _userPlayListController =>
       UserPlayListController.instance;
 
-  @override
-  final items = listSignal(<MusicCache>[]); // 也许可以去除Rx
-
-  @override
-  final Signal<Uint8List> headCover = signal(kTransparentImage);
-
   EffectCleanup? _syncSongEditedWorker;
   EffectCleanup? _syncRemoveWorker;
 
@@ -43,14 +39,9 @@ class DetailsPageController with DetailsPageControllerBase {
       });
     });
 
-    bool isFirstSongDeleted = true;
     _syncRemoveWorker = effect(() {
       final List<String> removeList =
           _userPlayListController.songDeletedSignal.value;
-      if (isFirstSongDeleted) {
-        isFirstSongDeleted = false;
-        return;
-      }
       if (removeList.isEmpty) {
         return;
       }
@@ -84,7 +75,7 @@ class DetailsPageController with DetailsPageControllerBase {
 
     itemReSort(operateArea: operateArea);
     if (loadCover) {
-      _loadCover();
+      unawaited(_loadCover());
     }
   }
 
@@ -98,7 +89,10 @@ class DetailsPageController with DetailsPageControllerBase {
           ? ' - $artist'
           : '';
 
-      final cover = await getCover(path: firstItem.path, sizeFlag: 1);
+      final cover = await getCover(
+        path: firstItem.path,
+        sizeFlag: CoverQuality.middle,
+      );
       if (cover != null && cover.isNotEmpty) {
         headCover.value = cover;
         return;

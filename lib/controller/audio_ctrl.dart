@@ -229,10 +229,10 @@ class AudioController {
   Future<(Uint8List?, Uint8List?)> _loadLocalCovers(String path) async {
     Uint8List? smallCover = CoverLRUCache.get(path);
 
-    final bigFuture = getCover(path: path, sizeFlag: 1);
+    final bigFuture = getCover(path: path, sizeFlag: CoverQuality.high);
     final smallFuture = smallCover != null
         ? Future.value(smallCover)
-        : getCover(path: path, sizeFlag: 0);
+        : getCover(path: path, sizeFlag: CoverQuality.low);
 
     final results = await Future.wait([bigFuture, smallFuture]);
     return (results[0], results[1]);
@@ -821,7 +821,7 @@ class AudioController {
     });
 
     currentCover.value =
-        await getCover(path: currentPath.value, sizeFlag: 1) ??
+        await getCover(path: currentPath.value, sizeFlag: CoverQuality.high) ??
         kTransparentImage;
   }
 

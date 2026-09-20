@@ -1,8 +1,7 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals/signals_flutter.dart';
+import 'package:zerobit_player/components/covers.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/diamond_silder_thumb.dart';
 import 'package:zerobit_player/custom_widgets/rect_value_indicator.dart';
@@ -25,7 +24,6 @@ const double _resViewThresholds = 1100;
 const double _radius = 6;
 
 const double _coverSize = 48.0;
-final double _dpr = PlatformDispatcher.instance.views.first.devicePixelRatio;
 
 const double _ctrlBtnMinSize = 40.0;
 
@@ -268,29 +266,22 @@ class PlayBar extends StatelessWidget {
       forceStrutHeight: true,
     );
 
-    final cacheResolution = (_coverSize * _dpr).round();
     final c = AudioController.instance;
     return Expanded(
       child: Row(
         spacing: 8,
         children: [
           SignalBuilder(
-            builder: (context) => Hero(
-              tag: 'playingCover',
-              child: ClipRRect(
-                borderRadius: _coverBorderRadius,
-                child: Image.memory(
-                  c.currentSmallCover.value,
-                  key: ValueKey(c.currentSmallCover.value.hashCode),
-                  cacheWidth: cacheResolution,
-                  cacheHeight: cacheResolution,
-                  height: _coverSize,
-                  width: _coverSize,
-                  fit: BoxFit.cover,
-                  gaplessPlayback: true,
+            builder: (context) {
+              final cover = c.currentSmallCover.value;
+              return Hero(
+                tag: 'playingCover',
+                child: ClipRRect(
+                  borderRadius: _coverBorderRadius,
+                  child: LoadU8Cover(data: cover, size: _coverSize),
                 ),
-              ),
-            ),
+              );
+            },
           ),
           Expanded(
             child: Column(

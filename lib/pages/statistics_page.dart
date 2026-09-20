@@ -3,7 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/music_list_tool.dart';
+import 'package:zerobit_player/components/music_tile.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/statistics_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';

@@ -16,9 +16,6 @@ class MusicCacheController with DetailsPageControllerBase {
   MusicCacheController._();
   static final MusicCacheController instance = MusicCacheController._();
 
-  @override
-  final items = listSignal(<MusicCache>[]);
-
   SplayTreeMap<String, List<String>> artistItemsDict =
       SplayTreeMap<String, List<String>>((a, b) => a.compareTo(b));
   final artistHasLetter = <String>[];

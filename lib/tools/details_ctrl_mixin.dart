@@ -76,8 +76,8 @@ List<MusicCache> _sortPairs2((List<MusicCache>, int, bool) args) {
 }
 
 mixin DetailsPageControllerBase {
-  ListSignal<MusicCache> get items;
-  Signal<Uint8List> get headCover => signal(kTransparentImage);
+  final ListSignal<MusicCache> items = listSignal([]);
+  final Signal<Uint8List> headCover = signal(kTransparentImage);
   final SettingController _settingController = SettingController.instance;
   AudioController get audioController => AudioController.instance;
 

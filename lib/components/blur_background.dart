@@ -2,12 +2,11 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
+import 'package:zerobit_player/components/covers.dart';
 import 'package:zerobit_player/components/lyrics_mesh.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/theme_manager.dart';
 import 'package:zerobit_player/tools/paint_cache.dart';
-
-const int _coverBigRenderSize = 800;
 
 final LinearGradient _maskGradient = LinearGradient(
   begin: Alignment.topCenter,
@@ -80,15 +79,7 @@ class BlurWithCoverBackground extends StatelessWidget {
 
                 final rawCover = Transform.scale(
                   scale: coverScale,
-                  child: SizedBox.expand(
-                    child: Image.memory(
-                      coverBytes,
-                      cacheWidth: _coverBigRenderSize,
-                      cacheHeight: _coverBigRenderSize,
-                      fit: BoxFit.cover,
-                      gaplessPlayback: true,
-                    ),
-                  ),
+                  child: SizedBox.expand(child: LoadU8Cover(data: coverBytes)),
                 );
 
                 return Opacity(

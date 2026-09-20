@@ -59,6 +59,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int dco_decode_box_autoadd_u_32(dynamic raw);
 
   @protected
+  CoverQuality dco_decode_cover_quality(dynamic raw);
+
+  @protected
   EditableMetadata dco_decode_editable_metadata(dynamic raw);
 
   @protected
@@ -149,6 +152,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
+  CoverQuality sse_decode_cover_quality(SseDeserializer deserializer);
 
   @protected
   EditableMetadata sse_decode_editable_metadata(SseDeserializer deserializer);
@@ -256,6 +262,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_cover_quality(CoverQuality self, SseSerializer serializer);
 
   @protected
   void sse_encode_editable_metadata(

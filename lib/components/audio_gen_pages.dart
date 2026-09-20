@@ -1,11 +1,11 @@
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
+import 'package:zerobit_player/components/covers.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
@@ -23,7 +23,7 @@ import 'package:zerobit_player/tools/func/general_style.dart';
 import 'edit_embedded_lyrics_dialog.dart';
 import 'floating_button.dart';
 import 'get_snack_bar.dart';
-import 'music_list_tool.dart';
+import 'music_tile.dart';
 
 const double _itemHeight = 64.0;
 const double _headCoverSize = 240;
@@ -35,7 +35,6 @@ const double _menuBtnWidth = 180;
 const double _menuBtnHeight = 48;
 const double _menuBtnRadius = 0;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
-final double _dpr = PlatformDispatcher.instance.views.first.devicePixelRatio;
 
 class _MusicMenuController {
   final _menuController = MenuController();
@@ -414,25 +413,14 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   }
 
   Widget _buildHeaderCover() {
-    final cacheResolution = (_headCoverSize * _dpr).round();
     return ClipRRect(
       borderRadius: _coverBorderRadius,
       child: SignalBuilder(
         builder: (context) {
-          return AnimatedSwitcher(
-            duration: Duration(milliseconds: 300),
-            transitionBuilder: (child, anim) =>
-                FadeTransition(opacity: anim, child: child),
-            child: Image.memory(
-              widget.controller.headCover.value,
-              key: ValueKey(widget.controller.headCover.value.hashCode),
-              cacheWidth: cacheResolution,
-              cacheHeight: cacheResolution,
-              height: _headCoverSize,
-              width: _headCoverSize,
-              fit: BoxFit.cover,
-              gaplessPlayback: true,
-            ),
+          return LoadU8Cover(
+            data: widget.controller.headCover.value,
+            coverResolutionFlag: CoverResolutionFlag.middle,
+            size: _headCoverSize,
           );
         },
       ),

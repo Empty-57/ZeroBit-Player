@@ -428,12 +428,19 @@ impl AudioMetadata {
 }
 
 #[flutter_rust_bridge::frb]
+pub enum CoverQuality {
+    Low,
+    Middle,
+    High,
+}
+
+#[flutter_rust_bridge::frb]
 pub fn get_metadata(path: String) -> AudioMetadata {
     AudioMetadata::render_tags(path)
 }
 
 #[flutter_rust_bridge::frb]
-pub fn get_cover(path: String, size_flag: u8) -> Option<Vec<u8>> {
+pub fn get_cover(path: String, size_flag: CoverQuality) -> Option<Vec<u8>> {
     if let Some(image_data) = AudioMetadata::get_cover(path) {
         let image_data = match load_from_memory(image_data.as_slice()) {
             Ok(v) => v,
@@ -442,13 +449,11 @@ pub fn get_cover(path: String, size_flag: u8) -> Option<Vec<u8>> {
                 return None;
             }
         };
-        let mut cover_size = (150, 150);
-        let mut filter_type = image::imageops::FilterType::Lanczos3;
 
-        match size_flag {
-            0 => filter_type = image::imageops::FilterType::Triangle,
-            1 => cover_size = (800, 800),
-            _ => {}
+        let (cover_size, filter_type) = match size_flag {
+            CoverQuality::Low => ((150, 150), image::imageops::FilterType::Triangle),
+            CoverQuality::Middle => ((450, 450), image::imageops::FilterType::Triangle),
+            CoverQuality::High => ((800, 800), image::imageops::FilterType::Lanczos3),
         };
 
         let (cover_witdh, cover_height) = cover_size;

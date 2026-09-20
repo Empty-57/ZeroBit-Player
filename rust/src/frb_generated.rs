@@ -315,7 +315,8 @@ fn wire__crate__api__music_tag_tool__get_cover_impl(
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_path = <String>::sse_decode(&mut deserializer);
-            let api_size_flag = <u8>::sse_decode(&mut deserializer);
+            let api_size_flag =
+                <crate::api::music_tag_tool::CoverQuality>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, ()>((move || {
@@ -1334,6 +1335,19 @@ impl SseDecode for bool {
     }
 }
 
+impl SseDecode for crate::api::music_tag_tool::CoverQuality {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::music_tag_tool::CoverQuality::Low,
+            1 => crate::api::music_tag_tool::CoverQuality::Middle,
+            2 => crate::api::music_tag_tool::CoverQuality::High,
+            _ => unreachable!("Invalid variant for CoverQuality: {}", inner),
+        };
+    }
+}
+
 impl SseDecode for crate::api::music_tag_tool::EditableMetadata {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1662,6 +1676,28 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::bass::basswasapi_func::BASS_W
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::music_tag_tool::CoverQuality {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Low => 0.into_dart(),
+            Self::Middle => 1.into_dart(),
+            Self::High => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::music_tag_tool::CoverQuality
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::music_tag_tool::CoverQuality>
+    for crate::api::music_tag_tool::CoverQuality
+{
+    fn into_into_dart(self) -> crate::api::music_tag_tool::CoverQuality {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::music_tag_tool::EditableMetadata {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -1810,6 +1846,23 @@ impl SseEncode for bool {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         serializer.cursor.write_u8(self as _).unwrap();
+    }
+}
+
+impl SseEncode for crate::api::music_tag_tool::CoverQuality {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::music_tag_tool::CoverQuality::Low => 0,
+                crate::api::music_tag_tool::CoverQuality::Middle => 1,
+                crate::api::music_tag_tool::CoverQuality::High => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
     }
 }
 

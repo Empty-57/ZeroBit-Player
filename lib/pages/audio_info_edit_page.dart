@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -8,6 +9,7 @@ import 'package:path/path.dart' as p;
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/API/apis.dart';
+import 'package:zerobit_player/components/covers.dart';
 import 'package:zerobit_player/components/get_snack_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
@@ -21,7 +23,6 @@ import 'package:zerobit_player/tools/func/general_style.dart';
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 
 const double _bigCoverSize = 260;
-const int _coverBigRenderSize = 800;
 
 sealed class _CoverSource {}
 
@@ -106,14 +107,13 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
       _albumCtrl = TextEditingController(text: metadata.album);
       _genreCtrl = TextEditingController(text: metadata.genre);
 
+      unawaited(_loadInitialCover());
       final file = File(metadata.path);
       audioSize =
           '${((await file.length()) / 1024 / 1024).toStringAsFixed(2)} MB';
 
       lastEditTime = (await file.lastModified()).toString().substring(0, 19);
       createTime = (await file.stat()).changed.toString().substring(0, 19);
-
-      _loadInitialCover();
 
       _isInit = true;
     }
@@ -130,7 +130,10 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
 
   Future<void> _loadInitialCover() async {
     try {
-      final bytes = await getCover(path: metadata.path, sizeFlag: 1);
+      final bytes = await getCover(
+        path: metadata.path,
+        sizeFlag: CoverQuality.high,
+      );
       if (mounted) {
         setState(() {
           _currentCoverSource = bytes != null
@@ -312,34 +315,20 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
     );
   }
 
-  ImageProvider _getImageProvider(_CoverSource source) => switch (source) {
-    _InitialCover(:final bytes) => MemoryImage(bytes),
-    _GeneratedCover(:final bytes) => MemoryImage(bytes),
-    _FileCover(:final file) => MemoryImage(file.bytes ?? kTransparentImage),
-    _NoCover() => MemoryImage(kTransparentImage),
+  Uint8List _getImageProvider(_CoverSource source) => switch (source) {
+    _InitialCover(:final bytes) => bytes,
+    _GeneratedCover(:final bytes) => bytes,
+    _FileCover(:final file) => file.bytes ?? kTransparentImage,
+    _NoCover() => kTransparentImage,
   };
 
-  Widget _buildImageProvider(ImageProvider provider) {
+  Widget _buildImageProvider(Uint8List data) {
     return ClipRRect(
       borderRadius: _coverBorderRadius,
-      child: Image(
-        image: ResizeImage(
-          provider,
-          width: _coverBigRenderSize,
-          height: _coverBigRenderSize,
-        ),
-        height: _bigCoverSize,
-        width: _bigCoverSize,
-        fit: BoxFit.cover,
-        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-          if (wasSynchronouslyLoaded) return child;
-          return AnimatedOpacity(
-            opacity: frame == null ? 0 : 1,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-            child: child,
-          );
-        },
+      child: LoadU8Cover(
+        data: data,
+        coverResolutionFlag: CoverResolutionFlag.big,
+        size: _bigCoverSize,
       ),
     );
   }
