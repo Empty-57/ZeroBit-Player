@@ -145,8 +145,8 @@ final BoxDecoration _glareBand = BoxDecoration(
       Colors.white.withValues(alpha: 0),
       Colors.white.withValues(alpha: 0),
       Colors.white.withValues(alpha: 0),
-      Colors.white.withValues(alpha: 0.275),
-      Colors.white.withValues(alpha: 0.275),
+      Colors.white.withValues(alpha: 0.1375),
+      Colors.white.withValues(alpha: 0.1375),
       Colors.white.withValues(alpha: 0),
       Colors.white.withValues(alpha: 0),
       Colors.white.withValues(alpha: 0),
@@ -356,6 +356,15 @@ class _MetalCoverState extends State<_MetalCover>
     _keepTicking();
   }
 
+  /// 把封面内的局部坐标换算成归一化位置，中心是 (0,0)、边角是 ±1
+  Offset _normalize(Offset local) {
+    final half = widget.size / 2;
+    return Offset(
+      ((local.dx - half) / half).clamp(-1.0, 1.0),
+      ((local.dy - half) / half).clamp(-1.0, 1.0),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final AudioController audioController = AudioController.instance;
@@ -409,14 +418,18 @@ class _MetalCoverState extends State<_MetalCover>
     }
 
     return MouseRegion(
-      onEnter: (_) => _setHovering(true),
+      onEnter: (event) {
+        // 高光要出现在指针真正进入的那个位置。只设 _target 是不够的：_x/_y 还停在
+        // 上一轮归零后的 (0,0)，高光会从封面正中滑过来——看上去就是"鼠标刚挪上去
+        // 时先白一片，然后那片白又滑走了"。
+        _target = _normalize(event.localPosition);
+        _x = _target.dx;
+        _y = _target.dy;
+        _setHovering(true);
+      },
       onExit: (_) => _setHovering(false),
       onHover: (event) {
-        final half = widget.size / 2;
-        _target = Offset(
-          ((event.localPosition.dx - half) / half).clamp(-1.0, 1.0),
-          ((event.localPosition.dy - half) / half).clamp(-1.0, 1.0),
-        );
+        _target = _normalize(event.localPosition);
         _keepTicking();
       },
       child: ValueListenableBuilder<_CoverTilt>(

@@ -337,7 +337,7 @@ class SettingController {
       useVolumeFade.value =
           prefs?.getBool(SharedPreferencesKey.useVolumeFade) ?? true;
       useCoverMetalEffect.value =
-          prefs?.getBool(SharedPreferencesKey.useCoverMetalEffect) ?? true;
+          prefs?.getBool(SharedPreferencesKey.useCoverMetalEffect) ?? false;
     });
 
     // 提取快捷键解析逻辑，消除冗余
