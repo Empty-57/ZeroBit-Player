@@ -17,20 +17,36 @@ class LyricController {
   SpringListController? springController;
 
   final ValueNotifier<double> currentMs20Notifier = ValueNotifier<double>(0.0);
+
+  ///当前字索引
   final ValueNotifier<int> currentWordIndexNotifier = ValueNotifier<int>(0);
+
+  /// 词动画进度
   final ValueNotifier<double> wordProgress = ValueNotifier<double>(0.0);
+
+  /// 间奏动画进度
   final ValueNotifier<double> interludeProcess = ValueNotifier<double>(0.0);
 
+  /// 当前行索引
   final currentLineIndex = signal(-1);
   final isPointerScroll = signal(false);
   final showInterlude = signal(false);
 
   ItemScrollController? lrcViewScrollController;
 
+  /// 词动画进度增量
   double _wordProgressIncrement = 0;
-  double _interval = 0; // 歌词行间隔值
-  int _wordsLen = 0; // 当前行长度
-  List<WordEntry>? _currentLine; // 当前行信息
+
+  /// 本行与下一行的间隔时间
+  double _interval = 0;
+
+  /// 当前行词数
+  int _wordsLen = 0;
+
+  /// 当前行信息
+  List<WordEntry>? _currentLine;
+
+  /// 可视区歌词行数量的一半
   int visibleItemCount = 10;
 
   Timer? _debounceTimer;
@@ -55,6 +71,15 @@ class LyricController {
     _delayTimer?.cancel();
     _currentLine = null;
     lrcViewScrollController = null;
+  }
+
+  void lineUpdatedReset() {
+    _interval = 0;
+    _currentLine = null;
+    _wordsLen = 0;
+    _wordProgressIncrement = 0;
+    currentWordIndexNotifier.value = -1;
+    wordProgress.value = 0;
   }
 
   // 更新 _currentWord, _currentLine, _interval, _threshold
@@ -167,16 +192,11 @@ class LyricController {
       hint: currentLineIndex.value,
     );
     if (newLineIndex != currentLineIndex.value) {
-      _interval = 0;
-      _currentLine = null;
-      _wordsLen = 0;
-      _wordProgressIncrement = 0;
-      currentWordIndexNotifier.value = -1;
-      wordProgress.value = 0;
+      lineUpdatedReset();
 
       visibleItemCount = newLineIndex <= 0
-          ? 20
-          : springController?.getVisibleItemCount() ?? 20;
+          ? 10
+          : springController?.getVisibleItemCount() ?? 10;
       currentLineIndex.value = newLineIndex;
       _updateLyricsInfo(updateLineOnly: true);
       if (!isPointerScroll.value) {

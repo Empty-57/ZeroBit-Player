@@ -34,6 +34,7 @@ class LoadU8Cover extends StatefulWidget {
   final CoverResolutionFlag coverResolutionFlag;
   final double? width;
   final double? height;
+  final bool useFrameBuilderCallback;
 
   const LoadU8Cover({
     super.key,
@@ -42,6 +43,7 @@ class LoadU8Cover extends StatefulWidget {
     double? size,
     double? width,
     double? height,
+    this.useFrameBuilderCallback = true,
   }) : assert(
          size == null || (width == null && height == null),
          '[参数冲突]：size 与 (width/height) 互斥，不可同时设置',
@@ -82,7 +84,7 @@ class _LoadU8CoverState extends State<LoadU8Cover> {
 
   @override
   void dispose() {
-    _imageProvider?.evict();
+    unawaited(_imageProvider?.evict());
     super.dispose();
   }
 
@@ -109,15 +111,17 @@ class _LoadU8CoverState extends State<LoadU8Cover> {
         height: widget.height,
         fit: BoxFit.cover,
         gaplessPlayback: true,
-        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-          if (wasSynchronouslyLoaded) return child;
-          return AnimatedOpacity(
-            opacity: frame == null ? 0 : 1,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-            child: child,
-          );
-        },
+        frameBuilder: widget.useFrameBuilderCallback
+            ? (context, child, frame, wasSynchronouslyLoaded) {
+                if (wasSynchronouslyLoaded) return child;
+                return AnimatedOpacity(
+                  opacity: frame == null ? 0 : 1,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                  child: child,
+                );
+              }
+            : null,
       );
     }
     return Container(
@@ -134,6 +138,7 @@ class LoadLocalOrNetCover extends StatefulWidget {
   final CoverQuality coverQuality;
   final double? width;
   final double? height;
+  final bool useFrameBuilderCallback;
 
   const LoadLocalOrNetCover({
     super.key,
@@ -143,6 +148,7 @@ class LoadLocalOrNetCover extends StatefulWidget {
     double? size,
     double? width,
     double? height,
+    this.useFrameBuilderCallback = true,
   }) : assert(
          size == null || (width == null && height == null),
          '[参数冲突]：size 与 (width/height) 互斥，不可同时设置',
@@ -184,7 +190,7 @@ class _LoadLocalOrNetCoverState extends State<LoadLocalOrNetCover> {
   @override
   void dispose() {
     _debounceTimer?.cancel();
-    _imageProvider?.evict();
+    unawaited(_imageProvider?.evict());
     super.dispose();
   }
 
@@ -273,15 +279,17 @@ class _LoadLocalOrNetCoverState extends State<LoadLocalOrNetCover> {
           height: widget.height,
           fit: BoxFit.cover,
           gaplessPlayback: true,
-          frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-            if (wasSynchronouslyLoaded) return child;
-            return AnimatedOpacity(
-              opacity: frame == null ? 0 : 1,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-              child: child,
-            );
-          },
+          frameBuilder: widget.useFrameBuilderCallback
+              ? (context, child, frame, wasSynchronouslyLoaded) {
+                  if (wasSynchronouslyLoaded) return child;
+                  return AnimatedOpacity(
+                    opacity: frame == null ? 0 : 1,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                    child: child,
+                  );
+                }
+              : null,
         ),
       );
     }

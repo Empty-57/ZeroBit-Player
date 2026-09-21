@@ -16,6 +16,7 @@ import 'package:zerobit_player/components/covers.dart';
 import 'package:zerobit_player/components/lyrics_render.dart';
 import 'package:zerobit_player/components/window_ctrl_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/controller/lyric_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
@@ -1130,6 +1131,7 @@ class _PlayPageState extends State<PlayPage> {
 
   ThemeService get _themeService => ThemeService.instance;
   AudioController get _audioController => AudioController.instance;
+  LyricController get _lyricController => LyricController.instance;
   SettingController get _settingController => SettingController.instance;
   MusicCacheController get _musicCacheController =>
       MusicCacheController.instance;
@@ -1282,64 +1284,60 @@ class _PlayPageState extends State<PlayPage> {
       height: 0.5,
       thickness: 0.5,
     );
-    final settingController = _settingController;
-    final musicCacheController = _musicCacheController;
-    final audioController = _audioController;
 
     return [
       SignalBuilder(
         builder: (context) => _createInfoBar(
-          text: "字号 ${settingController.lrcFontSize.value}",
+          text: "字号 ${_settingController.lrcFontSize.value}",
           darkColorScheme: darkColorScheme,
           addFn: () {
-            if (settingController.lrcFontSize.value <
+            if (_settingController.lrcFontSize.value <
                 SettingController.lrcFontSizeMax) {
               // 字号与渲染版本号的写入合并为一次通知
               batch(() {
-                settingController.lrcFontSize.value++;
-                audioController.lyricRenderRevision.value++;
-                // ?
+                _settingController.lrcFontSize.value++;
+                _audioController.lyricRenderRevision.value++;
+                _lyricController.springController?.cachedScreenHeight = 0.0;
               });
-              settingController.putCache(isSaveFolders: false);
+              _settingController.putCache(isSaveFolders: false);
             }
           },
           decFn: () {
-            if (settingController.lrcFontSize.value >
+            if (_settingController.lrcFontSize.value >
                 SettingController.lrcFontSizeMin) {
               // 字号与渲染版本号的写入合并为一次通知
               batch(() {
-                settingController.lrcFontSize.value--;
-                audioController.lyricRenderRevision.value++;
+                _settingController.lrcFontSize.value--;
+                _audioController.lyricRenderRevision.value++;
+                _lyricController.springController?.cachedScreenHeight = 0.0;
               });
-              settingController.putCache(isSaveFolders: false);
+              _settingController.putCache(isSaveFolders: false);
             }
           },
         ),
       ),
       SignalBuilder(
         builder: (context) => _createInfoBar(
-          text: "字重 ${settingController.lrcFontWeight.value * 100 + 100}",
+          text: "字重 ${_settingController.lrcFontWeight.value * 100 + 100}",
           darkColorScheme: darkColorScheme,
           addFn: () {
-            if (settingController.lrcFontWeight.value <
+            if (_settingController.lrcFontWeight.value <
                 SettingController.lrcFontWeightMax) {
-              // 字重与渲染版本号的写入合并为一次通知
               batch(() {
-                settingController.lrcFontWeight.value++;
-                audioController.lyricRenderRevision.value++;
+                _settingController.lrcFontWeight.value++;
+                _audioController.lyricRenderRevision.value++;
               });
-              settingController.putCache(isSaveFolders: false);
+              _settingController.putCache(isSaveFolders: false);
             }
           },
           decFn: () {
-            if (settingController.lrcFontWeight.value >
+            if (_settingController.lrcFontWeight.value >
                 SettingController.lrcFontWeightMin) {
-              // 字重与渲染版本号的写入合并为一次通知
               batch(() {
-                settingController.lrcFontWeight.value--;
-                audioController.lyricRenderRevision.value++;
+                _settingController.lrcFontWeight.value--;
+                _audioController.lyricRenderRevision.value++;
               });
-              settingController.putCache(isSaveFolders: false);
+              _settingController.putCache(isSaveFolders: false);
             }
           },
         ),
@@ -1349,13 +1347,13 @@ class _PlayPageState extends State<PlayPage> {
         builder: (context) {
           final album = currentMetadata.value.album;
           final albumWithLetter =
-              musicCacheController.getLetter(str: album) + album;
+              _musicCacheController.getLetter(str: album) + album;
           final router = GoRouter.of(context);
           return _createMenuBtn(
             fn: () {
               final extra = {
                 'pathList':
-                    musicCacheController.albumItemsDict[albumWithLetter],
+                    _musicCacheController.albumItemsDict[albumWithLetter],
                 'title': album,
                 'operateArea': OperateArea.albumDetails,
               };
@@ -1375,13 +1373,13 @@ class _PlayPageState extends State<PlayPage> {
           final artistList = currentMetadata.value.artist.split('/');
           final artistFirst = artistList.first;
           final artistFirstWithLetter =
-              musicCacheController.getLetter(str: artistFirst) + artistFirst;
+              _musicCacheController.getLetter(str: artistFirst) + artistFirst;
           final router = GoRouter.of(context);
           if (artistList.length == 1) {
             return _createMenuBtn(
               fn: () {
                 final extra = {
-                  'pathList': musicCacheController
+                  'pathList': _musicCacheController
                       .artistItemsDict[artistFirstWithLetter],
                   'title': artistFirst,
                   'operateArea': OperateArea.artistDetails,
@@ -1409,8 +1407,8 @@ class _PlayPageState extends State<PlayPage> {
                   onPressed: () {
                     final extra = {
                       'pathList':
-                          musicCacheController
-                              .artistItemsDict[musicCacheController.getLetter(
+                          _musicCacheController
+                              .artistItemsDict[_musicCacheController.getLetter(
                                 str: v,
                               ) +
                               v],
