@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 /// 字形模糊歌词组件
-class LyricText extends StatelessWidget {
-  const LyricText(
+class BlurableText extends StatelessWidget {
+  const BlurableText(
     this.text, {
     super.key,
     this.style,

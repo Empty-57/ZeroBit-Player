@@ -1,13 +1,12 @@
-import 'dart:async';
-import 'dart:ui' as ui;
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/lyric_text.dart';
+import 'package:zerobit_player/components/lyric/interlude_widget.dart';
+import 'package:zerobit_player/components/lyric/line_render.dart';
+import 'package:zerobit_player/components/lyric/lyric_arg_constants.dart';
 import 'package:zerobit_player/components/spring_list_view.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/lyric_ctrl.dart';
@@ -17,45 +16,6 @@ import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
 import 'audio_ctrl_btn.dart';
-
-const double _audioCtrlBarHeight = 96;
-const double _controllerBarHeight = 48;
-const double _highLightAlpha = 0.9;
-const double _currentAlpha = 0.4;
-const double _notPlayedLightAlpha = 0.25;
-const double _notPlayedDarkAlpha = 0.15;
-const BorderRadius _borderRadius = BorderRadius.all(Radius.circular(4));
-const double _ctrlBtnMinSize = 40.0;
-const double _floatingY = -1.5;
-const double _rippleThreshold = 1.5;
-const double _ripplesScaleMin = 1.1;
-const double _ripplesScaleExtra = 0.1;
-const double _glowAlphaMin = 0.2;
-const double _glowAlphaExtra = 0.3;
-
-const _lrcCrossAlignment = <CrossAxisAlignment>[
-  CrossAxisAlignment.start,
-  CrossAxisAlignment.center,
-  CrossAxisAlignment.end,
-];
-const _lrcMainAlignment = <MainAxisAlignment>[
-  MainAxisAlignment.start,
-  MainAxisAlignment.center,
-  MainAxisAlignment.end,
-];
-const _lrcScaleAlignment = <Alignment>[
-  Alignment.centerLeft,
-  Alignment.center,
-  Alignment.centerRight,
-];
-
-const _lrcTextAlign = <TextAlign>[
-  TextAlign.left,
-  TextAlign.center,
-  TextAlign.right,
-];
-const _gradientStops = <double>[0.0, 0.333, 0.666];
-const double _lrcScale = 1.1;
 
 class _LyricsStyle {
   final SettingController _settingsController = SettingController.instance;
@@ -77,7 +37,9 @@ class _LyricsStyle {
   // 核心样式生成
   TextStyle get lyricStyle => generalTextStyle(
     size: _baseSize,
-    color: _onContainerColor.withValues(alpha: _notPlayedDarkAlpha),
+    color: _onContainerColor.withValues(
+      alpha: LyricConstants.notPlayedDarkAlpha,
+    ),
     weight: _weight,
   );
 
@@ -89,553 +51,13 @@ class _LyricsStyle {
       lyricStyle.copyWith(fontFamily: 'Microsoft YaHei Light');
 
   Color get hoverColor => _themeService.darkTheme.colorScheme.onSurface
-      .withValues(alpha: _notPlayedDarkAlpha);
+      .withValues(alpha: LyricConstants.notPlayedDarkAlpha);
 
-  Color? get mixColor =>
-      Color.lerp(_primaryColor, Colors.white, _notPlayedLightAlpha);
-}
-
-class _LrcLyricWidget extends StatelessWidget {
-  final String text;
-  final TextStyle style;
-  final bool isCurrent;
-  final TextAlign textAlign;
-  final double highLightAlpha;
-  final int blurSigma;
-  const _LrcLyricWidget({
-    required this.text,
-    required this.style,
-    required this.isCurrent,
-    required this.textAlign,
-    this.highLightAlpha = _highLightAlpha,
-    this.blurSigma = 0,
-  });
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedDefaultTextStyle(
-      duration: const Duration(milliseconds: 600),
-      style: style.copyWith(
-        color: isCurrent
-            ? style.color?.withValues(alpha: highLightAlpha)
-            : style.color,
-      ),
-      child: LyricText(text, textAlign: textAlign, blurSigma: blurSigma),
-    );
-  }
-}
-
-class _ScaledTranslateGradientTransform extends GradientTransform {
-  final double dx;
-  final double translateGradientScale;
-  const _ScaledTranslateGradientTransform({
-    required this.dx,
-    required this.translateGradientScale,
-  });
-
-  static final Matrix4 _sharedMatrix = Matrix4.zero();
-
-  @override
-  Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
-    // final double scale=entry.value.duration>=1.0 ? 3:2; 动态 scale 视觉效果更好
-    // 先将x轴扩大scale倍，然后平移x轴
-
-    final storage = _sharedMatrix.storage;
-
-    // xyz缩放
-    storage[0] = translateGradientScale; // x
-    storage[5] = 1.0; // y
-    storage[10] = 1.0; // z
-    storage[15] = 1.0; // w
-
-    // x平移
-    storage[12] = translateGradientScale * dx;
-    return _sharedMatrix;
-  }
-}
-
-class _HighlightedWord extends StatefulWidget {
-  final String text;
-  final double progress;
-  final TextStyle style;
-  final StrutStyle strutStyle;
-  final List<Color> gradientColors;
-  final double duartion;
-  final double ripplesScaleMax;
-  final double glowAlphaMax;
-  final double translateGradientScale;
-
-  const _HighlightedWord({
-    required this.text,
-    required this.progress,
-    required this.style,
-    required this.strutStyle,
-    required this.gradientColors,
-    required this.duartion,
-    required this.ripplesScaleMax,
-    required this.glowAlphaMax,
-    required this.translateGradientScale,
-  });
-
-  @override
-  State<_HighlightedWord> createState() => _HighlightedWordState();
-}
-
-class _HighlightedWordState extends State<_HighlightedWord> {
-  // text 不变或 duration 未超过 _rippleThreshold 则不重算
-  late List<String> _charList;
-  late int _charCount;
-
-  // 涟漪效果核心算法
-  // 推进步长 stepRatio（0.0 ~ 1.0）：决定前后两个字的动画有多少交集。
-  // 设为 0.1 意味着：当前一个字的动画跑到 10% 时，后一个字的动画就要开始了
-  static const double _stepRatio = 0.1;
-
-  // 动画时间比例
-  static const double _animatedRatio = 0.6;
-
-  // 计算出每个字的动画在总进度里占多少"时间窗口"(即动画持续时间)
-  // 算法：
-  // waveWidth + (charCount - 1) * stepRatio * waveWidth = 1
-  // 第一个字占一个完整窗口 所以 +waveWidth
-  // charCount - 1 推进次数(即字符之间有多少个间隔) 第一个字不推进所以-1
-  // stepRatio * waveWidth 每次推进的宽度 即后一个字动画的开始时间
-  // 提取后得到 waveWidth = 1.0 / (_stepRatio * (_charCount - 1) + 1.0)
-  late double _waveWidth;
-
-  // 每个字的 windowStart 只依赖 i / stepRatio / waveWidth，全部不变，预计算缓存
-  late List<double> _windowStarts;
-
-  // 正常显示文本的样式
-  late TextStyle _normalStyle;
-
-  // 提取基础颜色以备 shadow 计算使用
-  late Color _baseColor;
-
-  @override
-  void initState() {
-    super.initState();
-    _initCachedValues();
-    _initStyles();
-  }
-
-  @override
-  void didUpdateWidget(_HighlightedWord oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.text != widget.text) {
-      _initCachedValues();
-    }
-    if (oldWidget.style != widget.style) {
-      _initStyles();
-    }
-  }
-
-  void _initStyles() {
-    _normalStyle = widget.style.copyWith(
-      color: widget.style.color?.withValues(alpha: 1),
-    );
-    _baseColor = widget.style.color ?? Colors.white;
-  }
-
-  void _initCachedValues() {
-    _charList = widget.text.split('');
-    _charCount = _charList.length;
-    _waveWidth = 1.0 / (_stepRatio * (_charCount - 1) + 1.0);
-    _windowStarts = List.generate(
-      _charCount,
-      // 这个字动画开始的时间 依照 i 和 stepRatio 设置动画区间用于延时启动
-      (i) => i * _stepRatio * _waveWidth,
-    );
-  }
-
-  Widget _shaderMaskWrap(Widget child) {
-    return ShaderMask(
-      shaderCallback: (bounds) {
-        // 颜色平均分三段：高亮区 过渡区 透明区
-        // 在动画开始的时候，覆盖到 Text 上的应该是透明区，应该先把整个遮罩层应该向左移动
-        // 但是因为遮罩层放大了3倍，所以应该用 -0.666 * bounds.width 得到透明区位置，负号为向左
-        // 随着 progress 增大 遮罩会逐渐向右移动
-        final double dx = (-0.666 * bounds.width) * (1 - widget.progress);
-        return LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: widget.gradientColors,
-          stops: _gradientStops,
-          transform: _ScaledTranslateGradientTransform(
-            dx: dx,
-            translateGradientScale: widget.translateGradientScale,
-          ),
-        ).createShader(bounds);
-      },
-      blendMode: BlendMode.dstIn,
-      child: child,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (widget.duartion < _rippleThreshold) {
-      // 小于阈值则不应用涟漪效果
-      return _shaderMaskWrap(
-        Text(widget.text, style: _normalStyle, strutStyle: widget.strutStyle),
-      );
-    }
-
-    final List<InlineSpan> glowChildren = List<InlineSpan>.filled(
-      _charCount,
-      const TextSpan(),
-      growable: false,
-    );
-
-    for (int i = 0; i < _charCount; i++) {
-      final char = _charList[i];
-
-      // 当 progress>=windowStart 时 这个字才会开始动画
-      // 将 progress 进度分别映射到每个字的进度上
-      final double charProgress =
-          // 这个字动画持续的时间为 _waveWidth
-          ((widget.progress - _windowStarts[i]) / _waveWidth).clamp(0.0, 1.0);
-
-      // 使用非对称曲线，设置 animatedRatio 可控制放大与缩小所占的时间比例
-      double animationCurve;
-      if (charProgress < _animatedRatio) {
-        // 前 animatedRatio 的时间用于放大的曲线
-        // 使用 easeOut 曲线
-        animationCurve = Curves.easeOut.transform(
-          charProgress / _animatedRatio,
-        );
-      } else {
-        // 后 1 - animatedRatio 的时间用于缩小的曲线
-        // 使用 easeIn 曲线
-        animationCurve =
-            1.0 -
-            Curves.easeIn.transform(
-              (charProgress - _animatedRatio) / (1 - _animatedRatio),
-            );
-      }
-
-      // 将 animationCurve 应用到缩放与辉光效果线性插值
-      final double scale = ui.lerpDouble(
-        1.0,
-        widget.ripplesScaleMax,
-        animationCurve,
-      )!;
-      final double glowAlpha = ui.lerpDouble(
-        0.0,
-        widget.glowAlphaMax,
-        animationCurve,
-      )!;
-
-      // glow 层
-      glowChildren[i] = WidgetSpan(
-        alignment: PlaceholderAlignment.baseline,
-        baseline: TextBaseline.alphabetic,
-        child: Transform.scale(
-          alignment: Alignment.bottomCenter,
-          scale: scale,
-          filterQuality: FilterQuality.low,
-          child: Text(
-            char,
-            style: _normalStyle.copyWith(
-              shadows: [
-                Shadow(
-                  color: _baseColor.withValues(alpha: glowAlpha * 0.6),
-                  blurRadius: 4,
-                ),
-                Shadow(
-                  color: _baseColor.withValues(alpha: glowAlpha),
-                  blurRadius: 8,
-                ),
-              ],
-            ),
-            strutStyle: widget.strutStyle,
-          ),
-        ),
-      );
-    }
-
-    return _shaderMaskWrap(
-      Text.rich(
-        TextSpan(children: glowChildren),
-        strutStyle: widget.strutStyle,
-      ),
-    );
-  }
-}
-
-class _KaraOkLyricWidget extends StatelessWidget {
-  final List<WordEntry> text;
-  final TextStyle style;
-  final bool isCurrentLine;
-  final bool isPrevLine;
-  final int lrcAlignmentIndex;
-  final LyricController lyricController;
-  final StrutStyle strutStyle;
-  final int blurSigma;
-
-  const _KaraOkLyricWidget({
-    required this.text,
-    required this.style,
-    required this.isCurrentLine,
-    required this.lrcAlignmentIndex,
-    required this.lyricController,
-    required this.strutStyle,
-    required this.isPrevLine,
-    required this.blurSigma,
-  });
-
-  Widget _createPlainText() {
-    final StringBuffer buffer = StringBuffer();
-    for (int i = 0; i < text.length; i++) {
-      buffer.write(text[i].lyricWord);
-    }
-
-    return LyricText(
-      buffer.toString(),
-      style: style,
-      strutStyle: strutStyle,
-      textAlign: _lrcTextAlign[lrcAlignmentIndex],
-      blurSigma: blurSigma,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!isCurrentLine && !isPrevLine) {
-      return _createPlainText();
-    }
-
-    final gradientColors = <Color>[
-      style.color!.withValues(alpha: _highLightAlpha),
-      style.color!.withValues(alpha: _highLightAlpha),
-      style.color!.withValues(alpha: _currentAlpha),
-    ];
-
-    final TextAlign textAlign = _lrcTextAlign[lrcAlignmentIndex];
-
-    return ValueListenableBuilder<int>(
-      valueListenable: lyricController.currentWordIndexNotifier,
-      builder: (_, currentIndex, _) {
-        // 以下只会在“当前行”和“刚唱完的上一行”执行，保证了动画平滑且不被打断
-        return Text.rich(
-          TextSpan(
-            children: List.generate(text.length, (wordIndex) {
-              final entry = text[wordIndex];
-              final word = entry.lyricWord;
-              final double dura = entry.duration;
-
-              final bool isFloating =
-                  isCurrentLine && wordIndex <= currentIndex;
-              final floatingDuration = dura * (1000 * 1.8) + 50;
-              final floatingDelay = dura * (1000 * 0.2);
-
-              Widget wordWidget;
-
-              if (isCurrentLine && wordIndex == currentIndex) {
-                gradientColors[2] = style.color!.withValues(
-                  alpha: wordIndex == 0 ? _currentAlpha - 0.15 : _currentAlpha,
-                ); // 视觉欺骗，防止颜色突变
-
-                final translateGradientScale = dura >= 1.0
-                    ? 3.0
-                    : 2.0; // 动态改变渐变区宽度
-                double ripplesScaleMax = _ripplesScaleMin;
-                double glowAlphaMax = _glowAlphaMin;
-
-                if (dura >= _rippleThreshold) {
-                  // 将词的持续时间 dura 在 [_rippleThreshold, 3] 区间内归一化为 [0.0, 1.0] 的比例值
-                  // 时间参数，根据dura的大小影响缩放和辉光效果的最大值
-                  final effectRatio =
-                      (((dura - _rippleThreshold) /
-                              (3 - _rippleThreshold))) // 最大观测长度 3s
-                          .clamp(0.0, 1.0);
-                  ripplesScaleMax += _ripplesScaleExtra * effectRatio;
-                  glowAlphaMax += _glowAlphaExtra * effectRatio;
-                }
-
-                // 正在唱的字
-                wordWidget = ValueListenableBuilder<double>(
-                  valueListenable: lyricController.wordProgress,
-                  builder: (context, progress, child) {
-                    return _HighlightedWord(
-                      text: word,
-                      progress: progress,
-                      style: style,
-                      strutStyle: strutStyle,
-                      gradientColors: gradientColors,
-                      duartion: dura,
-                      ripplesScaleMax: ripplesScaleMax,
-                      glowAlphaMax: glowAlphaMax,
-                      translateGradientScale: translateGradientScale,
-                    );
-                  },
-                );
-              } else {
-                // 目标颜色
-                Color targetColor;
-                Color beginColor;
-
-                if (isCurrentLine) {
-                  if (wordIndex < currentIndex) {
-                    targetColor = style.color!.withValues(
-                      alpha: _highLightAlpha,
-                    );
-                    beginColor = targetColor; // 已经唱过的字，保持高亮
-                  } else {
-                    targetColor = style.color!.withValues(alpha: _currentAlpha);
-                    beginColor = style.color!.withValues(
-                      alpha: _notPlayedDarkAlpha,
-                    ); // 还没唱到的字，从暗色过渡到稍微高亮的颜色
-                  }
-                } else {
-                  targetColor = style.color!;
-                  beginColor = style.color!.withValues(
-                    alpha: _highLightAlpha,
-                  ); // 刚唱完的上一行，最终褪回普通颜色
-                }
-
-                wordWidget = TweenAnimationBuilder<Color?>(
-                  key: ValueKey('word_$wordIndex'),
-                  duration: const Duration(milliseconds: 600),
-                  curve: Curves.easeInOut,
-                  tween: ColorTween(begin: beginColor, end: targetColor),
-                  builder: (_, color, __) {
-                    return LyricText(
-                      word,
-                      style: style.copyWith(color: color),
-                      strutStyle: strutStyle,
-                      blurSigma: blurSigma,
-                    );
-                  },
-                );
-
-                // 这套方案的问题： 在歌词换行的时候最后一个词偶尔会直接跳变为透明色 但性能较优
-                // wordWidget = AnimatedDefaultTextStyle(
-                //   key: ValueKey('word_$wordIndex'),
-                //   duration: const Duration(milliseconds: 600),
-                //   curve: Curves.easeInOut,
-                //   style: style.copyWith(color: targetColor),
-                //   child: Text(word, strutStyle: strutStyle),
-                // );
-              }
-
-              return WidgetSpan(
-                alignment: PlaceholderAlignment.baseline,
-                baseline: TextBaseline.alphabetic,
-                child: _SyllableFloatWidget(
-                  isFloating: isFloating,
-                  duration: isFloating ? floatingDuration : 600,
-                  delay: isFloating ? floatingDelay : 0,
-                  child: wordWidget,
-                ),
-              );
-            }),
-          ),
-          textAlign: textAlign,
-          strutStyle: strutStyle,
-          softWrap: true,
-        );
-      },
-    );
-  }
-}
-
-class _SyllableFloatWidget extends StatefulWidget {
-  final bool isFloating;
-  final double duration;
-  final double delay;
-  final Widget child;
-
-  const _SyllableFloatWidget({
-    required this.isFloating,
-    required this.duration,
-    required this.delay,
-    required this.child,
-  });
-
-  @override
-  State<_SyllableFloatWidget> createState() => _SyllableFloatWidgetState();
-}
-
-class _SyllableFloatWidgetState extends State<_SyllableFloatWidget>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late CurvedAnimation _curvedAnimation;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: widget.duration.round()),
-    );
-    _curvedAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: widget.isFloating ? Curves.easeInOut : Curves.easeInCubic,
-    );
-    _updateAnimation();
-  }
-
-  @override
-  void didUpdateWidget(_SyllableFloatWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.isFloating != widget.isFloating ||
-        oldWidget.duration != widget.duration ||
-        oldWidget.delay != widget.delay) {
-      _controller.duration = Duration(milliseconds: widget.duration.round());
-
-      _curvedAnimation.dispose();
-      _curvedAnimation = CurvedAnimation(
-        parent: _controller,
-        curve: widget.isFloating ? Curves.easeInOut : Curves.easeInCubic,
-      );
-
-      _updateAnimation();
-    }
-  }
-
-  void _updateAnimation() {
-    _timer?.cancel();
-    final double target = widget.isFloating ? 1.0 : 0.0;
-
-    if (widget.delay > 0 && widget.isFloating) {
-      _timer = Timer(Duration(milliseconds: widget.delay.round()), () {
-        if (mounted) {
-          _controller.animateTo(target);
-        }
-      });
-    } else {
-      _controller.animateTo(target);
-    }
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _curvedAnimation.dispose();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _curvedAnimation,
-      builder: (context, child) {
-        final double dy = ui.lerpDouble(
-          0.0,
-          _floatingY,
-          _curvedAnimation.value,
-        )!;
-        return Transform.translate(
-          offset: Offset(0, dy),
-          filterQuality: FilterQuality.low,
-          child: child,
-        );
-      },
-      child: widget.child,
-    );
-  }
+  Color? get mixColor => Color.lerp(
+    _primaryColor,
+    Colors.white,
+    LyricConstants.notPlayedLightAlpha,
+  );
 }
 
 class LyricsRender extends StatefulWidget {
@@ -683,7 +105,7 @@ class _LyricsRenderState extends State<LyricsRender> {
     final height = MediaQuery.sizeOf(context).height;
     final width = MediaQuery.sizeOf(context).width;
 
-    final dynamicPadding = width / 2 * (1 - 1 / _lrcScale);
+    final dynamicPadding = width / 2 * (1 - 1 / LyricConstants.lrcScale);
 
     // 路由外部更改的值
     final useSpringscroll = _settingController.useSpringScroll.value;
@@ -723,7 +145,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                         "无歌词",
                         style: lyricsStyle.copyWith(
                           color: lyricsStyle.color?.withValues(
-                            alpha: _highLightAlpha,
+                            alpha: LyricConstants.highLightAlpha,
                           ),
                         ),
                       ),
@@ -813,8 +235,8 @@ class _LyricsRenderState extends State<LyricsRender> {
                             padding: EdgeInsets.symmetric(
                               vertical:
                                   (height -
-                                      _audioCtrlBarHeight -
-                                      _controllerBarHeight) /
+                                      LyricConstants.audioCtrlBarHeight -
+                                      LyricConstants.controllerBarHeight) /
                                   2,
                             ),
                             itemBuilder: (BuildContext context, int index) {
@@ -841,7 +263,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                         icon: _settingController.showTranslate.value
                             ? PhosphorIconsFill.translate
                             : PhosphorIconsLight.translate,
-                        size: _ctrlBtnMinSize,
+                        size: LyricConstants.ctrlBtnMinSize,
                         color: mixColor,
                         fn: () {
                           batch(() {
@@ -859,7 +281,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                         icon: _settingController.showRoma.value
                             ? PhosphorIconsFill.textAUnderline
                             : PhosphorIconsLight.textAUnderline,
-                        size: _ctrlBtnMinSize,
+                        size: LyricConstants.ctrlBtnMinSize,
                         color: mixColor,
                         fn: () {
                           batch(() {
@@ -940,10 +362,10 @@ class _StaggeredLyricItem extends StatelessWidget {
     required bool isCurrent,
   }) {
     return AnimatedScale(
-      scale: isCurrent ? _lrcScale : 1.0,
+      scale: isCurrent ? LyricConstants.lrcScale : 1.0,
       duration: const Duration(milliseconds: 600),
       curve: Curves.easeOutCubic,
-      alignment: _lrcScaleAlignment[lrcAlignment],
+      alignment: LyricConstants.lrcScaleAlignment[lrcAlignment],
       child: child,
     );
   }
@@ -955,7 +377,7 @@ class _StaggeredLyricItem extends StatelessWidget {
     return AnimatedSize(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOutCubic,
-      alignment: _lrcScaleAlignment[lrcAlignment],
+      alignment: LyricConstants.lrcScaleAlignment[lrcAlignment],
       child: show ? child : const SizedBox.shrink(),
     );
   }
@@ -991,10 +413,10 @@ class _StaggeredLyricItem extends StatelessWidget {
           width: double.infinity,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: _lrcCrossAlignment[lrcAlignment],
+            crossAxisAlignment: LyricConstants.lrcCrossAlignment[lrcAlignment],
             children: [
               if (index == 0)
-                _InterludeWidget(
+                InterludeWidget(
                   lyricController: lyricController,
                   lrcAlignment: lrcAlignment,
                   interludeLyricStyle: interludeLyricStyle,
@@ -1003,7 +425,7 @@ class _StaggeredLyricItem extends StatelessWidget {
                 ),
               if (lrcType == LyricFormat.lrc)
                 _createAnimatedScaleWidget(
-                  child: _LrcLyricWidget(
+                  child: LrcLyricWidget(
                     text: lineText as String,
                     style: lyricStyle,
                     isCurrent: isCurrent,
@@ -1014,7 +436,7 @@ class _StaggeredLyricItem extends StatelessWidget {
                 )
               else
                 _createAnimatedScaleWidget(
-                  child: _KaraOkLyricWidget(
+                  child: KaraOkLyricWidget(
                     text: lineText as List<WordEntry>,
                     style: lyricStyle,
                     isCurrentLine: isCurrent,
@@ -1029,29 +451,29 @@ class _StaggeredLyricItem extends StatelessWidget {
 
               _createAnimatedSizeWidget(
                 show: romaText.isNotEmpty && showRoma,
-                child: _LrcLyricWidget(
+                child: LrcLyricWidget(
                   text: romaText,
                   style: romaLyricStyle,
                   isCurrent: isCurrent,
                   textAlign: textAlign,
-                  highLightAlpha: _currentAlpha,
+                  highLightAlpha: LyricConstants.currentAlpha,
                   blurSigma: blurSigma,
                 ),
               ),
 
               _createAnimatedSizeWidget(
                 show: translateText.isNotEmpty && showTranslate,
-                child: _LrcLyricWidget(
+                child: LrcLyricWidget(
                   text: translateText,
                   style: tsLyricStyle,
                   isCurrent: isCurrent,
                   textAlign: textAlign,
-                  highLightAlpha: _currentAlpha,
+                  highLightAlpha: LyricConstants.currentAlpha,
                   blurSigma: blurSigma,
                 ),
               ),
               if (isCurrent || isPrevLine)
-                _InterludeWidget(
+                InterludeWidget(
                   lyricController: lyricController,
                   lrcAlignment: lrcAlignment,
                   interludeLyricStyle: interludeLyricStyle,
@@ -1067,241 +489,15 @@ class _StaggeredLyricItem extends StatelessWidget {
             audioController.throttledSeek(startTime);
           },
           style: TextButton.styleFrom(
-            shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
+            shape: const RoundedRectangleBorder(
+              borderRadius: LyricConstants.borderRadius,
+            ),
             padding: lrcPadding,
             overlayColor: hoverColor,
           ),
           child: content,
         );
       },
-    );
-  }
-}
-
-class _InterludeTransition extends StatefulWidget {
-  final Animation<double> animation;
-  final Alignment scaleAlignment;
-  final Widget child;
-
-  const _InterludeTransition({
-    required this.animation,
-    required this.scaleAlignment,
-    required this.child,
-  });
-
-  @override
-  State<_InterludeTransition> createState() => _InterludeTransitionState();
-}
-
-class _InterludeTransitionState extends State<_InterludeTransition> {
-  late CurvedAnimation _sizeAnimation;
-  late CurvedAnimation _fadeAnimation;
-  late CurvedAnimation _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _initAnimations();
-  }
-
-  @override
-  void didUpdateWidget(_InterludeTransition oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.animation != widget.animation) {
-      _disposeAnimations();
-      _initAnimations();
-    }
-  }
-
-  void _initAnimations() {
-    _sizeAnimation = CurvedAnimation(
-      parent: widget.animation,
-      curve: Curves.easeOutCubic,
-      reverseCurve: Curves.easeInCubic,
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: widget.animation,
-      curve: Curves.easeOut,
-      reverseCurve: Curves.easeIn,
-    );
-    _scaleAnimation = CurvedAnimation(
-      parent: widget.animation,
-      curve: Curves.easeOutBack,
-      reverseCurve: Curves.easeInBack,
-    );
-  }
-
-  void _disposeAnimations() {
-    _sizeAnimation.dispose();
-    _fadeAnimation.dispose();
-    _scaleAnimation.dispose();
-  }
-
-  @override
-  void dispose() {
-    _disposeAnimations();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizeTransition(
-      axis: Axis.vertical,
-      sizeFactor: _sizeAnimation,
-      child: FadeTransition(
-        opacity: _fadeAnimation,
-        child: ScaleTransition(
-          scale: _scaleAnimation,
-          alignment: widget.scaleAlignment,
-          child: widget.child,
-        ),
-      ),
-    );
-  }
-}
-
-class _InterludeWidget extends StatelessWidget {
-  final LyricController lyricController;
-  final int lrcAlignment;
-  final TextStyle interludeLyricStyle;
-  final StrutStyle strutStyle;
-  final bool isCurrent;
-
-  const _InterludeWidget({
-    required this.lyricController,
-    required this.lrcAlignment,
-    required this.interludeLyricStyle,
-    required this.strutStyle,
-    required this.isCurrent,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final Color baseColor =
-        interludeLyricStyle.color ?? const Color(0xFFFFFFFF);
-    final List<Color> gradientColors = [
-      baseColor.withValues(alpha: _highLightAlpha),
-      baseColor.withValues(alpha: _highLightAlpha),
-      baseColor,
-    ];
-
-    return SignalBuilder(
-      builder: (context) {
-        final bool show = lyricController.showInterlude.value;
-        final bool isVisible = isCurrent && show;
-
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 500),
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            return _InterludeTransition(
-              animation: animation,
-              scaleAlignment: _lrcScaleAlignment[lrcAlignment],
-              child: child,
-            );
-          },
-          child: isVisible
-              ? Row(
-                  key: const ValueKey('interlude_visible'),
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: _lrcMainAlignment[lrcAlignment],
-                  children: [
-                    RepaintBoundary(
-                      child: _BreathingDots(
-                        lyricController: lyricController,
-                        interludeLyricStyle: interludeLyricStyle,
-                        strutStyle: strutStyle,
-                        gradientColors: gradientColors,
-                        lrcAlignment: lrcAlignment,
-                      ),
-                    ),
-                  ],
-                )
-              : const SizedBox.shrink(key: ValueKey('interlude_hidden')),
-        );
-      },
-    );
-  }
-}
-
-class _BreathingDots extends StatefulWidget {
-  final LyricController lyricController;
-  final TextStyle interludeLyricStyle;
-  final StrutStyle strutStyle;
-  final List<Color> gradientColors;
-  final int lrcAlignment;
-
-  const _BreathingDots({
-    required this.lyricController,
-    required this.interludeLyricStyle,
-    required this.strutStyle,
-    required this.gradientColors,
-    required this.lrcAlignment,
-  });
-
-  @override
-  State<_BreathingDots> createState() => _BreathingDotsState();
-}
-
-class _BreathingDotsState extends State<_BreathingDots>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animController;
-  late CurvedAnimation _curvedAnimation;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-
-    _curvedAnimation = CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeInOut,
-    );
-
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: _lrcScale,
-    ).animate(_curvedAnimation);
-  }
-
-  @override
-  void dispose() {
-    _curvedAnimation.dispose();
-    _animController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _scaleAnimation,
-      builder: (context, child) {
-        return Transform.scale(
-          alignment: _lrcScaleAlignment[widget.lrcAlignment],
-          scale: _scaleAnimation.value,
-          filterQuality: FilterQuality.low, // 保持低质量抗锯齿，防止抖动
-          child: child,
-        );
-      },
-      child: ValueListenableBuilder(
-        valueListenable: widget.lyricController.interludeProcess,
-        builder: (context, progress, child) {
-          return _HighlightedWord(
-            text: "  ● ● ●  ",
-            progress: progress,
-            style: widget.interludeLyricStyle,
-            strutStyle: widget.strutStyle,
-            gradientColors: widget.gradientColors,
-            duartion: 0,
-            ripplesScaleMax: 1.1,
-            glowAlphaMax: 0.2,
-            translateGradientScale: 2.0,
-          );
-        },
-      ),
     );
   }
 }
