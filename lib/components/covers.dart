@@ -206,12 +206,17 @@ class _LoadLocalOrNetCoverState extends State<LoadLocalOrNetCover> {
   void _triggerLoad({bool isInit = false}) {
     _debounceTimer?.cancel();
 
-    final cachedData = CoverLRUCache.get(widget.music.path);
+    Uint8List? cachedData;
+
+    if (widget.coverQuality == CoverQuality.low) {
+      cachedData = CoverLRUCache.get(widget.music.path);
+    }
+
     if (cachedData != null) {
       if (isInit) {
         _applyImageData(cachedData);
       } else {
-        setState(() => _applyImageData(cachedData));
+        setState(() => _applyImageData(cachedData!));
       }
       return;
     }
@@ -262,7 +267,9 @@ class _LoadLocalOrNetCoverState extends State<LoadLocalOrNetCover> {
     }
 
     if (finalData != null && finalData.isNotEmpty) {
-      CoverLRUCache.put(targetPath, finalData);
+      if (widget.coverQuality == CoverQuality.low) {
+        CoverLRUCache.put(targetPath, finalData);
+      }
       setState(() => _applyImageData(finalData!));
     }
   }

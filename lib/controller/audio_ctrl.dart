@@ -46,6 +46,9 @@ class AudioController {
   // 歌词渲染刷新计数
   final lyricRenderRevision = signal(0);
 
+  // 封面渲染刷新计数
+  final coverRevision = signal(0);
+
   late final Signal<MusicCache> currentMetadata = signal(
     MusicCache(
       title: '',
@@ -77,7 +80,7 @@ class AudioController {
 
   MusicCache? _hasNextAudioMetadata;
 
-  final currentCover = signal(kTransparentImage);
+  Uint8List currentCover = kTransparentImage;
   final currentSmallCover = signal(kTransparentImage);
 
   final currentSpeed = signal(1.0);
@@ -207,7 +210,7 @@ class AudioController {
 
       // 原子提交
       batch(() {
-        currentCover.value = bigCover!;
+        currentCover = bigCover!;
         currentSmallCover.value = smallCover;
         if (palette != null) {
           _applyCoverPalette(palette);
@@ -215,6 +218,7 @@ class AudioController {
 
         currentLyrics.value = lyrics;
         lyricRenderRevision.value++; // 触发构建
+        coverRevision.value++;
       });
 
       _settingController.lastAudioInfo[SettingController.lastAudioMetadataKey] =
@@ -258,7 +262,8 @@ class AudioController {
             netSrc.isEmpty) {
           return;
         }
-        currentCover.value = Uint8List.fromList(netSrc);
+        currentCover = Uint8List.fromList(netSrc);
+        coverRevision.value++;
       } catch (e) {
         debugPrint("网络封面下载失败: $e");
       }
@@ -375,7 +380,6 @@ class AudioController {
     currentDuration.dispose();
     currentState.dispose();
     playListCacheItems.dispose();
-    currentCover.dispose();
     currentSmallCover.dispose();
     currentSpeed.dispose();
     currentLyrics.dispose();
@@ -819,10 +823,6 @@ class AudioController {
       }
       currentMetadata.value = newCache;
     });
-
-    currentCover.value =
-        await getCover(path: currentPath.value, sizeFlag: CoverQuality.high) ??
-        kTransparentImage;
   }
 
   /// 若 `metadata` 不在 `playListCacheItems` 内 则添加并播放

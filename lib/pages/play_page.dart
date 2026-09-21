@@ -26,6 +26,7 @@ import 'package:zerobit_player/custom_widgets/scroll_text.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
+import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/theme_manager.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
@@ -650,7 +651,6 @@ class _CoverSideState extends State<_CoverSide> {
                 borderRadius: _borderRadius,
                 child: SignalBuilder(
                   builder: (context) {
-                    final cover = audioController.currentCover.value;
                     return AnimatedSwitcher(
                       duration: 300.ms,
                       switchInCurve: Curves.easeOutCubic,
@@ -663,9 +663,9 @@ class _CoverSideState extends State<_CoverSide> {
                         ),
                       ),
                       child: LoadU8Cover(
-                        data: cover,
+                        data: audioController.currentCover,
                         coverResolutionFlag: CoverResolutionFlag.big,
-                        key: ValueKey(cover),
+                        key: ValueKey(audioController.coverRevision.value),
                         size: widget.coverSize,
                       ),
                     );
@@ -1293,7 +1293,6 @@ class _PlayPageState extends State<PlayPage> {
           addFn: () {
             if (_settingController.lrcFontSize.value <
                 SettingController.lrcFontSizeMax) {
-              // 字号与渲染版本号的写入合并为一次通知
               batch(() {
                 _settingController.lrcFontSize.value++;
                 _audioController.lyricRenderRevision.value++;
@@ -1305,7 +1304,6 @@ class _PlayPageState extends State<PlayPage> {
           decFn: () {
             if (_settingController.lrcFontSize.value >
                 SettingController.lrcFontSizeMin) {
-              // 字号与渲染版本号的写入合并为一次通知
               batch(() {
                 _settingController.lrcFontSize.value--;
                 _audioController.lyricRenderRevision.value++;
