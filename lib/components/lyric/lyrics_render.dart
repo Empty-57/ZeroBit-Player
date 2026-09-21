@@ -15,7 +15,7 @@ import 'package:zerobit_player/theme_manager.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
-import 'audio_ctrl_btn.dart';
+import '../audio_ctrl_btn.dart';
 
 class _LyricsStyle {
   final SettingController _settingsController = SettingController.instance;

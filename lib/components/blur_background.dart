@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/covers.dart';
-import 'package:zerobit_player/components/lyrics_mesh.dart';
+import 'package:zerobit_player/components/play_page/play_page_mesh.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/theme_manager.dart';
 import 'package:zerobit_player/tools/paint_cache.dart';
@@ -64,7 +64,7 @@ class BlurWithCoverBackground extends StatelessWidget {
           child: () {
             final bool useMesh = _settingController.useMesh.value && meshEnable;
             if (useMesh) {
-              return LyricsMesh();
+              return PlayPageMesh();
             }
 
             if (_settingController.backgroundImagePath.value.isNotEmpty &&

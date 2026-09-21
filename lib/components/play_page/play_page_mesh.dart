@@ -12,8 +12,8 @@ final AnimatedMeshGradientOptions _meshOptions = AnimatedMeshGradientOptions(
 
 final Widget _meshChild = Container();
 
-class LyricsMesh extends StatelessWidget {
-  const LyricsMesh({super.key});
+class PlayPageMesh extends StatelessWidget {
+  const PlayPageMesh({super.key});
 
   @override
   Widget build(BuildContext context) {
