@@ -281,7 +281,7 @@ packages:
     source: hosted
     version: "2.11.1"
   flutter_shaders:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: flutter_shaders
       sha256: "34794acadd8275d971e02df03afee3dee0f98dbfb8c4837082ad0034f612a3e2"
@@ -532,6 +532,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "5.1.1"
+  logger:
+    dependency: "direct main"
+    description:
+      name: logger
+      sha256: "2a0dc097e7b01d942475bdd552356db2d0f768b05540bd4b2b53f1840f2239a7"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.8.0"
   logging:
     dependency: transitive
     description:

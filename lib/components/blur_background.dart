@@ -54,7 +54,9 @@ class BlurWithCoverBackground extends StatelessWidget {
       children: [
         ClipRRect(
           child: Container(
-            color: _settingController.backgroundImagePath.value.isNotEmpty
+            color:
+                _settingController.backgroundImagePath.value.isNotEmpty ||
+                    _settingController.useTransparencyBackground.value
                 ? null
                 : backgroundColor,
           ),
@@ -67,8 +69,9 @@ class BlurWithCoverBackground extends StatelessWidget {
               return PlayPageMesh();
             }
 
-            if (_settingController.backgroundImagePath.value.isNotEmpty &&
-                !isPlayPage) {
+            if (!isPlayPage &&
+                (_settingController.backgroundImagePath.value.isNotEmpty ||
+                    _settingController.useTransparencyBackground.value)) {
               return const SizedBox.shrink();
             }
 

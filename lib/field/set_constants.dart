@@ -7,3 +7,10 @@ abstract class SortType {
   static const int createTime = 5;
   static const int trackNumber = 6;
 }
+
+abstract class SpectrogramStyleType {
+  static const int none = 0;
+  static const int rect = 1;
+  static const int waveform = 2;
+  static const int wave = 3;
+}

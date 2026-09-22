@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
-import 'package:zerobit_player/field/sort_type.dart';
+import 'package:zerobit_player/field/set_constants.dart';
 
 import '../components/get_snack_bar.dart';
 import '../controller/audio_ctrl.dart';

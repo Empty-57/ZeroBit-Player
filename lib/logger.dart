@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
-class FileLogger {
+class LoggerUni {
   static IOSink? _logSink;
   static String? _currentLogDate;
 

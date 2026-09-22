@@ -10,7 +10,7 @@ import 'package:zerobit_player/controller/window_ctrl.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/field/scalable_config_keys.dart';
 import 'package:zerobit_player/field/shared_preferences_key.dart';
-import 'package:zerobit_player/field/sort_type.dart';
+import 'package:zerobit_player/field/set_constants.dart';
 import 'package:zerobit_player/hive_manager/hive_box.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/scalable_setting_cache_model.dart';
@@ -65,11 +65,11 @@ class SettingController {
   final volume = signal(1.0);
   final playMode = signal(0);
   final useExclusiveMode = signal(false);
-  final showSpectrogram = signal(false);
   final equalizerGains = listSignal(List.generate(10, (_) => 0.0).toList());
   final useReplayGain = signal(false);
   final useTaskBarCtrl = signal(true);
   final useVolumeFade = signal(true);
+  final spectrogramStyle = signal(0); // 0：无，1：柱状图，2：波形图，3：波浪
 
   static const minGain = -12.0;
   static const maxGain = 12.0;
@@ -114,6 +114,12 @@ class SettingController {
 
   static const Map<int, String> apiMap = {0: "QQ音乐", 1: "网易云音乐", 2: "酷狗音乐"};
   static const Map<int, String> playModeMap = {0: '单曲循环', 1: '列表循环', 2: '随机播放'};
+  static const Map<int, String> spectrogramStyleMap = {
+    SpectrogramStyleType.none: '无',
+    SpectrogramStyleType.rect: '柱状图',
+    SpectrogramStyleType.waveform: '波形图',
+    SpectrogramStyleType.wave: '波浪',
+  };
 
   // 文件与列表状态
   final folders = listSignal(<String>[]);
@@ -294,12 +300,8 @@ class SettingController {
         );
       }
 
-      batch(() {
-        showSpectrogram.value =
-            config[ScalableConfigKeys.showSpectrogramKey] ?? false;
-        showDesktopLyrics.value =
-            config[ScalableConfigKeys.showDesktopLyricsKey] ?? false;
-      });
+      showDesktopLyrics.value =
+          config[ScalableConfigKeys.showDesktopLyricsKey] ?? false;
     }
   }
 
@@ -335,6 +337,8 @@ class SettingController {
           false;
       useVolumeFade.value =
           prefs?.getBool(SharedPreferencesKey.useVolumeFade) ?? true;
+      spectrogramStyle.value =
+          prefs?.getInt(SharedPreferencesKey.spectrogramStyle) ?? 0;
     });
 
     // 提取快捷键解析逻辑，消除冗余
@@ -478,7 +482,7 @@ class SettingController {
           ScalableConfigKeys.equalizerGains: equalizerGains,
           ScalableConfigKeys.lastAudioInfo: lastAudioInfo,
           ScalableConfigKeys.lastWindowInfo: lastWindowInfo,
-          ScalableConfigKeys.showSpectrogramKey: showSpectrogram.value,
+          // ScalableConfigKeys.showSpectrogramKey: showSpectrogram.value,
           ScalableConfigKeys.showDesktopLyricsKey: showDesktopLyrics.value,
         },
       ),
@@ -704,6 +708,14 @@ class SettingController {
       return;
     }
     prefs!.setString(SharedPreferencesKey.backgroundImagePath, value);
+  }
+
+  void setSpectrogramStyle({required int value}) {
+    spectrogramStyle.value = value;
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setInt(SharedPreferencesKey.spectrogramStyle, value);
   }
 
   void setUseAutoUpdate({required bool value}) => _setBoolPref(

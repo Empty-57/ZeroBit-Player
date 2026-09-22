@@ -116,7 +116,7 @@ Future<Box> _openSafeBox<T>(String boxName) async {
 
 Future<void> _initLog() async {
   // 初始化本地日志系统
-  await FileLogger.init();
+  await LoggerUni.init();
 
   // 拦截 Flutter 框架级别的错误
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -124,7 +124,7 @@ Future<void> _initLog() async {
     FlutterError.presentError(details);
 
     // 写入日志文件
-    FileLogger.logError(
+    LoggerUni.logError(
       'Flutter UI/Framework Error',
       error: details.exception,
       stackTrace: details.stack,
@@ -133,7 +133,7 @@ Future<void> _initLog() async {
 
   // 拦截 Dart 异步/底层级别的错误
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
-    FileLogger.logError(
+    LoggerUni.logError(
       'Dart Async/Unhandled Error',
       error: error,
       stackTrace: stack,

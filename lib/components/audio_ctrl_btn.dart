@@ -143,8 +143,6 @@ class AudioCtrlWidget {
 
   AudioCtrlWidget({required this.size, required this.context, this.color});
 
-  Widget get speedSet => _SpeedSetBtn(size: size, color: color);
-
   Widget get volumeSet => _VolumeSetBtn(size: size, color: color);
 
   Widget get skipBack => _SkipBackBtn(size: size, color: color);
@@ -159,80 +157,6 @@ class AudioCtrlWidget {
       _SeekSlideWidget(audioController: AudioController.instance);
 
   Widget get equalizerSet => _EqualizerBtn(size: size, color: color);
-}
-
-class _SpeedSetBtn extends StatelessWidget {
-  final double size;
-  final Color? color;
-  const _SpeedSetBtn({required this.size, this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    final AudioController audioController = AudioController.instance;
-    final menuController = MenuController();
-
-    final speedList = List.generate(16, (index) => index + 5).map((i) {
-      final speed = i / 10;
-      return SignalBuilder(
-        builder: (context) {
-          final isCurrent = audioController.currentSpeed.value == speed;
-          return CustomBtn(
-            fn: () async {
-              await setSpeed(speed: speed);
-              audioController.currentSpeed.value = speed;
-              menuController.close();
-            },
-            btnWidth: 72,
-            btnHeight: 36,
-            label: speed.toString(),
-            icon: isCurrent ? PhosphorIconsLight.check : null,
-            iconSize: 'xs',
-            contentColor: Theme.of(context).colorScheme.onSecondaryContainer,
-            mainAxisAlignment: isCurrent
-                ? MainAxisAlignment.spaceBetween
-                : MainAxisAlignment.end,
-            spacing: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            backgroundColor: Colors.transparent,
-          );
-        },
-      );
-    }).toList();
-
-    final height = MediaQuery.sizeOf(context).height;
-
-    return Theme(
-      data: Theme.of(context).copyWith(
-        scrollbarTheme: const ScrollbarThemeData(
-          thumbVisibility: WidgetStatePropertyAll(false),
-          trackVisibility: WidgetStatePropertyAll(false),
-          thickness: WidgetStatePropertyAll(0),
-        ),
-      ),
-      child: MenuAnchor(
-        menuChildren: speedList,
-        controller: menuController,
-        style: MenuStyle(
-          maximumSize: WidgetStatePropertyAll(Size.fromHeight(height / 2)),
-          backgroundColor: WidgetStatePropertyAll(
-            Theme.of(
-              context,
-            ).colorScheme.surfaceContainer.withValues(alpha: 0.8),
-          ),
-        ),
-        builder: (_, MenuController controller, __) {
-          return GenIconBtn(
-            tooltip: "倍速",
-            icon: PhosphorIconsLight.waveform,
-            size: size,
-            color: color,
-            fn: () =>
-                controller.isOpen ? controller.close() : controller.open(),
-          );
-        },
-      ),
-    );
-  }
 }
 
 class _VolumeSetBtn extends StatelessWidget {

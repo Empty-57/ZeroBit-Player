@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -22,7 +24,9 @@ import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/custom_widgets/scroll_text.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
+import 'package:zerobit_player/field/set_constants.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
+import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/theme_manager.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
@@ -402,6 +406,8 @@ class _PlayPageState extends State<PlayPage> {
       thickness: 0.5,
     );
 
+    final iconSize = getIconSize(size: 'md');
+
     return [
       SignalBuilder(
         builder: (context) => _createInfoBar(
@@ -513,10 +519,7 @@ class _PlayPageState extends State<PlayPage> {
             return _createdSubmenuBtn(
               text: '查看艺术家',
               darkColorScheme: darkColorScheme,
-              leadingIcon: Icon(
-                PhosphorIconsLight.userFocus,
-                size: getIconSize(size: 'md'),
-              ),
+              leadingIcon: Icon(PhosphorIconsLight.userFocus, size: iconSize),
               menuChildren: artistList.map((v) {
                 return MenuItemButton(
                   onPressed: () {
@@ -544,13 +547,62 @@ class _PlayPageState extends State<PlayPage> {
         },
       ),
       divider,
+      SignalBuilder(
+        builder: (_) {
+          return _createdSubmenuBtn(
+            text: '调整倍速',
+            darkColorScheme: darkColorScheme,
+            leadingIcon: Icon(PhosphorIconsLight.waveform, size: iconSize),
+            menuChildren: List.generate(16, (index) => index + 5).map((i) {
+              final speed = i / 10;
+              return MenuItemButton(
+                closeOnActivate: false,
+                leadingIcon: Icon(
+                  _audioController.currentSpeed.value == speed
+                      ? PhosphorIconsLight.check
+                      : null,
+                  size: iconSize,
+                ),
+                onPressed: () {
+                  unawaited(setSpeed(speed: speed));
+                  _audioController.currentSpeed.value = speed;
+                },
+                child: Center(child: Text(speed.toString())),
+              );
+            }).toList(),
+          );
+        },
+      ),
+      SignalBuilder(
+        builder: (_) {
+          return _createdSubmenuBtn(
+            text: '频谱图样式',
+            darkColorScheme: darkColorScheme,
+            leadingIcon: Icon(PhosphorIconsLight.waveTriangle, size: iconSize),
+            menuChildren: SettingController.spectrogramStyleMap.entries.map((
+              v,
+            ) {
+              return MenuItemButton(
+                closeOnActivate: false,
+                leadingIcon: Icon(
+                  _settingController.spectrogramStyle.value == v.key
+                      ? PhosphorIconsLight.check
+                      : null,
+                  size: iconSize,
+                ),
+                onPressed: () {
+                  _settingController.setSpectrogramStyle(value: v.key);
+                },
+                child: Center(child: Text(v.value)),
+              );
+            }).toList(),
+          );
+        },
+      ),
       _createdSubmenuBtn(
         text: '添加到歌单',
         darkColorScheme: darkColorScheme,
-        leadingIcon: Icon(
-          PhosphorIconsLight.plus,
-          size: getIconSize(size: 'md'),
-        ),
+        leadingIcon: Icon(PhosphorIconsLight.plus, size: iconSize),
         menuChildren: _userPlayListController.allUserKey.map((v) {
           return MenuItemButton(
             onPressed: () {
@@ -906,22 +958,33 @@ class _PlayPageState extends State<PlayPage> {
                                   bottom: 0,
                                   child: SignalBuilder(
                                     builder: (context) {
-                                      if (!settingController
-                                          .showSpectrogram
-                                          .value) {
-                                        return const SizedBox.shrink();
-                                      }
-                                      return SpectrogramWidget(
-                                        key: ValueKey(
-                                          _settingController
-                                              .showSpectrogram
-                                              .value,
-                                        ),
-                                        gradient: spectrogramBarGradient,
-                                        lenth: spectrogramBarLength,
-                                        barWidth: spectrogramBarWidth,
-                                        paddingWidth: spectrogramPaddingWidth,
-                                      );
+                                      final style = settingController
+                                          .spectrogramStyle
+                                          .value;
+                                      return switch (style) {
+                                        SpectrogramStyleType.none =>
+                                          const SizedBox.shrink(),
+                                        SpectrogramStyleType.rect =>
+                                          SpectrogramWidget(
+                                            gradient: spectrogramBarGradient,
+                                            lenth: spectrogramBarLength,
+                                            barWidth: spectrogramBarWidth,
+                                            paddingWidth:
+                                                spectrogramPaddingWidth,
+                                          ),
+                                        SpectrogramStyleType.waveform ||
+                                        SpectrogramStyleType.wave =>
+                                          WaveSpectrogramWidget(
+                                            color: activeTrackCover,
+                                            lenth: spectrogramBarLength,
+                                            width: width,
+                                            isFill:
+                                                style ==
+                                                SpectrogramStyleType.wave,
+                                          ),
+
+                                        _ => const SizedBox.shrink(),
+                                      };
                                     },
                                   ),
                                 ),

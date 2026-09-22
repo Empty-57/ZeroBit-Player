@@ -14,7 +14,7 @@ import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/custom_widgets/custom_drop_menu.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
-import 'package:zerobit_player/field/sort_type.dart';
+import 'package:zerobit_player/field/set_constants.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';

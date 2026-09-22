@@ -247,13 +247,11 @@ class ControlBar extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             spacing: 16,
                             children: [
-                              audioCtrlWidget.speedSet,
                               audioCtrlWidget.volumeSet,
                               audioCtrlWidget.skipBack,
                               audioCtrlWidget.toggle,
                               audioCtrlWidget.skipForward,
                               audioCtrlWidget.changeMode,
-                              audioCtrlWidget.equalizerSet,
                             ],
                           ),
                         ),
@@ -382,21 +380,7 @@ class ControlBar extends StatelessWidget {
                               },
                             ),
                           ),
-                          SignalBuilder(
-                            builder: (context) => GenIconBtn(
-                              tooltip: '频谱图',
-                              icon: settingController.showSpectrogram.value
-                                  ? PhosphorIconsFill.waveTriangle
-                                  : PhosphorIconsLight.waveTriangle,
-                              size: PlayPageConstant.ctrlBtnMinSize,
-                              color: mixColor,
-                              fn: () {
-                                settingController.showSpectrogram.value =
-                                    !settingController.showSpectrogram.value;
-                                settingController.putScalableCache();
-                              },
-                            ),
-                          ),
+                          audioCtrlWidget.equalizerSet,
                           SignalBuilder(
                             builder: (context) => GenIconBtn(
                               tooltip: '桌面歌词',
