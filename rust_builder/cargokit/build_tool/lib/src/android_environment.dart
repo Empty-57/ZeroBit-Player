@@ -135,7 +135,7 @@ class AndroidEnvironment {
         Platform.isWindows ? 'run_build_tool.cmd' : 'run_build_tool.sh';
 
     final packagePath = (await Isolate.resolvePackageUri(
-            Uri.parse('package:build_tool/buildtool.dart')))!
+            Uri.parse('package:build_tool/build_tool.dart')))!
         .toFilePath();
     final selfPath = path.canonicalize(path.join(
       packagePath,
