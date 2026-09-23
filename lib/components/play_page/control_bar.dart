@@ -14,16 +14,25 @@ import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
+import 'dart:ui' as ui;
 
 class _GradientSliderTrackShape extends SliderTrackShape {
   final double activeTrackHeight;
   final double inactiveTrackHeight;
   final Color activeColor;
+
   const _GradientSliderTrackShape({
     this.activeTrackHeight = 6.0,
     this.inactiveTrackHeight = 4.0,
     required this.activeColor,
   });
+
+  static final Paint _inactivePaint = Paint()..style = PaintingStyle.fill;
+  static final Paint _activePaint = Paint()..style = PaintingStyle.fill;
+  static const List<double> _stops = <double>[0.0, 0.1];
+
+  static Color? _lastActiveColor;
+  static List<Color>? _cachedColors;
 
   @override
   Rect getPreferredRect({
@@ -36,7 +45,7 @@ class _GradientSliderTrackShape extends SliderTrackShape {
     final double height = activeTrackHeight;
     final double left = offset.dx;
     final double width = parentBox.size.width;
-    final double top = offset.dy + (parentBox.size.height - height) / 2;
+    final double top = offset.dy + (parentBox.size.height - height) * 0.5;
     return Rect.fromLTWH(left, top, width, height);
   }
 
@@ -63,43 +72,49 @@ class _GradientSliderTrackShape extends SliderTrackShape {
       isDiscrete: isDiscrete,
     );
 
-    final double inH = inactiveTrackHeight;
-    final double inTop = offset.dy + (parentBox.size.height - inH) / 2;
-    final Rect inactiveRect = Rect.fromLTWH(
-      baseRect.left,
-      inTop,
-      baseRect.width,
-      inH,
-    );
-    final Paint inactivePaint = Paint()
-      ..color = sliderTheme.inactiveTrackColor!
-      ..style = PaintingStyle.fill;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(inactiveRect, Radius.circular(inH / 2)),
-      inactivePaint,
+    final double trackLeft = baseRect.left;
+    final double trackRight = baseRect.right;
+    final double centerY = baseRect.top + baseRect.height * 0.5;
+
+    final double inRadius = inactiveTrackHeight * 0.5;
+    final RRect inactiveRRect = RRect.fromLTRBXY(
+      trackLeft,
+      centerY - inRadius,
+      trackRight,
+      centerY + inRadius,
+      inRadius,
+      inRadius,
     );
 
-    final Rect activeRect = Rect.fromLTRB(
-      baseRect.left,
+    _inactivePaint.color = sliderTheme.inactiveTrackColor!;
+    canvas.drawRRect(inactiveRRect, _inactivePaint);
+
+    final double currentThumbX = thumbCenter.dx;
+
+    final double actRadius = activeTrackHeight * 0.5;
+
+    final RRect activeRRect = RRect.fromLTRBXY(
+      trackLeft,
       baseRect.top,
-      thumbCenter.dx,
+      currentThumbX,
       baseRect.bottom,
+      actRadius,
+      actRadius,
     );
-    final Paint activePaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-        colors: [activeColor.withValues(alpha: 0.0), activeColor],
-        stops: [0.0, 0.1],
-      ).createShader(activeRect)
-      ..style = PaintingStyle.fill;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        activeRect,
-        Radius.circular(activeTrackHeight / 2),
-      ),
-      activePaint,
+
+    if (_lastActiveColor != activeColor || _cachedColors == null) {
+      _lastActiveColor = activeColor;
+      _cachedColors = <Color>[activeColor.withValues(alpha: 0.0), activeColor];
+    }
+
+    _activePaint.shader = ui.Gradient.linear(
+      Offset(trackLeft, centerY),
+      Offset(currentThumbX, centerY),
+      _cachedColors!,
+      _stops,
     );
+
+    canvas.drawRRect(activeRRect, _activePaint);
   }
 }
 

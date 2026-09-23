@@ -316,6 +316,7 @@ const double _waveAmplitudeFactor = 1;
 const double _waveGlowSigma = 4.0;
 
 /// 波形图
+// TODO: Memory Leak
 class WaveSpectrogramWidget extends StatefulWidget {
   final double lenth;
   final double width;
