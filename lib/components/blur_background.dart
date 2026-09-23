@@ -66,7 +66,7 @@ class BlurWithCoverBackground extends StatelessWidget {
           child: () {
             final bool useMesh = _settingController.useMesh.value && meshEnable;
             if (useMesh) {
-              return PlayPageMesh();
+              return const PlayPageMesh();
             }
 
             if (!isPlayPage &&
@@ -96,6 +96,7 @@ class BlurWithCoverBackground extends StatelessWidget {
                       topLeft: Radius.circular(radius),
                     ),
                     child: ImageFiltered(
+                      enabled: sigma > 0,
                       imageFilter: ImageFilterCache.imageFilter(
                         sigma: sigma,
                         tileMode: TileMode.clamp,

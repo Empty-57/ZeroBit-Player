@@ -172,6 +172,7 @@ List<Widget> _genMenuItems({
 
     if (artistList.length > 1)
       SubmenuButton(
+        animated: true,
         style: ButtonStyle(
           padding: WidgetStateProperty.all(
             const EdgeInsets.symmetric(horizontal: 16),
@@ -205,6 +206,7 @@ List<Widget> _genMenuItems({
     divider,
 
     SubmenuButton(
+      animated: true,
       style: ButtonStyle(
         padding: WidgetStateProperty.all(
           const EdgeInsets.symmetric(horizontal: 16),

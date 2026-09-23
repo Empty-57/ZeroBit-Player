@@ -94,12 +94,14 @@ class AudioController {
   final _unplayedIndex = <int>[];
   final navigationIsExtend = signal(true);
 
-  final coverPalette = listSignal(<Color>[
-    Colors.black12,
-    Colors.white24,
-    Colors.white,
-    Colors.grey,
-  ]);
+  static final _defaultPalette = <Color>[
+    Color(0xFF035B2D),
+    Color(0xFF2A6F97),
+    Color(0xFF014F86),
+    Color(0xFF037081),
+  ];
+
+  final coverPalette = listSignal([..._defaultPalette]);
 
   /// 封面调色板缓存（key 为 path）
   final Map<String, List<Color>> _paletteCache = {};
@@ -344,12 +346,7 @@ class AudioController {
       final palette = extractedColors.length >= 4
           ? extractedColors.sublist(0, 4)
           : (List<Color>.from(extractedColors)..addAll(
-              [
-                Colors.black12,
-                Colors.white24,
-                Colors.white,
-                Colors.grey,
-              ].sublist(0, 4 - extractedColors.length),
+              [..._defaultPalette].sublist(0, 4 - extractedColors.length),
             ));
 
       if (_paletteCache.length >= _paletteCacheMaxSize) _paletteCache.clear();
@@ -357,7 +354,7 @@ class AudioController {
       return palette;
     } catch (e, stackTrace) {
       LoggerUni.w("调色板计算异常", e, stackTrace);
-      return [const Color(0xff27272a)];
+      return [..._defaultPalette];
     } finally {
       image?.dispose();
       codec?.dispose();
@@ -551,7 +548,7 @@ class AudioController {
 
       reTryCount = 0;
     } catch (e, stackTrace) {
-      LoggerUni.w('播放失败', e, stackTrace);
+      LoggerUni.w('播放失败 Path: ${currentPath.value}', e, stackTrace);
       showSnackBar(title: "ERR:", msg: 'playingERR | $e');
       if (reTryCount > 4 || prevMetadata.path.isEmpty) return;
       reTryCount++;
@@ -570,7 +567,7 @@ class AudioController {
       unawaited(smtcUpdateState(state: SMTCState.playing).catchError((_) {}));
       await resume();
     } catch (e, stackTrace) {
-      LoggerUni.w('恢复播放失败', e, stackTrace);
+      LoggerUni.w('恢复播放失败 Path: ${currentPath.value}', e, stackTrace);
       currentState.value = AudioState.stop;
       showSnackBar(title: "ERR", msg: 'resumeERR | $e');
     }
@@ -587,7 +584,7 @@ class AudioController {
       unawaited(smtcUpdateState(state: SMTCState.paused).catchError((_) {}));
       await pause();
     } catch (e, stackTrace) {
-      LoggerUni.w('暂停播放失败', e, stackTrace);
+      LoggerUni.w('暂停播放失败 Path: ${currentPath.value}', e, stackTrace);
       currentState.value = AudioState.stop;
       showSnackBar(title: "ERR", msg: 'pauseERR | $e');
     }
@@ -603,7 +600,7 @@ class AudioController {
       unawaited(smtcUpdateState(state: SMTCState.paused).catchError((_) {}));
       await stop();
     } catch (e, stackTrace) {
-      LoggerUni.w('停止播放失败', e, stackTrace);
+      LoggerUni.w('停止播放失败 Path: ${currentPath.value}', e, stackTrace);
       showSnackBar(title: "ERR", msg: 'stopERR | $e');
     }
   }
@@ -623,7 +620,11 @@ class AudioController {
         ).catchError((_) {}),
       );
     } catch (e, stackTrace) {
-      LoggerUni.w('切换播放 / 暂停失败', e, stackTrace);
+      LoggerUni.w(
+        '切换播放 / 暂停失败 Path: ${currentMetadata.value.path}',
+        e,
+        stackTrace,
+      );
       currentState.value = AudioState.stop;
       showSnackBar(title: "ERR", msg: e.toString());
     }
@@ -634,7 +635,7 @@ class AudioController {
     try {
       return await getVolume();
     } catch (e, stackTrace) {
-      LoggerUni.w('获取音量失败', e, stackTrace);
+      LoggerUni.w('获取音量失败 Path: ${currentPath.value}', e, stackTrace);
       showSnackBar(title: "ERR", msg: e.toString());
       return 0.0;
     }
@@ -645,7 +646,7 @@ class AudioController {
     try {
       await setVolume(vol: vol);
     } catch (e, stackTrace) {
-      LoggerUni.w('设置音量失败', e, stackTrace);
+      LoggerUni.w('设置音量失败 Path: ${currentPath.value}', e, stackTrace);
       showSnackBar(title: "ERR", msg: e.toString());
     }
   }
@@ -657,7 +658,7 @@ class AudioController {
       await setPosition(pos: pos);
       await audioResume();
     } catch (e, stackTrace) {
-      LoggerUni.w('设置进度失败', e, stackTrace);
+      LoggerUni.w('设置进度失败 Path: ${currentMetadata.value.path}', e, stackTrace);
       showSnackBar(title: "ERR", msg: e.toString());
     }
   }

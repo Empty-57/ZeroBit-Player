@@ -61,8 +61,8 @@ class _SpectrumFeed {
       _ref++;
       return;
     }
-    LoggerUni.i('频谱图资源已挂载 Ref: $_ref');
     _ref++;
+    LoggerUni.i('频谱图资源已挂载 Ref: $_ref');
     _animController = AnimationController(
       vsync: _tickerProvider,
       duration: _lerpDuration,

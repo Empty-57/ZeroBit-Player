@@ -371,6 +371,7 @@ class _PlayPageState extends State<PlayPage> {
     Widget? leadingIcon,
   }) {
     return SubmenuButton(
+      animated: true,
       submenuIcon: const WidgetStatePropertyAll(SizedBox.shrink()),
       style: ButtonStyle(
         padding: WidgetStateProperty.all(

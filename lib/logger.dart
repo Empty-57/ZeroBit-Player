@@ -9,8 +9,6 @@ class RestrictionFileOutput extends AdvancedFileOutput {
   RestrictionFileOutput({
     required super.path,
     super.maxFileSizeKB,
-    super.fileHeader,
-    super.fileFooter,
     super.latestFileName,
     super.fileNameFormatter,
   });
@@ -50,10 +48,6 @@ class LoggerUni {
     final fileOutput = RestrictionFileOutput(
       path: logDirectory.path,
       maxFileSizeKB: 512,
-      fileHeader:
-          '—————————————————————————————— Start writing  ——————————————————————————————',
-      fileFooter:
-          '—————————————————————————————— Write complete ——————————————————————————————',
       latestFileName: '$todayStr.log',
       fileNameFormatter: (DateTime timestamp) {
         final hms =
