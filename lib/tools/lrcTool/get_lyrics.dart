@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_charset/fl_charset.dart';
-import 'package:flutter/cupertino.dart';
+
 import 'package:path/path.dart' as p;
 import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/tools/lrcTool/parse_lyrics.dart';

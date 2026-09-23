@@ -8,6 +8,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/play_page/play_page_constant.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/logger.dart';
 
 /// 共享数据源专用的极简 TickerProvider
 /// 插值动画在数据稳定后会自己停下来，不需要 TickerMode 的静音管理
@@ -60,7 +61,7 @@ class _SpectrumFeed {
       _ref++;
       return;
     }
-    print('attach');
+    LoggerUni.i('频谱图资源已挂载 Ref: $_ref');
     _ref++;
     _animController = AnimationController(
       vsync: _tickerProvider,
@@ -80,7 +81,7 @@ class _SpectrumFeed {
     if (_ref > 0) {
       return;
     }
-    print('detach');
+    LoggerUni.i('频谱图资源已释放 Ref: $_ref');
     // 先取消监听，再 dispose controller
     // 顺序重要：防止 cancel 期间还有回调触发
     _audioController.audioFFT.removeListener(_onFFTUpdated);

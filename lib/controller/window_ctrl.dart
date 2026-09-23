@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';

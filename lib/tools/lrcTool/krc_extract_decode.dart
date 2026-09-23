@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
 import 'package:zerobit_player/logger.dart';
 
 /// 提取并解码 KRC 文本中的 language Base64 数据

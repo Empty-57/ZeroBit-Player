@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:core';
 import 'dart:math';
 
-import 'package:flutter/cupertino.dart';
 import 'package:zerobit_player/logger.dart';
 
 import 'lyric_model.dart';
