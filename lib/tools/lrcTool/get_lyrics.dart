@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:fl_charset/fl_charset.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:path/path.dart' as p;
+import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/tools/lrcTool/parse_lyrics.dart';
 
 import '../../src/rust/api/music_tag_tool.dart';
@@ -68,7 +69,7 @@ Future<String?> _safeReadFile(String filePath) async {
       return null;
     }
     final ext = p.extension(filePath).toLowerCase();
-    debugPrint("currentLyrics | encoding: ${encoding.name} ext: $ext");
+    LoggerUni.i("localLyric | encoding: ${encoding.name} ext: $ext");
     final String lrc = encoding.decode(bytes);
     if (ext == LyricFormat.qrc) {
       if (!lrc.trimLeft().startsWith('<?xml') &&
@@ -87,8 +88,8 @@ Future<String?> _safeReadFile(String filePath) async {
     }
 
     return lrc;
-  } catch (e) {
-    debugPrint('Error reading $filePath: $e');
+  } catch (e, stackTrace) {
+    LoggerUni.w('读取本地歌词失败 Path: $filePath', e, stackTrace);
     return null;
   }
 }
@@ -157,7 +158,7 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
       String? lyricsTs = data['lyricsTs'];
 
       final detectType = detectLrcType(lyrics);
-      debugPrint("currentLyrics | embeddedLyricType: $detectType");
+      LoggerUni.i("embeddedLyric | type: $detectType");
       if (type == LyricFormat.lrc &&
           (detectType == LrcType.enhanced ||
               detectType == LrcType.wordByWord)) {
@@ -183,7 +184,7 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
       }
     } catch (_) {
       final detectType = detectLrcType(embeddedLyrics);
-      debugPrint("currentLyrics | embeddedLyricType: $detectType");
+      LoggerUni.i("embeddedLyric | type: $detectType");
       if (detectType == LrcType.enhanced || detectType == LrcType.wordByWord) {
         return ParsedLyricModel(
           parsedLrc: parseLrc(lyricData: embeddedLyrics),
@@ -201,7 +202,7 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
     return null;
   }
 
-  debugPrint("currentLyrics | localType: ${lyricsData.type}");
+  LoggerUni.i("localLyric | type: ${lyricsData.type}");
   if (lyricsData.type == LyricFormat.lrc ||
       lyricsData.type == LyricFormat.byWordLrc) {
     return ParsedLyricModel(

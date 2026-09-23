@@ -15,6 +15,7 @@ import 'package:zerobit_player/hive_manager/hive_box.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/scalable_setting_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/setting_cache_model.dart';
+import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/tools/func/sync_cache.dart';
 
@@ -388,7 +389,8 @@ class SettingController {
         keys.last,
         keys.length > 1 ? keys.sublist(0, keys.length - 1) : [],
       );
-    } catch (_) {
+    } catch (e, stackTrace) {
+      LoggerUni.w('加载快捷键失败', e, stackTrace);
       onLoaded(defaultHid, []);
     }
   }
@@ -681,7 +683,8 @@ class SettingController {
       } else {
         await WindowsTaskbarThumbnail.resetAll();
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      LoggerUni.w('设置taskBar失败', e, stackTrace);
       showSnackBar(title: 'Err', msg: 'settingERR | $e');
     }
   }
@@ -744,7 +747,12 @@ class SettingController {
     useExclusiveMode.value = use;
     try {
       await switchExclusiveMode(exclusive: use);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      LoggerUni.w(
+        '启用独占模式失败 Path: ${_audioController.currentPath.value}',
+        e,
+        stackTrace,
+      );
       showSnackBar(title: 'Err', msg: 'settingERR | $e');
       useExclusiveMode.value = prev;
       await switchExclusiveMode(exclusive: prev);

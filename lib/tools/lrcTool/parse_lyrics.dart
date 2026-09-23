@@ -3,6 +3,7 @@ import 'dart:core';
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
+import 'package:zerobit_player/logger.dart';
 
 import 'lyric_model.dart';
 
@@ -134,8 +135,8 @@ List<LyricEntry> _parseLyrics(String text) {
               .trim();
           if (lyric.isEmpty) return null;
           return LyricEntry(start: start, lyricText: lyric);
-        } catch (e) {
-          debugPrint('Invalid lyric line: ${match.group(0)} → $e');
+        } catch (e, stackTrace) {
+          LoggerUni.w("解析歌词行异常: ${match.group(0)}", e, stackTrace);
           return null;
         }
       })
@@ -480,8 +481,8 @@ List<LyricEntry> _mergeKrcTranslations(
           }
       }
     }
-  } catch (e) {
-    debugPrint(e.toString());
+  } catch (e, stackTrace) {
+    LoggerUni.w(" KRC 翻译合并异常", e, stackTrace);
   }
   return mainEntries;
 }
@@ -541,7 +542,7 @@ List<LyricEntry> _mergeByTimeMatch(
     }
     // 抛弃的翻译
     else {
-      debugPrint("丢弃翻译 (时间偏差过大或无剩余原文): ${getTranslate(te)}");
+      LoggerUni.i("丢弃翻译 (时间偏差过大或无剩余原文): ${getTranslate(te)}");
     }
   }
 
@@ -600,6 +601,6 @@ List<LyricEntry>? parseKaraOkLyric({
         : double.infinity;
   }
 
-  debugPrint("currentLyrics | parsedType: $type");
+  LoggerUni.i("currentLyrics | parsedType: $type");
   return _mergeTranslations(segments, lyricDataTs, type: type);
 }

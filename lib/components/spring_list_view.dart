@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/rendering.dart';
+import 'package:zerobit_player/logger.dart';
 
 class _JumpSignal {
   final int triggerId;
@@ -60,7 +61,7 @@ class SpringListController {
     if (_cachedVisibleItemCount != null &&
         (cachedScreenHeight - currentHeight).abs() < 0.1) {
       _visibleItemCount = _cachedVisibleItemCount!;
-      debugPrint('visibleLine> $_visibleItemCount | hitCache');
+      LoggerUni.i('visibleLine> $_visibleItemCount | hitCache');
       return _visibleItemCount;
     }
 
@@ -93,7 +94,7 @@ class SpringListController {
       final visibleLineCount = (cachedScreenHeight / minHeights).ceil();
       _visibleItemCount = max((visibleLineCount ~/ 2) + 1, 2);
       _cachedVisibleItemCount = _visibleItemCount;
-      debugPrint('visibleLine> $_visibleItemCount | calc');
+      LoggerUni.i('visibleLine> $_visibleItemCount | calc');
     }
     return _visibleItemCount;
   }

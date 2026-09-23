@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
+import 'package:zerobit_player/logger.dart';
 
 final List<int> _krcKey = [
   64,
@@ -27,7 +28,7 @@ String? krcDecrypt(String content) {
   List<int> bytes = base64Decode(content);
 
   if (bytes.length <= 4) {
-    debugPrint('解压失败:krc');
+    LoggerUni.i("krcDecrypt: bytes.length <= 4 失败");
     return null;
   }
   List<int> contentBytes = bytes.sublist(4);
@@ -39,8 +40,8 @@ String? krcDecrypt(String content) {
     }
 
     return utf8.decode(zlib.decode(krcCompress));
-  } catch (e) {
-    debugPrint('解压失败: $e');
+  } catch (e, stackTrace) {
+    LoggerUni.w("krc解压失败", e, stackTrace);
     return null;
   }
 }

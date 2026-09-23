@@ -6,6 +6,7 @@ import 'dart:typed_data';
 
 import 'package:convert/convert.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:zerobit_player/logger.dart';
 
 const int _encrypt = 1;
 const int _devrypt = 0;
@@ -1201,7 +1202,7 @@ Future<String?> qrcDecrypt({
   } else if (encryptedQrc is Uint8List) {
     encryptedBytes = encryptedQrc;
   } else {
-    debugPrint('未知类型');
+    LoggerUni.i("encryptedQrc未知类型");
     return null;
   }
 
@@ -1219,8 +1220,8 @@ Future<String?> qrcDecrypt({
     }
 
     return utf8.decode(ZLibDecoder().convert(data));
-  } catch (e) {
-    debugPrint('解压失败: $e');
+  } catch (e, stackTrace) {
+    LoggerUni.w("qrc解压失败", e, stackTrace);
     return null;
   }
 }

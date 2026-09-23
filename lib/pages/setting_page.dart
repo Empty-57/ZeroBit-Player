@@ -15,6 +15,7 @@ import 'package:zerobit_player/controller/desktop_lyrics_setting_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
+import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/get_fonts.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:path/path.dart' as p;
@@ -1240,7 +1241,8 @@ class _BackgroundImagePathPicker extends StatelessWidget {
               } else {
                 showSnackBar(title: 'ERR', msg: '发生未知问题');
               }
-            } catch (e) {
+            } catch (e, stackTrace) {
+              LoggerUni.w("FilePicker错误", e, stackTrace);
               showSnackBar(title: 'ERR', msg: '发生错误： $e');
             }
           },
@@ -1877,8 +1879,8 @@ class _AboutTab extends StatelessWidget {
   Future<void> _launch(BuildContext context, String urlStr) async {
     try {
       await launchUrl(Uri.parse(urlStr));
-    } catch (e) {
-      debugPrint(e.toString());
+    } catch (e, stackTrace) {
+      LoggerUni.w("跳转失败 URL: $urlStr", e, stackTrace);
       showSnackBar(
         title: "ERROR",
         msg: "跳转失败！",

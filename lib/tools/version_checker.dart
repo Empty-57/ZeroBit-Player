@@ -5,6 +5,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:zerobit_player/logger.dart';
 
 import '../components/get_snack_bar.dart';
 import '../custom_widgets/custom_button.dart';
@@ -74,8 +75,8 @@ class VersionChecker {
         if (l < c) return false;
       }
       return false;
-    } catch (e) {
-      debugPrint('版本号解析失败: $e');
+    } catch (e, stackTrace) {
+      LoggerUni.w("版本号解析失败", e, stackTrace);
       return false;
     }
   }
@@ -140,8 +141,8 @@ class VersionChecker {
         }
         return false;
       }
-    } catch (err, stack) {
-      debugPrint('检查更新出错: $err\n$stack');
+    } catch (e, stackTrace) {
+      LoggerUni.w("检查更新失败", e, stackTrace);
       if (showErrorToast && context.mounted) {
         showSnackBar(
           title: "ERROR",
@@ -208,8 +209,12 @@ class VersionChecker {
                           final Uri url = Uri.parse(repoInfo.downloadUrl);
                           try {
                             await launchUrl(url);
-                          } catch (e) {
-                            debugPrint(e.toString());
+                          } catch (e, stackTrace) {
+                            LoggerUni.w(
+                              "跳转失败 URL: ${repoInfo.downloadUrl}",
+                              e,
+                              stackTrace,
+                            );
                             showSnackBar(
                               title: "ERROR",
                               msg: "跳转失败，请前往浏览器下载！",

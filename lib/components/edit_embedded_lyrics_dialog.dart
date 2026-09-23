@@ -5,6 +5,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
+import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
@@ -97,12 +98,15 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
         _lyricsTsCtrl.text = data?['lyricsTs'] ?? '';
         _selectedValue.value = data?['type'] ?? LyricFormat.lrc;
         _lyricsMap['type'] = _selectedValue.value;
-      } catch (_) {}
+      } catch (e, stackTrace) {
+        LoggerUni.w('解析内嵌歌词失败 Path: ${widget.metadata.path}', e, stackTrace);
+      }
 
       setState(() {
         _isLoading = false;
       });
-    } catch (_) {
+    } catch (e, stackTrace) {
+      LoggerUni.w('加载内嵌歌词失败 Path: ${widget.metadata.path}', e, stackTrace);
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -281,7 +285,13 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
                   late final String jsonData;
                   try {
                     jsonData = jsonEncode(_lyricsMap);
-                  } catch (_) {
+                  } catch (e, stackTrace) {
+                    LoggerUni.w(
+                      '保存内嵌歌词失败 Path: ${widget.metadata.path}',
+                      e,
+                      stackTrace,
+                    );
+
                     if (context.mounted) {
                       Navigator.pop(context);
                       showSnackBar(

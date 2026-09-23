@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
+import 'package:zerobit_player/logger.dart';
 
 /// 提取并解码 KRC 文本中的 language Base64 数据
 String? krcExtractAndDecodeLanguage(String? krcText) {
@@ -19,8 +20,8 @@ String? krcExtractAndDecodeLanguage(String? krcText) {
       List<int> bytes = base64Decode(base64String);
       String decodedText = utf8.decode(bytes);
       return decodedText;
-    } catch (e) {
-      debugPrint("Decode Base64 Err: $e");
+    } catch (e, stackTrace) {
+      LoggerUni.w("解码Base64失败", e, stackTrace);
       return null;
     }
   }

@@ -1,84 +1,100 @@
 import 'dart:io';
-
 import 'package:flutter/foundation.dart';
+import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
 
-class LoggerUni {
-  static IOSink? _logSink;
-  static String? _currentLogDate;
+class RestrictionFileOutput extends AdvancedFileOutput {
+  static final RegExp _ansiRegex = RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]');
 
-  /// 初始化日志文件
-  static Future<void> init() async {
-    try {
-      final currentDir = p.dirname(Platform.resolvedExecutable);
-      final logDirectory = Directory(p.join(currentDir, 'logs'));
+  RestrictionFileOutput({
+    required super.path,
+    super.maxFileSizeKB,
+    super.fileHeader,
+    super.fileFooter,
+    super.latestFileName,
+    super.fileNameFormatter,
+  });
 
-      if (!await logDirectory.exists()) {
-        await logDirectory.create(recursive: true);
-      }
-
-      _openLogFileForToday(logDirectory.path);
-    } catch (e) {
-      debugPrint('日志系统初始化失败: $e');
+  @override
+  void output(OutputEvent event) {
+    // 只允许写入 Level.warning 及以上级别
+    if (event.level < Level.warning) {
+      return;
     }
-  }
 
-  /// 按天生成日志文件 (例: log_2026-04-22.txt)
-  static void _openLogFileForToday(String dirPath) {
+    // 清除控制台产生的 ANSI 彩色转义码
+    final cleanLines = event.lines
+        .map((l) => l.replaceAll(_ansiRegex, ''))
+        .toList();
+
+    super.output(OutputEvent(event.origin, cleanLines));
+  }
+}
+
+/// 全局 Logger 单例工具类
+class LoggerUni {
+  static late final Logger _logger;
+  LoggerUni._();
+
+  static void init() {
+    final currentDir = p.dirname(Platform.resolvedExecutable);
+    final logDirectory = Directory(p.join(currentDir, 'logs'));
+    if (!logDirectory.existsSync()) {
+      logDirectory.createSync(recursive: true);
+    }
+
     final now = DateTime.now();
-    final dateString =
+    final todayStr =
         '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
-    if (_currentLogDate == dateString && _logSink != null) return;
+    final fileOutput = RestrictionFileOutput(
+      path: logDirectory.path,
+      maxFileSizeKB: 512,
+      fileHeader:
+          '—————————————————————————————— Start writing  ——————————————————————————————',
+      fileFooter:
+          '—————————————————————————————— Write complete ——————————————————————————————',
+      latestFileName: '$todayStr.log',
+      fileNameFormatter: (DateTime timestamp) {
+        final hms =
+            '${timestamp.hour.toString().padLeft(2, '0')}-${timestamp.minute.toString().padLeft(2, '0')}-${timestamp.second.toString().padLeft(2, '0')}';
+        return '$todayStr-$hms.log';
+      },
+    );
 
-    _logSink?.close(); // 关闭旧日期的文件流并更新日期
-    _currentLogDate = dateString;
+    final List<LogOutput> outputs = [fileOutput];
 
-    final logFile = File(p.join(dirPath, 'log_$dateString.txt'));
-
-    // 使用 IOSink 以追加模式 (append) 写入
-    _logSink = logFile.openWrite(mode: FileMode.append);
-    _logSink?.writeln('\n=======================================');
-    _logSink?.writeln('====== APP LAUNCH: ${now.toIso8601String()} ======');
-    _logSink?.writeln('=======================================\n');
-  }
-
-  /// 写入错误日志
-  static void logError(
-    String message, {
-    Object? error,
-    StackTrace? stackTrace,
-  }) {
-    final now = DateTime.now();
-    final timeString =
-        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
-
-    final buffer = StringBuffer();
-    buffer.writeln('[$timeString] [ERROR] $message');
-
-    if (error != null) {
-      buffer.writeln('Exception: $error');
+    // Debug 模式输出到控制台，Release 模式不输出到控制台
+    if (kDebugMode) {
+      outputs.add(ConsoleOutput());
     }
-    if (stackTrace != null) {
-      buffer.writeln('StackTrace:\n$stackTrace');
-    }
-    buffer.writeln('--------------------------------------------------');
-    debugPrint(buffer.toString());
 
-    // 写入本地文件
-    _logSink?.writeln(buffer.toString());
+    _logger = Logger(
+      filter: kReleaseMode ? ProductionFilter() : DevelopmentFilter(),
+      printer: PrettyPrinter(
+        colors: kDebugMode,
+        printEmojis: false,
+        dateTimeFormat: DateTimeFormat.dateAndTime,
+      ),
+      output: MultiOutput(outputs),
+    );
   }
 
-  /// 写入普通信息日志
-  static void logInfo(String message) {
-    final now = DateTime.now();
-    final timeString =
-        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
+  static void t(dynamic message, [dynamic error, StackTrace? stackTrace]) =>
+      _logger.t(message, error: error, stackTrace: stackTrace);
 
-    final logMsg = '[$timeString] [INFO] $message';
+  static void d(dynamic message, [dynamic error, StackTrace? stackTrace]) =>
+      _logger.d(message, error: error, stackTrace: stackTrace);
 
-    debugPrint(logMsg);
-    _logSink?.writeln(logMsg);
-    _logSink?.writeln('--------------------------------------------------');
-  }
+  static void i(dynamic message, [dynamic error, StackTrace? stackTrace]) =>
+      _logger.i(message, error: error, stackTrace: stackTrace);
+
+  static void w(dynamic message, [dynamic error, StackTrace? stackTrace]) =>
+      _logger.w(message, error: error, stackTrace: stackTrace);
+
+  static void e(dynamic message, [dynamic error, StackTrace? stackTrace]) =>
+      _logger.e(message, error: error, stackTrace: stackTrace);
+
+  static void f(dynamic message, [dynamic error, StackTrace? stackTrace]) =>
+      _logger.f(message, error: error, stackTrace: stackTrace);
 }

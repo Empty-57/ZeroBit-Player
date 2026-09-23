@@ -15,6 +15,7 @@ import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/custom_widgets/custom_button.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
+import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/tools/cover_lru_cache.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
@@ -142,7 +143,8 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
           _isCoverLoading = false;
         });
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      LoggerUni.w('获取封面失败', e, stackTrace);
       if (mounted) {
         setState(() {
           _currentCoverSource = _NoCover();
@@ -161,7 +163,8 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
       if (result != null && result.files.isNotEmpty && mounted) {
         setState(() => _currentCoverSource = _FileCover(result.files.first));
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      LoggerUni.w('选择本地封面失败', e, stackTrace);
       _showError('选择本地封面失败: $e');
     }
   }
@@ -190,7 +193,8 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
       } else {
         _showError('未找到网络封面');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      LoggerUni.w('获取网络封面失败', e, stackTrace);
       _showError('获取网络封面失败: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -200,7 +204,6 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
   Future<void> _saveChanges() async {
     if (_isLoading) return;
     setState(() => _isLoading = true);
-    debugPrint('123');
 
     try {
       // 保存封面
@@ -240,8 +243,8 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
 
       // 安全关闭
       if (mounted) context.pop();
-    } catch (e) {
-      debugPrint("保存失败: $e");
+    } catch (e, stackTrace) {
+      LoggerUni.w('保存封面失败', e, stackTrace);
       _showError('保存失败，请重试');
       if (mounted) setState(() => _isLoading = false);
     }

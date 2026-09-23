@@ -25,8 +25,6 @@ void showSnackBar({
   Color? backgroundColor = Colors.red,
   Color? textColor = Colors.white,
 }) {
-  debugPrint(msg);
-
   if (rootNavigatorKey.currentState?.overlay == null) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _showSnackBar(

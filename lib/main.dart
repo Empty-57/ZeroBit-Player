@@ -81,42 +81,52 @@ void _hiveSafeRegisterAdapter<T>(TypeAdapter<T> adapter) {
   }
 }
 
-Future<Box> _openSafeBox<T>(String boxName) async {
+Future<Box<T>> _openSafeBox<T>(String boxName) async {
+  if (Hive.isBoxOpen(boxName)) {
+    return Hive.box<T>(boxName);
+  }
   try {
     return await Hive.openBox<T>(boxName);
-  } catch (e) {
-    // 捕获到 HiveError 或者其他异常
-    debugPrint('Box <$boxName> Damage，Reset... ErrMsg: $e');
+  } catch (e, stackTrace) {
+    LoggerUni.e('Hive Box <$boxName> 数据损坏或打开失败，开始尝试重置修复...', e, stackTrace);
 
-    await Future.delayed(const Duration(milliseconds: 100));
+    await Future.delayed(const Duration(milliseconds: 150));
 
-    // 从磁盘删除损坏的 Box 不使用Hive.deleteBoxFromDisk是因为可能被占用
-    final directory = p.join(
-      (await getApplicationDocumentsDirectory()).path,
-      configDirectory,
-    );
-    final file = File('$directory/$boxName.hive');
-    final lockFile = File('$directory/$boxName.lock');
+    final docDir = await getApplicationDocumentsDirectory();
+    final directory = p.join(docDir.path, configDirectory);
+    final hiveFile = File(p.join(directory, '$boxName.hive'));
+    final lockFile = File(p.join(directory, '$boxName.lock'));
 
+    await _safeDeleteFile(hiveFile);
+    await _safeDeleteFile(lockFile);
+
+    // 二次兜底尝试打开
+    try {
+      final box = await Hive.openBox<T>(boxName);
+      LoggerUni.i('Hive Box <$boxName> 损坏文件已重置，空 Box 重新打开成功');
+      return box;
+    } catch (secondErr, secondStack) {
+      // 如果重置后依然无法打开，记录致命日志并向外抛出
+      LoggerUni.f('Hive Box <$boxName> 重置后二次打开依然失败！', secondErr, secondStack);
+      rethrow;
+    }
+  }
+}
+
+/// 安全删除文件并记录日志
+Future<void> _safeDeleteFile(File file) async {
+  try {
     if (await file.exists()) {
-      try {
-        await file.delete();
-      } catch (_) {}
+      await file.delete();
     }
-    if (await lockFile.exists()) {
-      try {
-        await lockFile.delete();
-      } catch (_) {}
-    }
-
-    // 重新尝试打开（此时会创建一个新的空 Box）
-    return await Hive.openBox<T>(boxName);
+  } catch (e, stackTrace) {
+    LoggerUni.w('删除 Hive 缓存/锁文件失败 (可能被操作系统占用): ${file.path}', e, stackTrace);
   }
 }
 
 Future<void> _initLog() async {
   // 初始化本地日志系统
-  await LoggerUni.init();
+  LoggerUni.init();
 
   // 拦截 Flutter 框架级别的错误
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -124,20 +134,12 @@ Future<void> _initLog() async {
     FlutterError.presentError(details);
 
     // 写入日志文件
-    LoggerUni.logError(
-      'Flutter UI/Framework Error',
-      error: details.exception,
-      stackTrace: details.stack,
-    );
+    LoggerUni.e('Flutter UI/Framework Error', details.exception, details.stack);
   };
 
   // 拦截 Dart 异步/底层级别的错误
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
-    LoggerUni.logError(
-      'Dart Async/Unhandled Error',
-      error: error,
-      stackTrace: stack,
-    );
+    LoggerUni.e('Dart Async/Unhandled Error', error, stack);
     // 返回 true 表示错误已经被我们处理了，防止向系统抛出导致崩溃
     return true;
   };
@@ -165,14 +167,14 @@ void main() async {
   try {
     await loadLib();
     await initBass();
-  } catch (e) {
-    debugPrint('Error on initBass: $e');
+  } catch (e, stackTrace) {
+    LoggerUni.e('初始化 BASS 音频引擎失败，播放功能可能受限', e, stackTrace);
   }
 
   try {
     await initSmtc();
-  } catch (e) {
-    debugPrint('Error on initSmtc: $e');
+  } catch (e, stackTrace) {
+    LoggerUni.w('初始化 SMTC 系统媒体传输控制失败', e, stackTrace);
   }
 
   await Hive.initFlutter(configDirectory);
@@ -211,11 +213,11 @@ void main() async {
   double x = 0;
   double y = 0;
 
-  final lastSize =
-      settingController.lastWindowInfo[SettingController.lastWindowSizeKey]
-          as List<double>?;
-  if (lastSize != null && lastSize.isNotEmpty) {
-    [w, h] = lastSize;
+  final rawLastSize =
+      settingController.lastWindowInfo[SettingController.lastWindowSizeKey];
+  if (rawLastSize is List && rawLastSize.length >= 2) {
+    w = (rawLastSize[0] as num).toDouble();
+    h = (rawLastSize[1] as num).toDouble();
   }
 
   WindowOptions windowOptions = WindowOptions(
@@ -228,11 +230,11 @@ void main() async {
   );
   windowManager.waitUntilReadyToShow(windowOptions, () async {
     windowManager.setHasShadow(true);
-    final lastPosition =
-        settingController.lastWindowInfo[SettingController.lastWindowPositonKey]
-            as List<double>?;
-    if (lastPosition != null && lastPosition.isNotEmpty) {
-      [x, y] = lastPosition;
+    final rawLastPos = settingController
+        .lastWindowInfo[SettingController.lastWindowPositonKey];
+    if (rawLastPos is List && rawLastPos.length >= 2) {
+      x = (rawLastPos[0] as num).toDouble();
+      y = (rawLastPos[1] as num).toDouble();
       await windowManager.setPosition(Offset(x, y));
     }
 
@@ -269,35 +271,43 @@ void main() async {
   WidgetsBinding.instance.addPostFrameCallback((_) async {
     // 异步进行缓存清理，不阻塞启动
     Future.delayed(const Duration(milliseconds: 300), () async {
-      final keysToDelete = musicBox.values
-          .map((v) => v.path)
-          .where((k) => !supportedExts.contains(p.extension(k).toLowerCase()))
-          .map((v) => md5.convert(utf8.encode(v)).toString())
-          .toList();
-      await musicBox.deleteAll(keysToDelete); //清除不是音频格式的路径，防止路径被污染
-      await syncCache();
-      await StatisticsController.instance.init();
-      await audioController.initRestoreState();
+      try {
+        final keysToDelete = musicBox.values
+            .map((v) => v.path)
+            .where((k) => !supportedExts.contains(p.extension(k).toLowerCase()))
+            .map((v) => md5.convert(utf8.encode(v)).toString())
+            .toList();
+        await musicBox.deleteAll(keysToDelete); //清除不是音频格式的路径，防止路径被污染
+        await syncCache();
+        await StatisticsController.instance.init();
+        await audioController.initRestoreState();
+      } catch (e, stackTrace) {
+        LoggerUni.e('启动后异步清理缓存或恢复播放状态失败', e, stackTrace);
+      }
     });
   });
   await initStream(audioController);
 
   // 初始化taskbar
-  WindowsTaskbarThumbnail.init(
-    onButtonClick: (action) {
-      switch (action) {
-        case TaskbarButtonAction.prev:
-          audioController.audioToPrevious.throttle(ms: 500)();
-          break;
-        case TaskbarButtonAction.toggle:
-          audioController.audioToggle.throttle(ms: 300)();
-          break;
-        case TaskbarButtonAction.next:
-          audioController.audioToNext.throttle(ms: 500)();
-          break;
-      }
-    },
-  );
+  try {
+    WindowsTaskbarThumbnail.init(
+      onButtonClick: (action) {
+        switch (action) {
+          case TaskbarButtonAction.prev:
+            audioController.audioToPrevious.throttle(ms: 500)();
+            break;
+          case TaskbarButtonAction.toggle:
+            audioController.audioToggle.throttle(ms: 300)();
+            break;
+          case TaskbarButtonAction.next:
+            audioController.audioToNext.throttle(ms: 500)();
+            break;
+        }
+      },
+    );
+  } catch (e, stackTrace) {
+    LoggerUni.w('初始化 Windows 任务栏缩略图控制失败', e, stackTrace);
+  }
 }
 
 void _initLeakTracking() {
@@ -345,80 +355,113 @@ void _initLeakTracking() {
 
 Future<void> initStream(AudioController audioController) async {
   final LyricController lyricController = LyricController.instance;
+
   await _audioEventSub?.cancel();
   await _progressSub?.cancel();
   await _smtcSub?.cancel();
+  _countMs100 = 0;
+  _countSec = 0;
+  _countSec30 = 0;
 
+  //音频状态流
   try {
-    _audioEventSub = audioEventStream().listen((data) {
-      final state = AudioState.values[data];
-      audioController.currentState.value = state;
-      WindowsTaskbarThumbnail.setButtons(
-        isPlaying: state == AudioState.playing,
-        visible: SettingController.instance.useTaskBarCtrl.value,
-      );
-      if (state == AudioState.ended) {
-        audioController.audioAutoPlay();
-      }
-    });
-  } catch (e) {
-    debugPrint(e.toString());
-    showSnackBar(title: "ERR:", msg: e.toString());
-  }
+    _audioEventSub = audioEventStream().listen(
+      (data) {
+        if (data < 0 || data >= AudioState.values.length) {
+          LoggerUni.w('收到未知的底层音频状态码: $data');
+          return;
+        }
 
-  try {
-    _progressSub = progressListen().listen((data) {
-      lyricController.currentMs20Notifier.value = data;
-      lyricController.updateProgress();
-      _countMs100++;
-      _countSec++;
-      _countSec30++;
-      if (_countMs100 > 4) {
-        _countMs100 = 0;
-        audioController.currentMs100.value = data;
-        audioController.updateProgress();
-      }
-      if (_countSec > 49) {
-        _countSec = 0;
-        audioController.currentSec.value = data;
-      }
-      if (_countSec30 > 1499) {
-        _countSec30 = 0;
-        StatisticsController.instance.updateStatistics();
-        unawaited(
-          StatisticsController.instance.saveStatistics().then(
-            (_) => debugPrint("Statistics Save OK!"),
-            onError: (e) => debugPrint("Statistics Save ERR> $e"),
-          ),
+        final state = AudioState.values[data];
+        audioController.currentState.value = state;
+
+        WindowsTaskbarThumbnail.setButtons(
+          isPlaying: state == AudioState.playing,
+          visible: SettingController.instance.useTaskBarCtrl.value,
         );
-      }
-    });
-  } catch (e) {
-    debugPrint(e.toString());
+
+        if (state == AudioState.ended) {
+          audioController.audioAutoPlay();
+        }
+      },
+      onError: (e, stackTrace) {
+        LoggerUni.e('audioEventStream 数据流产生异步异常', e, stackTrace);
+      },
+    );
+  } catch (e, stackTrace) {
+    LoggerUni.e('订阅 audioEventStream 失败', e, stackTrace);
     showSnackBar(title: "ERR:", msg: e.toString());
   }
 
+  // 音频进度流 (20ms一次)
   try {
-    _smtcSub = smtcControlEvents().listen((event) {
-      switch (event) {
-        case SMTCControlEvent.play:
-          audioController.audioResume.throttle(ms: 300)();
-          break;
-        case SMTCControlEvent.pause:
-          audioController.audioPause.throttle(ms: 300)();
-          break;
-        case SMTCControlEvent.next:
-          audioController.audioToNext.throttle(ms: 500)();
-          break;
-        case SMTCControlEvent.previous:
-          audioController.audioToPrevious.throttle(ms: 500)();
-          break;
-        case SMTCControlEvent.unknown:
-          break;
-      }
-    });
-  } catch (e) {
-    debugPrint(e.toString());
+    _progressSub = progressListen().listen(
+      (data) {
+        lyricController.currentMs20Notifier.value = data;
+        lyricController.updateProgress();
+
+        _countMs100++;
+        _countSec++;
+        _countSec30++;
+
+        if (_countMs100 > 4) {
+          _countMs100 = 0;
+          audioController.currentMs100.value = data;
+          audioController.updateProgress();
+        }
+
+        if (_countSec > 49) {
+          _countSec = 0;
+          audioController.currentSec.value = data;
+        }
+
+        if (_countSec30 > 1499) {
+          _countSec30 = 0;
+          StatisticsController.instance.updateStatistics();
+          StatisticsController.instance.saveStatistics().then(
+            (_) => LoggerUni.i("听歌统计数据自动保存成功"),
+            onError: (e, stackTrace) {
+              LoggerUni.e("自动保存统计数据失败", e, stackTrace);
+            },
+          );
+        }
+      },
+      onError: (e, stackTrace) {
+        LoggerUni.e('progressListen 进度数据流产生异常', e, stackTrace);
+      },
+    );
+  } catch (e, stackTrace) {
+    LoggerUni.e('订阅 progressListen 失败', e, stackTrace);
+    showSnackBar(title: "ERR:", msg: e.toString());
+  }
+
+  // SMTC事件流
+  try {
+    _smtcSub = smtcControlEvents().listen(
+      (event) {
+        switch (event) {
+          case SMTCControlEvent.play:
+            audioController.audioResume.throttle(ms: 300)();
+            break;
+          case SMTCControlEvent.pause:
+            audioController.audioPause.throttle(ms: 300)();
+            break;
+          case SMTCControlEvent.next:
+            audioController.audioToNext.throttle(ms: 500)();
+            break;
+          case SMTCControlEvent.previous:
+            audioController.audioToPrevious.throttle(ms: 500)();
+            break;
+          case SMTCControlEvent.unknown:
+            break;
+        }
+      },
+      onError: (e, stackTrace) {
+        LoggerUni.w('SMTC 媒体传输事件流异常', e, stackTrace);
+      },
+    );
+  } catch (e, stackTrace) {
+    LoggerUni.w('订阅 SMTC 事件流失败 (系统可能不支持 SMTC)', e, stackTrace);
   }
 }
 

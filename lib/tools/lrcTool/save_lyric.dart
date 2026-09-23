@@ -1,7 +1,6 @@
 import 'dart:io';
-
-import 'package:flutter/cupertino.dart';
 import 'package:path/path.dart' as p;
+import 'package:zerobit_player/logger.dart';
 
 import 'lyric_model.dart';
 
@@ -60,7 +59,7 @@ Future<void> saveLyrics({
       final newTranslateFile = File(p.join(dir, '$baseName$lyricTsSuffix'));
       await newTranslateFile.writeAsString(translateContent);
     }
-  } catch (err) {
-    debugPrint('saveLyrics err: $err');
+  } catch (e, stackTrace) {
+    LoggerUni.e("保存歌词到目录异常", e, stackTrace);
   }
 }

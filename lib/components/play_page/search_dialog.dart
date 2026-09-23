@@ -9,6 +9,7 @@ import 'package:zerobit_player/components/audio_ctrl_btn.dart';
 import 'package:zerobit_player/components/play_page/play_page_constant.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
+import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import 'package:zerobit_player/tools/lrcTool/parse_lyrics.dart';
@@ -120,7 +121,9 @@ class _SearchResultItem extends StatelessWidget {
             ts = str;
           }
         }
-      } catch (_) {}
+      } catch (e, stackTrace) {
+        LoggerUni.w('krc 翻译解析失败', e, stackTrace);
+      }
     }
 
     return TextButton(

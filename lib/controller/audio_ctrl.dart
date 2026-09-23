@@ -15,6 +15,7 @@ import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/controller/statistics_ctrl.dart';
 import 'package:zerobit_player/field/audio_source.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
+import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
@@ -224,8 +225,8 @@ class AudioController {
       _settingController.lastAudioInfo[SettingController.lastAudioMetadataKey] =
           metadata;
       unawaited(_settingController.putScalableCache());
-    } catch (e) {
-      debugPrint("切歌流程异常: $e");
+    } catch (e, stackTrace) {
+      LoggerUni.w("切歌流程异常", e, stackTrace);
     }
   }
 
@@ -249,24 +250,20 @@ class AudioController {
     int generation,
   ) {
     unawaited(() async {
-      try {
-        final netSrc = await saveCoverByText(
-          text: "${metadata.title} - ${metadata.artist}",
-          songPath: songPath,
-          saveCover: false,
-        );
+      final netSrc = await saveCoverByText(
+        text: "${metadata.title} - ${metadata.artist}",
+        songPath: songPath,
+        saveCover: false,
+      );
 
-        // await后校验 generation
-        if (generation != _metadataGeneration ||
-            netSrc == null ||
-            netSrc.isEmpty) {
-          return;
-        }
-        currentCover = Uint8List.fromList(netSrc);
-        coverRevision.value++;
-      } catch (e) {
-        debugPrint("网络封面下载失败: $e");
+      // await后校验 generation
+      if (generation != _metadataGeneration ||
+          netSrc == null ||
+          netSrc.isEmpty) {
+        return;
       }
+      currentCover = Uint8List.fromList(netSrc);
+      coverRevision.value++;
     }());
   }
 
@@ -358,8 +355,8 @@ class AudioController {
       if (_paletteCache.length >= _paletteCacheMaxSize) _paletteCache.clear();
       _paletteCache[path] = List<Color>.unmodifiable(palette);
       return palette;
-    } catch (e) {
-      debugPrint("调色板计算出错: $e");
+    } catch (e, stackTrace) {
+      LoggerUni.w("调色板计算异常", e, stackTrace);
       return [const Color(0xff27272a)];
     } finally {
       image?.dispose();
@@ -420,36 +417,31 @@ class AudioController {
   }
 
   Future<void> initRestoreState() async {
-    try {
-      final lastMetadata =
-          _settingController.lastAudioInfo[SettingController
-                  .lastAudioMetadataKey]
-              as MusicCache?;
-      if (lastMetadata == null ||
-          playListCacheItems.isEmpty ||
-          lastMetadata.path.isEmpty) {
-        return;
-      }
+    final lastMetadata =
+        _settingController.lastAudioInfo[SettingController.lastAudioMetadataKey]
+            as MusicCache?;
+    if (lastMetadata == null ||
+        playListCacheItems.isEmpty ||
+        lastMetadata.path.isEmpty) {
+      return;
+    }
 
-      await setVolume(vol: 0.0);
-      await audioPlay(metadata: lastMetadata);
-      await audioPause();
-      await setVolume(vol: _settingController.volume.value);
+    await setVolume(vol: 0.0);
+    await audioPlay(metadata: lastMetadata);
+    await audioPause();
+    await setVolume(vol: _settingController.volume.value);
 
-      // sync_cache 已经先执行了一次
-      // 此操作放在这个位置的原因： 需要等待 main.dart 中的 await syncCache()先执行完 ， 因为上面两行await任务排在await syncCache();之后
-      final lastPlayPathList =
-          _settingController.lastAudioInfo[SettingController
-                  .lastAudioPlayPathListKey]
-              as List<String>?;
-      if (lastPlayPathList != null && lastPlayPathList.isNotEmpty) {
-        final pathSet = lastPlayPathList.toSet();
-        playListCacheItems.value = _musicCacheController.items
-            .where((v) => pathSet.contains(v.path))
-            .toList();
-      }
-    } catch (e) {
-      debugPrint("Restore State Error: $e");
+    // sync_cache 已经先执行了一次
+    // 此操作放在这个位置的原因： 需要等待 main.dart 中的 await syncCache()先执行完 ， 因为上面两行await任务排在await syncCache();之后
+    final lastPlayPathList =
+        _settingController.lastAudioInfo[SettingController
+                .lastAudioPlayPathListKey]
+            as List<String>?;
+    if (lastPlayPathList != null && lastPlayPathList.isNotEmpty) {
+      final pathSet = lastPlayPathList.toSet();
+      playListCacheItems.value = _musicCacheController.items
+          .where((v) => pathSet.contains(v.path))
+          .toList();
     }
   }
 
@@ -462,51 +454,41 @@ class AudioController {
     if (hasLocalLyrics || !_settingController.autoGetLyrics.value) {
       return localLyrics;
     }
+    final searchedLyric = await getLrcBySearch(
+      text: "${metadata.title} - ${metadata.artist}",
+      offset: 1,
+      limit: 1,
+    );
 
-    try {
-      final searchedLyric = await getLrcBySearch(
-        text: "${metadata.title} - ${metadata.artist}",
-        offset: 1,
-        limit: 1,
+    if (searchedLyric.isEmpty) return localLyrics;
+
+    final lyricInfo = searchedLyric.first?.lyric;
+    if (lyricInfo == null) return localLyrics;
+
+    final type = lyricInfo.type;
+    List<LyricEntry<dynamic>>? parsedResult;
+
+    if (type == LyricFormat.lrc) {
+      parsedResult = parseLrc(
+        lyricData: lyricInfo.lrc,
+        lyricDataTs: lyricInfo.translate,
       );
-
-      if (searchedLyric.isEmpty) return localLyrics;
-
-      final lyricInfo = searchedLyric.first?.lyric;
-      if (lyricInfo == null) return localLyrics;
-
-      final type = lyricInfo.type;
-      List<LyricEntry<dynamic>>? parsedResult;
-
-      if (type == LyricFormat.lrc) {
-        parsedResult = parseLrc(
-          lyricData: lyricInfo.lrc,
-          lyricDataTs: lyricInfo.translate,
-        );
-      } else if (type == LyricFormat.yrc ||
-          type == LyricFormat.qrc ||
-          type == LyricFormat.krc) {
-        parsedResult = parseKaraOkLyric(
-          lyricData: lyricInfo.verbatimLrc,
-          lyricDataTs: lyricInfo.translate,
-          type: type,
-        );
-      }
-
-      if (parsedResult == null || parsedResult.isEmpty) return localLyrics;
-
-      if (_settingController.autoDownloadLrc.value) {
-        unawaited(
-          saveLyrics(path: metadata.path, lrcData: lyricInfo).catchError((e) {
-            debugPrint('Failed to save lyrics: $e');
-          }),
-        );
-      }
-      return ParsedLyricModel(parsedLrc: parsedResult, type: type);
-    } catch (e, stackTrace) {
-      debugPrint('Error getting lyrics: $e\n$stackTrace');
-      return localLyrics;
+    } else if (type == LyricFormat.yrc ||
+        type == LyricFormat.qrc ||
+        type == LyricFormat.krc) {
+      parsedResult = parseKaraOkLyric(
+        lyricData: lyricInfo.verbatimLrc,
+        lyricDataTs: lyricInfo.translate,
+        type: type,
+      );
     }
+
+    if (parsedResult == null || parsedResult.isEmpty) return localLyrics;
+
+    if (_settingController.autoDownloadLrc.value) {
+      unawaited(saveLyrics(path: metadata.path, lrcData: lyricInfo));
+    }
+    return ParsedLyricModel(parsedLrc: parsedResult, type: type);
   }
 
   void refreshLyrics() {
@@ -568,7 +550,8 @@ class AudioController {
       });
 
       reTryCount = 0;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      LoggerUni.w('播放失败', e, stackTrace);
       showSnackBar(title: "ERR:", msg: 'playingERR | $e');
       if (reTryCount > 4 || prevMetadata.path.isEmpty) return;
       reTryCount++;
@@ -586,7 +569,8 @@ class AudioController {
     try {
       unawaited(smtcUpdateState(state: SMTCState.playing).catchError((_) {}));
       await resume();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      LoggerUni.w('恢复播放失败', e, stackTrace);
       currentState.value = AudioState.stop;
       showSnackBar(title: "ERR", msg: 'resumeERR | $e');
     }
@@ -602,7 +586,8 @@ class AudioController {
     try {
       unawaited(smtcUpdateState(state: SMTCState.paused).catchError((_) {}));
       await pause();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      LoggerUni.w('暂停播放失败', e, stackTrace);
       currentState.value = AudioState.stop;
       showSnackBar(title: "ERR", msg: 'pauseERR | $e');
     }
@@ -617,7 +602,8 @@ class AudioController {
     try {
       unawaited(smtcUpdateState(state: SMTCState.paused).catchError((_) {}));
       await stop();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      LoggerUni.w('停止播放失败', e, stackTrace);
       showSnackBar(title: "ERR", msg: 'stopERR | $e');
     }
   }
@@ -636,7 +622,8 @@ class AudioController {
               : SMTCState.paused,
         ).catchError((_) {}),
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      LoggerUni.w('切换播放 / 暂停失败', e, stackTrace);
       currentState.value = AudioState.stop;
       showSnackBar(title: "ERR", msg: e.toString());
     }
@@ -646,7 +633,8 @@ class AudioController {
   Future<double> audioGetVolume() async {
     try {
       return await getVolume();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      LoggerUni.w('获取音量失败', e, stackTrace);
       showSnackBar(title: "ERR", msg: e.toString());
       return 0.0;
     }
@@ -656,7 +644,8 @@ class AudioController {
   Future<void> audioSetVolume({required double vol}) async {
     try {
       await setVolume(vol: vol);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      LoggerUni.w('设置音量失败', e, stackTrace);
       showSnackBar(title: "ERR", msg: e.toString());
     }
   }
@@ -667,7 +656,8 @@ class AudioController {
     try {
       await setPosition(pos: pos);
       await audioResume();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      LoggerUni.w('设置进度失败', e, stackTrace);
       showSnackBar(title: "ERR", msg: e.toString());
     }
   }

@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:path/path.dart' as p;
 import 'package:signals/signals_flutter.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
+import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import 'package:zerobit_player/tools/websocket_model.dart';
 
@@ -18,6 +18,7 @@ import 'controller/setting_ctrl.dart';
 class DesktopLyricsSever {
   DesktopLyricsSever._();
   static final instance = DesktopLyricsSever._();
+
   late final LyricController _lyricController = LyricController.instance;
   late final AudioController _audioController = AudioController.instance;
   final SettingController _settingController = SettingController.instance;
@@ -58,26 +59,20 @@ class DesktopLyricsSever {
   }
 
   void _lineWorkerFn() {
-    if (_channel == null) {
-      return;
-    }
+    if (_channel == null) return;
+
     final lyrics = _audioController.currentLyrics.value?.parsedLrc;
     int lineIndex = _lyricController.currentLineIndex.value;
     int nextLineIndex = lineIndex + 1;
     final type = _audioController.currentLyrics.value?.type;
+
+    // 无歌词状态
     if (lyrics == null || lyrics.isEmpty || type == null) {
-      try {
-        final jsonData = jsonEncode(
-          LyricsIOModel.sendData('暂无歌词', '', LyricFormat.lrc),
-        );
-        _add(jsonData);
-        final nextJsonData = jsonEncode(
-          LyricsIOModel.sendNextData('', '', LyricFormat.lrc),
-        );
-        _add(nextJsonData);
-      } catch (_) {}
+      _sendJson(LyricsIOModel.sendData('暂无歌词', '', LyricFormat.lrc));
+      _sendJson(LyricsIOModel.sendNextData('', '', LyricFormat.lrc));
       return;
     }
+
     if (lineIndex < 0 || lineIndex >= lyrics.length) {
       lineIndex = 0;
       nextLineIndex = 1;
@@ -87,9 +82,9 @@ class DesktopLyricsSever {
 
     final currLyrics = lyrics[lineIndex].lyricText;
     final nextLyrics = nextLineIndex > lyrics.length - 1
-        ? type == LyricFormat.lrc
+        ? (type == LyricFormat.lrc
               ? ''
-              : [WordEntry(start: 0.0, duration: 0.0, lyricWord: '')]
+              : [WordEntry(start: 0.0, duration: 0.0, lyricWord: '')])
         : lyrics[nextLineIndex].lyricText;
 
     final translate = lyrics[lineIndex].translate;
@@ -98,38 +93,18 @@ class DesktopLyricsSever {
         : lyrics[nextLineIndex].translate;
 
     if (type == LyricFormat.lrc) {
-      try {
-        final jsonData = jsonEncode(
-          LyricsIOModel.sendData(currLyrics, translate, type),
-        );
-        _add(jsonData);
-
-        final nextJsonData = jsonEncode(
-          LyricsIOModel.sendNextData(nextLyrics, nextTranslate, type),
-        );
-
-        _add(nextJsonData);
-      } catch (_) {}
+      _sendJson(LyricsIOModel.sendData(currLyrics, translate, type));
+      _sendJson(LyricsIOModel.sendNextData(nextLyrics, nextTranslate, type));
     } else {
-      final line = (currLyrics as List<WordEntry>).map((v) {
-        return WordEntry.toJson(v);
-      }).toList();
+      final line = (currLyrics as List<WordEntry>)
+          .map((v) => WordEntry.toJson(v))
+          .toList();
+      final nextLine = (nextLyrics as List<WordEntry>)
+          .map((v) => WordEntry.toJson(v))
+          .toList();
 
-      final nextLine = (nextLyrics as List<WordEntry>).map((v) {
-        return WordEntry.toJson(v);
-      }).toList();
-
-      try {
-        final jsonData = jsonEncode(
-          LyricsIOModel.sendData(line, translate, type),
-        );
-        _add(jsonData);
-
-        final nextJsonData = jsonEncode(
-          LyricsIOModel.sendNextData(nextLine, nextTranslate, type),
-        );
-        _add(nextJsonData);
-      } catch (_) {}
+      _sendJson(LyricsIOModel.sendData(line, translate, type));
+      _sendJson(LyricsIOModel.sendNextData(nextLine, nextTranslate, type));
     }
   }
 
@@ -144,15 +119,12 @@ class DesktopLyricsSever {
   void _ms20WorkerFn() {
     if ((_audioController.currentLyrics.value?.type ?? LyricFormat.lrc) !=
         LyricFormat.lrc) {
-      try {
-        final jsonData = jsonEncode(
-          LyricsIOModel.sendPosition(
-            _lyricController.currentWordIndexNotifier.value,
-            _lyricController.wordProgress.value,
-          ),
-        );
-        _add(jsonData);
-      } catch (_) {}
+      _sendJson(
+        LyricsIOModel.sendPosition(
+          _lyricController.currentWordIndexNotifier.value,
+          _lyricController.wordProgress.value,
+        ),
+      );
     }
   }
 
@@ -162,81 +134,47 @@ class DesktopLyricsSever {
 
   void connect() async {
     await close();
+
+    _startStateWorker();
+    _startLineWorker();
+    _startMs20Worker();
+    _wakeUpDesktopLyrics();
+
     try {
-      _startStateWorker();
-      _startLineWorker();
-      _startMs20Worker();
-      _wakeUpDesktopLyrics();
+      // 启动本地 HttpServer
       _server = await HttpServer.bind(_wsUrl.host, _wsUrl.port, shared: true);
-      await for (HttpRequest request in _server!) {
+      _server!.listen((HttpRequest request) {
         if (WebSocketTransformer.isUpgradeRequest(request)) {
-          WebSocketTransformer.upgrade(request).then((socket) async {
+          WebSocketTransformer.upgrade(request).then((socket) {
             _channel = IOWebSocketChannel(socket);
-            _listen = _channel!.stream.listen((message) {
-              if (message == 'ok') {
-                _lineWorkerFn();
-                _ms20WorkerFn();
-                _refreshStatus();
-                sendCmd(
-                  cmdType: SeverCmdType.putConfig,
-                  cmdData: {
-                    'fontFamily':
-                        _desktopLyricsSettingController.fontFamily.value,
-                    'fontSize': _desktopLyricsSettingController.fontSize.value,
-                    'fontWeight':
-                        _desktopLyricsSettingController.fontWeight.value,
-                    'overlayColor':
-                        _desktopLyricsSettingController
-                            .useDynamicOverlayColor
-                            .value
-                        ? _settingController.themeColor.value
-                        : _desktopLyricsSettingController.overlayColor.value,
-                    'underColor':
-                        _desktopLyricsSettingController
-                            .useDynamicOverlayColor
-                            .value
-                        ? 0xFFD4D8E5
-                        : _desktopLyricsSettingController.underColor.value,
-                    'fontOpacity':
-                        _desktopLyricsSettingController.fontOpacity.value,
-                    'dx': _desktopLyricsSettingController.windowDx,
-                    'dy': _desktopLyricsSettingController.windowDy,
-                    'windowWidth': _desktopLyricsSettingController.windowWidth,
-                    'windowHeight':
-                        _desktopLyricsSettingController.windowHeight,
-                    'isIgnoreMouseEvents': _desktopLyricsSettingController
-                        .isIgnoreMouseEvents
-                        .value,
-                    'lrcAlignment':
-                        _desktopLyricsSettingController.lrcAlignment.value,
-                    'displayMode': _desktopLyricsSettingController
-                        .useVerticalDisplayMode
-                        .value,
-                    'useStroke':
-                        _desktopLyricsSettingController.useStroke.value,
-                    'strokeColor':
-                        _desktopLyricsSettingController.strokeColor.value,
-                    'showDoubleLine':
-                        _desktopLyricsSettingController.showDoubleLine.value,
-                    'lyricsSwitchAnimateMode': _desktopLyricsSettingController
-                        .lyricsSwitchAnimateMode
-                        .value,
-                  },
-                );
-              }
-              _messageHandle(message);
-            }, onError: (e) => debugPrint(e.toString()));
+            _listen = _channel!.stream.listen(
+              _onMessageReceived,
+              onError: (e, stackTrace) {
+                LoggerUni.e('桌面歌词 WebSocket 通信异常', e, stackTrace);
+              },
+            );
           });
         } else {
-          await request.response.close();
-          close();
+          request.response.close();
         }
-      }
-    } catch (e) {
-      debugPrint(e.toString());
-      close();
+      });
+    } catch (e, stackTrace) {
+      LoggerUni.e('桌面歌词服务器启动失败 (端口可能被占用)', e, stackTrace);
+      await close();
+    }
+  }
+
+  /// 处理 WebSocket 接收消息的分发
+  void _onMessageReceived(dynamic message) {
+    if (message == 'ok') {
+      // 客户端初次连接握手成功，推送初始化数据
+      _lineWorkerFn();
+      _ms20WorkerFn();
+      _refreshStatus();
+      _sendConfig();
       return;
     }
+    _messageHandle(message);
   }
 
   void _wakeUpDesktopLyrics() async {
@@ -246,18 +184,57 @@ class DesktopLyricsSever {
         dir,
         r'desktop_lyrics\zerobit_player_desktop_lyrics.exe',
       );
+      if (!File(fullPath).existsSync()) {
+        LoggerUni.w('未找到桌面歌词可执行程序: $fullPath');
+        return;
+      }
       await Process.start(fullPath, []);
-    } catch (e) {
-      debugPrint(e.toString());
+    } catch (e, stackTrace) {
+      LoggerUni.e('拉起桌面歌词进程失败', e, stackTrace);
     }
+  }
+
+  void _sendConfig() {
+    sendCmd(
+      cmdType: SeverCmdType.putConfig,
+      cmdData: {
+        'fontFamily': _desktopLyricsSettingController.fontFamily.value,
+        'fontSize': _desktopLyricsSettingController.fontSize.value,
+        'fontWeight': _desktopLyricsSettingController.fontWeight.value,
+        'overlayColor':
+            _desktopLyricsSettingController.useDynamicOverlayColor.value
+            ? _settingController.themeColor.value
+            : _desktopLyricsSettingController.overlayColor.value,
+        'underColor':
+            _desktopLyricsSettingController.useDynamicOverlayColor.value
+            ? 0xFFD4D8E5
+            : _desktopLyricsSettingController.underColor.value,
+        'fontOpacity': _desktopLyricsSettingController.fontOpacity.value,
+        'dx': _desktopLyricsSettingController.windowDx,
+        'dy': _desktopLyricsSettingController.windowDy,
+        'windowWidth': _desktopLyricsSettingController.windowWidth,
+        'windowHeight': _desktopLyricsSettingController.windowHeight,
+        'isIgnoreMouseEvents':
+            _desktopLyricsSettingController.isIgnoreMouseEvents.value,
+        'lrcAlignment': _desktopLyricsSettingController.lrcAlignment.value,
+        'displayMode':
+            _desktopLyricsSettingController.useVerticalDisplayMode.value,
+        'useStroke': _desktopLyricsSettingController.useStroke.value,
+        'strokeColor': _desktopLyricsSettingController.strokeColor.value,
+        'showDoubleLine': _desktopLyricsSettingController.showDoubleLine.value,
+        'lyricsSwitchAnimateMode':
+            _desktopLyricsSettingController.lyricsSwitchAnimateMode.value,
+      },
+    );
   }
 
   Future<void> _messageHandle(dynamic msg) async {
     try {
-      final data = jsonDecode(msg) as Map<String, dynamic>;
+      final data = jsonDecode(msg as String);
+      if (data is! Map<String, dynamic>) return;
 
-      final type = data['type'] as String;
-      final cmdType = data['cmdType'] as String;
+      final type = data['type'] as String?;
+      final cmdType = data['cmdType'] as String?;
       final cmdData = data['cmdData'];
 
       if (type == 'clientCmd') {
@@ -274,7 +251,7 @@ class DesktopLyricsSever {
           case ClientCmdType.close:
             _settingController.showDesktopLyrics.value = false;
             await _settingController.putScalableCache();
-            close();
+            await close();
             return;
           case ClientCmdType.addFontSize:
             _desktopLyricsSettingController.fontSize.value++;
@@ -310,36 +287,38 @@ class DesktopLyricsSever {
             return;
         }
       }
-    } catch (_) {}
+    } catch (e, stackTrace) {
+      LoggerUni.w('解析客户端指令失败: $msg', e, stackTrace);
+    }
   }
 
-  void _add(dynamic msg) {
-    if (_channel == null) {
-      return;
-    }
-
+  /// 统一发送方法，集中管理异常与日志
+  void _sendJson(dynamic model) {
+    if (_channel == null) return;
     try {
-      _channel!.sink.add(msg);
-    } catch (e) {
-      debugPrint(e.toString());
+      final jsonData = jsonEncode(model);
+      _channel!.sink.add(jsonData);
+    } catch (e, stackTrace) {
+      LoggerUni.e('桌面歌词发送数据失败', e, stackTrace);
     }
   }
 
   void sendCmd({required String cmdType, required dynamic cmdData}) {
-    try {
-      final jsonData = jsonEncode(LyricsIOModel.sendCmd(cmdType, cmdData));
-      _add(jsonData);
-    } catch (e) {
-      debugPrint(e.toString());
-    }
+    _sendJson(LyricsIOModel.sendCmd(cmdType, cmdData));
   }
 
   Future<void> close() async {
     _lineWorker?.call();
+    _lineWorker = null;
+
     _lyricController.currentMs20Notifier.removeListener(_ms20WorkerFn);
+
     _stateWorker?.call();
+    _stateWorker = null;
+
     try {
       sendCmd(cmdType: SeverCmdType.shutdown, cmdData: null);
+
       if (_listen != null) {
         await _listen!.cancel();
         _listen = null;
@@ -351,11 +330,11 @@ class DesktopLyricsSever {
       }
 
       if (_server != null) {
-        await _server!.close();
+        await _server!.close(force: true);
         _server = null;
       }
-    } catch (e) {
-      debugPrint(e.toString());
+    } catch (e, stackTrace) {
+      LoggerUni.e('桌面歌词服务关闭时发生异常', e, stackTrace);
     }
   }
 }

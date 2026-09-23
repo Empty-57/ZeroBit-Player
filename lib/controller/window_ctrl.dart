@@ -3,6 +3,7 @@ import 'package:signals/signals_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/desktop_lyrics_sever.dart';
+import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
 
 class WindowController with WindowListener {
@@ -39,8 +40,8 @@ class WindowController with WindowListener {
     try {
       await smtcClear();
       await _desktopLyricsSever.close();
-    } catch (e) {
-      debugPrint('Error on closeClean: $e');
+    } catch (e, stackTrace) {
+      LoggerUni.w("资源清理异常", e, stackTrace);
     } finally {
       windowManager.removeListener(this);
       isMaximized.dispose();
@@ -70,7 +71,7 @@ class WindowController with WindowListener {
   @override
   void onWindowResized() async {
     final size = await windowManager.getSize();
-    debugPrint('now size | width: ${size.width} height: ${size.height}');
+    LoggerUni.i('now size | width: ${size.width} height: ${size.height}');
 
     var windowInfoSize =
         _settingController.lastWindowInfo[SettingController.lastWindowSizeKey]
@@ -87,7 +88,7 @@ class WindowController with WindowListener {
   @override
   void onWindowMoved() async {
     final position = await windowManager.getPosition();
-    debugPrint('now position | x: ${position.dx} y: ${position.dy}');
+    LoggerUni.i('now position | x: ${position.dx} y: ${position.dy}');
 
     var windowInfoPosition =
         _settingController.lastWindowInfo[SettingController

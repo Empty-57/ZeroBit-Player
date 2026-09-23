@@ -11,6 +11,7 @@ import 'package:zerobit_player/components/spring_list_view.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/lyric_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
+import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/theme_manager.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
@@ -138,7 +139,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                   final hoverColor = lrcStylePackage.hoverColor;
                   mixColor = lrcStylePackage.mixColor;
 
-                  debugPrint("LyricRenderReBuild");
+                  LoggerUni.i("LyricRenderReBuild");
                   if (!c.showLyricRender) {
                     return Center(
                       child: Text(

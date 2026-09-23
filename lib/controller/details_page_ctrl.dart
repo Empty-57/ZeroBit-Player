@@ -8,6 +8,7 @@ import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
+import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 
@@ -109,7 +110,8 @@ class DetailsPageController with DetailsPageControllerBase {
       } else {
         headCover.value = kTransparentImage;
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      LoggerUni.w('获取封面失败', e, stackTrace);
       headCover.value = kTransparentImage;
     }
   }

@@ -10,6 +10,7 @@ import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/controller/statistics_ctrl.dart';
 import 'package:zerobit_player/hive_manager/hive_box.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
+import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 
 const Set<String> supportedExts = {
@@ -91,8 +92,8 @@ Future<Map<String, MusicCache>> _fetchMetadataBatch(
           path: meta.path,
         ),
       );
-    } catch (e) {
-      debugPrint('Metadata error for $path: \$e');
+    } catch (e, stackTrace) {
+      LoggerUni.w("元数据获取失败", e, stackTrace);
       return null;
     }
   });

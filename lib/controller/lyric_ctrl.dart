@@ -4,6 +4,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/spring_list_view.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
+import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
 import 'audio_ctrl.dart';
@@ -269,8 +270,8 @@ class LyricController {
           alignment: 0.4,
           curve: Curves.easeInOut,
         );
-      } catch (e) {
-        debugPrint(e.toString());
+      } catch (e, stackTrace) {
+        LoggerUni.w("歌词回滚异常", e, stackTrace);
       }
     }
   }

@@ -1,8 +1,8 @@
 import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
+import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/tools/lrcTool/krc_decryptor.dart';
 import 'package:zerobit_player/tools/lrcTool/krc_extract_decode.dart';
@@ -21,8 +21,13 @@ const _kgDownloadLrcUrl = "http://lyrics.kugou.com/download";
 
 const _coverSize = 800; // 150, 300, 500, 800
 
+const _defaultConnectTimeout = Duration(seconds: 8);
+const _defaultReceiveTimeout = Duration(seconds: 8);
+
 final _dio = Dio(
   BaseOptions(
+    connectTimeout: _defaultConnectTimeout,
+    receiveTimeout: _defaultReceiveTimeout,
     headers: {
       'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
@@ -33,6 +38,8 @@ final _dio = Dio(
 
 final _qmDio = Dio(
   BaseOptions(
+    connectTimeout: _defaultConnectTimeout,
+    receiveTimeout: _defaultReceiveTimeout,
     headers: {
       "Host": "u.y.qq.com",
       'User-Agent':
@@ -77,13 +84,17 @@ Future<dynamic> _saveNetCover({
     );
 
     if (pic.data != null) {
+      final bytes = pic.data is Uint8List
+          ? (pic.data as Uint8List)
+          : Uint8List.fromList(pic.data as List<int>);
+
       if (saveCover) {
-        await editCover(path: songPath, src: Uint8List.fromList(pic.data));
+        await editCover(path: songPath, src: bytes);
       }
-      return pic.data;
+      return bytes;
     }
-  } catch (e) {
-    debugPrint('$e,$picUrl');
+  } catch (e, stackTrace) {
+    LoggerUni.w('获取或保存封面失败 URL: $picUrl', e, stackTrace);
   }
   return null;
 }
@@ -121,103 +132,115 @@ Future<dynamic> _qmSearchByText({
 Future<dynamic> _qmSaveCoverByText({
   required String text,
   required String songPath,
-  bool? saveCover = true,
+  bool saveCover = true,
 }) async {
   String? picUrl;
   try {
-    final Map<String, dynamic> data = await _qmSearchByText(
+    final dynamic rawData = await _qmSearchByText(
       text: text,
       offset: 1,
       limit: 1,
     );
+    if (rawData is! Map<String, dynamic>) return null;
+
     final songList =
-        data["music.search.SearchCgiService"]?["data"]?["body"]?["song"]?["list"];
-    if (songList is! List || songList.isEmpty) {
-      return null;
-    }
-    final mid = songList.first?['album']?['mid']?.toString().trim();
+        rawData["music.search.SearchCgiService"]?["data"]?["body"]?["song"]?["list"];
+    if (songList is! List || songList.isEmpty) return null;
+
+    final firstSong = songList.first;
+    if (firstSong is! Map) return null;
+
+    final mid = firstSong['album']?['mid']?.toString().trim();
     if (mid != null && mid.isNotEmpty) {
       picUrl =
           "https://y.gtimg.cn/music/photo_new/T002R${_coverSize}x${_coverSize}M000$mid.jpg";
       return await _saveNetCover(
         songPath: songPath,
         picUrl: picUrl,
-        saveCover: saveCover!,
+        saveCover: saveCover,
       );
     }
-  } catch (e) {
-    debugPrint('$e,$picUrl');
+  } catch (e, stackTrace) {
+    LoggerUni.w('接口0按关键词保存封面失败: $text, URL: $picUrl', e, stackTrace);
   }
   return null;
 }
 
 Future<Get4NetLrcModel?> _qmGetLrc({required int id}) async {
-  final response = await _qmDio.get(
-    _qmLrcUrl,
-    queryParameters: {"version": '15', "lrctype": '4', "musicid": id},
-    options: Options(responseType: ResponseType.plain),
-  );
+  try {
+    final response = await _qmDio.get(
+      _qmLrcUrl,
+      queryParameters: {"version": '15', "lrctype": '4', "musicid": id},
+      options: Options(responseType: ResponseType.plain),
+    );
 
-  final String? body = response.data?.toString();
-  if (body == null || body.isEmpty) {
+    final String? body = response.data?.toString();
+    if (body == null || body.isEmpty) {
+      return Get4NetLrcModel(
+        lrc: null,
+        verbatimLrc: null,
+        translate: null,
+        type: LyricFormat.qrc,
+      );
+    }
+
+    // Original、ts、roma
+    final data = _qrcParseLyricByRegex(body);
+    String? encryptedOriginal = data['lyric'];
+    String? encryptedTranslate = data['trans'];
+    // String? decryptedRoma = data['roma'];
+
+    String? qrcDecrypted;
+    String? translateDecrypted;
+
+    if (encryptedOriginal != null && encryptedOriginal.isNotEmpty) {
+      final trimmed = encryptedOriginal.trimLeft();
+      if (!trimmed.startsWith('<?xml') &&
+          !trimmed.startsWith('<Qrc') &&
+          !trimmed.contains('[00:')) {
+        // 只要以上述字符串开头或包含时间戳就代表已解压
+        try {
+          qrcDecrypted = await qrcDecrypt(
+            encryptedQrc: encryptedOriginal,
+            isLocal: false,
+          );
+        } catch (e, stackTrace) {
+          LoggerUni.w('QRC 解压异常', e, stackTrace);
+          qrcDecrypted = null;
+        }
+      } else {
+        qrcDecrypted = encryptedOriginal;
+      }
+    }
+
+    if (encryptedTranslate != null && encryptedTranslate.isNotEmpty) {
+      if (!encryptedTranslate.contains("[00") &&
+          !encryptedTranslate.contains("[al")) {
+        // 只要包含时间戳或者专辑信息就不解压
+        try {
+          translateDecrypted = await qrcDecrypt(
+            encryptedQrc: encryptedTranslate,
+            isLocal: false,
+          );
+        } catch (e, stackTrace) {
+          LoggerUni.w('QRC 翻译解压异常', e, stackTrace);
+          translateDecrypted = null;
+        }
+      } else {
+        translateDecrypted = encryptedTranslate;
+      }
+    }
+
     return Get4NetLrcModel(
       lrc: null,
-      verbatimLrc: null,
-      translate: null,
+      verbatimLrc: qrcDecrypted,
+      translate: translateDecrypted,
       type: LyricFormat.qrc,
     );
+  } catch (e, stackTrace) {
+    LoggerUni.w('接口0获取歌词异常 (ID: $id)', e, stackTrace);
+    return null;
   }
-
-  //Original、ts、roma
-  final data = _qrcParseLyricByRegex(body);
-  String? encryptedOriginal = data['lyric'];
-  String? encryptedTranslate = data['trans'];
-  // String? decryptedRoma = data['roma'];
-
-  String? qrcDecrypted;
-  String? translateDecrypted;
-
-  if (encryptedOriginal != null && encryptedOriginal.isNotEmpty) {
-    if (!encryptedOriginal.trimLeft().startsWith('<?xml') &&
-        !encryptedOriginal.trimLeft().startsWith('<Qrc') &&
-        !encryptedOriginal.contains('[00:')) {
-      // 只要以以上俩字符串开头或包含时间戳就代表已解压
-      try {
-        qrcDecrypted = await qrcDecrypt(
-          encryptedQrc: encryptedOriginal,
-          isLocal: false,
-        );
-      } catch (e) {
-        debugPrint('qrcDecrypt original error: $e');
-        qrcDecrypted = null;
-      }
-    }
-  }
-
-  if (encryptedTranslate != null && encryptedTranslate.isNotEmpty) {
-    if (!encryptedTranslate.contains("[00") &&
-        !encryptedTranslate.contains("[al")) {
-      // 只要包含时间戳或者专辑信息就不解密
-      try {
-        translateDecrypted = await qrcDecrypt(
-          encryptedQrc: encryptedTranslate,
-          isLocal: false,
-        );
-      } catch (e) {
-        debugPrint('qrcDecrypt translate error: $e');
-        translateDecrypted = null;
-      }
-    } else {
-      translateDecrypted = encryptedTranslate;
-    }
-  }
-
-  return Get4NetLrcModel(
-    lrc: null,
-    verbatimLrc: qrcDecrypted,
-    translate: translateDecrypted,
-    type: LyricFormat.qrc,
-  );
 }
 
 Future<List<SearchLrcModel?>> _qmGetLrcBySearch({
@@ -227,41 +250,43 @@ Future<List<SearchLrcModel?>> _qmGetLrcBySearch({
 }) async {
   final List<SearchLrcModel> lrcData = [];
   try {
-    final Map<String, dynamic> data = await _qmSearchByText(
+    final dynamic rawData = await _qmSearchByText(
       text: text,
       offset: offset,
       limit: limit,
     );
+    if (rawData is! Map<String, dynamic>) return [];
+
     final songList =
-        data["music.search.SearchCgiService"]?["data"]?["body"]?["song"]?["list"];
-    if (songList is! List || songList.isEmpty) {
-      return [];
-    }
+        rawData["music.search.SearchCgiService"]?["data"]?["body"]?["song"]?["list"];
+    if (songList is! List || songList.isEmpty) return [];
 
     for (final item in songList) {
-      final data = await _qmGetLrc(id: item["id"]);
-      if (data == null) {
-        continue;
-      }
+      if (item is! Map) continue;
+      final songId = item["id"];
+      if (songId == null) continue;
 
-      var singerList = item["singer"];
-      String? singer;
-      if (singerList is List && singerList.isNotEmpty) {
-        singer = singerList[0]["name"];
+      final data = await _qmGetLrc(id: songId);
+      if (data == null) continue;
+
+      String singer = 'UNKNOWN';
+      final singerList = item["singer"];
+      if (singerList is List && singerList.isNotEmpty && singerList[0] is Map) {
+        singer = singerList[0]["name"]?.toString() ?? 'UNKNOWN';
       }
 
       lrcData.add(
         SearchLrcModel(
-          title: item["title"] ?? 'UNKNOWN',
-          artist: singer ?? 'UNKNOWN',
-          id: item["id"] ?? 'UNKNOWN',
+          title: item["title"]?.toString() ?? 'UNKNOWN',
+          artist: singer,
+          id: songId,
           lyric: data,
         ),
       );
     }
     return lrcData;
-  } catch (err) {
-    debugPrint(err.toString());
+  } catch (err, stackTrace) {
+    LoggerUni.w('接口0搜索歌词异常: $text', err, stackTrace);
     return lrcData;
   }
 }
@@ -291,65 +316,76 @@ Future<dynamic> _neSearchByText({
 Future<dynamic> _neSaveCoverByText({
   required String text,
   required String songPath,
-  bool? saveCover = true,
+  bool saveCover = true,
 }) async {
   String? picUrl;
   try {
-    final Map<String, dynamic> data = await _neSearchByText(
+    final dynamic rawData = await _neSearchByText(
       text: text,
       offset: 1,
       limit: 1,
     );
-    final songCount = data["result"]?["songCount"];
-    if (songCount is int && songCount > 0) {
-      final songList = data["result"]?["songs"];
-      if (songList is! List || songList.isEmpty) {
-        return null;
-      }
+    if (rawData is! Map<String, dynamic>) return null;
 
-      final picUrl = songList[0]["al"]["picUrl"];
-      return await _saveNetCover(
-        songPath: songPath,
-        picUrl: picUrl,
-        saveCover: saveCover!,
-      );
+    final songCount = rawData["result"]?["songCount"];
+    if (songCount is int && songCount > 0) {
+      final songList = rawData["result"]?["songs"];
+      if (songList is! List || songList.isEmpty) return null;
+
+      final firstSong = songList[0];
+      if (firstSong is! Map) return null;
+
+      picUrl = firstSong["al"]?["picUrl"]?.toString();
+      if (picUrl != null && picUrl.isNotEmpty) {
+        return await _saveNetCover(
+          songPath: songPath,
+          picUrl: picUrl,
+          saveCover: saveCover,
+        );
+      }
     }
-  } catch (e) {
-    debugPrint('$e,$picUrl');
+  } catch (e, stackTrace) {
+    LoggerUni.w('接口1按关键词保存封面失败: $text, URL: $picUrl', e, stackTrace);
   }
   return null;
 }
 
 Future<Get4NetLrcModel?> _neGetLrc({required int id}) async {
-  final response = await _dio.get(
-    _neLrcUrl,
-    queryParameters: {"id": id, "lv": -1, "yv": -1, "tv": -1, "os": 'pc'},
-    options: Options(responseType: ResponseType.plain),
-  );
-  final body = response.data as String?;
-  if (body == null || body.isEmpty) {
-    return Get4NetLrcModel(
-      lrc: null,
-      verbatimLrc: null,
-      translate: null,
-      type: LyricFormat.lrc,
+  try {
+    final response = await _dio.get(
+      _neLrcUrl,
+      queryParameters: {"id": id, "lv": -1, "yv": -1, "tv": -1, "os": 'pc'},
+      options: Options(responseType: ResponseType.plain),
     );
+    final body = response.data as String?;
+    if (body == null || body.isEmpty) {
+      return Get4NetLrcModel(
+        lrc: null,
+        verbatimLrc: null,
+        translate: null,
+        type: LyricFormat.lrc,
+      );
+    }
+    final dynamic rawData = jsonDecode(body);
+    if (rawData is! Map<String, dynamic>) return null;
+
+    final String? lrcLyric = rawData['lrc']?['lyric'];
+    final String? yrcLyric = rawData['yrc']?['lyric'];
+    final String? tLyric = rawData['tlyric']?['lyric'];
+    final String type = yrcLyric != null && yrcLyric.isNotEmpty
+        ? LyricFormat.yrc
+        : LyricFormat.lrc;
+
+    return Get4NetLrcModel(
+      lrc: lrcLyric,
+      verbatimLrc: yrcLyric,
+      translate: tLyric,
+      type: type,
+    );
+  } catch (e, stackTrace) {
+    LoggerUni.w('接口1获取歌词异常 (ID: $id)', e, stackTrace);
+    return null;
   }
-  final Map<String, dynamic> data = jsonDecode(body);
-
-  final String? lrcLyric = data['lrc']?['lyric'];
-  final String? yrcLyric = data['yrc']?['lyric'];
-  final String? tLyric = data['tlyric']?['lyric'];
-  final String type = yrcLyric != null && yrcLyric.isNotEmpty
-      ? LyricFormat.yrc
-      : LyricFormat.lrc;
-
-  return Get4NetLrcModel(
-    lrc: lrcLyric,
-    verbatimLrc: yrcLyric,
-    translate: tLyric,
-    type: type,
-  );
 }
 
 Future<List<SearchLrcModel?>> _neGetLrcBySearch({
@@ -359,34 +395,42 @@ Future<List<SearchLrcModel?>> _neGetLrcBySearch({
 }) async {
   final List<SearchLrcModel> lrcData = [];
   try {
-    final data = await _neSearchByText(
+    final dynamic rawData = await _neSearchByText(
       text: text,
       offset: offset,
       limit: limit,
     );
-    final songs = data["result"]?["songs"];
-    if (songs is! List || songs.isEmpty) {
-      return [];
-    }
+    if (rawData is! Map<String, dynamic>) return [];
+
+    final songs = rawData["result"]?["songs"];
+    if (songs is! List || songs.isEmpty) return [];
 
     for (final item in songs) {
-      final data = await _neGetLrc(id: item["id"]);
-      if (data == null) {
-        continue;
+      if (item is! Map) continue;
+      final songId = item["id"];
+      if (songId == null) continue;
+
+      final data = await _neGetLrc(id: songId);
+      if (data == null) continue;
+
+      String artist = 'UNKNOWN';
+      final arList = item["ar"];
+      if (arList is List && arList.isNotEmpty && arList[0] is Map) {
+        artist = arList[0]["name"]?.toString() ?? 'UNKNOWN';
       }
 
       lrcData.add(
         SearchLrcModel(
-          title: item["name"] ?? 'UNKNOWN',
-          artist: item["ar"][0]["name"] ?? 'UNKNOWN',
-          id: item["id"] ?? 'UNKNOWN',
+          title: item["name"]?.toString() ?? 'UNKNOWN',
+          artist: artist,
+          id: songId,
           lyric: data,
         ),
       );
     }
     return lrcData;
-  } catch (err) {
-    debugPrint(err.toString());
+  } catch (err, stackTrace) {
+    LoggerUni.w('接口1搜索歌词异常: $text', err, stackTrace);
     return [];
   }
 }
@@ -415,49 +459,45 @@ Future<dynamic> _kgSearchByText({
 Future<dynamic> _kgSaveCoverByText({
   required String text,
   required String songPath,
-  bool? saveCover = true,
+  bool saveCover = true,
 }) async {
   String? picUrl;
   try {
-    final Map<String, dynamic> data = await _kgSearchByText(
+    final dynamic rawData = await _kgSearchByText(
       text: text,
       offset: 1,
       limit: 1,
     );
-    final songList = data["data"]?["info"];
-    if (songList is! List || songList.isEmpty) {
-      return null;
-    }
+    if (rawData is! Map<String, dynamic>) return null;
 
-    final groupList = songList.first['group'];
+    final songList = rawData["data"]?["info"];
+    if (songList is! List || songList.isEmpty) return null;
 
-    if (groupList is! List || groupList.isEmpty) {
-      return null;
-    }
+    final firstSong = songList.first;
+    if (firstSong is! Map) return null;
 
-    final unionCover = groupList.first['trans_param']?['union_cover'];
+    final groupList = firstSong['group'];
+    if (groupList is! List || groupList.isEmpty) return null;
 
+    final firstGroup = groupList.first;
+    if (firstGroup is! Map) return null;
+
+    final unionCover = firstGroup['trans_param']?['union_cover'];
     if (unionCover != null && unionCover.isNotEmpty) {
       picUrl = unionCover.toString().replaceFirst("{size}", "$_coverSize");
       return await _saveNetCover(
         songPath: songPath,
         picUrl: picUrl,
-        saveCover: saveCover!,
+        saveCover: saveCover,
       );
     }
-  } catch (e) {
-    debugPrint('$e,$picUrl');
+  } catch (e, stackTrace) {
+    LoggerUni.w('接口2按关键词保存封面失败: $text, URL: $picUrl', e, stackTrace);
   }
   return null;
 }
 
 Future<Get4NetLrcModel?> _kgGetLrc({required String id}) async {
-  final response = await _dio.get(
-    _kgSearchLrcUrl,
-    queryParameters: {"ver": '1', "man": 'yes', "client": "pc", "hash": id},
-    options: Options(responseType: ResponseType.plain),
-  );
-
   final nullModel = Get4NetLrcModel(
     lrc: null,
     verbatimLrc: null,
@@ -465,56 +505,61 @@ Future<Get4NetLrcModel?> _kgGetLrc({required String id}) async {
     type: LyricFormat.krc,
   );
 
-  if (response.data == null) {
+  try {
+    final response = await _dio.get(
+      _kgSearchLrcUrl,
+      queryParameters: {"ver": '1', "man": 'yes', "client": "pc", "hash": id},
+      options: Options(responseType: ResponseType.plain),
+    );
+
+    if (response.data == null) return nullModel;
+
+    final dynamic parsedData = jsonDecode(response.data);
+    final candidate = parsedData?['candidates'];
+    if (candidate is! List || candidate.isEmpty) return nullModel;
+
+    final firstCandidate = candidate.first;
+    if (firstCandidate is! Map) return nullModel;
+
+    final String? id_ = firstCandidate['id'];
+    final String? accesskey = firstCandidate['accesskey'];
+
+    if (id_ == null || accesskey == null || id_.isEmpty || accesskey.isEmpty) {
+      return nullModel;
+    }
+
+    final lyricResponse = await _dio.get(
+      _kgDownloadLrcUrl,
+      queryParameters: {
+        "ver": '1',
+        "client": "pc",
+        "id": id_,
+        "accesskey": accesskey,
+        'fmt': 'krc',
+        'charset': 'utf8',
+      },
+      options: Options(responseType: ResponseType.plain),
+    );
+
+    if (lyricResponse.data == null) return nullModel;
+
+    final dynamic lyricJson = jsonDecode(lyricResponse.data);
+    final String? content = lyricJson?['content'];
+    if (content == null || content.isEmpty) return nullModel;
+
+    final String? contentcDecrypted = krcDecrypt(content);
+    final String? translate = krcExtractAndDecodeLanguage(contentcDecrypted);
+
+    return Get4NetLrcModel(
+      lrc: null,
+      verbatimLrc: contentcDecrypted,
+      translate: translate,
+      type: LyricFormat.krc,
+    );
+  } catch (e, stackTrace) {
+    LoggerUni.w('接口2获取歌词异常 (ID: $id)', e, stackTrace);
     return nullModel;
   }
-
-  final candidate = jsonDecode(response.data)?['candidates'];
-
-  if (candidate is! List || candidate.isEmpty) {
-    return nullModel;
-  }
-
-  final String? id_ = candidate.first['id'];
-  final String? accesskey = candidate.first['accesskey'];
-
-  if (id_ == null || accesskey == null || id_.isEmpty || accesskey.isEmpty) {
-    return nullModel;
-  }
-
-  final lyricResponse = await _dio.get(
-    _kgDownloadLrcUrl,
-    queryParameters: {
-      "ver": '1',
-      "client": "pc",
-      "id": id_,
-      "accesskey": accesskey,
-      'fmt': 'krc',
-      'charset': 'utf8',
-    },
-    options: Options(responseType: ResponseType.plain),
-  );
-
-  if (lyricResponse.data == null) {
-    return nullModel;
-  }
-
-  final String? content = jsonDecode(lyricResponse.data)?['content'];
-
-  if (content == null || content.isEmpty) {
-    return nullModel;
-  }
-
-  final String? contentcDecrypted = krcDecrypt(content);
-
-  final String? translate = krcExtractAndDecodeLanguage(contentcDecrypted);
-
-  return Get4NetLrcModel(
-    lrc: null,
-    verbatimLrc: contentcDecrypted,
-    translate: translate,
-    type: LyricFormat.krc,
-  );
 }
 
 Future<List<SearchLrcModel?>> _kgGetLrcBySearch({
@@ -524,34 +569,36 @@ Future<List<SearchLrcModel?>> _kgGetLrcBySearch({
 }) async {
   final List<SearchLrcModel> lrcData = [];
   try {
-    final Map<String, dynamic> data = await _kgSearchByText(
+    final dynamic rawData = await _kgSearchByText(
       text: text,
       offset: offset,
       limit: limit,
     );
-    final songList = data["data"]?["info"];
-    if (songList is! List || songList.isEmpty) {
-      return [];
-    }
+    if (rawData is! Map<String, dynamic>) return [];
+
+    final songList = rawData["data"]?["info"];
+    if (songList is! List || songList.isEmpty) return [];
 
     for (final item in songList) {
-      final data = await _kgGetLrc(id: item["hash"]);
-      if (data == null) {
-        continue;
-      }
+      if (item is! Map) continue;
+      final songHash = item["hash"];
+      if (songHash == null) continue;
+
+      final data = await _kgGetLrc(id: songHash);
+      if (data == null) continue;
 
       lrcData.add(
         SearchLrcModel(
-          title: item["songname"] ?? 'UNKNOWN',
-          artist: item["singername"] ?? 'UNKNOWN',
-          id: item["hash"] ?? 'UNKNOWN',
+          title: item["songname"]?.toString() ?? 'UNKNOWN',
+          artist: item["singername"]?.toString() ?? 'UNKNOWN',
+          id: songHash,
           lyric: data,
         ),
       );
     }
     return lrcData;
-  } catch (err) {
-    debugPrint(err.toString());
+  } catch (err, stackTrace) {
+    LoggerUni.w('接口2搜索歌词异常: $text', err, stackTrace);
     return lrcData;
   }
 }
@@ -559,13 +606,12 @@ Future<List<SearchLrcModel?>> _kgGetLrcBySearch({
 Future<dynamic> saveCoverByText({
   required String text,
   required String songPath,
-  bool? saveCover = true,
+  bool saveCover = true,
 }) async {
-  return await [
-    _qmSaveCoverByText,
-    _neSaveCoverByText,
-    _kgSaveCoverByText,
-  ][_settingController.apiIndex.value](
+  final handlers = [_qmSaveCoverByText, _neSaveCoverByText, _kgSaveCoverByText];
+
+  final index = _settingController.apiIndex.value.clamp(0, handlers.length - 1);
+  return await handlers[index](
     text: text,
     songPath: songPath,
     saveCover: saveCover,
@@ -577,13 +623,8 @@ Future<List<SearchLrcModel?>> getLrcBySearch({
   required int offset,
   required int limit,
 }) async {
-  return await [
-    _qmGetLrcBySearch,
-    _neGetLrcBySearch,
-    _kgGetLrcBySearch,
-  ][_settingController.apiIndex.value](
-    text: text,
-    offset: offset,
-    limit: limit,
-  );
+  final handlers = [_qmGetLrcBySearch, _neGetLrcBySearch, _kgGetLrcBySearch];
+
+  final index = _settingController.apiIndex.value.clamp(0, handlers.length - 1);
+  return await handlers[index](text: text, offset: offset, limit: limit);
 }

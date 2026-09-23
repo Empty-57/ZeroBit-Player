@@ -5,6 +5,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/controller/window_ctrl.dart';
+import 'package:zerobit_player/logger.dart';
 
 class TrayManagerService with TrayListener {
   TrayManagerService._();
@@ -23,8 +24,8 @@ class TrayManagerService with TrayListener {
       trayManager.addListener(this);
 
       await _updateTrayMenu();
-    } catch (e) {
-      debugPrint('Tray init failed: $e');
+    } catch (e, stackTrace) {
+      LoggerUni.w('初始化系统托盘失败', e, stackTrace);
     }
   }
 
