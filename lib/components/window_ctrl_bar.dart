@@ -13,7 +13,7 @@ import 'package:zerobit_player/theme_manager.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/paint_cache.dart';
 
-import 'get_snack_bar.dart';
+import 'widget/get_snack_bar.dart';
 
 const double _controllerBarHeight = 48;
 const double _itemHeight = 64;

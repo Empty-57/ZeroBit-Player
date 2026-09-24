@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/get_snack_bar.dart';
+import 'package:zerobit_player/components/widget/get_snack_bar.dart';
 import 'package:zerobit_player/controller/window_ctrl.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/field/scalable_config_keys.dart';

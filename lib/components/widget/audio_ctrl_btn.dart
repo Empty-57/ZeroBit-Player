@@ -5,8 +5,8 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
-import 'package:zerobit_player/custom_widgets/custom_button.dart';
-import 'package:zerobit_player/custom_widgets/diamond_silder_thumb.dart';
+import 'package:zerobit_player/components/widget/general_btn.dart';
+import 'package:zerobit_player/components/widget/diamond_silder_thumb.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
@@ -460,7 +460,7 @@ class _EqualizerBtn extends StatelessWidget {
                                 equalizerGains,
                                 entry.value,
                               );
-                              return CustomBtn(
+                              return GeneralBtn(
                                 fn: () async {
                                   settingController.equalizerGains.value =
                                       entry.value;

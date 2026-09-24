@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/audio_ctrl_btn.dart';
+import 'package:zerobit_player/components/widget/audio_ctrl_btn.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';

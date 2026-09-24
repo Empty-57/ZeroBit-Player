@@ -3,10 +3,10 @@ import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/music_tile.dart';
+import 'package:zerobit_player/components/widget/music_tile.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/statistics_ctrl.dart';
-import 'package:zerobit_player/custom_widgets/custom_button.dart';
+import 'package:zerobit_player/components/widget/general_btn.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
@@ -125,7 +125,7 @@ class StatisticsPage extends StatelessWidget {
                 ],
               ),
               const Spacer(),
-              CustomBtn(
+              GeneralBtn(
                 fn: () {
                   StatisticsController.instance.refresh();
                 },

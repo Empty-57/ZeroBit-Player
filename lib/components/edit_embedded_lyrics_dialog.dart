@@ -3,14 +3,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/custom_widgets/custom_button.dart';
+import 'package:zerobit_player/components/widget/general_btn.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
-import 'get_snack_bar.dart';
+import 'widget/get_snack_bar.dart';
 
 const double _menuWidth = 180;
 const double _menuHeight = 48;
@@ -28,7 +28,7 @@ class EditEmbeddedLyricsDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomBtn(
+    return GeneralBtn(
       fn: () {
         menuController.close();
         showDialog(
@@ -153,7 +153,7 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
           borderRadius: BorderRadius.all(Radius.circular(4)),
         ),
         actions: [
-          CustomBtn(
+          GeneralBtn(
             fn: () => Navigator.pop(context),
             backgroundColor: Theme.of(context).colorScheme.primary,
             contentColor: Theme.of(context).colorScheme.onPrimary,
@@ -262,7 +262,7 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
           mainAxisAlignment: MainAxisAlignment.end,
           spacing: 8,
           children: [
-            CustomBtn(
+            GeneralBtn(
               fn: () => Navigator.pop(context),
               backgroundColor: Colors.transparent,
               contentColor: Theme.of(context).colorScheme.primary,
@@ -270,7 +270,7 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
               btnHeight: 36,
               label: "取消",
             ),
-            CustomBtn(
+            GeneralBtn(
               fn: () async {
                 if (_originCtrl.text.isNotEmpty) {
                   await editEmbeddedLyric(

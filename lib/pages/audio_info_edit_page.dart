@@ -9,11 +9,11 @@ import 'package:path/path.dart' as p;
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/API/apis.dart';
-import 'package:zerobit_player/components/covers.dart';
-import 'package:zerobit_player/components/get_snack_bar.dart';
+import 'package:zerobit_player/components/widget/covers.dart';
+import 'package:zerobit_player/components/widget/get_snack_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
-import 'package:zerobit_player/custom_widgets/custom_button.dart';
+import 'package:zerobit_player/components/widget/general_btn.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
@@ -537,7 +537,7 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
     bool isPrimary = false,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    return CustomBtn(
+    return GeneralBtn(
       fn: onPressed,
       backgroundColor: isPrimary
           ? colorScheme.primary

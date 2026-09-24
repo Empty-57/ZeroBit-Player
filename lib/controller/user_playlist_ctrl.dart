@@ -1,5 +1,5 @@
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/get_snack_bar.dart';
+import 'package:zerobit_player/components/widget/get_snack_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/hive_box.dart';

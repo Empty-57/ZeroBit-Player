@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
-import 'package:zerobit_player/custom_widgets/custom_button.dart';
+import 'package:zerobit_player/components/widget/general_btn.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 
@@ -52,7 +52,7 @@ class PlayListPreviewPage extends StatelessWidget {
               ),
             ),
             actions: [
-              CustomBtn(
+              GeneralBtn(
                 fn: () => Navigator.pop(context, null),
                 backgroundColor: Colors.transparent,
                 contentColor: primaryColor,
@@ -60,7 +60,7 @@ class PlayListPreviewPage extends StatelessWidget {
                 btnHeight: 36,
                 label: "取消",
               ),
-              CustomBtn(
+              GeneralBtn(
                 fn: () => Navigator.pop(context, textCtrl.text),
                 backgroundColor: primaryColor,
                 contentColor: Theme.of(context).colorScheme.onPrimary,
@@ -92,7 +92,7 @@ class PlayListPreviewPage extends StatelessWidget {
               shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
               backgroundColor: Theme.of(context).colorScheme.surface,
               actions: [
-                CustomBtn(
+                GeneralBtn(
                   fn: () => Navigator.pop(context, false),
                   backgroundColor: Colors.transparent,
                   contentColor: primaryColor,
@@ -100,7 +100,7 @@ class PlayListPreviewPage extends StatelessWidget {
                   btnHeight: 36,
                   label: "取消",
                 ),
-                CustomBtn(
+                GeneralBtn(
                   fn: () => Navigator.pop(context, true),
                   backgroundColor: Colors.transparent,
                   contentColor: Colors.red,
@@ -163,7 +163,7 @@ class PlayListPreviewPage extends StatelessWidget {
           ],
         ),
         const Spacer(),
-        CustomBtn(
+        GeneralBtn(
           fn: () async {
             final result = await _showInputDialog(context, title: '新建歌单');
             if (result != null && result.trim().isNotEmpty) {
@@ -225,7 +225,7 @@ class PlayListPreviewPage extends StatelessWidget {
                   ],
                 ),
               ),
-              CustomBtn(
+              GeneralBtn(
                 fn: () async {
                   final result = await _showInputDialog(
                     context,
@@ -245,7 +245,7 @@ class PlayListPreviewPage extends StatelessWidget {
                 icon: PhosphorIconsLight.pencilSimpleLine,
                 backgroundColor: Colors.transparent,
               ),
-              CustomBtn(
+              GeneralBtn(
                 fn: () async {
                   final confirm = await _showDeleteConfirmDialog(
                     context,

@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/covers.dart';
+import 'package:zerobit_player/components/widget/covers.dart';
 import 'package:zerobit_player/components/play_page/play_page_mesh.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/theme_manager.dart';

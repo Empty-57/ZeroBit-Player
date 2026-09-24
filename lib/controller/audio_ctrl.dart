@@ -9,7 +9,7 @@ import 'package:transparent_image/transparent_image.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/API/apis.dart';
-import 'package:zerobit_player/components/get_snack_bar.dart';
+import 'package:zerobit_player/components/widget/get_snack_bar.dart';
 import 'package:zerobit_player/controller/lyric_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/controller/statistics_ctrl.dart';

@@ -33,12 +33,12 @@ final _playQueueScrollController = ScrollController();
 const double _itemHeight = 64;
 const _borderRadius = BorderRadius.all(Radius.circular(4));
 
-class CustomNavigationBtn extends StatelessWidget {
+class SideBarBtn extends StatelessWidget {
   final String label;
   final IconData icon;
   final int localIndex;
 
-  const CustomNavigationBtn({
+  const SideBarBtn({
     super.key,
     required this.label,
     required this.icon,
@@ -156,8 +156,8 @@ class CustomNavigationBtn extends StatelessWidget {
   }
 }
 
-class CustomNavigation extends StatelessWidget {
-  const CustomNavigation({super.key, required this.btnList});
+class SideBar extends StatelessWidget {
+  const SideBar({super.key, required this.btnList});
 
   final List<Widget> btnList;
 

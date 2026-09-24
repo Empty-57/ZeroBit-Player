@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/covers.dart';
+import 'package:zerobit_player/components/widget/covers.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';

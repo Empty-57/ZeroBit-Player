@@ -7,8 +7,8 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zerobit_player/logger.dart';
 
-import '../components/get_snack_bar.dart';
-import '../custom_widgets/custom_button.dart';
+import '../components/widget/get_snack_bar.dart';
+import '../components/widget/general_btn.dart';
 import 'func/general_style.dart';
 
 const String _latestRepoApiUrl =
@@ -195,7 +195,7 @@ class VersionChecker {
                     mainAxisAlignment: MainAxisAlignment.end,
                     spacing: 8,
                     children: [
-                      CustomBtn(
+                      GeneralBtn(
                         fn: () => Navigator.pop(ctx, 'cancel'),
                         backgroundColor: Colors.transparent,
                         contentColor: Theme.of(ctx).colorScheme.primary,
@@ -203,7 +203,7 @@ class VersionChecker {
                         btnHeight: 36,
                         label: "取消",
                       ),
-                      CustomBtn(
+                      GeneralBtn(
                         fn: () async {
                           Navigator.pop(ctx, 'action');
                           final Uri url = Uri.parse(repoInfo.downloadUrl);

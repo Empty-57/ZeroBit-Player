@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 
-class CustomBtn<T> extends StatelessWidget {
+class GeneralBtn<T> extends StatelessWidget {
   final VoidCallback? fn;
   final String? label;
   final T? labelSize;
@@ -21,7 +21,7 @@ class CustomBtn<T> extends StatelessWidget {
   final double? borderWidth;
   final Color? borderColor;
 
-  const CustomBtn({
+  const GeneralBtn({
     super.key,
     required this.fn,
     this.label,

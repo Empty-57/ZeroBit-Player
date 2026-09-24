@@ -5,13 +5,12 @@ import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/covers.dart';
+import 'package:zerobit_player/components/widget/covers.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
-import 'package:zerobit_player/custom_widgets/custom_button.dart';
-import 'package:zerobit_player/custom_widgets/custom_drop_menu.dart';
+import 'package:zerobit_player/components/widget/general_btn.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/field/set_constants.dart';
@@ -21,9 +20,9 @@ import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 
 import 'edit_embedded_lyrics_dialog.dart';
-import 'floating_button.dart';
-import 'get_snack_bar.dart';
-import 'music_tile.dart';
+import 'widget/floating_button.dart';
+import 'widget/get_snack_bar.dart';
+import 'widget/music_tile.dart';
 
 const double _itemHeight = 64.0;
 const double _headCoverSize = 240;
@@ -86,7 +85,7 @@ List<Widget> _genMenuItems({
     required String label,
     String? tooltip,
   }) {
-    return CustomBtn(
+    return GeneralBtn(
       fn: () {
         menuController.close();
         fn();
@@ -119,7 +118,7 @@ List<Widget> _genMenuItems({
       label: "添加到下一首",
     ),
 
-    CustomBtn(
+    GeneralBtn(
       fn: () {
         menuController.close();
         context.push(AppRoutes.audioInfoEdit, extra: {'metadata': metadata});
@@ -433,7 +432,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     return Row(
       spacing: 8,
       children: [
-        CustomBtn(
+        GeneralBtn(
           fn: _playAll.throttle(ms: 500),
           icon: PhosphorIconsLight.play,
           btnHeight: btnHeight,
@@ -460,7 +459,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       children: [
         _buildSortButton(),
         SignalBuilder(
-          builder: (context) => CustomBtn(
+          builder: (context) => GeneralBtn(
             fn: () {
               _settingController.isReverse.value =
                   !_settingController.isReverse.value;
@@ -477,7 +476,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
           ),
         ),
         SignalBuilder(
-          builder: (context) => CustomBtn(
+          builder: (context) => GeneralBtn(
             fn: () {
               _settingController.viewModeMap[widget.operateArea] =
                   !_settingController.viewModeMap[widget.operateArea]!;
@@ -504,7 +503,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       spacing: 8,
       children: [
         if (widget.operateArea == OperateArea.playListDetails)
-          CustomBtn(
+          GeneralBtn(
             fn: () {
               if (widget.userKey.isNotEmpty) {
                 batch(() {
@@ -524,7 +523,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
           ),
         _buildAddToPlaylistMenuButton(),
         SignalBuilder(
-          builder: (context) => CustomBtn(
+          builder: (context) => GeneralBtn(
             fn: () {
               if (_selectedList.isNotEmpty) {
                 _selectedList.clear();
@@ -546,7 +545,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   }
 
   Widget _buildMultiSelectToggleButton() {
-    return CustomBtn(
+    return GeneralBtn(
       fn: () {
         batch(() {
           _selectedList.clear();
@@ -596,28 +595,62 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         PhosphorIconsRegular.filePlus,
       ],
     };
-
-    return SignalBuilder(
-      builder: (_) => CustomDropdownMenu(
-        itemMap: itemMap,
-        fn: (entry) {
-          _settingController.sortMap[widget.operateArea] = entry.key;
-          widget.controller.itemReSort(operateArea: widget.operateArea);
-          _settingController.putCache();
-          _audioController.syncCurrentIndex();
+    final menuController = MenuController();
+    return MenuAnchor(
+      menuChildren: itemMap.entries.map((entry) {
+        return GeneralBtn(
+          fn: () {
+            _settingController.sortMap[widget.operateArea] = entry.key;
+            widget.controller.itemReSort(operateArea: widget.operateArea);
+            _settingController.putCache();
+            _audioController.syncCurrentIndex();
+            menuController.close();
+          },
+          btnHeight: btnHeight,
+          btnWidth: 128,
+          radius: 4,
+          icon: entry.value[1] as IconData?,
+          label: entry.value[0].toString(),
+          mainAxisAlignment: MainAxisAlignment.start,
+          backgroundColor: Colors.transparent,
+        );
+      }).toList(),
+      controller: menuController,
+      consumeOutsideTap: true,
+      child: GeneralBtn(
+        fn: () {
+          if (menuController.isOpen) {
+            menuController.close();
+          } else {
+            menuController.open();
+          }
         },
-        label:
-            SettingController.sortType[_settingController.sortMap[widget
-                    .operateArea]
-                as int] ??
-            "未指定",
-        btnWidth: 148,
         btnHeight: btnHeight,
-        itemWidth: 128,
-        itemHeight: btnHeight,
-        btnIcon: PhosphorIconsLight.funnelSimple,
-        mainAxisAlignment: MainAxisAlignment.start,
-        spacing: 6,
+        btnWidth: 148,
+        mainAxisAlignment: .start,
+        children: [
+          Icon(
+            PhosphorIconsLight.funnelSimple,
+            color: Theme.of(context).colorScheme.onSecondaryContainer,
+            size: getIconSize(size: 'md'),
+          ),
+
+          Expanded(
+            flex: 1,
+            child: Text(
+              SettingController.sortType[_settingController.sortMap[widget
+                          .operateArea]
+                      as int] ??
+                  "未指定",
+              style: generalTextStyle(ctx: context, size: 'md'),
+            ),
+          ),
+          Icon(
+            PhosphorIconsFill.caretDown,
+            color: Theme.of(context).colorScheme.onSecondaryContainer,
+            size: getIconSize(size: 'sm'),
+          ),
+        ],
       ),
     );
   }
@@ -626,7 +659,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     return MenuAnchor(
       controller: _playListMenuController,
       menuChildren: _userPlayListController.allUserKey.map((v) {
-        return CustomBtn(
+        return GeneralBtn(
           fn: () {
             _playListMenuController.close();
             _userPlayListController.addAllToAudioList(
@@ -641,7 +674,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
           backgroundColor: Colors.transparent,
         );
       }).toList(),
-      child: CustomBtn(
+      child: GeneralBtn(
         fn: () {
           if (_userPlayListController.allUserKey.isEmpty) {
             showSnackBar(title: "WARNING", msg: "未创建歌单！");

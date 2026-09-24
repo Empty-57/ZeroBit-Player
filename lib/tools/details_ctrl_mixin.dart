@@ -6,7 +6,7 @@ import 'package:signals/signals_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/field/set_constants.dart';
 
-import '../components/get_snack_bar.dart';
+import '../components/widget/get_snack_bar.dart';
 import '../controller/audio_ctrl.dart';
 import '../controller/setting_ctrl.dart';
 import '../hive_manager/models/music_cache_model.dart';

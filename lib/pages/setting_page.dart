@@ -10,11 +10,11 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:zerobit_player/components/get_snack_bar.dart';
+import 'package:zerobit_player/components/widget/get_snack_bar.dart';
 import 'package:zerobit_player/controller/desktop_lyrics_setting_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
-import 'package:zerobit_player/custom_widgets/custom_button.dart';
+import 'package:zerobit_player/components/widget/general_btn.dart';
 import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/get_fonts.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
@@ -46,7 +46,7 @@ class _FolderManagerDialog extends StatelessWidget {
     final musicCacheController = MusicCacheController.instance;
     final height = MediaQuery.sizeOf(context).height;
     final width = MediaQuery.sizeOf(context).width;
-    return CustomBtn(
+    return GeneralBtn(
       fn: () {
         var foldersClone = [..._settingController.folders];
         showDialog(
@@ -157,7 +157,7 @@ class _FolderManagerDialog extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             spacing: 8,
                             children: [
-                              CustomBtn(
+                              GeneralBtn(
                                 fn: () async {
                                   String? selectedDirectory = await FilePicker
                                       .platform
@@ -179,7 +179,7 @@ class _FolderManagerDialog extends StatelessWidget {
                                 btnHeight: 36,
                                 label: "添加",
                               ),
-                              CustomBtn(
+                              GeneralBtn(
                                 fn: () {
                                   Navigator.pop(context, 'cancel');
                                   _settingController.folders.value =
@@ -193,7 +193,7 @@ class _FolderManagerDialog extends StatelessWidget {
                                 btnHeight: 36,
                                 label: "取消",
                               ),
-                              CustomBtn(
+                              GeneralBtn(
                                 fn: () async {
                                   foldersClone = [
                                     ..._settingController.folders,
@@ -255,7 +255,7 @@ class _ApiDropMenu extends StatelessWidget {
 
     final menuController = MenuController();
     final apiMenuList = SettingController.apiMap.entries.map((entry) {
-      return CustomBtn(
+      return GeneralBtn(
         fn: () {
           _settingController.apiIndex.value = entry.key;
           _settingController.putCache(isSaveFolders: false);
@@ -274,7 +274,7 @@ class _ApiDropMenu extends StatelessWidget {
       controller: menuController,
       consumeOutsideTap: true,
       child: SignalBuilder(
-        builder: (context) => CustomBtn(
+        builder: (context) => GeneralBtn(
           fn: () {
             if (menuController.isOpen) {
               menuController.close();
@@ -319,7 +319,7 @@ Widget _getColorPicker(
           ),
         ),
       ),
-      CustomBtn(
+      GeneralBtn(
         fn: () {
           showDialog<String>(
             barrierDismissible: true,
@@ -434,7 +434,7 @@ class _ColorPickerDialogState extends State<_ColorPickerDialog> {
               crossAxisAlignment: CrossAxisAlignment.center,
               spacing: 8,
               children: [
-                CustomBtn(
+                GeneralBtn(
                   fn: () {
                     widget.themeColor.value = _initialColor;
                     Navigator.pop(context, 'cancel');
@@ -445,7 +445,7 @@ class _ColorPickerDialogState extends State<_ColorPickerDialog> {
                   btnHeight: 36,
                   label: "取消",
                 ),
-                CustomBtn(
+                GeneralBtn(
                   fn: () {
                     Navigator.pop(context, 'action');
                   },
@@ -489,7 +489,7 @@ Widget _getFontFamilyDialog(
 ) {
   final height = MediaQuery.sizeOf(context).height;
   final width = MediaQuery.sizeOf(context).width;
-  return CustomBtn(
+  return GeneralBtn(
     fn: () {
       showDialog(
         barrierDismissible: true,
@@ -592,13 +592,13 @@ class _FontFamilyDialog extends StatelessWidget {
   }
 }
 
-List<CustomBtn<dynamic>> _getFontSizeList(
+List<GeneralBtn<dynamic>> _getFontSizeList(
   void Function(int) fn, {
   int min = SettingController.lrcFontSizeMin,
   int max = SettingController.lrcFontSizeMax,
 }) {
   return List.generate(max + 1 - min, (index) => index + min).map((i) {
-    return CustomBtn(
+    return GeneralBtn(
       fn: () => fn(i),
       btnWidth: btnW,
       btnHeight: _setBtnHeight,
@@ -609,12 +609,12 @@ List<CustomBtn<dynamic>> _getFontSizeList(
   }).toList();
 }
 
-List<CustomBtn<dynamic>> _getFontWeightList(void Function(int) fn) {
+List<GeneralBtn<dynamic>> _getFontWeightList(void Function(int) fn) {
   return List.generate(
     SettingController.lrcFontWeightMax + 1,
     (index) => index,
   ).map((i) {
-    return CustomBtn(
+    return GeneralBtn(
       fn: () => fn(i),
       btnWidth: btnW,
       btnHeight: _setBtnHeight,
@@ -639,7 +639,7 @@ MenuAnchor _getMenuAnchorButton(
     style: MenuStyle(
       maximumSize: WidgetStatePropertyAll(Size.fromHeight(height / 2)),
     ),
-    child: CustomBtn(
+    child: GeneralBtn(
       fn: () {
         if (menuController.isOpen) {
           menuController.close();
@@ -749,7 +749,7 @@ class _CheckVersionState extends State<_CheckVersion>
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme.onPrimary;
 
-    return CustomBtn(
+    return GeneralBtn(
       fn: _loading ? null : _handleCheck,
       btnHeight: _setBtnHeight,
       btnWidth: 128,
@@ -1035,7 +1035,7 @@ Widget _createHotKeyItem(
           style: generalTextStyle(ctx: context, size: 'md'),
         ),
       ),
-      CustomBtn(
+      GeneralBtn(
         fn: () async {
           await hotKeyManager.unregisterAll();
           if (!context.mounted) {
@@ -1226,7 +1226,7 @@ class _BackgroundImagePathPicker extends StatelessWidget {
             ),
           ),
         ),
-        CustomBtn(
+        GeneralBtn(
           fn: () async {
             try {
               final result = await FilePicker.platform.pickFiles(
@@ -1253,7 +1253,7 @@ class _BackgroundImagePathPicker extends StatelessWidget {
           btnWidth: 36,
           backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
         ),
-        CustomBtn(
+        GeneralBtn(
           fn: () {
             _settingController.backgroundImagePath.value = '';
             _settingController.setBackgroundImagePath(value: '');
@@ -1441,7 +1441,7 @@ class _SettingPageState extends State<SettingPage> {
               children: List.generate(_tabs.length, (index) {
                 final tab = _tabs[index];
                 final isSelected = _currentTabIndex == index;
-                return CustomBtn(
+                return GeneralBtn(
                   fn: () => _onTabChanged(index),
                   label: tab.label,
                   backgroundColor: theme.colorScheme.secondaryContainer
@@ -1929,7 +1929,7 @@ class _AboutTab extends StatelessWidget {
         const _SettingItem(text: '检查更新', child: _CheckVersion()),
         _SettingItem(
           text: '官网',
-          child: CustomBtn(
+          child: GeneralBtn(
             fn: () => _launch(context, _repoSiteUrl),
             contentColor: theme.colorScheme.onPrimary,
             btnHeight: _setBtnHeight,
@@ -1943,7 +1943,7 @@ class _AboutTab extends StatelessWidget {
         ),
         _SettingItem(
           text: '项目主页',
-          child: CustomBtn(
+          child: GeneralBtn(
             fn: () => _launch(context, _repoUrl),
             contentColor: theme.colorScheme.onPrimary,
             btnHeight: _setBtnHeight,
@@ -1957,7 +1957,7 @@ class _AboutTab extends StatelessWidget {
         ),
         _SettingItem(
           text: '反馈',
-          child: CustomBtn(
+          child: GeneralBtn(
             fn: () => _launch(context, _reportUrl),
             contentColor: theme.colorScheme.onPrimary,
             btnHeight: _setBtnHeight,

@@ -23,7 +23,6 @@ import 'package:zerobit_player/components/window_ctrl_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/statistics_ctrl.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
-import 'package:zerobit_player/custom_widgets/index.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/adapters/scalable_setting_adapters.dart';
 import 'package:zerobit_player/hive_manager/adapters/statistics_cache_adapter.dart';
@@ -51,7 +50,8 @@ import 'package:zerobit_player/tools/version_checker.dart';
 import 'package:zerobit_player/tray.dart';
 import 'package:zerobit_player/windows_taskbar_thumbnail.dart';
 
-import 'components/get_snack_bar.dart';
+import 'components/widget/get_snack_bar.dart';
+import 'components/side_bar.dart';
 import 'controller/desktop_lyrics_setting_ctrl.dart';
 import 'controller/lyric_ctrl.dart';
 import 'controller/setting_ctrl.dart';
@@ -822,39 +822,39 @@ class _HomePageState extends State<HomePage> {
                   children: <Widget>[
                     Padding(
                       padding: const EdgeInsetsGeometry.all(8),
-                      child: CustomNavigation(
+                      child: SideBar(
                         btnList: const <Widget>[
-                          CustomNavigationBtn(
+                          SideBarBtn(
                             label: '音乐',
                             icon: PhosphorIconsLight.musicNoteSimple,
                             localIndex: AppRoutes.homeOrder,
                           ),
-                          CustomNavigationBtn(
+                          SideBarBtn(
                             label: '艺术家',
                             icon: PhosphorIconsLight.userFocus,
                             localIndex: AppRoutes.artistPreviewOrder,
                           ),
-                          CustomNavigationBtn(
+                          SideBarBtn(
                             label: '专辑',
                             icon: PhosphorIconsLight.vinylRecord,
                             localIndex: AppRoutes.albumPreviewOrder,
                           ),
-                          CustomNavigationBtn(
+                          SideBarBtn(
                             label: '歌单',
                             icon: PhosphorIconsLight.playlist,
                             localIndex: AppRoutes.playListPreviewOrder,
                           ),
-                          CustomNavigationBtn(
+                          SideBarBtn(
                             label: '文件夹',
                             icon: PhosphorIconsLight.folders,
                             localIndex: AppRoutes.foldersPreviewOrder,
                           ),
-                          CustomNavigationBtn(
+                          SideBarBtn(
                             label: '统计',
                             icon: PhosphorIconsLight.chartLine,
                             localIndex: AppRoutes.statisticsOrder,
                           ),
-                          CustomNavigationBtn(
+                          SideBarBtn(
                             label: '设置',
                             icon: PhosphorIconsLight.gearSix,
                             localIndex: AppRoutes.settingOrder,

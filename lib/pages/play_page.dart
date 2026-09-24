@@ -7,9 +7,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/audio_ctrl_btn.dart';
+import 'package:zerobit_player/components/widget/audio_ctrl_btn.dart';
 import 'package:zerobit_player/components/blur_background.dart';
-import 'package:zerobit_player/components/covers.dart';
+import 'package:zerobit_player/components/widget/covers.dart';
 import 'package:zerobit_player/components/lyric/lyrics_render.dart';
 import 'package:zerobit_player/components/play_page/control_bar.dart';
 import 'package:zerobit_player/components/play_page/play_page_constant.dart';
@@ -20,8 +20,8 @@ import 'package:zerobit_player/controller/lyric_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
-import 'package:zerobit_player/custom_widgets/custom_button.dart';
-import 'package:zerobit_player/custom_widgets/scroll_text.dart';
+import 'package:zerobit_player/components/widget/general_btn.dart';
+import 'package:zerobit_player/components/widget/scroll_text.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/field/set_constants.dart';
@@ -288,7 +288,7 @@ class _PlayPageState extends State<PlayPage> {
     IconData? icon,
     required void Function() fn,
   }) {
-    return CustomBtn(
+    return GeneralBtn(
       fn: fn,
       btnHeight: 28,
       btnWidth: 28,
@@ -307,7 +307,7 @@ class _PlayPageState extends State<PlayPage> {
     required void Function() fn,
     String? toolTip,
   }) {
-    return CustomBtn(
+    return GeneralBtn(
       fn: fn,
       btnHeight: PlayPageConstant.menuBtnHeight,
       btnWidth: PlayPageConstant.menuBtnWidth,
