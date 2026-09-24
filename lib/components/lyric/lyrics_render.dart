@@ -78,13 +78,12 @@ class _LyricsRenderState extends State<LyricsRender> {
   @override
   void initState() {
     super.initState();
-    // 首次进入页面时，跳转到当前行
-
     if (_settingController.useSpringScroll.value) {
       _lyricController.springController = SpringListController();
     }
-
     _lyricController.lrcViewScrollController = ItemScrollController();
+
+    // 首次进入页面时，跳转到当前行
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _lyricController.scrollToCenter();

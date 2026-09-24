@@ -118,8 +118,8 @@ class SettingController {
   static const Map<int, String> spectrogramStyleMap = {
     SpectrogramStyleType.none: '无',
     SpectrogramStyleType.rect: '柱状图',
-    SpectrogramStyleType.waveform: '波形图',
-    SpectrogramStyleType.wave: '波浪',
+    // SpectrogramStyleType.waveform: '波形图',
+    // SpectrogramStyleType.wave: '波浪',
   };
 
   // 文件与列表状态
