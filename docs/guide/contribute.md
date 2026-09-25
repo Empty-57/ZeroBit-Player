@@ -7,7 +7,7 @@
 - 先查看[常见问题](/guide/faq)并完成相关排查
 - 还不能确认是程序问题或需要询问使用方法时，先到 [Discussions](https://github.com/Empty-57/ZeroBit-Player/discussions/categories/general) 交流
 - 能够复现的异常使用对应的 [Issue 模板](https://github.com/Empty-57/ZeroBit-Player/issues/new/choose) 提交
-- 日志位于程序目录下 `logs` 中，请将完整日志、复现步骤、系统版本和相关样本附在 Issue 中
+- 日志位于 `C:\Users\<用户名>\Documents\zerobit_logs` 中，请将完整日志、复现步骤、系统版本和相关样本附在 Issue 中
 
 ## 提交代码
 

@@ -203,7 +203,7 @@ flutter_rust_bridge_codegen generate --watch
 ### 贡献
 - 创建一个 [Issue](https://github.com/Empty-57/ZeroBit-Player/issues)
 
-可以是bug反馈，新功能请求，若提交BUG，请尽可能说明复现步骤并提供截图和日志，日志文件位于软件根目录下的 `logs` 目录下。
+可以是bug反馈，新功能请求，若提交BUG，请尽可能说明复现步骤并提供截图和日志，日志文件位于 `C:\Users\<用户名>\Documents\zerobit_logs` 目录下。
 
 - 创建一个 [Pull Request](https://github.com/Empty-57/ZeroBit-Player/pulls)
 

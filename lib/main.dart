@@ -126,7 +126,7 @@ Future<void> _safeDeleteFile(File file) async {
 
 Future<void> _initLog() async {
   // 初始化本地日志系统
-  LoggerUni.init();
+  await LoggerUni.init();
 
   // 拦截 Flutter 框架级别的错误
   FlutterError.onError = (FlutterErrorDetails details) {

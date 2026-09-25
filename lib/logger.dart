@@ -2,6 +2,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+
+const String logsDirectory = 'zerobit_logs';
 
 class RestrictionFileOutput extends AdvancedFileOutput {
   static final RegExp _ansiRegex = RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]');
@@ -34,11 +37,11 @@ class LoggerUni {
   static late final Logger _logger;
   LoggerUni._();
 
-  static void init() {
-    final currentDir = p.dirname(Platform.resolvedExecutable);
-    final logDirectory = Directory(p.join(currentDir, 'logs'));
-    if (!logDirectory.existsSync()) {
-      logDirectory.createSync(recursive: true);
+  static Future<void> init() async{
+    final docDir =  await getApplicationDocumentsDirectory();
+    final logDirectory = Directory(p.join(docDir.path, logsDirectory));
+    if (!await logDirectory.exists()) {
+      await logDirectory.create(recursive: true);
     }
 
     final now = DateTime.now();

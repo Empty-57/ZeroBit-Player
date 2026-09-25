@@ -282,7 +282,7 @@
 
 先在本页搜索现象并按相关条目排查。常见问题没有答案、但还不能确认是程序问题时，可以先到 [Discussions](https://github.com/Empty-57/ZeroBit-Player/discussions/categories/general) 交流；已经能够复现的异常，再使用对应的 [Issue 模板](https://github.com/Empty-57/ZeroBit-Player/issues/new/choose) 提交。
 
-在「设置 → 反馈」中跳转到浏览器反馈问题，尽量带上软件目录下 `logs` 内的日志。
+在「设置 → 反馈」中跳转到浏览器反馈问题，尽量带上 `C:\Users\<用户名>\Documents\zerobit_logs` 内的日志。
 
 提交前可以按下面的顺序自查：
 
