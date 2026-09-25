@@ -5,6 +5,7 @@
 #include "flutter/generated_plugin_registrant.h"
 
 #include "taskbar_manager.h"
+#include "japanese_analyzer.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -38,6 +39,7 @@ bool FlutterWindow::OnCreate() {
   // window is shown. It is a no-op if the first frame hasn't completed yet.
   flutter_controller_->ForceRedraw();
   TaskbarManager::GetInstance().Init(GetHandle(), flutter_controller_->engine()->messenger());
+  japanese_analyzer::RegisterChannel(flutter_controller_->engine()->messenger());
   return true;
 }
 

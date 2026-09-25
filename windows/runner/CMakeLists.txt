@@ -13,6 +13,8 @@ add_executable(${BINARY_NAME} WIN32
   "win32_window.cpp"
   "taskbar_manager.cpp"
   "taskbar_manager.h"
+  "japanese_analyzer.cpp"
+  "japanese_analyzer.h"
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
   "Runner.rc"
   "runner.exe.manifest"
