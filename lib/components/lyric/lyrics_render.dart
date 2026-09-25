@@ -16,6 +16,7 @@ import 'package:zerobit_player/theme_manager.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
+import '../../field/set_constants.dart';
 import '../widget/audio_ctrl_btn.dart';
 
 class _LyricsStyle {
@@ -106,9 +107,6 @@ class _LyricsRenderState extends State<LyricsRender> {
     final width = MediaQuery.sizeOf(context).width;
 
     final dynamicPadding = width / 2 * (1 - 1 / LyricConstants.lrcScale);
-
-    // 路由外部更改的值
-    final useSpringscroll = _settingController.useSpringScroll.value;
     return MouseRegion(
       onEnter: (_) => _isHover.value = true,
       onExit: (_) => _isHover.value = false,
@@ -151,31 +149,33 @@ class _LyricsRenderState extends State<LyricsRender> {
                       ),
                     );
                   }
+                  final useSpringscroll =
+                      _settingController.useSpringScroll.value;
                   final lrcAlignment = _settingController.lrcAlignment.value;
                   final showRoma = _settingController.showRoma.value;
                   final showTranslate = _settingController.showTranslate.value;
+                  final useBlur = _settingController.useBlur.value;
+                  final currentSongPath = c.currentPath.peek();
 
                   final lrcPadding = EdgeInsets.only(
                     top: 16,
                     bottom: 16,
-                    left: lrcAlignment == 2
+                    left: lrcAlignment == LrcAlignmentType.right
                         ? dynamicPadding
-                        : lrcAlignment == 1
+                        : lrcAlignment == LrcAlignmentType.center
                         ? dynamicPadding / 2
                         : 16,
-                    right: lrcAlignment == 0
+                    right: lrcAlignment == LrcAlignmentType.left
                         ? dynamicPadding
-                        : lrcAlignment == 1
+                        : lrcAlignment == LrcAlignmentType.center
                         ? dynamicPadding / 2
                         : 16,
                   );
-                  final textAlign = lrcAlignment == 0
+                  final textAlign = lrcAlignment == LrcAlignmentType.left
                       ? TextAlign.left
-                      : lrcAlignment == 1
+                      : lrcAlignment == LrcAlignmentType.center
                       ? TextAlign.center
                       : TextAlign.right;
-
-                  final currentSongPath = c.currentPath.peek();
 
                   Widget creatLyricItem(int index) {
                     if (index < 0 ||
@@ -187,9 +187,8 @@ class _LyricsRenderState extends State<LyricsRender> {
                     return _StaggeredLyricItem(
                       key: ValueKey('${currentSongPath}_$index'),
                       index: index,
+                      onClick: c.throttledSeek,
                       lyricController: _lyricController,
-                      audioController: _audioController,
-                      settingController: _settingController,
                       lrcType: c.currentlyricType,
                       lineText: c.lineTextList[index],
                       translateText: c.translateList[index],
@@ -206,6 +205,8 @@ class _LyricsRenderState extends State<LyricsRender> {
                       textAlign: textAlign,
                       showTranslate: showTranslate,
                       showRoma: showRoma,
+                      useSpringScroll: useSpringscroll,
+                      useBlur: useBlur,
                     );
                   }
 
@@ -311,8 +312,6 @@ class _StaggeredLyricItem extends StatelessWidget {
   final int index;
 
   final LyricController lyricController;
-  final AudioController audioController;
-  final SettingController settingController;
 
   final String lrcType;
   final dynamic lineText;
@@ -325,6 +324,8 @@ class _StaggeredLyricItem extends StatelessWidget {
   final EdgeInsets lrcPadding;
   final bool showTranslate;
   final bool showRoma;
+  final bool useSpringScroll;
+  final bool useBlur;
 
   final TextStyle lyricStyle;
   final TextStyle tsLyricStyle;
@@ -333,12 +334,12 @@ class _StaggeredLyricItem extends StatelessWidget {
   final StrutStyle strutStyle;
   final Color? hoverColor;
 
+  final void Function(double) onClick;
+
   const _StaggeredLyricItem({
     super.key,
     required this.index,
     required this.lyricController,
-    required this.audioController,
-    required this.settingController,
     required this.lrcType,
     required this.lineText,
     required this.translateText,
@@ -355,6 +356,9 @@ class _StaggeredLyricItem extends StatelessWidget {
     required this.textAlign,
     required this.showTranslate,
     required this.showRoma,
+    required this.useSpringScroll,
+    required this.useBlur,
+    required this.onClick,
   });
 
   Widget _createAnimatedScaleWidget({
@@ -384,9 +388,6 @@ class _StaggeredLyricItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final useBlur = settingController.useBlur.value;
-    final useSpring = settingController.useSpringScroll.value;
-
     return SignalBuilder(
       builder: (context) {
         final int currentLineIndex = lyricController.currentLineIndex.value;
@@ -394,7 +395,7 @@ class _StaggeredLyricItem extends StatelessWidget {
         final renderWidget = distance <= lyricController.visibleItemCount;
 
         final isPointerScrolling = lyricController.isPointerScroll.value;
-        if (!renderWidget && useSpring && !isPointerScrolling) {
+        if (!renderWidget && useSpringScroll && !isPointerScrolling) {
           return const SizedBox.shrink(); // ?
         }
 
@@ -441,7 +442,7 @@ class _StaggeredLyricItem extends StatelessWidget {
                     style: lyricStyle,
                     isCurrentLine: isCurrent,
                     isPrevLine: isPrevLine,
-                    lrcAlignmentIndex: lrcAlignment,
+                    lrcAlignment: lrcAlignment,
                     lyricController: lyricController,
                     strutStyle: strutStyle,
                     blurSigma: blurSigma,
@@ -485,9 +486,7 @@ class _StaggeredLyricItem extends StatelessWidget {
         );
 
         return TextButton(
-          onPressed: () {
-            audioController.throttledSeek(startTime);
-          },
+          onPressed: () => onClick(startTime),
           style: TextButton.styleFrom(
             shape: const RoundedRectangleBorder(
               borderRadius: LyricConstants.borderRadius,

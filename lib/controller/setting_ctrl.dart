@@ -59,7 +59,11 @@ class SettingController {
   static const int lrcFontSizeMin = 24;
   static const int lrcFontWeightMax = 8;
   static const int lrcFontWeightMin = 0;
-  static const Map<int, String> lrcAlignmentMap = {0: '左对齐', 1: '居中', 2: '右对齐'};
+  static const Map<int, String> lrcAlignmentMap = {
+    LrcAlignmentType.left: '左对齐',
+    LrcAlignmentType.center: '居中',
+    LrcAlignmentType.right: '右对齐',
+  };
 
   // 音频与播放状态
   final apiIndex = signal(0);
@@ -515,7 +519,7 @@ class SettingController {
   );
   void setUseMesh({required bool value}) =>
       _setBoolPref(SharedPreferencesKey.useMesh, useMesh, overrideValue: value);
-  void setSpringScroll({required bool value}) => _setBoolPref(
+  void setSpringScroll({bool? value}) => _setBoolPref(
     SharedPreferencesKey.useSpringScroll,
     useSpringScroll,
     overrideValue: value,

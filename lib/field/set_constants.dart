@@ -14,3 +14,9 @@ abstract class SpectrogramStyleType {
   static const int waveform = 2;
   static const int wave = 3;
 }
+
+abstract class LrcAlignmentType {
+  static const int left = 0;
+  static const int center = 1;
+  static const int right = 2;
+}

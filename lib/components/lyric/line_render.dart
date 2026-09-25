@@ -44,7 +44,7 @@ class KaraOkLyricWidget extends StatelessWidget {
   final TextStyle style;
   final bool isCurrentLine;
   final bool isPrevLine;
-  final int lrcAlignmentIndex;
+  final int lrcAlignment;
   final LyricController lyricController;
   final StrutStyle strutStyle;
   final int blurSigma;
@@ -54,7 +54,7 @@ class KaraOkLyricWidget extends StatelessWidget {
     required this.text,
     required this.style,
     required this.isCurrentLine,
-    required this.lrcAlignmentIndex,
+    required this.lrcAlignment,
     required this.lyricController,
     required this.strutStyle,
     required this.isPrevLine,
@@ -71,7 +71,7 @@ class KaraOkLyricWidget extends StatelessWidget {
       buffer.toString(),
       style: style,
       strutStyle: strutStyle,
-      textAlign: LyricConstants.lrcTextAlign[lrcAlignmentIndex],
+      textAlign: LyricConstants.lrcTextAlign[lrcAlignment],
       blurSigma: blurSigma,
     );
   }
@@ -88,7 +88,7 @@ class KaraOkLyricWidget extends StatelessWidget {
       style.color!.withValues(alpha: LyricConstants.currentAlpha),
     ];
 
-    final TextAlign textAlign = LyricConstants.lrcTextAlign[lrcAlignmentIndex];
+    final TextAlign textAlign = LyricConstants.lrcTextAlign[lrcAlignment];
 
     return ValueListenableBuilder<int>(
       valueListenable: lyricController.currentWordIndexNotifier,

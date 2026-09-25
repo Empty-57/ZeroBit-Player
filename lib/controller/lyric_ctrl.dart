@@ -202,7 +202,7 @@ class LyricController {
       _updateLyricsInfo(updateLineOnly: true);
       if (!isPointerScroll.value) {
         if (_settingController.useSpringScroll.value) {
-          springScrollToCenter();
+          _springScrollToCenter();
         } else {
           scrollToCenter();
         }
@@ -246,14 +246,14 @@ class LyricController {
     });
   }
 
-  void springScrollToCenter() {
+  void _springScrollToCenter() {
     springController?.nextLyric(currentLineIndex.value);
   }
 
   void scrollToCenter() {
     if (_settingController.useSpringScroll.value) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        springScrollToCenter();
+        _springScrollToCenter();
       });
     } else {
       if (lrcViewScrollController == null ||

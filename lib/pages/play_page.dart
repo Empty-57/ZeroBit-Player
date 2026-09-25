@@ -33,6 +33,8 @@ import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/paint_cache.dart';
 
+import '../components/spring_list_view.dart';
+
 const LinearGradient _lyricsFadeGradient = LinearGradient(
   begin: Alignment.topCenter,
   end: Alignment.bottomCenter,
@@ -549,6 +551,44 @@ class _PlayPageState extends State<PlayPage> {
       ),
       divider,
       SignalBuilder(
+        builder: (context) {
+          return _createMenuBtn(
+            fn: () {
+              menuController.close();
+              _settingController.useBlur.value =
+                  !_settingController.useBlur.value;
+              _settingController.putCache();
+            },
+            text: '歌词行模糊',
+            icon: _settingController.useBlur.value
+                ? PhosphorIconsFill.dotsNine
+                : PhosphorIconsLight.dotsNine,
+          );
+        },
+      ),
+      SignalBuilder(
+        builder: (context) {
+          return _createMenuBtn(
+            fn: () {
+              menuController.close();
+              _settingController.setSpringScroll();
+              if (_settingController.useSpringScroll.value) {
+                _lyricController.springController = SpringListController();
+              } else {
+                _lyricController.springController = null;
+              }
+              SchedulerBinding.instance.addPostFrameCallback((_) {
+                _lyricController.scrollToCenter();
+              });
+            },
+            text: '弹性滚动',
+            icon: _settingController.useSpringScroll.value
+                ? PhosphorIconsFill.waves
+                : PhosphorIconsLight.waves,
+          );
+        },
+      ),
+      SignalBuilder(
         builder: (_) {
           return _createdSubmenuBtn(
             text: '调整倍速',
@@ -600,6 +640,7 @@ class _PlayPageState extends State<PlayPage> {
           );
         },
       ),
+      divider,
       _createdSubmenuBtn(
         text: '添加到歌单',
         darkColorScheme: darkColorScheme,
