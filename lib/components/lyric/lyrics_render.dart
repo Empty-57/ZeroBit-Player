@@ -24,7 +24,7 @@ class _LyricsStyle {
 
   final _themeService = ThemeService.instance;
 
-  // 提取基础参数，避免重复访问 Rx 变量的 .value
+  // 提取基础参数
   double get _baseSize => _settingsController.lrcFontSize.value.toDouble();
   FontWeight get _weight =>
       FontWeight.values[_settingsController.lrcFontWeight.value];
