@@ -5,7 +5,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:convert/convert.dart';
-
 import 'package:zerobit_player/logger.dart';
 
 const int _encrypt = 1;

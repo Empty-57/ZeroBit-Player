@@ -2,8 +2,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/widget/covers.dart';
 import 'package:zerobit_player/components/play_page/play_page_mesh.dart';
+import 'package:zerobit_player/components/widget/covers.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/theme_manager.dart';
 import 'package:zerobit_player/tools/paint_cache.dart';
@@ -46,7 +46,11 @@ class BlurWithCoverBackground extends StatelessWidget {
   SettingController get _settingController => SettingController.instance;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      SignalBuilder(builder: _buildBackground);
+
+  Widget _buildBackground(BuildContext context) {
+    final useMesh = _settingController.useMesh.value && meshEnable;
     final backgroundColor = onlyDarkMode
         ? ThemeService.instance.darkTheme.colorScheme.surface
         : Theme.of(context).colorScheme.surface;
@@ -64,7 +68,6 @@ class BlurWithCoverBackground extends StatelessWidget {
 
         RepaintBoundary(
           child: () {
-            final bool useMesh = _settingController.useMesh.value && meshEnable;
             if (useMesh) {
               return const PlayPageMesh();
             }

@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/API/apis.dart';
-import 'package:zerobit_player/components/widget/audio_ctrl_btn.dart';
 import 'package:zerobit_player/components/play_page/play_page_constant.dart';
+import 'package:zerobit_player/components/widget/audio_ctrl_btn.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/logger.dart';
@@ -127,11 +127,11 @@ class _SearchResultItem extends StatelessWidget {
     }
 
     return TextButton(
-      onPressed: () {
+      onPressed: () async {
         final type = v.lyric!.type;
         if (type == LyricFormat.lrc) {
           audioController.currentLyrics.value = ParsedLyricModel(
-            parsedLrc: parseLrc(
+            parsedLrc: await parseLrc(
               lyricData: v.lyric!.lrc,
               lyricDataTs: v.lyric!.translate,
             ),
@@ -141,7 +141,7 @@ class _SearchResultItem extends StatelessWidget {
             type == LyricFormat.qrc ||
             type == LyricFormat.krc) {
           audioController.currentLyrics.value = ParsedLyricModel(
-            parsedLrc: parseKaraOkLyric(
+            parsedLrc: await parseKaraOkLyric(
               lyricData: v.lyric!.verbatimLrc,
               lyricDataTs: v.lyric!.translate,
               type: type,

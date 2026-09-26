@@ -1,20 +1,21 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/widget/audio_ctrl_btn.dart';
 import 'package:zerobit_player/components/play_page/play_page_constant.dart';
 import 'package:zerobit_player/components/play_page/search_dialog.dart';
+import 'package:zerobit_player/components/widget/audio_ctrl_btn.dart';
+import 'package:zerobit_player/components/widget/rect_value_indicator.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
-import 'package:zerobit_player/components/widget/rect_value_indicator.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
-import 'dart:ui' as ui;
 
 class _GradientSliderTrackShape extends SliderTrackShape {
   final double activeTrackHeight;
@@ -107,14 +108,20 @@ class _GradientSliderTrackShape extends SliderTrackShape {
       _cachedColors = <Color>[activeColor.withValues(alpha: 0.0), activeColor];
     }
 
-    _activePaint.shader = ui.Gradient.linear(
+    final shader = ui.Gradient.linear(
       Offset(trackLeft, centerY),
       Offset(currentThumbX, centerY),
       _cachedColors!,
       _stops,
     );
 
-    canvas.drawRRect(activeRRect, _activePaint);
+    _activePaint.shader = shader;
+    try {
+      canvas.drawRRect(activeRRect, _activePaint);
+    } finally {
+      _activePaint.shader = null;
+      shader.dispose();
+    }
   }
 }
 

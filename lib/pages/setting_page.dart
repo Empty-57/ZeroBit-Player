@@ -7,18 +7,19 @@ import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path/path.dart' as p;
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:zerobit_player/components/widget/general_btn.dart';
 import 'package:zerobit_player/components/widget/get_snack_bar.dart';
 import 'package:zerobit_player/controller/desktop_lyrics_setting_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
-import 'package:zerobit_player/components/widget/general_btn.dart';
 import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/get_fonts.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
-import 'package:path/path.dart' as p;
+
 import '../field/shared_preferences_key.dart';
 import '../tools/version_checker.dart';
 

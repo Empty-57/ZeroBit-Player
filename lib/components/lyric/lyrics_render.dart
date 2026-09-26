@@ -32,9 +32,12 @@ class _LyricsStyle {
   Color get _onContainerColor =>
       _themeService.darkTheme.colorScheme.onSecondaryContainer;
 
-  // StrutStyle 强制行高一致，防止跳动
-  StrutStyle get strutStyle =>
-      StrutStyle(fontSize: _baseSize.toDouble(), forceStrutHeight: true);
+  // StrutStyle 行高一致，防止跳动
+  StrutStyle get strutStyle => StrutStyle(
+    fontSize: _baseSize.toDouble(),
+    height: 1,
+    forceStrutHeight: false,
+  );
 
   // 核心样式生成
   TextStyle get lyricStyle => generalTextStyle(
@@ -45,9 +48,13 @@ class _LyricsStyle {
     weight: _weight,
   );
 
-  TextStyle get tsLyricStyle => lyricStyle.copyWith(fontSize: _baseSize - 4);
+  TextStyle get tsLyricStyle => lyricStyle.copyWith(fontSize: _baseSize * 0.9);
 
-  TextStyle get romaLyricStyle => lyricStyle.copyWith(fontSize: _baseSize - 6);
+  TextStyle get romaLyricStyle =>
+      lyricStyle.copyWith(fontSize: _baseSize * 0.8);
+
+  TextStyle get furiganaLyricStyle =>
+      lyricStyle.copyWith(fontSize: _baseSize * 0.6, height: 1);
 
   TextStyle get interludeLyricStyle =>
       lyricStyle.copyWith(fontFamily: 'Microsoft YaHei Light');
@@ -94,6 +101,7 @@ class _LyricsRenderState extends State<LyricsRender> {
 
   @override
   void dispose() {
+    _lyricController.springController?.dispose();
     _lyricController.lrcViewScrollController = null;
     _lyricController.springController = null;
     _isHover.dispose();
@@ -130,6 +138,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                   final lyricsStyle = lrcStylePackage.lyricStyle;
                   final tsLyricStyle = lrcStylePackage.tsLyricStyle;
                   final romaLyricStyle = lrcStylePackage.romaLyricStyle;
+                  final furiganaLyricStyle = lrcStylePackage.furiganaLyricStyle;
                   final strutStyle = lrcStylePackage.strutStyle;
                   final interludeLyricStyle =
                       lrcStylePackage.interludeLyricStyle;
@@ -149,8 +158,16 @@ class _LyricsRenderState extends State<LyricsRender> {
                       ),
                     );
                   }
+
+                  // 接受这些信号也重建
                   final useSpringscroll =
                       _settingController.useSpringScroll.value;
+                  if (useSpringscroll) {
+                    _lyricController.springController ??=
+                        SpringListController();
+                  } else {
+                    _lyricController.springController = null;
+                  }
                   final lrcAlignment = _settingController.lrcAlignment.value;
                   final showRoma = _settingController.showRoma.value;
                   final showTranslate = _settingController.showTranslate.value;
@@ -197,6 +214,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                       lyricStyle: lyricsStyle,
                       tsLyricStyle: tsLyricStyle,
                       romaLyricStyle: romaLyricStyle,
+                      furiganaLyricStyle: furiganaLyricStyle,
                       interludeLyricStyle: interludeLyricStyle,
                       strutStyle: strutStyle,
                       hoverColor: hoverColor,
@@ -331,6 +349,7 @@ class _StaggeredLyricItem extends StatelessWidget {
   final TextStyle tsLyricStyle;
   final TextStyle romaLyricStyle;
   final TextStyle interludeLyricStyle;
+  final TextStyle furiganaLyricStyle;
   final StrutStyle strutStyle;
   final Color? hoverColor;
 
@@ -359,6 +378,7 @@ class _StaggeredLyricItem extends StatelessWidget {
     required this.useSpringScroll,
     required this.useBlur,
     required this.onClick,
+    required this.furiganaLyricStyle,
   });
 
   Widget _createAnimatedScaleWidget({
@@ -440,6 +460,7 @@ class _StaggeredLyricItem extends StatelessWidget {
                   child: KaraOkLyricWidget(
                     text: lineText as List<WordEntry>,
                     style: lyricStyle,
+                    furiganaLyricStyle: furiganaLyricStyle,
                     isCurrentLine: isCurrent,
                     isPrevLine: isPrevLine,
                     lrcAlignment: lrcAlignment,

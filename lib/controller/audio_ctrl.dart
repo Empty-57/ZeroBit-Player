@@ -130,6 +130,7 @@ class AudioController {
   EffectCleanup? _metadataCleanup;
 
   void init() {
+    _metadataCleanup?.call();
     _metadataCleanup = effect(() {
       final metadata = currentMetadata.value;
       if (metadata.path.isEmpty) return;
@@ -271,6 +272,10 @@ class AudioController {
 
   /// 提取歌词文本解析逻辑
   void _parseLyricLists(ParsedLyricModel? lyrics) {
+    _lyricController.lineUpdatedReset();
+    _lyricController.currentLineIndex.value = -1;
+    _lyricController.interludeProcess.value = 0;
+    _lyricController.showInterlude.value = false;
     final parsedLrc = lyrics?.parsedLrc;
     showLyricRender = parsedLrc?.isNotEmpty ?? false;
     if (showLyricRender) {
@@ -362,7 +367,16 @@ class AudioController {
   }
 
   void dispose() {
+    _metadataGeneration++;
     _metadataCleanup?.call();
+    _metadataCleanup = null;
+    _paletteCache.clear();
+    lineTextList = [];
+    translateList = [];
+    startTime = [];
+    romaList = [];
+    currentCover = kTransparentImage;
+    coverRevision.dispose();
     currentMs100.dispose();
     progress.dispose();
     audioFFT.dispose();
@@ -466,14 +480,14 @@ class AudioController {
     List<LyricEntry<dynamic>>? parsedResult;
 
     if (type == LyricFormat.lrc) {
-      parsedResult = parseLrc(
+      parsedResult = await parseLrc(
         lyricData: lyricInfo.lrc,
         lyricDataTs: lyricInfo.translate,
       );
     } else if (type == LyricFormat.yrc ||
         type == LyricFormat.qrc ||
         type == LyricFormat.krc) {
-      parsedResult = parseKaraOkLyric(
+      parsedResult = await parseKaraOkLyric(
         lyricData: lyricInfo.verbatimLrc,
         lyricDataTs: lyricInfo.translate,
         type: type,

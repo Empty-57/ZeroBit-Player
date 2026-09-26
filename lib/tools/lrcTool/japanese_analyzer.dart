@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/services.dart';
 
 import '../../logger.dart';
@@ -15,14 +16,15 @@ class JapanesePhoneticModel {
   final String yomi;
   final bool isPhraseStart;
 
-  JapanesePhoneticModel({
+  const JapanesePhoneticModel({
     required this.text,
     required this.yomi,
     required this.isPhraseStart,
   });
+  static final RegExp _kanjiRegex = RegExp(r'\p{Script=Han}', unicode: true);
 
   /// 是否有注音
-  bool get hasFurigana => text != yomi;
+  bool get hasFurigana => _kanjiRegex.hasMatch(text) && text != yomi;
 
   @override
   String toString() => hasFurigana ? '$text($yomi)' : text;
@@ -62,11 +64,7 @@ class JapaneseAnalyzer {
     String text, {
     bool monoRuby = true,
   }) async {
-    if (!Platform.isWindows) {
-      throw UnsupportedError('Native analyzer is only supported on Windows');
-    }
-
-    if (text.trim().isEmpty) return [];
+    if (!Platform.isWindows || text.trim().isEmpty) return const [];
 
     try {
       final List<dynamic>? result = await _channel.invokeMethod('getWords', {

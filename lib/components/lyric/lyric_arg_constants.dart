@@ -9,7 +9,7 @@ abstract class LyricConstants {
   static const double notPlayedDarkAlpha = 0.15;
   static const BorderRadius borderRadius = BorderRadius.all(Radius.circular(4));
   static const double ctrlBtnMinSize = 40.0;
-  static const double floatingY = -1.5;
+  static const double floatingY = -2.0;
   static const double rippleThreshold = 1.5;
   static const double ripplesScaleMin = 1.1;
   static const double ripplesScaleExtra = 0.1;
@@ -39,4 +39,10 @@ abstract class LyricConstants {
   ];
   static const gradientStops = <double>[0.0, 0.333, 0.666];
   static const double lrcScale = 1.1;
+
+  static const List<WrapAlignment> lrcWrapAlign = [
+    WrapAlignment.start,
+    WrapAlignment.center,
+    WrapAlignment.end,
+  ];
 }

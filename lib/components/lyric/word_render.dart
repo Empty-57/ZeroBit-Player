@@ -11,24 +11,10 @@ class _ScaledTranslateGradientTransform extends GradientTransform {
     required this.translateGradientScale,
   });
 
-  static final Matrix4 _sharedMatrix = Matrix4.zero();
-
   @override
-  Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
-    // final double scale=entry.value.duration>=1.0 ? 3:2; 动态 scale 视觉效果更好
-    // 先将x轴扩大scale倍，然后平移x轴
-
-    final storage = _sharedMatrix.storage;
-
-    // xyz缩放
-    storage[0] = translateGradientScale; // x
-    storage[5] = 1.0; // y
-    storage[10] = 1.0; // z
-    storage[15] = 1.0; // w
-
-    // x平移
-    storage[12] = translateGradientScale * dx;
-    return _sharedMatrix;
+  Matrix4 transform(Rect bounds, {TextDirection? textDirection}) {
+    return Matrix4.diagonal3Values(translateGradientScale, 1, 1)
+      ..setTranslationRaw(translateGradientScale * dx, 0, 0);
   }
 }
 
@@ -160,9 +146,9 @@ class HighlightedWordState extends State<HighlightedWord> {
       );
     }
 
-    final List<InlineSpan> glowChildren = List<InlineSpan>.filled(
+    final List<Widget> glowChildren = List<Widget>.filled(
       _charCount,
-      const TextSpan(),
+      const SizedBox.shrink(),
       growable: false,
     );
 
@@ -206,37 +192,34 @@ class HighlightedWordState extends State<HighlightedWord> {
       )!;
 
       // glow 层
-      glowChildren[i] = WidgetSpan(
-        alignment: PlaceholderAlignment.baseline,
-        baseline: TextBaseline.alphabetic,
-        child: Transform.scale(
-          alignment: Alignment.bottomCenter,
-          scale: scale,
-          filterQuality: FilterQuality.low,
-          child: Text(
-            char,
-            style: _normalStyle.copyWith(
-              shadows: [
-                Shadow(
-                  color: _baseColor.withValues(alpha: glowAlpha * 0.6),
-                  blurRadius: 4,
-                ),
-                Shadow(
-                  color: _baseColor.withValues(alpha: glowAlpha),
-                  blurRadius: 8,
-                ),
-              ],
-            ),
-            strutStyle: widget.strutStyle,
+      glowChildren[i] = Transform.scale(
+        alignment: Alignment.bottomCenter,
+        scale: scale,
+        filterQuality: FilterQuality.low,
+        child: Text(
+          char,
+          style: _normalStyle.copyWith(
+            shadows: [
+              Shadow(
+                color: _baseColor.withValues(alpha: glowAlpha * 0.6),
+                blurRadius: 4,
+              ),
+              Shadow(
+                color: _baseColor.withValues(alpha: glowAlpha),
+                blurRadius: 8,
+              ),
+            ],
           ),
+          strutStyle: widget.strutStyle,
         ),
       );
     }
 
     return _shaderMaskWrap(
-      Text.rich(
-        TextSpan(children: glowChildren),
-        strutStyle: widget.strutStyle,
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: glowChildren,
       ),
     );
   }

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_charset/fl_charset.dart';
-
 import 'package:path/path.dart' as p;
 import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/tools/lrcTool/parse_lyrics.dart';
@@ -168,13 +167,13 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
 
       if (type == LyricFormat.lrc || type == LyricFormat.byWordLrc) {
         return ParsedLyricModel(
-          parsedLrc: parseLrc(lyricData: lyrics, lyricDataTs: lyricsTs),
+          parsedLrc: await parseLrc(lyricData: lyrics, lyricDataTs: lyricsTs),
           type: type,
         );
       }
       if (type == LyricFormat.yrc || type == LyricFormat.qrc) {
         return ParsedLyricModel(
-          parsedLrc: parseKaraOkLyric(
+          parsedLrc: await parseKaraOkLyric(
             lyricData: lyrics,
             lyricDataTs: lyricsTs,
             type: type,
@@ -187,13 +186,13 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
       LoggerUni.i("embeddedLyric | type: $detectType");
       if (detectType == LrcType.enhanced || detectType == LrcType.wordByWord) {
         return ParsedLyricModel(
-          parsedLrc: parseLrc(lyricData: embeddedLyrics),
+          parsedLrc: await parseLrc(lyricData: embeddedLyrics),
           type: LyricFormat.byWordLrc,
         );
       }
       if (detectType == LrcType.lineByLine) {
         return ParsedLyricModel(
-          parsedLrc: parseLrc(lyricData: embeddedLyrics),
+          parsedLrc: await parseLrc(lyricData: embeddedLyrics),
           type: LyricFormat.lrc,
         );
       }
@@ -206,7 +205,7 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
   if (lyricsData.type == LyricFormat.lrc ||
       lyricsData.type == LyricFormat.byWordLrc) {
     return ParsedLyricModel(
-      parsedLrc: parseLrc(lyricData: lyricsData.lyrics),
+      parsedLrc: await parseLrc(lyricData: lyricsData.lyrics),
       type: lyricsData.type,
     );
   }
@@ -214,7 +213,7 @@ Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
       lyricsData.type == LyricFormat.qrc ||
       lyricsData.type == LyricFormat.krc) {
     return ParsedLyricModel(
-      parsedLrc: parseKaraOkLyric(
+      parsedLrc: await parseKaraOkLyric(
         lyricData: lyricsData.lyrics,
         lyricDataTs: lyricsData.lyricsTs,
         type: lyricsData.type,

@@ -28,7 +28,7 @@ class LyricEntry<T> implements TimedEntry {
         : (lyricText as List<WordEntry>)
               .map(
                 (w) =>
-                    "word:${w.lyricWord} start:${w.start} duration:${w.duration} \n",
+                    "word:${w.lyricWord}${w.furigana.isEmpty ? '' : '(${w.furigana})'} start:${w.start} duration:${w.duration} \n",
               )
               .join();
     return '[segmentStart: $start,\n lyricText: "$display",\n nextTime: $nextTime,\n translate: "$translate"\n]';
@@ -41,12 +41,14 @@ class WordEntry implements TimedEntry {
   final double start;
   double duration;
   String lyricWord;
+  String furigana;
   @override
   double nextTime;
   WordEntry({
     required this.start,
     required this.duration,
     required this.lyricWord,
+    required this.furigana,
     this.nextTime = double.infinity,
   });
 

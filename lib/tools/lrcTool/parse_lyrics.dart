@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:zerobit_player/logger.dart';
 
+import 'japanese_analyzer.dart';
 import 'lyric_model.dart';
 
 // ─────────────────────────── 正则表达式 ───────────────────────────
@@ -86,11 +87,11 @@ WordEntry _mergeWords(WordEntry last, WordEntry curr) {
     start: last.start,
     duration: last.duration + curr.duration,
     lyricWord: last.lyricWord + curr.lyricWord,
+    furigana: last.furigana + curr.furigana,
   );
 }
 
-// ─────────────────────────── LRC 类型检测 ───────────────────────────
-
+///LRC 类型检测
 LrcType detectLrcType(String lrcContent) {
   final lines = lrcContent.trim();
 
@@ -113,6 +114,147 @@ LrcType detectLrcType(String lrcContent) {
   }
 
   return LrcType.unknown;
+}
+
+/// 检测是否含有日文
+class JapaneseDetector {
+  JapaneseDetector._();
+  // 匹配平假名和片假名
+  static final RegExp _kanaRegex = RegExp(
+    r'[\u3040-\u309F\u30A0-\u30FF\uFF66-\uFF9F]',
+  );
+
+  // 匹配CJK汉字
+  static final RegExp _kanjiRegex = RegExp(
+    r'[\p{Script=Han}々〆〻]',
+    unicode: true,
+  );
+
+  /// 检查某段文字是否包含假名
+  static bool hasKana(String text) => _kanaRegex.hasMatch(text);
+
+  /// 检查某段文字是否包含汉字
+  static bool hasKanji(String text) => _kanjiRegex.hasMatch(text);
+
+  /// 如果一首歌里有超过 15% 的行包含假名，那么判定为日语歌
+  static bool isJapaneseSong(List<LyricEntry<dynamic>> entries) {
+    if (entries.isEmpty) return false;
+    int kanaLineCount = 0;
+
+    for (final entry in entries) {
+      final lineText = _getPlainText(entry);
+      if (lineText.trim().isEmpty) continue;
+      if (hasKana(lineText)) {
+        kanaLineCount++;
+      }
+      if ((kanaLineCount / entries.length) > 0.15) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// 判断某一行是否需要进行注音处理
+  static bool shouldAnnotateLine({
+    required LyricEntry<dynamic> entry,
+    required bool isSongJapanese,
+  }) {
+    final lineText = _getPlainText(entry);
+
+    // 如果该行连汉字都没有，不需要注音
+    if (!hasKanji(lineText)) {
+      return false;
+    }
+
+    // 如果整首歌判定为日文歌，则进行注音
+    if (isSongJapanese) {
+      return true;
+    }
+
+    // 这行出现假名则注音
+    if (hasKana(lineText)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  static String _getPlainText(LyricEntry<dynamic> entry) {
+    final lyricText = entry.lyricText;
+    if (lyricText is String) {
+      return lyricText;
+    } else if (lyricText is List<WordEntry>) {
+      return (lyricText).map((w) => w.lyricWord).join();
+    }
+    return '';
+  }
+}
+
+// ─────────────────────────── 日文逐字注音核心处理 ───────────────────────────
+
+/// 遍历逐字歌词行并注入假名。
+Future<void> _applyJapaneseFurigana(
+  List<LyricEntry> entries,
+  bool isSongJapanese,
+) async {
+  for (final entry in entries) {
+    if (!JapaneseDetector.shouldAnnotateLine(
+      entry: entry,
+      isSongJapanese: isSongJapanese,
+    )) {
+      continue;
+    }
+
+    final lyricText = entry.lyricText;
+    if (lyricText is! List<WordEntry> || lyricText.isEmpty) continue;
+    await _annotateWordsForLine(lyricText);
+  }
+}
+
+/// 对单行的 WordEntry 集合进行 Windows 原生假名匹配对齐
+Future<void> _annotateWordsForLine(List<WordEntry> words) async {
+  if (words.isEmpty) return;
+
+  final fullLineText = words.map((w) => w.lyricWord).join();
+  if (fullLineText.trim().isEmpty) return;
+
+  final phonemes = await JapaneseAnalyzer.getWords(
+    fullLineText,
+    monoRuby: true,
+  );
+  if (phonemes.isEmpty) return;
+
+  final List<String> charFuriganaMap = List.filled(fullLineText.length, '');
+
+  int textPointer = 0;
+  for (final p in phonemes) {
+    final pLen = p.text.length;
+    if (textPointer + pLen > fullLineText.length) break;
+    // 只有当该音素包含汉字时才赋予注音
+    if (JapaneseDetector.hasKanji(p.text) && p.hasFurigana) {
+      charFuriganaMap[textPointer] = p.yomi;
+    }
+    textPointer += pLen;
+  }
+
+  int wordPointer = 0;
+  for (final word in words) {
+    final wLen = word.lyricWord.length;
+    if (wLen == 0) continue;
+
+    final StringBuffer furiganaBuffer = StringBuffer();
+
+    for (int i = 0; i < wLen; i++) {
+      final currentIdx = wordPointer + i;
+      if (currentIdx < charFuriganaMap.length &&
+          charFuriganaMap[currentIdx].isNotEmpty) {
+        furiganaBuffer.write(charFuriganaMap[currentIdx]);
+      }
+    }
+
+    word.furigana = furiganaBuffer.toString();
+    wordPointer += wLen;
+  }
 }
 
 // ─────────────────────────── 基础 LRC 解析 ───────────────────────────
@@ -164,7 +306,12 @@ List<WordEntry> _enhancedAndWordByWordLrcAnalysis(
       if (words.isNotEmpty) {
         words.last.duration = max(0.0, currStart - words.last.start);
       }
-      final curr = WordEntry(start: currStart, duration: 5.0, lyricWord: text);
+      final curr = WordEntry(
+        start: currStart,
+        duration: 5.0,
+        lyricWord: text,
+        furigana: '',
+      );
       words.add(curr);
     }
   } else {
@@ -175,6 +322,7 @@ List<WordEntry> _enhancedAndWordByWordLrcAnalysis(
         start: line.first.start,
         duration: 5.0,
         lyricWord: line.first.lyricText,
+        furigana: '',
       );
       if (words.isNotEmpty) {
         words.last.duration = max(0.0, curr.start - words.last.start);
@@ -261,6 +409,7 @@ List<WordEntry> _processWords(
       start: _msToSec(m.group(startIdx)!) + lineStart(),
       duration: _msToSec(m.group(durIdx)!),
       lyricWord: m.group(textIdx)!.replaceAll('\n', ''),
+      furigana: '',
     );
 
     if (words.isNotEmpty && _shouldMergeWords(curr, words.last)) {
@@ -286,24 +435,38 @@ List<WordEntry> _processWords(
 // ─────────────────────────── 翻译合并 ───────────────────────────
 
 /// 合并主歌词与翻译歌词
-List<LyricEntry> _mergeTranslations(
+Future<List<LyricEntry>> _mergeTranslations(
   List<LyricEntry> mainEntries,
   String? lyricDataTs, {
   String type = LyricFormat.lrc,
-}) {
-  // LRC 系列：从 mainEntries 自身提取翻译（同时间戳多行）
+}) async {
+  final isJapaneseSong = JapaneseDetector.isJapaneseSong(mainEntries);
+
+  // LRC / byWordLrc 系列：从 mainEntries 自身提取翻译（同时间戳多行）
   if ((type == LyricFormat.lrc || type == LyricFormat.byWordLrc) &&
       (lyricDataTs == null || lyricDataTs.isEmpty)) {
-    return _mergeLrcInlineTranslations(mainEntries, type);
+    _mergeLrcInlineTranslations(mainEntries, type);
   }
-
   // KRC：从 JSON 格式的 lyricDataTs 提取翻译 / 注音
-  if (type == LyricFormat.krc && lyricDataTs != null) {
-    return _mergeKrcTranslations(mainEntries, lyricDataTs);
+  else if (type == LyricFormat.krc && lyricDataTs != null) {
+    _mergeKrcTranslations(mainEntries, lyricDataTs);
+  }
+  // 其余格式（QRC / YRC 等）按时间匹配外部翻译
+  else {
+    _mergeByTimeMatch(mainEntries, lyricDataTs, type);
   }
 
-  // 其余格式：按时间匹配翻译
-  return _mergeByTimeMatch(mainEntries, lyricDataTs, type);
+  final bool isVerbatimFormat =
+      type == LyricFormat.qrc ||
+      type == LyricFormat.yrc ||
+      type == LyricFormat.krc ||
+      type == LyricFormat.byWordLrc;
+
+  if (isVerbatimFormat) {
+    await _applyJapaneseFurigana(mainEntries, isJapaneseSong);
+  }
+
+  return mainEntries;
 }
 
 /// LRC 内嵌翻译合并（同时间戳多行）
@@ -560,18 +723,21 @@ List<LyricEntry> _mergeByTimeMatch(
 // ─────────────────────────── 公开 API ───────────────────────────
 
 /// 解析 LRC 格式歌词并合并翻译
-List<LyricEntry>? parseLrc({String? lyricData, String? lyricDataTs = ''}) {
+Future<List<LyricEntry>?> parseLrc({
+  String? lyricData,
+  String? lyricDataTs = '',
+}) async {
   if (lyricData == null || lyricData.isEmpty) return null;
   final (entries, format) = _lrcAnalysis(lyricData);
-  return _mergeTranslations(entries, lyricDataTs, type: format);
+  return await _mergeTranslations(entries, lyricDataTs, type: format);
 }
 
 /// 解析逐字格式歌词（KRC / QRC / YRC）并合并翻译
-List<LyricEntry>? parseKaraOkLyric({
+Future<List<LyricEntry>?> parseKaraOkLyric({
   String? lyricData,
   String? lyricDataTs,
   required String type,
-}) {
+}) async {
   if (lyricData == null || lyricData.isEmpty) return null;
 
   final cfg = _getWordRegexConfig(type);
@@ -601,5 +767,5 @@ List<LyricEntry>? parseKaraOkLyric({
   }
 
   LoggerUni.i("currentLyrics | parsedType: $type");
-  return _mergeTranslations(segments, lyricDataTs, type: type);
+  return await _mergeTranslations(segments, lyricDataTs, type: type);
 }

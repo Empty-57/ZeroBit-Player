@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/lyric/lyric_arg_constants.dart';
 import 'package:zerobit_player/components/lyric/word_render.dart';
-
 import 'package:zerobit_player/controller/lyric_ctrl.dart';
 
 class _InterludeTransition extends StatefulWidget {

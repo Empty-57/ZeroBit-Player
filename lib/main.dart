@@ -50,8 +50,8 @@ import 'package:zerobit_player/tools/version_checker.dart';
 import 'package:zerobit_player/tray.dart';
 import 'package:zerobit_player/windows_taskbar_thumbnail.dart';
 
-import 'components/widget/get_snack_bar.dart';
 import 'components/side_bar.dart';
+import 'components/widget/get_snack_bar.dart';
 import 'controller/desktop_lyrics_setting_ctrl.dart';
 import 'controller/lyric_ctrl.dart';
 import 'controller/setting_ctrl.dart';

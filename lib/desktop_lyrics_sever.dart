@@ -84,7 +84,14 @@ class DesktopLyricsSever {
     final nextLyrics = nextLineIndex > lyrics.length - 1
         ? (type == LyricFormat.lrc
               ? ''
-              : [WordEntry(start: 0.0, duration: 0.0, lyricWord: '')])
+              : [
+                  WordEntry(
+                    start: 0.0,
+                    duration: 0.0,
+                    lyricWord: '',
+                    furigana: '',
+                  ),
+                ])
         : lyrics[nextLineIndex].lyricText;
 
     final translate = lyrics[lineIndex].translate;

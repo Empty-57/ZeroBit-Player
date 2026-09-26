@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/widget/covers.dart';
-import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/components/widget/diamond_silder_thumb.dart';
 import 'package:zerobit_player/components/widget/rect_value_indicator.dart';
+import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 
-import 'widget/scroll_text.dart';
 import 'widget/audio_ctrl_btn.dart';
+import 'widget/scroll_text.dart';
 
 const double _barWidth = 700;
 const double _barHeight = 64;

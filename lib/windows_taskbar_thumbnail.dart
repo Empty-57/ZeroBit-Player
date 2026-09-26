@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/services.dart';
 
 enum TaskbarButtonAction { prev, toggle, next }

@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
@@ -37,8 +38,8 @@ class LoggerUni {
   static late final Logger _logger;
   LoggerUni._();
 
-  static Future<void> init() async{
-    final docDir =  await getApplicationDocumentsDirectory();
+  static Future<void> init() async {
+    final docDir = await getApplicationDocumentsDirectory();
     final logDirectory = Directory(p.join(docDir.path, logsDirectory));
     if (!await logDirectory.exists()) {
       await logDirectory.create(recursive: true);

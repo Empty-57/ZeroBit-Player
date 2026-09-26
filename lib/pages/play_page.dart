@@ -7,21 +7,21 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/widget/audio_ctrl_btn.dart';
 import 'package:zerobit_player/components/blur_background.dart';
-import 'package:zerobit_player/components/widget/covers.dart';
 import 'package:zerobit_player/components/lyric/lyrics_render.dart';
 import 'package:zerobit_player/components/play_page/control_bar.dart';
 import 'package:zerobit_player/components/play_page/play_page_constant.dart';
 import 'package:zerobit_player/components/play_page/spectrogram_widget.dart';
+import 'package:zerobit_player/components/widget/audio_ctrl_btn.dart';
+import 'package:zerobit_player/components/widget/covers.dart';
+import 'package:zerobit_player/components/widget/general_btn.dart';
+import 'package:zerobit_player/components/widget/scroll_text.dart';
 import 'package:zerobit_player/components/window_ctrl_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/lyric_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
-import 'package:zerobit_player/components/widget/general_btn.dart';
-import 'package:zerobit_player/components/widget/scroll_text.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/field/set_constants.dart';
@@ -32,8 +32,6 @@ import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/paint_cache.dart';
-
-import '../components/spring_list_view.dart';
 
 const LinearGradient _lyricsFadeGradient = LinearGradient(
   begin: Alignment.topCenter,
@@ -572,11 +570,6 @@ class _PlayPageState extends State<PlayPage> {
             fn: () {
               menuController.close();
               _settingController.setSpringScroll();
-              if (_settingController.useSpringScroll.value) {
-                _lyricController.springController = SpringListController();
-              } else {
-                _lyricController.springController = null;
-              }
               SchedulerBinding.instance.addPostFrameCallback((_) {
                 _lyricController.scrollToCenter();
               });
@@ -892,10 +885,12 @@ class _PlayPageState extends State<PlayPage> {
                                         buildAnimatedSide(
                                           right: lyricsRight,
                                           width: lyricsWidth,
-                                          child: AnimatedOpacity(
-                                            opacity: lyricsOpacity,
+                                          // 淡出后卸载隐藏歌词，停止时间监听与字形资源更新。
+                                          child: AnimatedSwitcher(
                                             duration: 100.ms,
-                                            child: const _LyricsSide(),
+                                            child: lyricsOpacity > 0
+                                                ? const _LyricsSide()
+                                                : const SizedBox.expand(),
                                           ),
                                         ),
 

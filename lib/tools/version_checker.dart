@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
@@ -7,8 +8,8 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zerobit_player/logger.dart';
 
-import '../components/widget/get_snack_bar.dart';
 import '../components/widget/general_btn.dart';
+import '../components/widget/get_snack_bar.dart';
 import 'func/general_style.dart';
 
 const String _latestRepoApiUrl =

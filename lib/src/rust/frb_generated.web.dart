@@ -6,16 +6,18 @@
 // Static analysis wrongly picks the IO variant, thus ignore this
 // ignore_for_file: argument_type_not_assignable
 
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_web.dart';
+
 import 'api/bass.dart';
 import 'api/bass/bass_func.dart';
 import 'api/bass/basswasapi_func.dart';
 import 'api/get_fonts.dart';
 import 'api/music_tag_tool.dart';
 import 'api/smtc.dart';
-import 'dart:async';
-import 'dart:convert';
 import 'frb_generated.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_web.dart';
 
 abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RustLibApiImplPlatform({
