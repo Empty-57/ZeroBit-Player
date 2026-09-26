@@ -885,7 +885,6 @@ class _PlayPageState extends State<PlayPage> {
                                         buildAnimatedSide(
                                           right: lyricsRight,
                                           width: lyricsWidth,
-                                          // 淡出后卸载隐藏歌词，停止时间监听与字形资源更新。
                                           child: AnimatedSwitcher(
                                             duration: 100.ms,
                                             child: lyricsOpacity > 0
