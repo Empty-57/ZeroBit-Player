@@ -887,9 +887,7 @@ class _PlayPageState extends State<PlayPage> {
                                           width: lyricsWidth,
                                           child: AnimatedSwitcher(
                                             duration: 100.ms,
-                                            child: lyricsOpacity > 0
-                                                ? const _LyricsSide()
-                                                : const SizedBox.expand(),
+                                            child: const _LyricsSide(),
                                           ),
                                         ),
 
