@@ -21,4 +21,5 @@ abstract class SharedPreferencesKey {
   static const useVolumeFade = 'useVolumeFade';
   static const spectrogramStyle = 'spectrogramStyle';
   static const lrcLetterSpacing = 'lrcLetterSpacing';
+  static const lyricSource = 'lyricSource';
 }

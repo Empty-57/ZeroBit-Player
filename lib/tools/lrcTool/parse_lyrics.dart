@@ -765,7 +765,5 @@ Future<List<LyricEntry>?> parseKaraOkLyric({
         ? segments[i + 1].start
         : double.infinity;
   }
-
-  LoggerUni.i("currentLyrics | parsedType: $type");
   return await _mergeTranslations(segments, lyricDataTs, type: type);
 }

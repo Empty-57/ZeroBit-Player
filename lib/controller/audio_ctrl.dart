@@ -23,6 +23,7 @@ import 'package:zerobit_player/tools/cover_lru_cache.dart';
 import 'package:zerobit_player/tools/lrcTool/get_lyrics.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
+import '../field/set_constants.dart';
 import '../tools/func/func_extension.dart';
 import '../tools/lrcTool/parse_lyrics.dart';
 import '../tools/lrcTool/save_lyric.dart';
@@ -465,31 +466,22 @@ class AudioController {
     if (hasLocalLyrics || !_settingController.autoGetLyrics.value) {
       return localLyrics;
     }
-    final searchedLyric = await getLrcBySearch(
-      text: "${metadata.title} - ${metadata.artist}",
-      offset: 1,
-      limit: 1,
-    );
-
-    if (searchedLyric.isEmpty) return localLyrics;
-
-    final lyricInfo = searchedLyric.first?.lyric;
-    if (lyricInfo == null) return localLyrics;
-
-    final type = lyricInfo.type;
     List<LyricEntry<dynamic>>? parsedResult;
+    final netLyrics = await getNetLyrics(metadata: metadata);
+    if (netLyrics == null) return null;
 
+    final type = netLyrics.type;
     if (type == LyricFormat.lrc) {
       parsedResult = await parseLrc(
-        lyricData: lyricInfo.lrc,
-        lyricDataTs: lyricInfo.translate,
+        lyricData: netLyrics.lyrics,
+        lyricDataTs: netLyrics.lyricsTs,
       );
     } else if (type == LyricFormat.yrc ||
         type == LyricFormat.qrc ||
         type == LyricFormat.krc) {
       parsedResult = await parseKaraOkLyric(
-        lyricData: lyricInfo.verbatimLrc,
-        lyricDataTs: lyricInfo.translate,
+        lyricData: netLyrics.lyrics,
+        lyricDataTs: netLyrics.lyricsTs,
         type: type,
       );
     }
@@ -497,7 +489,17 @@ class AudioController {
     if (parsedResult == null || parsedResult.isEmpty) return localLyrics;
 
     if (_settingController.autoDownloadLrc.value) {
-      unawaited(saveLyrics(path: metadata.path, lrcData: lyricInfo));
+      unawaited(
+        saveLyrics(
+          path: metadata.path,
+          lrcData: Get4NetLrcModel(
+            lrc: netLyrics.lyrics,
+            verbatimLrc: netLyrics.lyrics,
+            translate: netLyrics.lyricsTs,
+            type: netLyrics.type,
+          ),
+        ),
+      );
     }
     return ParsedLyricModel(parsedLrc: parsedResult, type: type);
   }
@@ -709,7 +711,7 @@ class AudioController {
   }
 
   Future<void> _maybeRandomPlay() async {
-    if (_settingController.playMode.value == 2 &&
+    if (_settingController.playMode.value == PlayModeType.random &&
         playListCacheItems.length > 1) {
       _pickNextRandomIndex();
     }
@@ -734,7 +736,7 @@ class AudioController {
   Future<void> audioToPrevious() async {
     if (playListCacheItems.isEmpty) return;
 
-    if (_settingController.playMode.value != 2) {
+    if (_settingController.playMode.value != PlayModeType.random) {
       if (currentIndex.value > 0 &&
           currentIndex.value < playListCacheItems.length) {
         currentIndex.value--;
@@ -750,7 +752,7 @@ class AudioController {
   Future<void> audioToNext() async {
     if (playListCacheItems.isEmpty) return;
 
-    if (_settingController.playMode.value != 2) {
+    if (_settingController.playMode.value != PlayModeType.random) {
       if (currentIndex.value < playListCacheItems.length - 1 &&
           currentIndex.value >= 0) {
         currentIndex.value++;
@@ -767,13 +769,13 @@ class AudioController {
     if (playListCacheItems.isEmpty) return;
 
     switch (_settingController.playMode.value) {
-      case 0:
+      case PlayModeType.loop:
         await audioPlay(metadata: currentMetadata.value);
         break;
-      case 1:
+      case PlayModeType.queue:
         await audioToNext();
         break;
-      case 2:
+      case PlayModeType.random:
         await _maybeRandomPlay();
         break;
     }

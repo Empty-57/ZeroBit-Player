@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:signals/signals_flutter.dart';
+import 'package:zerobit_player/components/lyric/blurable_widget.dart';
 import 'package:zerobit_player/components/lyric/interlude_widget.dart';
 import 'package:zerobit_player/components/lyric/line_render.dart';
 import 'package:zerobit_player/components/lyric/lyric_arg_constants.dart';
@@ -32,6 +33,8 @@ class _LyricsStyle {
   Color get _onContainerColor =>
       _themeService.darkTheme.colorScheme.onSecondaryContainer;
 
+  double get _letterSpaing=>_settingsController.lrcLetterSpacing.value;
+
   // StrutStyle 行高一致，防止跳动
   StrutStyle get strutStyle => StrutStyle(
     fontSize: _baseSize.toDouble(),
@@ -46,6 +49,7 @@ class _LyricsStyle {
       alpha: LyricConstants.notPlayedDarkAlpha,
     ),
     weight: _weight,
+    letterSpacing: _letterSpaing
   );
 
   TextStyle get tsLyricStyle => lyricStyle.copyWith(fontSize: _baseSize * 0.9);
@@ -506,16 +510,19 @@ class _StaggeredLyricItem extends StatelessWidget {
           ),
         );
 
-        return TextButton(
-          onPressed: () => onClick(startTime),
-          style: TextButton.styleFrom(
-            shape: const RoundedRectangleBorder(
-              borderRadius: LyricConstants.borderRadius,
+        return BlurableLine(
+          blurSigma: blurSigma,
+          child: TextButton(
+            onPressed: () => onClick(startTime),
+            style: TextButton.styleFrom(
+              shape: const RoundedRectangleBorder(
+                borderRadius: LyricConstants.borderRadius,
+              ),
+              padding: lrcPadding,
+              overlayColor: hoverColor,
             ),
-            padding: lrcPadding,
-            overlayColor: hoverColor,
+            child: content,
           ),
-          child: content,
         );
       },
     );

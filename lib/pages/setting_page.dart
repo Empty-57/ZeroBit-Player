@@ -924,23 +924,28 @@ class _DesktopLyricsFontFamilyDialog extends StatelessWidget {
   }
 }
 
-class _DesktopLyricsAlignmentRadio extends StatelessWidget {
-  const _DesktopLyricsAlignmentRadio();
+class _RadioItem extends StatelessWidget {
+  final Signal<int> groupValue;
+  final Map<int, String> map;
+  final void Function(int?) onChanged;
+
+  const _RadioItem({
+    required this.groupValue,
+    required this.map,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final alignment = [0, 1, 2, 3];
     return Material(
       color: Colors.transparent,
       child: SignalBuilder(
         builder: (context) => RadioGroup<int>(
-          groupValue: _desktopLyricsSettingController.lrcAlignment.value,
-          onChanged: (int? v) {
-            _desktopLyricsSettingController.setLrcAlignment(alignment: v ?? 1);
-          },
+          groupValue: groupValue.value,
+          onChanged: onChanged,
           child: Wrap(
             spacing: 8,
-            children: alignment
+            children: map.keys
                 .map(
                   (v) => Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -948,10 +953,7 @@ class _DesktopLyricsAlignmentRadio extends StatelessWidget {
                     spacing: 2,
                     children: [
                       Radio<int>(value: v),
-                      Text(
-                        DesktopLyricsSettingController.lrcAlignmentMap[v] ??
-                            '左对齐',
-                      ),
+                      Text(map[v] ?? '无'),
                     ],
                   ),
                 )
@@ -963,45 +965,43 @@ class _DesktopLyricsAlignmentRadio extends StatelessWidget {
   }
 }
 
-class _LyricsSwitchAnimateModeRadio extends StatelessWidget {
-  const _LyricsSwitchAnimateModeRadio();
+class _DesktopLyricsAlignmentRadio extends StatelessWidget {
+  const _DesktopLyricsAlignmentRadio();
 
   @override
   Widget build(BuildContext context) {
-    final alignment = [0, 1, 2, 3];
-    return Material(
-      color: Colors.transparent,
-      child: SignalBuilder(
-        builder: (context) => RadioGroup<int>(
-          groupValue:
-              _desktopLyricsSettingController.lyricsSwitchAnimateMode.value,
-          onChanged: (int? v) {
-            _desktopLyricsSettingController.setLyricsSwitchAnimateMode(
-              mode: v ?? 1,
-            );
-          },
-          child: Wrap(
-            spacing: 8,
-            children: alignment
-                .map(
-                  (v) => Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    spacing: 2,
-                    children: [
-                      Radio<int>(value: v),
-                      Text(
-                        DesktopLyricsSettingController
-                                .lyricsSwitchAnimateModeMap[v] ??
-                            '无',
-                      ),
-                    ],
-                  ),
-                )
-                .toList(),
-          ),
-        ),
-      ),
+    return _RadioItem(
+      groupValue: _desktopLyricsSettingController.lrcAlignment,
+      map: DesktopLyricsSettingController.lrcAlignmentMap,
+      onChanged: (v) =>
+          _desktopLyricsSettingController.setLrcAlignment(alignment: v ?? 1),
+    );
+  }
+}
+
+class _DesktopLyricsAnimateModeRadio extends StatelessWidget {
+  const _DesktopLyricsAnimateModeRadio();
+
+  @override
+  Widget build(BuildContext context) {
+    return _RadioItem(
+      groupValue: _desktopLyricsSettingController.lyricsSwitchAnimateMode,
+      map: DesktopLyricsSettingController.lyricsSwitchAnimateModeMap,
+      onChanged: (v) => _desktopLyricsSettingController
+          .setLyricsSwitchAnimateMode(mode: v ?? 1),
+    );
+  }
+}
+
+class _LyricsSourceRadio extends StatelessWidget {
+  const _LyricsSourceRadio();
+
+  @override
+  Widget build(BuildContext context) {
+    return _RadioItem(
+      groupValue: _settingController.lyricSource,
+      map: SettingController.lyricSourceMap,
+      onChanged: (v) => _settingController.setLyricSource(value: v ?? 0),
     );
   }
 }
@@ -1625,6 +1625,7 @@ class _GeneralTab extends StatelessWidget {
       children: [
         const _SettingItem(text: '歌曲文件夹', child: _FolderManagerDialog()),
         const _SettingItem(text: 'API源', child: _ApiDropMenu()),
+        const _SettingItem(text: '首选歌词来源', child: _LyricsSourceRadio()),
         _SettingSwitchItem(
           text: '自动保存获取的歌词',
           value: _settingController.autoDownloadLrc,
@@ -1854,7 +1855,7 @@ class _DesktopLyricsTab extends StatelessWidget {
         const _SettingItem(text: '对齐方式', child: _DesktopLyricsAlignmentRadio()),
         const _SettingItem(
           text: '歌词切换特效',
-          child: _LyricsSwitchAnimateModeRadio(),
+          child: _DesktopLyricsAnimateModeRadio(),
         ),
         _SettingSwitchItem(
           text: '使用双行显示',

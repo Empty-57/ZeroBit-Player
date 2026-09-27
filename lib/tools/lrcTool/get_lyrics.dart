@@ -3,9 +3,14 @@ import 'dart:io';
 
 import 'package:fl_charset/fl_charset.dart';
 import 'package:path/path.dart' as p;
+import 'package:zerobit_player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/tools/lrcTool/parse_lyrics.dart';
 
+import '../../API/apis.dart';
+import '../../field/set_constants.dart';
+import '../../hive_manager/models/music_cache_model.dart';
 import '../../src/rust/api/music_tag_tool.dart';
 import 'krc_decryptor.dart';
 import 'krc_extract_decode.dart';
@@ -93,19 +98,19 @@ Future<String?> _safeReadFile(String filePath) async {
   }
 }
 
-class _LyricModel {
+class LyricModel {
   final String? lyrics;
   final String? lyricsTs;
   final String type;
-  const _LyricModel({
+  const LyricModel({
     required this.lyrics,
     required this.lyricsTs,
     required this.type,
   });
 }
 
-Future<_LyricModel?> _getLyrics({String? filePath}) async {
-  if (filePath == null || filePath.isEmpty) return null;
+Future<LyricModel?> _getLocalLyrics({required String filePath}) async {
+  if (filePath.isEmpty) return null;
 
   final paths = _getLyricPaths(filePath);
   final List<String> mainPaths = paths['mainPaths'];
@@ -132,76 +137,128 @@ Future<_LyricModel?> _getLyrics({String? filePath}) async {
         lyricsTs = krcExtractAndDecodeLanguage(lyrics);
       }
 
-      return _LyricModel(lyrics: lyrics, lyricsTs: lyricsTs, type: type);
+      return LyricModel(lyrics: lyrics, lyricsTs: lyricsTs, type: type);
     }
   }
 
   return null;
 }
 
-/// 主入口，获取已解析的歌词及翻译
-Future<ParsedLyricModel?> getParsedLyric({String? filePath}) async {
-  if (filePath == null || filePath.isEmpty) return null;
-
-  final lyricsData = await _getLyrics(filePath: filePath);
-  if (lyricsData == null) {
-    final embeddedLyrics = await getEmbeddedLyric(path: filePath);
-    if (embeddedLyrics == null || embeddedLyrics.isEmpty) {
-      return null;
-    }
-
-    try {
-      final data = jsonDecode(embeddedLyrics);
-      String type = data['type'];
-      final lyrics = data['lyrics'];
-      String? lyricsTs = data['lyricsTs'];
-
-      final detectType = detectLrcType(lyrics);
-      LoggerUni.i("embeddedLyric | type: $detectType");
-      if (type == LyricFormat.lrc &&
-          (detectType == LrcType.enhanced ||
-              detectType == LrcType.wordByWord)) {
-        type = LyricFormat.byWordLrc;
-        lyricsTs = null;
-      }
-
-      if (type == LyricFormat.lrc || type == LyricFormat.byWordLrc) {
-        return ParsedLyricModel(
-          parsedLrc: await parseLrc(lyricData: lyrics, lyricDataTs: lyricsTs),
-          type: type,
-        );
-      }
-      if (type == LyricFormat.yrc || type == LyricFormat.qrc) {
-        return ParsedLyricModel(
-          parsedLrc: await parseKaraOkLyric(
-            lyricData: lyrics,
-            lyricDataTs: lyricsTs,
-            type: type,
-          ),
-          type: type,
-        );
-      }
-    } catch (_) {
-      final detectType = detectLrcType(embeddedLyrics);
-      LoggerUni.i("embeddedLyric | type: $detectType");
-      if (detectType == LrcType.enhanced || detectType == LrcType.wordByWord) {
-        return ParsedLyricModel(
-          parsedLrc: await parseLrc(lyricData: embeddedLyrics),
-          type: LyricFormat.byWordLrc,
-        );
-      }
-      if (detectType == LrcType.lineByLine) {
-        return ParsedLyricModel(
-          parsedLrc: await parseLrc(lyricData: embeddedLyrics),
-          type: LyricFormat.lrc,
-        );
-      }
-    }
-
+Future<LyricModel?> _getEmbeddedLyrics({required String filePath}) async {
+  final embeddedLyrics = await getEmbeddedLyric(path: filePath);
+  if (embeddedLyrics == null || embeddedLyrics.isEmpty) {
     return null;
   }
 
-  LoggerUni.i("localLyric | type: ${lyricsData.type}");
+  try {
+    final data = jsonDecode(embeddedLyrics);
+    String type = data['type'];
+    final lyrics = data['lyrics'];
+    String? lyricsTs = data['lyricsTs'];
+
+    final detectType = detectLrcType(lyrics);
+    if (type == LyricFormat.lrc &&
+        (detectType == LrcType.enhanced || detectType == LrcType.wordByWord)) {
+      type = LyricFormat.byWordLrc;
+      lyricsTs = null;
+    }
+
+    return LyricModel(lyrics: lyrics, lyricsTs: lyricsTs, type: type);
+  } catch (_) {
+    final detectType = detectLrcType(embeddedLyrics);
+    if (detectType == LrcType.enhanced || detectType == LrcType.wordByWord) {
+      return LyricModel(
+        lyrics: embeddedLyrics,
+        lyricsTs: null,
+        type: LyricFormat.byWordLrc,
+      );
+    }
+    if (detectType == LrcType.lineByLine) {
+      return LyricModel(
+        lyrics: embeddedLyrics,
+        lyricsTs: null,
+        type: LyricFormat.lrc,
+      );
+    }
+  }
+  return null;
+}
+
+Future<LyricModel?> getNetLyrics({required MusicCache metadata}) async {
+  final searchedLyric = await getLrcBySearch(
+    text: "${metadata.title} - ${metadata.artist}",
+    offset: 1,
+    limit: 1,
+  );
+
+  if (searchedLyric.isEmpty) return null;
+
+  final lyricInfo = searchedLyric.first?.lyric;
+  if (lyricInfo == null) return null;
+
+  final type = lyricInfo.type;
+  LyricModel? parsedResult;
+
+  if (type == LyricFormat.lrc) {
+    parsedResult = LyricModel(
+      lyrics: lyricInfo.lrc,
+      lyricsTs: lyricInfo.translate,
+      type: type,
+    );
+  } else if (type == LyricFormat.yrc ||
+      type == LyricFormat.qrc ||
+      type == LyricFormat.krc) {
+    parsedResult = LyricModel(
+      lyrics: lyricInfo.verbatimLrc,
+      lyricsTs: lyricInfo.translate,
+      type: type,
+    );
+  }
+
+  if (parsedResult == null) return null;
+
+  return parsedResult;
+}
+
+/// 主入口，获取已解析的歌词及翻译
+Future<ParsedLyricModel?> getParsedLyric({required String filePath}) async {
+  if (filePath.isEmpty) return null;
+  final lyricSource = SettingController.instance.lyricSource.value;
+  final sources = [
+    lyricSource,
+    ...SettingController.lyricSourceMap.keys.where(
+      (source) => source != lyricSource,
+    ),
+  ];
+  String label = 'localLyric';
+
+  LyricModel? lyricsData;
+  for (final source in sources) {
+    (lyricsData, label) = switch (source) {
+      LyricSourceType.local => (
+        await _getLocalLyrics(filePath: filePath),
+        'localLyric',
+      ),
+      LyricSourceType.embedded => (
+        await _getEmbeddedLyrics(filePath: filePath),
+        'embeddedLyric',
+      ),
+      LyricSourceType.net => (
+        await getNetLyrics(
+          metadata: AudioController.instance.currentMetadata.value,
+        ),
+        'netLyric',
+      ),
+      _ => (null, ''),
+    };
+    if (lyricsData != null) {
+      break;
+    }
+  }
+
+  if (lyricsData == null) return null;
+
+  LoggerUni.i("$label | type: ${lyricsData.type}");
   if (lyricsData.type == LyricFormat.lrc ||
       lyricsData.type == LyricFormat.byWordLrc) {
     return ParsedLyricModel(

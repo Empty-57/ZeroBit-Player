@@ -130,7 +130,7 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
     final border = const OutlineInputBorder();
     final hintStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
     final textStyle = generalTextStyle(ctx: context, size: 'md');
-    final types = [LyricFormat.lrc, LyricFormat.qrc, LyricFormat.yrc];
+    final types = [LyricFormat.lrc, LyricFormat.qrc, LyricFormat.yrc, LyricFormat.krc];
 
     if (_isLoading) {
       return const AlertDialog(
@@ -236,7 +236,7 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
                 maxLines: null,
                 decoration: InputDecoration(
                   border: border,
-                  hintText: "请提供完整的逐行Lrc格式的歌词翻译数据，若使用逐字Lrc或增强型Lrc，则不需要填写此项",
+                  hintText: "请提供完整的逐行Lrc格式的歌词翻译数据，若使用逐字Lrc，增强型Lrc，krc类型的歌词，则不需要填写此项",
                   hintStyle: hintStyle,
                 ),
               ),

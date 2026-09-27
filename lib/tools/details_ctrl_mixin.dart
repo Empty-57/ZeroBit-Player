@@ -103,7 +103,7 @@ mixin DetailsPageControllerBase {
 
     final metadataToPlay =
         metadata ??
-        (_settingController.playMode.value == 2
+        (_settingController.playMode.value == PlayModeType.random
             ? items[Random().nextInt(items.length)]
             : items[0]);
     audioCtrl.audioPlay(metadata: metadataToPlay);
