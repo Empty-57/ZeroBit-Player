@@ -51,6 +51,7 @@ class SettingController {
   final lrcAlignment = signal(0); // 012 左中右
   final lrcFontSize = signal(32); // 24-48
   final lrcFontWeight = signal(5); // 0-8 w100-w900
+  final lrcLetterSpacing = signal(0.0); // -5 - 10
   final autoDownloadLrc = signal(true);
   final showDesktopLyrics = signal(false);
   final autoGetLyrics = signal(true);
@@ -344,6 +345,9 @@ class SettingController {
           prefs?.getBool(SharedPreferencesKey.useVolumeFade) ?? true;
       spectrogramStyle.value =
           prefs?.getInt(SharedPreferencesKey.spectrogramStyle) ?? 0;
+
+      lrcLetterSpacing.value =
+          prefs?.getDouble(SharedPreferencesKey.lrcLetterSpacing) ?? 0.0;
     });
 
     // 提取快捷键解析逻辑，消除冗余
@@ -707,6 +711,14 @@ class SettingController {
       return;
     }
     prefs!.setDouble(SharedPreferencesKey.backgroundImageBlur, value);
+  }
+
+  void setLrcLetterSpacing({required double value}) {
+    lrcLetterSpacing.value = value;
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setDouble(SharedPreferencesKey.lrcLetterSpacing, value);
   }
 
   void setBackgroundImagePath({required String value}) {

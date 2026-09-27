@@ -1271,8 +1271,20 @@ class _BackgroundImagePathPicker extends StatelessWidget {
   }
 }
 
-class _BackgroundImageOpacitySlider extends StatelessWidget {
-  const _BackgroundImageOpacitySlider();
+class _SliderItem extends StatelessWidget {
+  final Signal<double> listenValue;
+  final double min;
+  final double max;
+  final void Function(double) onChangeEnd;
+  final int? divisions;
+
+  const _SliderItem({
+    required this.min,
+    required this.max,
+    this.divisions,
+    required this.listenValue,
+    required this.onChangeEnd,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1283,31 +1295,44 @@ class _BackgroundImageOpacitySlider extends StatelessWidget {
           context,
         ).copyWith(showValueIndicator: ShowValueIndicator.onDrag),
         child: SignalBuilder(
-          builder: (context) => Row(
-            children: [
-              Text(
-                _settingController.backgroundImageOpacity.value.toStringAsFixed(
-                  2,
+          builder: (context) {
+            final spacing = listenValue.value;
+            final label = spacing.toStringAsFixed(2);
+            return Row(
+              children: [
+                Text(label),
+                Slider(
+                  min: min,
+                  max: max,
+                  divisions: divisions,
+                  label: label,
+                  value: spacing,
+                  onChanged: (v) {
+                    listenValue.value = v;
+                  },
+                  onChangeEnd: onChangeEnd,
                 ),
-              ),
-              Slider(
-                min: 0.0,
-                max: 1.0,
-                label: _settingController.backgroundImageOpacity.value
-                    .toStringAsFixed(2),
-                value: _settingController.backgroundImageOpacity.value,
-
-                onChanged: (v) {
-                  _settingController.backgroundImageOpacity.value = v;
-                },
-                onChangeEnd: (v) {
-                  _settingController.setBackgroundImageOpacity(value: v);
-                },
-              ),
-            ],
-          ),
+              ],
+            );
+          },
         ),
       ),
+    );
+    ;
+  }
+}
+
+class _BackgroundImageOpacitySlider extends StatelessWidget {
+  const _BackgroundImageOpacitySlider();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SliderItem(
+      min: 0.0,
+      max: 1.0,
+      listenValue: _settingController.backgroundImageOpacity,
+      onChangeEnd: (v) =>
+          _settingController.setBackgroundImageOpacity(value: v),
     );
   }
 }
@@ -1317,37 +1342,27 @@ class _BackgroundImageBlurSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: SliderTheme(
-        data: SliderTheme.of(
-          context,
-        ).copyWith(showValueIndicator: ShowValueIndicator.onDrag),
-        child: SignalBuilder(
-          builder: (context) => Row(
-            children: [
-              Text(
-                _settingController.backgroundImageBlur.value.toStringAsFixed(2),
-              ),
-              Slider(
-                min: 0.0,
-                max: 36.0,
-                divisions: 18,
-                label: _settingController.backgroundImageBlur.value
-                    .toStringAsFixed(2),
-                value: _settingController.backgroundImageBlur.value,
+    return _SliderItem(
+      min: 0.0,
+      max: 36.0,
+      divisions: 18,
+      listenValue: _settingController.backgroundImageBlur,
+      onChangeEnd: (v) => _settingController.setBackgroundImageBlur(value: v),
+    );
+  }
+}
 
-                onChanged: (v) {
-                  _settingController.backgroundImageBlur.value = v;
-                },
-                onChangeEnd: (v) {
-                  _settingController.setBackgroundImageBlur(value: v);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
+class _LrcLetterSpacingSlider extends StatelessWidget {
+  const _LrcLetterSpacingSlider();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SliderItem(
+      min: -5.0,
+      max: 10.0,
+      divisions: 30,
+      listenValue: _settingController.lrcLetterSpacing,
+      onChangeEnd: (v) => _settingController.setLrcLetterSpacing(value: v),
     );
   }
 }
@@ -1366,6 +1381,7 @@ class _SettingPageState extends State<SettingPage> {
 
   static const List<({IconData icon, String label, double width})> _tabs = [
     (icon: PhosphorIconsLight.gearSix, label: '常规', width: 96),
+    (icon: PhosphorIconsLight.play, label: '播放设置', width: 108),
     (icon: PhosphorIconsLight.palette, label: '外观', width: 96),
     (icon: PhosphorIconsLight.playlist, label: '歌词', width: 96),
     (icon: PhosphorIconsLight.creditCard, label: '桌面歌词', width: 108),
@@ -1400,14 +1416,16 @@ class _SettingPageState extends State<SettingPage> {
       case 0:
         return const _GeneralTab();
       case 1:
-        return const _AppearanceTab();
+        return const _PlayTab();
       case 2:
-        return const _LyricsTab();
+        return const _AppearanceTab();
       case 3:
-        return const _DesktopLyricsTab();
+        return const _LyricsTab();
       case 4:
-        return const _HotkeysTab();
+        return const _DesktopLyricsTab();
       case 5:
+        return const _HotkeysTab();
+      case 6:
         return _AboutTab(packageInfoFuture: _packageInfoFuture);
       default:
         return const SizedBox.shrink();
@@ -1621,6 +1639,24 @@ class _GeneralTab extends StatelessWidget {
           onChanged: (val) => _settingController.setAutoGetLyrics(value: val),
         ),
         _SettingSwitchItem(
+          text: '关闭窗口后在后台运行',
+          value: _settingController.close2Tray,
+          onChanged: (val) => _settingController.setClose2Tray(value: val),
+        ),
+      ],
+    );
+  }
+}
+
+/// 播放设置
+class _PlayTab extends StatelessWidget {
+  const _PlayTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SettingsTabWrapper(
+      children: [
+        _SettingSwitchItem(
           text: '启用独占模式',
           value: _settingController.useExclusiveMode,
           onChanged: (val) => _settingController.setExclusiveMode(use: val),
@@ -1640,11 +1676,6 @@ class _GeneralTab extends StatelessWidget {
           text: '使用任务栏缩略图工具栏控制播放',
           value: _settingController.useTaskBarCtrl,
           onChanged: (val) => _settingController.setUseTaskBarCtrl(value: val),
-        ),
-        _SettingSwitchItem(
-          text: '关闭窗口后在后台运行',
-          value: _settingController.close2Tray,
-          onChanged: (val) => _settingController.setClose2Tray(value: val),
         ),
       ],
     );
@@ -1704,6 +1735,7 @@ class _LyricsTab extends StatelessWidget {
       children: [
         const _SettingItem(text: '字号', child: _LrcFontSizeDropMenu()),
         const _SettingItem(text: '字重', child: _LrcFontWeightDropMenu()),
+        const _SettingItem(text: '字符间距', child: _LrcLetterSpacingSlider()),
         // 预览模块
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1724,6 +1756,7 @@ class _LyricsTab extends StatelessWidget {
                         .withValues(alpha: isDark ? 0.2 : 0.3),
                     weight: FontWeight
                         .values[_settingController.lrcFontWeight.value],
+                    letterSpacing: _settingController.lrcLetterSpacing.value,
                   );
                   final strutStyle = StrutStyle(
                     fontSize: _settingController.lrcFontSize.value.toDouble(),
