@@ -232,14 +232,19 @@ class KaraOkLyricWidget extends StatelessWidget {
             final floatingDuration = dura * (1000 * 1.8) + 50;
             final floatingDelay = dura * (1000 * 0.2);
 
-            final Widget wordWidget = _buildWordWidget(
-              wordIndex: wordIndex,
-              currentIndex: currentIndex,
-              entry: entry,
-              gradientColors: gradientColors,
+            final Widget wordWidget = _SyllableFloatWidget(
+              isFloating: isFloating,
+              duration: isFloating ? floatingDuration : 600,
+              delay: isFloating ? floatingDelay : 0,
+              child: _buildWordWidget(
+                wordIndex: wordIndex,
+                currentIndex: currentIndex,
+                entry: entry,
+                gradientColors: gradientColors,
+              ),
             );
 
-            final Widget finalWidget = furigana.isNotEmpty
+            return furigana.isNotEmpty
                 ? Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -254,13 +259,6 @@ class KaraOkLyricWidget extends StatelessWidget {
                     ],
                   )
                 : wordWidget;
-
-            return _SyllableFloatWidget(
-              isFloating: isFloating,
-              duration: isFloating ? floatingDuration : 600,
-              delay: isFloating ? floatingDelay : 0,
-              child: finalWidget,
-            );
           }),
         );
       },
