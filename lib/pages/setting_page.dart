@@ -1318,7 +1318,6 @@ class _SliderItem extends StatelessWidget {
         ),
       ),
     );
-    ;
   }
 }
 

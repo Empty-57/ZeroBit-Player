@@ -55,7 +55,7 @@ class SettingController {
   final autoDownloadLrc = signal(true);
   final showDesktopLyrics = signal(false);
   final autoGetLyrics = signal(true);
-  final lyricSource=signal(0);// 0 本地 1 内嵌 2 网络
+  final lyricSource = signal(0); // 0 本地 1 内嵌 2 网络
 
   static const int lrcFontSizeMax = 48;
   static const int lrcFontSizeMin = 24;
@@ -128,10 +128,10 @@ class SettingController {
     // SpectrogramStyleType.wave: '波浪',
   };
 
-  static const Map<int,String> lyricSourceMap={
-    LyricSourceType.local:'本地',
-    LyricSourceType.embedded:'内嵌',
-    LyricSourceType.net:'在线',
+  static const Map<int, String> lyricSourceMap = {
+    LyricSourceType.local: '本地',
+    LyricSourceType.embedded: '内嵌',
+    LyricSourceType.net: '在线',
   };
 
   // 文件与列表状态
@@ -354,8 +354,7 @@ class SettingController {
           prefs?.getInt(SharedPreferencesKey.spectrogramStyle) ?? 0;
       lrcLetterSpacing.value =
           prefs?.getDouble(SharedPreferencesKey.lrcLetterSpacing) ?? 0.0;
-      lyricSource.value=
-          prefs?.getInt(SharedPreferencesKey.lrcLetterSpacing) ?? 0;
+      lyricSource.value = prefs?.getInt(SharedPreferencesKey.lyricSource) ?? 0;
     });
 
     // 提取快捷键解析逻辑，消除冗余
