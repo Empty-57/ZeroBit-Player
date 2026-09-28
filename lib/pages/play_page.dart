@@ -351,12 +351,12 @@ class _PlayPageState extends State<PlayPage> {
             _createMenuIconBtn(
               toolTip: '增大',
               icon: PhosphorIconsLight.plus,
-              fn: addFn.throttle(ms: 500),
+              fn: addFn.throttle(ms: 300),
             ),
             _createMenuIconBtn(
               toolTip: '减小',
               icon: PhosphorIconsLight.minus,
-              fn: decFn.throttle(ms: 500),
+              fn: decFn.throttle(ms: 300),
             ),
           ],
         ),
