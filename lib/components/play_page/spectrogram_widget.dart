@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -7,8 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/play_page/play_page_constant.dart';
-import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/logger.dart';
+
+import '../../tools/fft_feed.dart';
 
 /// 共享数据源专用的极简 TickerProvider
 /// 插值动画在数据稳定后会自己停下来，不需要 TickerMode 的静音管理
@@ -29,12 +29,9 @@ class _SpectrumFeed {
   /// 两帧数据之间的插值时长
   static const Duration _lerpDuration = Duration(milliseconds: 100);
 
-  /// 定时从后端拉取 FFT 数据
-  /// 视觉流畅度由插值保证，而非拉取频率
-  static const Duration _fetchInterval = Duration(milliseconds: 50);
-
-  final AudioController _audioController = AudioController.instance;
   final _FeedTickerProvider _tickerProvider = _FeedTickerProvider();
+
+  final fftFeed = FFTFeed.instance;
 
   /// 帧信号：每次插值完成后自增通知订阅者
   final Signal<double> frame = signal(0.0);
@@ -52,13 +49,11 @@ class _SpectrumFeed {
   Float32List get values => _display;
 
   AnimationController? _animController;
-  Timer? _fetchTimer;
   int _ref = 0; //引用计数
 
   /// 挂载动画并启动拉取和插值
   void attach() {
-    if (_ref > 0) {
-      _ref++;
+    if (_ref++ > 0) {
       return;
     }
     _ref++;
@@ -68,25 +63,21 @@ class _SpectrumFeed {
       duration: _lerpDuration,
     )..addListener(_onAnimationTick);
 
-    _audioController.audioFFT.addListener(_onFFTUpdated);
+    fftFeed.fft.addListener(_onFFTUpdated);
 
-    _fetchTimer = Timer.periodic(_fetchInterval, (_) {
-      _audioController.getAudioFFt();
-    });
+    fftFeed.attach();
   }
 
   /// 卸载动画并释放全部资源
   void detach() {
-    _ref--;
-    if (_ref > 0) {
+    if (--_ref > 0) {
       return;
     }
     LoggerUni.i('频谱图资源已释放 Ref: $_ref');
     // 先取消监听，再 dispose controller
     // 顺序重要：防止 cancel 期间还有回调触发
-    _audioController.audioFFT.removeListener(_onFFTUpdated);
-    _fetchTimer?.cancel();
-    _fetchTimer = null;
+    fftFeed.fft.removeListener(_onFFTUpdated);
+    fftFeed.detach();
     _animController?.dispose();
     _animController = null;
 
@@ -99,7 +90,7 @@ class _SpectrumFeed {
     final controller = _animController;
     if (controller == null) return;
 
-    final newFFT = _audioController.audioFFT.value;
+    final newFFT = fftFeed.fft.value;
     final int len = newFFT.length;
     if (len == 0) return;
 
@@ -150,13 +141,13 @@ class _SpectrumFeed {
 /// 柱状频谱图
 class SpectrogramWidget extends StatefulWidget {
   final LinearGradient gradient;
-  final double lenth;
+  final double length;
   final double barWidth;
   final double paddingWidth;
   const SpectrogramWidget({
     super.key,
     required this.gradient,
-    required this.lenth,
+    required this.length,
     required this.barWidth,
     required this.paddingWidth,
   });
@@ -228,9 +219,9 @@ class SpectrogramWidgetState extends State<SpectrogramWidget> {
           painter: _SpectrogramPainter(
             frame: _feed.frame,
             feed: _feed,
-            points: _getPoints(widget.lenth.toInt()),
+            points: _getPoints(widget.length.toInt()),
             shader: _getShader(size),
-            length: widget.lenth.toInt(),
+            length: widget.length.toInt(),
             barWidth: widget.barWidth,
             paddingWidth: widget.paddingWidth,
           ),
