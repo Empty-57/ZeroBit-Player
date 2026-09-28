@@ -137,7 +137,7 @@ class _SpectrumFeed {
     frame.value++;
   }
 }
-
+// TODO MemoryLeak
 /// 柱状频谱图
 class SpectrogramWidget extends StatefulWidget {
   final LinearGradient gradient;

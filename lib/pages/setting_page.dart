@@ -1669,8 +1669,15 @@ class _PlayTab extends StatelessWidget {
         ),
         _SettingSwitchItem(
           text: '使用音量过渡',
+          tooltip: '播放、暂停、停止和定位时平滑调整音量',
           value: _settingController.useVolumeFade,
           onChanged: (val) => _settingController.setUseVolumeFade(value: val),
+        ),
+        _SettingSwitchItem(
+          text: '交叉渐入渐出',
+          tooltip: '会自动跳过首尾静音。独占模式仅跳过静音和使用音量过渡。',
+          value: _settingController.useCrossfade,
+          onChanged: (val) => _settingController.setUseCrossfade(value: val),
         ),
         _SettingSwitchItem(
           text: '使用任务栏缩略图工具栏控制播放',

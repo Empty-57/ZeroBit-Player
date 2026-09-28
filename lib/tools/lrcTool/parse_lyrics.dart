@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:zerobit_player/logger.dart';
 
 import 'japanese_analyzer.dart';
+import 'furigana_alignment.dart';
 import 'lyric_model.dart';
 
 // ─────────────────────────── 正则表达式 ───────────────────────────
@@ -197,6 +198,8 @@ Future<void> _applyJapaneseFurigana(
   List<LyricEntry> entries,
   bool isSongJapanese,
 ) async {
+  // 解析期间复用副歌分析结果，结束后释放缓存。
+  final cache = <String, List<JapanesePhoneticModel>>{};
   for (final entry in entries) {
     if (!JapaneseDetector.shouldAnnotateLine(
       entry: entry,
@@ -207,54 +210,24 @@ Future<void> _applyJapaneseFurigana(
 
     final lyricText = entry.lyricText;
     if (lyricText is! List<WordEntry> || lyricText.isEmpty) continue;
-    await _annotateWordsForLine(lyricText);
+    await _annotateWordsForLine(lyricText, cache);
   }
 }
 
 /// 对单行的 WordEntry 集合进行 Windows 原生假名匹配对齐
-Future<void> _annotateWordsForLine(List<WordEntry> words) async {
+Future<void> _annotateWordsForLine(
+  List<WordEntry> words,
+  Map<String, List<JapanesePhoneticModel>> cache,
+) async {
   if (words.isEmpty) return;
-
-  final fullLineText = words.map((w) => w.lyricWord).join();
-  if (fullLineText.trim().isEmpty) return;
-
-  final phonemes = await JapaneseAnalyzer.getWords(
-    fullLineText,
-    monoRuby: true,
+  final text = words.map((w) => w.lyricWord).join();
+  if (text.trim().isEmpty) return;
+  // 整词分析保留熟字训和连浊，同时保留上下文，使分析更精确。
+  final phonemes = cache[text] ??= await JapaneseAnalyzer.getWords(
+    text,
+    monoRuby: false,
   );
-  if (phonemes.isEmpty) return;
-
-  final List<String> charFuriganaMap = List.filled(fullLineText.length, '');
-
-  int textPointer = 0;
-  for (final p in phonemes) {
-    final pLen = p.text.length;
-    if (textPointer + pLen > fullLineText.length) break;
-    // 只有当该音素包含汉字时才赋予注音
-    if (JapaneseDetector.hasKanji(p.text) && p.hasFurigana) {
-      charFuriganaMap[textPointer] = p.yomi;
-    }
-    textPointer += pLen;
-  }
-
-  int wordPointer = 0;
-  for (final word in words) {
-    final wLen = word.lyricWord.length;
-    if (wLen == 0) continue;
-
-    final StringBuffer furiganaBuffer = StringBuffer();
-
-    for (int i = 0; i < wLen; i++) {
-      final currentIdx = wordPointer + i;
-      if (currentIdx < charFuriganaMap.length &&
-          charFuriganaMap[currentIdx].isNotEmpty) {
-        furiganaBuffer.write(charFuriganaMap[currentIdx]);
-      }
-    }
-
-    word.furigana = furiganaBuffer.toString();
-    wordPointer += wLen;
-  }
+  alignJapaneseFurigana(words, phonemes);
 }
 
 // ─────────────────────────── 基础 LRC 解析 ───────────────────────────

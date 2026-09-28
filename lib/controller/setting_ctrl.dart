@@ -76,6 +76,7 @@ class SettingController {
   final useReplayGain = signal(false);
   final useTaskBarCtrl = signal(true);
   final useVolumeFade = signal(true);
+  final useCrossfade = signal(false);
   final spectrogramStyle = signal(0); // 0：无，1：柱状图，2：波形图，3：波浪
 
   static const minGain = -12.0;
@@ -256,6 +257,7 @@ class SettingController {
       }
 
       await setUseFade(value: useVolumeFade.value);
+      // TODO
     }());
   }
 
@@ -348,6 +350,8 @@ class SettingController {
       useTransparencyBackground.value =
           prefs?.getBool(SharedPreferencesKey.useTransparencyBackground) ??
           false;
+      useCrossfade.value =
+          prefs?.getBool(SharedPreferencesKey.useCrossfade) ?? false;
       useVolumeFade.value =
           prefs?.getBool(SharedPreferencesKey.useVolumeFade) ?? true;
       spectrogramStyle.value =
@@ -768,6 +772,23 @@ class SettingController {
     overrideValue: value,
   );
 
+  Future<void> setUseCrossfade({required bool value}) async {
+    final prev = useCrossfade.value;
+    useCrossfade.value = value;
+    try {
+      // TODO
+    } catch (e, stackTrace) {
+      LoggerUni.w('设置交叉淡化失败', e, stackTrace);
+      showSnackBar(title: 'Err', msg: 'settingERR | $e');
+      useCrossfade.value = prev;
+    }
+    _setBoolPref(
+        SharedPreferencesKey.useCrossfade,
+        useCrossfade,
+        overrideValue: value,
+      );
+  }
+
   void setUseVolumeFade({required bool value}) {
     _setBoolPref(
       SharedPreferencesKey.useVolumeFade,
@@ -781,7 +802,7 @@ class SettingController {
     final prev = useExclusiveMode.value;
     useExclusiveMode.value = use;
     try {
-      await switchExclusiveMode(exclusive: use);
+      unawaited(switchExclusiveMode(exclusive: use));
     } catch (e, stackTrace) {
       LoggerUni.w(
         '启用独占模式失败 Path: ${_audioController.currentPath.value}',
@@ -792,10 +813,10 @@ class SettingController {
       useExclusiveMode.value = prev;
       await switchExclusiveMode(exclusive: prev);
     }
-    if (prefs == null) {
-      return;
-    }
-    // 不保存独占模式的配置
-    // prefs!.setBool('useExclusiveMode', useExclusiveMode.value);
+    // _setBoolPref(
+    //     SharedPreferencesKey.useExclusiveMode,
+    //     useExclusiveMode,
+    //     overrideValue: use,
+    //   );
   }
 }

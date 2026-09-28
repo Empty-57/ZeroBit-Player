@@ -64,39 +64,14 @@ class KaraOkLyricWidget extends StatelessWidget {
 
   /// 构建静态行（非当前行且非上一行）
   Widget _buildStaticLine() {
-    return Wrap(
-      alignment: LyricConstants.lrcWrapAlign[lrcAlignment],
-      crossAxisAlignment: WrapCrossAlignment.end,
-      children: text.map((entry) {
-        final word = entry.lyricWord;
-        final furigana = entry.furigana;
-
-        final wordWidget = BlurText(
-          word,
-          style: style,
-          strutStyle: strutStyle,
-          blurSigma: blurSigma,
-        );
-
-        if (furigana.isEmpty) {
-          return wordWidget;
-        }
-
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            BlurText(
-              furigana,
-              style: furiganaLyricStyle,
-              textAlign: TextAlign.center,
-              blurSigma: blurSigma,
-            ),
-            wordWidget,
-          ],
-        );
-      }).toList(),
-    );
+    return _buildFuriganaLine((wordIndex, entry) {
+      return BlurText(
+        entry.lyricWord,
+        style: style,
+        strutStyle: strutStyle,
+        blurSigma: blurSigma,
+      );
+    });
   }
 
   /// 构建单字内容组件（负责高亮渐变、涟漪、颜色过渡）
@@ -204,6 +179,57 @@ class KaraOkLyricWidget extends StatelessWidget {
     }
   }
 
+  /// 构建注音行
+  Widget _buildFuriganaLine(Widget Function(int, WordEntry) build) {
+    final List<Widget> lineChildren = [];
+    int i = 0;
+
+    while (i < text.length) {
+      final entry = text[i];
+
+      final groupLen =
+          (entry.furigana.isNotEmpty && entry.furiganaGroupLength > 1)
+          ? entry.furiganaGroupLength
+          : 1;
+      final end = (i + groupLen).clamp(0, text.length);
+
+      final words = [for (int j = i; j < end; j++) build(j, text[j])];
+      final wordWidget = words.length == 1
+          ? words.first
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: words,
+            );
+
+      lineChildren.add(
+        entry.furigana.isEmpty
+            ? wordWidget
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  BlurText(
+                    entry.furigana,
+                    style: furiganaLyricStyle,
+                    textAlign: TextAlign.center,
+                    blurSigma: blurSigma,
+                  ),
+                  wordWidget,
+                ],
+              ),
+      );
+
+      i = end;
+    }
+
+    return Wrap(
+      alignment: LyricConstants.lrcWrapAlign[lrcAlignment],
+      crossAxisAlignment: WrapCrossAlignment.end,
+      children: lineChildren,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!isCurrentLine && !isPrevLine) {
@@ -220,47 +246,24 @@ class KaraOkLyricWidget extends StatelessWidget {
       valueListenable: lyricController.currentWordIndexNotifier,
       builder: (_, currentIndex, _) {
         // 以下只会在“当前行”和“刚唱完的上一行”执行，保证了动画平滑且不被打断
-        return Wrap(
-          alignment: LyricConstants.lrcWrapAlign[lrcAlignment],
-          crossAxisAlignment: WrapCrossAlignment.end,
-          children: List.generate(text.length, (wordIndex) {
-            final entry = text[wordIndex];
-            final furigana = entry.furigana;
-            final double dura = entry.duration;
+        return _buildFuriganaLine((wordIndex, entry) {
+          final double dura = entry.duration;
+          final bool isFloating = isCurrentLine && wordIndex <= currentIndex;
+          final floatingDuration = dura * (1000 * 1.8) + 50;
+          final floatingDelay = dura * (1000 * 0.2);
 
-            final bool isFloating = isCurrentLine && wordIndex <= currentIndex;
-            final floatingDuration = dura * (1000 * 1.8) + 50;
-            final floatingDelay = dura * (1000 * 0.2);
-
-            final Widget wordWidget = _SyllableFloatWidget(
-              isFloating: isFloating,
-              duration: isFloating ? floatingDuration : 600,
-              delay: isFloating ? floatingDelay : 0,
-              child: _buildWordWidget(
-                wordIndex: wordIndex,
-                currentIndex: currentIndex,
-                entry: entry,
-                gradientColors: gradientColors,
-              ),
-            );
-
-            return furigana.isNotEmpty
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      BlurText(
-                        furigana,
-                        style: furiganaLyricStyle,
-                        textAlign: TextAlign.center,
-                        blurSigma: blurSigma,
-                      ),
-                      wordWidget,
-                    ],
-                  )
-                : wordWidget;
-          }),
-        );
+          return _SyllableFloatWidget(
+            isFloating: isFloating,
+            duration: isFloating ? floatingDuration : 600,
+            delay: isFloating ? floatingDelay : 0,
+            child: _buildWordWidget(
+              wordIndex: wordIndex,
+              currentIndex: currentIndex,
+              entry: entry,
+              gradientColors: gradientColors,
+            ),
+          );
+        });
       },
     );
   }
