@@ -404,6 +404,7 @@ class _StaggeredLyricItem extends StatelessWidget {
   }) {
     return AnimatedSize(
       duration: const Duration(milliseconds: 300),
+      clipBehavior: .none,
       curve: Curves.easeOutCubic,
       alignment: LyricConstants.lrcScaleAlignment[lrcAlignment],
       child: show ? child : const SizedBox.shrink(),
