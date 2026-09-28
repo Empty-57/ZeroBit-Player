@@ -542,7 +542,11 @@ class SettingController {
   );
 
   void setUseReplayGain({required bool value}) async {
-    await setReplayGain(gainDb: 0.0, peak: 1.0);
+    final metadata = _audioController.currentMetadata.value;
+    await setReplayGain(
+      gainDb: value ? metadata.trackGain : 0.0,
+      peak: value ? metadata.trackPeak : 1.0,
+    );
     _setBoolPref(
       SharedPreferencesKey.useReplayGain,
       useReplayGain,
