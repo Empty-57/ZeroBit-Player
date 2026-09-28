@@ -140,6 +140,7 @@ class _SearchResultItem extends StatelessWidget {
         } else if (type == LyricFormat.yrc ||
             type == LyricFormat.qrc ||
             type == LyricFormat.krc) {
+          Navigator.pop(context);
           audioController.currentLyrics.value = ParsedLyricModel(
             parsedLrc: await parseKaraOkLyric(
               lyricData: v.lyric!.verbatimLrc,
@@ -152,10 +153,8 @@ class _SearchResultItem extends StatelessWidget {
         audioController.refreshLyrics();
 
         if (settingController.autoDownloadLrc.value) {
-          saveLyrics(path: audioController.currentPath.value, lrcData: v.lyric);
+          unawaited(saveLyrics(path: audioController.currentPath.value, lrcData: v.lyric));
         }
-
-        Navigator.pop(context);
       },
       style: TextButton.styleFrom(
         shape: RoundedRectangleBorder(

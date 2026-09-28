@@ -54,7 +54,6 @@ class _LyricsSide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
     return RepaintBoundary(
       child: ShaderMask(
         shaderCallback: (rect) {
