@@ -27,9 +27,9 @@ abstract class LyricConstants {
     MainAxisAlignment.end,
   ];
   static const lrcScaleAlignment = <Alignment>[
-    Alignment.centerLeft,
-    Alignment.center,
-    Alignment.centerRight,
+    Alignment.topLeft,
+    Alignment.topCenter,
+    Alignment.topRight,
   ];
 
   static const lrcTextAlign = <TextAlign>[

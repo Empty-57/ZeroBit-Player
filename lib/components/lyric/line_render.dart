@@ -43,6 +43,7 @@ class KaraOkLyricWidget extends StatelessWidget {
   final TextStyle style;
   final bool isCurrentLine;
   final bool isPrevLine;
+  final bool showKana;
   final int lrcAlignment;
   final LyricController lyricController;
   final StrutStyle strutStyle;
@@ -60,6 +61,7 @@ class KaraOkLyricWidget extends StatelessWidget {
     required this.isPrevLine,
     required this.blurSigma,
     required this.furiganaLyricStyle,
+    required this.showKana,
   });
 
   /// 构建静态行（非当前行且非上一行）
@@ -209,11 +211,19 @@ class KaraOkLyricWidget extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  BlurText(
-                    entry.furigana,
-                    style: furiganaLyricStyle,
-                    textAlign: TextAlign.center,
-                    blurSigma: blurSigma,
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.bottomCenter,
+                    clipBehavior: .none,
+                    child: showKana
+                        ? BlurText(
+                            entry.furigana,
+                            style: furiganaLyricStyle,
+                            textAlign: TextAlign.center,
+                            blurSigma: blurSigma,
+                          )
+                        : const SizedBox.shrink(),
                   ),
                   wordWidget,
                 ],

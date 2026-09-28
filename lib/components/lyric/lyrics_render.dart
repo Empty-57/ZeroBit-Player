@@ -176,6 +176,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                   final showRoma = _settingController.showRoma.value;
                   final showTranslate = _settingController.showTranslate.value;
                   final useBlur = _settingController.useBlur.value;
+                  final showKana = _settingController.showKana.value;
                   final currentSongPath = c.currentPath.peek();
 
                   final lrcPadding = EdgeInsets.only(
@@ -229,6 +230,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                       showRoma: showRoma,
                       useSpringScroll: useSpringScroll,
                       useBlur: useBlur,
+                      showKana: showKana,
                     );
                   }
 
@@ -317,6 +319,24 @@ class _LyricsRenderState extends State<LyricsRender> {
                               0.0; // 重置缓存
                         },
                       ),
+                      GenIconBtn(
+                        tooltip: '假名',
+                        icon: _settingController.showKana.value
+                            ? PhosphorIconsFill.textAa
+                            : PhosphorIconsLight.textAa,
+                        size: LyricConstants.ctrlBtnMinSize,
+                        color: mixColor,
+                        fn: () {
+                          batch(() {
+                            _settingController.setShowKana();
+                            _audioController.lyricRenderRevision.value++;
+                          });
+                          _lyricController
+                                  .springController
+                                  ?.cachedScreenHeight =
+                              0.0; // 重置缓存
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -348,6 +368,7 @@ class _StaggeredLyricItem extends StatelessWidget {
   final bool showRoma;
   final bool useSpringScroll;
   final bool useBlur;
+  final bool showKana;
 
   final TextStyle lyricStyle;
   final TextStyle tsLyricStyle;
@@ -383,6 +404,7 @@ class _StaggeredLyricItem extends StatelessWidget {
     required this.useBlur,
     required this.onClick,
     required this.furiganaLyricStyle,
+    required this.showKana,
   });
 
   Widget _createAnimatedScaleWidget({
@@ -468,6 +490,7 @@ class _StaggeredLyricItem extends StatelessWidget {
                     furiganaLyricStyle: furiganaLyricStyle,
                     isCurrentLine: isCurrent,
                     isPrevLine: isPrevLine,
+                    showKana: showKana,
                     lrcAlignment: lrcAlignment,
                     lyricController: lyricController,
                     strutStyle: strutStyle,

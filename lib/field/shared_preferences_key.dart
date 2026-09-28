@@ -23,6 +23,7 @@ abstract class SharedPreferencesKey {
   static const spectrogramStyle = 'spectrogramStyle';
   static const lrcLetterSpacing = 'lrcLetterSpacing';
   static const lyricSource = 'lyricSource';
+  static const showKana = 'showKana';
 }
 
 abstract class DesktopSharedPreferencesKey {

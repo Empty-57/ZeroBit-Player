@@ -34,7 +34,10 @@ void alignJapaneseFurigana(
     final yomi = _normalize(phoneme.yomi);
     if (phonemeText.isEmpty) continue;
 
-    final start = source.indexOf(phonemeText, cursor); // 从cursor的位置开始找音素原文第一次在原句出现的位置
+    final start = source.indexOf(
+      phonemeText,
+      cursor,
+    ); // 从cursor的位置开始找音素原文第一次在原句出现的位置
     // 原生分析器可能省略空白、标点；不能跨过未匹配的正文后猜测位置。
     if (start < 0 || !_separators.hasMatch(source.substring(cursor, start))) {
       break;
@@ -130,7 +133,7 @@ List<(int, int, String)> _splitReading(String surface, String reading) {
     }
     final next = runs[index + 1];
     final anchor = surface.substring(next.$1, next.$2);
-    var end = reading.indexOf(anchor, pos + 1);
+    var end = reading.indexOf(anchor, (pos + 1).clamp(0, reading.length - 1));
     while (end >= 0 && budget > 0 && solutions.length < 2) {
       path.add((run.$1, run.$2, reading.substring(pos, end)));
       visit(index + 1, end);

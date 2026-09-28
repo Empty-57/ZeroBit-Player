@@ -35,12 +35,7 @@ class SettingController {
   final themeColor = signal(0xff27272a);
   final dynamicThemeColor = signal(true);
   final fontFamily = signal("Microsoft YaHei Light");
-  final useBlur = signal(true);
-  final useMesh = signal(true);
-  final useSpringScroll = signal(true);
   final close2Tray = signal(false);
-  final showTranslate = signal(true);
-  final showRoma = signal(false);
   final backgroundImagePath = signal('1');
   final backgroundImageOpacity = signal(0.5); // 0-1
   final backgroundImageBlur = signal(4.0); // 0-36
@@ -56,6 +51,12 @@ class SettingController {
   final showDesktopLyrics = signal(false);
   final autoGetLyrics = signal(true);
   final lyricSource = signal(0); // 0 本地 1 内嵌 2 网络
+  final useBlur = signal(true);
+  final useMesh = signal(true);
+  final showKana = signal(true);
+  final useSpringScroll = signal(true);
+  final showTranslate = signal(true);
+  final showRoma = signal(false);
 
   static const int lrcFontSizeMax = 48;
   static const int lrcFontSizeMin = 24;
@@ -359,6 +360,7 @@ class SettingController {
       lrcLetterSpacing.value =
           prefs?.getDouble(SharedPreferencesKey.lrcLetterSpacing) ?? 0.0;
       lyricSource.value = prefs?.getInt(SharedPreferencesKey.lyricSource) ?? 0;
+      showKana.value = prefs?.getBool(SharedPreferencesKey.showKana) ?? true;
     });
 
     // 提取快捷键解析逻辑，消除冗余
@@ -527,6 +529,7 @@ class SettingController {
   void setShowTranslate() =>
       _setBoolPref(SharedPreferencesKey.showTranslate, showTranslate);
   void setShowRoma() => _setBoolPref(SharedPreferencesKey.showRoma, showRoma);
+  void setShowKana() => _setBoolPref(SharedPreferencesKey.showKana, showKana);
   void setHotKeyScope({required bool value}) => _setBoolPref(
     SharedPreferencesKey.hotKeyScope,
     hotKeyScope,
@@ -783,10 +786,10 @@ class SettingController {
       useCrossfade.value = prev;
     }
     _setBoolPref(
-        SharedPreferencesKey.useCrossfade,
-        useCrossfade,
-        overrideValue: value,
-      );
+      SharedPreferencesKey.useCrossfade,
+      useCrossfade,
+      overrideValue: value,
+    );
   }
 
   void setUseVolumeFade({required bool value}) {
