@@ -56,6 +56,7 @@ class WordEntry implements TimedEntry {
     'start': value.start,
     'duration': value.duration,
     'lyricWord': value.lyricWord,
+    'furigana':value.furigana
   };
 }
 

@@ -53,11 +53,11 @@ class HighlightedWordState extends State<HighlightedWord> {
 
   // 涟漪效果核心算法
   // 推进步长 stepRatio（0.0 ~ 1.0）：决定前后两个字的动画有多少交集。
-  // 设为 0.1 意味着：当前一个字的动画跑到 10% 时，后一个字的动画就要开始了
-  static const double _stepRatio = 0.1;
+  // 设为 0.05 意味着：当前一个字的动画跑到 5% 时，后一个字的动画就要开始了
+  static const double _stepRatio = 0.05;
 
   // 动画时间比例
-  static const double _animatedRatio = 0.6;
+  static const double _animatedRatio = 0.4;
 
   // 计算出每个字的动画在总进度里占多少"时间窗口"(即动画持续时间)
   // 算法：

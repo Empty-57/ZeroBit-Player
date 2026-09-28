@@ -1863,6 +1863,12 @@ class _DesktopLyricsTab extends StatelessWidget {
               _desktopLyricsSettingController.setShowDoubleLine(show: val),
         ),
         _SettingSwitchItem(
+          text: '显示日语假名',
+          value: _desktopLyricsSettingController.showFurigana,
+          onChanged: (val) =>
+              _desktopLyricsSettingController.setShowFurigana(value: val),
+        ),
+        _SettingSwitchItem(
           text: '边框',
           value: _desktopLyricsSettingController.useStroke,
           onChanged: (val) =>

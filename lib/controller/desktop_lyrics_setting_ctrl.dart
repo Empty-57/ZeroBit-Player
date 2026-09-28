@@ -3,6 +3,8 @@ import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/desktop_lyrics_sever.dart';
 import 'package:zerobit_player/tools/websocket_model.dart';
 
+import '../field/shared_preferences_key.dart';
+
 class DesktopLyricsSettingController {
   DesktopLyricsSettingController._();
   static final instance = DesktopLyricsSettingController._();
@@ -33,6 +35,8 @@ class DesktopLyricsSettingController {
 
   final lyricsSwitchAnimateMode = signal(1); // 0 无动画 1 淡入淡出 2滑动 3 缩放
 
+  final showFurigana = signal(true);
+
   static const Map<int, String> lrcAlignmentMap = {
     0: '左对齐',
     1: '居中',
@@ -55,28 +59,46 @@ class DesktopLyricsSettingController {
   void init() async {
     prefs = await SharedPreferences.getInstance();
     batch(() {
-      fontSize.value = prefs!.getInt('fontSize') ?? 24;
-      fontWeight.value = prefs!.getInt('fontWeight') ?? 5;
+      fontSize.value =
+          prefs!.getInt(DesktopSharedPreferencesKey.fontSize) ?? 24;
+      fontWeight.value =
+          prefs!.getInt(DesktopSharedPreferencesKey.fontWeight) ?? 5;
       fontFamily.value =
-          prefs!.getString('fontFamily') ?? 'Microsoft YaHei Light';
-      overlayColor.value = prefs!.getInt('overlayColor') ?? 0xffff0000;
-      underColor.value = prefs!.getInt('underColor') ?? 0xff0000ff;
-      fontOpacity.value = prefs!.getDouble('fontOpacity') ?? 1.0;
-      windowDx = prefs!.getDouble('dx') ?? 50.0;
-      windowDy = prefs!.getDouble('dy') ?? 50.0;
-      windowWidth = prefs!.getDouble('windowWidth') ?? 450.0;
-      windowHeight = prefs!.getDouble('windowHeight') ?? 150.0;
+          prefs!.getString(DesktopSharedPreferencesKey.fontFamily) ??
+          'Microsoft YaHei Light';
+      overlayColor.value =
+          prefs!.getInt(DesktopSharedPreferencesKey.overlayColor) ?? 0xffff0000;
+      underColor.value =
+          prefs!.getInt(DesktopSharedPreferencesKey.underColor) ?? 0xff0000ff;
+      fontOpacity.value =
+          prefs!.getDouble(DesktopSharedPreferencesKey.fontOpacity) ?? 1.0;
+      windowDx = prefs!.getDouble(DesktopSharedPreferencesKey.dx) ?? 50.0;
+      windowDy = prefs!.getDouble(DesktopSharedPreferencesKey.dy) ?? 50.0;
+      windowWidth =
+          prefs!.getDouble(DesktopSharedPreferencesKey.windowWidth) ?? 450.0;
+      windowHeight =
+          prefs!.getDouble(DesktopSharedPreferencesKey.windowHeight) ?? 150.0;
       isIgnoreMouseEvents.value =
-          prefs!.getBool('isIgnoreMouseEvents') ?? false;
-      lrcAlignment.value = prefs!.getInt('lrcAlignment') ?? 1;
-      useVerticalDisplayMode.value = prefs!.getBool('displayMode') ?? false;
-      useStroke.value = prefs!.getBool('useStroke') ?? true;
-      strokeColor.value = prefs!.getInt('strokeColor') ?? 0xff000000;
-      showDoubleLine.value = prefs!.getBool('showDoubleLine') ?? false;
+          prefs!.getBool(DesktopSharedPreferencesKey.isIgnoreMouseEvents) ??
+          false;
+      lrcAlignment.value =
+          prefs!.getInt(DesktopSharedPreferencesKey.lrcAlignment) ?? 1;
+      useVerticalDisplayMode.value =
+          prefs!.getBool(DesktopSharedPreferencesKey.displayMode) ?? false;
+      useStroke.value =
+          prefs!.getBool(DesktopSharedPreferencesKey.useStroke) ?? true;
+      strokeColor.value =
+          prefs!.getInt(DesktopSharedPreferencesKey.strokeColor) ?? 0xff000000;
+      showDoubleLine.value =
+          prefs!.getBool(DesktopSharedPreferencesKey.showDoubleLine) ?? false;
       useDynamicOverlayColor.value =
-          prefs!.getBool('useDynamicOverlayColor') ?? false;
+          prefs!.getBool(DesktopSharedPreferencesKey.useDynamicOverlayColor) ??
+          false;
       lyricsSwitchAnimateMode.value =
-          prefs!.getInt('lyricsSwitchAnimateMode') ?? 1;
+          prefs!.getInt(DesktopSharedPreferencesKey.lyricsSwitchAnimateMode) ??
+          1;
+      showFurigana.value =
+          prefs!.getBool(DesktopSharedPreferencesKey.showFurigana) ?? false;
     });
   }
 
@@ -89,7 +111,7 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setInt('fontSize', fontSize.value);
+    prefs!.setInt(DesktopSharedPreferencesKey.fontSize, fontSize.value);
   }
 
   void setFontWeight({required int weight}) {
@@ -101,7 +123,7 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setInt('fontWeight', fontWeight.value);
+    prefs!.setInt(DesktopSharedPreferencesKey.fontWeight, fontWeight.value);
   }
 
   void setFontFamily({required String family}) {
@@ -113,7 +135,7 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setString('fontFamily', family);
+    prefs!.setString(DesktopSharedPreferencesKey.fontFamily, family);
   }
 
   void setOverlayColor({required int color}) {
@@ -125,7 +147,7 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setInt('overlayColor', color);
+    prefs!.setInt(DesktopSharedPreferencesKey.overlayColor, color);
   }
 
   void setUnderColor({required int color}) {
@@ -137,7 +159,7 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setInt('underColor', color);
+    prefs!.setInt(DesktopSharedPreferencesKey.underColor, color);
   }
 
   void setFontOpacity({required double opacity}) {
@@ -149,7 +171,7 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setDouble('fontOpacity', opacity);
+    prefs!.setDouble(DesktopSharedPreferencesKey.fontOpacity, opacity);
   }
 
   void setDx({required double dx}) {
@@ -157,7 +179,7 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setDouble('dx', dx);
+    prefs!.setDouble(DesktopSharedPreferencesKey.dx, dx);
   }
 
   void setDy({required double dy}) {
@@ -165,7 +187,7 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setDouble('dy', dy);
+    prefs!.setDouble(DesktopSharedPreferencesKey.dy, dy);
   }
 
   void setWindowWidth({required double width}) {
@@ -173,7 +195,7 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setDouble('windowWidth', width);
+    prefs!.setDouble(DesktopSharedPreferencesKey.windowWidth, width);
   }
 
   void setWindowHeight({required double height}) {
@@ -181,7 +203,7 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setDouble('windowHeight', height);
+    prefs!.setDouble(DesktopSharedPreferencesKey.windowHeight, height);
   }
 
   void setIgnoreMouseEvents({required bool isIgnore}) {
@@ -193,7 +215,7 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setBool('isIgnoreMouseEvents', isIgnore);
+    prefs!.setBool(DesktopSharedPreferencesKey.isIgnoreMouseEvents, isIgnore);
   }
 
   void setLrcAlignment({required int alignment}) {
@@ -205,7 +227,7 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setInt('lrcAlignment', alignment);
+    prefs!.setInt(DesktopSharedPreferencesKey.lrcAlignment, alignment);
   }
 
   void setUseVerticalDisplayMode({required bool use}) {
@@ -217,7 +239,7 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setBool('displayMode', use);
+    prefs!.setBool(DesktopSharedPreferencesKey.displayMode, use);
   }
 
   void setStrokeEnable({required bool enable}) {
@@ -229,7 +251,7 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setBool('useStroke', enable);
+    prefs!.setBool(DesktopSharedPreferencesKey.useStroke, enable);
   }
 
   void setStrokeColor({required int color}) {
@@ -241,7 +263,7 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setInt('strokeColor', color);
+    prefs!.setInt(DesktopSharedPreferencesKey.strokeColor, color);
   }
 
   void setShowDoubleLine({required bool show}) {
@@ -253,7 +275,7 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setBool('showDoubleLine', show);
+    prefs!.setBool(DesktopSharedPreferencesKey.showDoubleLine, show);
   }
 
   void setDynamicOverlayColor(int color) {
@@ -285,18 +307,30 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setBool('useDynamicOverlayColor', value);
+    prefs!.setBool(DesktopSharedPreferencesKey.useDynamicOverlayColor, value);
   }
 
   void setLyricsSwitchAnimateMode({required int mode}) {
     lyricsSwitchAnimateMode.value = mode;
     _desktopLyricsSever.sendCmd(
-      cmdType: SeverCmdType.lyricsSwitchAnimateMode,
+      cmdType: SeverCmdType.setLyricsSwitchAnimateMode,
       cmdData: lyricsSwitchAnimateMode.value,
     );
     if (prefs == null) {
       return;
     }
-    prefs!.setInt('lyricsSwitchAnimateMode', mode);
+    prefs!.setInt(DesktopSharedPreferencesKey.lyricsSwitchAnimateMode, mode);
+  }
+
+  void setShowFurigana({required bool value}) {
+    showFurigana.value = value;
+    _desktopLyricsSever.sendCmd(
+      cmdType: SeverCmdType.setShowFurigana,
+      cmdData: showFurigana.value,
+    );
+    if (prefs == null) {
+      return;
+    }
+    prefs!.setBool(DesktopSharedPreferencesKey.showFurigana,value);
   }
 }

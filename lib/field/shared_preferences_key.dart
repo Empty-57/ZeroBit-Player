@@ -23,3 +23,25 @@ abstract class SharedPreferencesKey {
   static const lrcLetterSpacing = 'lrcLetterSpacing';
   static const lyricSource = 'lyricSource';
 }
+
+abstract class DesktopSharedPreferencesKey {
+  static const fontSize = 'desk_fontSize';
+  static const fontWeight = 'desk_fontWeight';
+  static const fontFamily = 'desk_fontFamily';
+  static const overlayColor = 'desk_overlayColor';
+  static const underColor = 'desk_underColor';
+  static const fontOpacity = 'desk_fontOpacity';
+  static const dx = 'desk_dx';
+  static const dy = 'desk_dy';
+  static const windowWidth = 'desk_windowWidth';
+  static const windowHeight = 'desk_windowHeight';
+  static const isIgnoreMouseEvents = 'desk_isIgnoreMouseEvents';
+  static const lrcAlignment = 'desk_lrcAlignment';
+  static const displayMode = 'desk_displayMode';
+  static const useStroke = 'desk_useStroke';
+  static const strokeColor = 'desk_strokeColor';
+  static const showDoubleLine = 'desk_showDoubleLine';
+  static const useDynamicOverlayColor = 'desk_useDynamicOverlayColor';
+  static const lyricsSwitchAnimateMode = 'desk_lyricsSwitchAnimateMode';
+  static const showFurigana = 'desk_showFurigana';
+}
