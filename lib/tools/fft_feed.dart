@@ -22,7 +22,6 @@ class FFTFeed {
     if (_ref++ > 0) {
       return;
     }
-    _ref++;
     LoggerUni.i('FFT数据流已连接 Ref: $_ref');
     _fetchTimer = Timer.periodic(_fetchInterval, (_) {
       _audioController.getAudioFFt();
