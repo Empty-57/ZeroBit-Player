@@ -64,7 +64,7 @@ class _LyricsSide extends StatelessWidget {
           );
         },
         blendMode: BlendMode.dstIn,
-        child: SizedBox(width: width / 2, child: const LyricsRender()),
+        child: const LyricsRender(),
       ),
     );
   }
