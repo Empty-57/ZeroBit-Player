@@ -141,7 +141,7 @@ class KaraOkLyricWidget extends StatelessWidget {
             style: style,
             strutStyle: strutStyle,
             gradientColors: gradientColors,
-            duartion: dura,
+            duration: dura,
             ripplesScaleMax: ripplesScaleMax,
             glowAlphaMax: glowAlphaMax,
             translateGradientScale: translateGradientScale,

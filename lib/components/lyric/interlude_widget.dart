@@ -223,7 +223,7 @@ class _BreathingDotsState extends State<_BreathingDots>
             style: widget.interludeLyricStyle,
             strutStyle: widget.strutStyle,
             gradientColors: widget.gradientColors,
-            duartion: 0,
+            duration: 0,
             ripplesScaleMax: 1.1,
             glowAlphaMax: 0.2,
             translateGradientScale: 2.0,

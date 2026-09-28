@@ -24,7 +24,7 @@ class HighlightedWord extends StatefulWidget {
   final TextStyle style;
   final StrutStyle strutStyle;
   final List<Color> gradientColors;
-  final double duartion;
+  final double duration;
   final double ripplesScaleMax;
   final double glowAlphaMax;
   final double translateGradientScale;
@@ -36,7 +36,7 @@ class HighlightedWord extends StatefulWidget {
     required this.style,
     required this.strutStyle,
     required this.gradientColors,
-    required this.duartion,
+    required this.duration,
     required this.ripplesScaleMax,
     required this.glowAlphaMax,
     required this.translateGradientScale,
@@ -139,7 +139,7 @@ class HighlightedWordState extends State<HighlightedWord> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.duartion < LyricConstants.rippleThreshold) {
+    if (widget.duration < LyricConstants.rippleThreshold) {
       // 小于阈值则不应用涟漪效果
       return _shaderMaskWrap(
         Text(widget.text, style: _normalStyle, strutStyle: widget.strutStyle),
