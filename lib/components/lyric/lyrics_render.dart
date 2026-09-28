@@ -49,7 +49,7 @@ class _LyricsStyle {
       alpha: LyricConstants.notPlayedDarkAlpha,
     ),
     weight: _weight,
-    letterSpacing: _letterSpacing
+    letterSpacing: _letterSpacing,
   );
 
   TextStyle get tsLyricStyle => lyricStyle.copyWith(fontSize: _baseSize * 0.9);
