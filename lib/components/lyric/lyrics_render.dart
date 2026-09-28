@@ -33,7 +33,7 @@ class _LyricsStyle {
   Color get _onContainerColor =>
       _themeService.darkTheme.colorScheme.onSecondaryContainer;
 
-  double get _letterSpacing=>_settingsController.lrcLetterSpacing.value;
+  double get _letterSpacing => _settingsController.lrcLetterSpacing.value;
 
   // StrutStyle 行高一致，防止跳动
   StrutStyle get strutStyle => StrutStyle(
