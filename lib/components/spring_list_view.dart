@@ -416,6 +416,7 @@ class _SpringItemState extends State<_SpringItem>
       animation: controller,
       builder: (context, child) {
         return Transform.translate(
+          filterQuality: .low,
           offset: Offset(0, controller.value), // 直接应用物理控制器的值
           child: child,
         );
