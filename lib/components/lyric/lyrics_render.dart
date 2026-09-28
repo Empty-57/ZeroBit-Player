@@ -4,7 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/lyric/blurable_widget.dart';
+import 'package:zerobit_player/components/lyric/blur_widget.dart';
 import 'package:zerobit_player/components/lyric/interlude_widget.dart';
 import 'package:zerobit_player/components/lyric/line_render.dart';
 import 'package:zerobit_player/components/lyric/lyric_arg_constants.dart';
@@ -33,7 +33,7 @@ class _LyricsStyle {
   Color get _onContainerColor =>
       _themeService.darkTheme.colorScheme.onSecondaryContainer;
 
-  double get _letterSpaing=>_settingsController.lrcLetterSpacing.value;
+  double get _letterSpacing=>_settingsController.lrcLetterSpacing.value;
 
   // StrutStyle 行高一致，防止跳动
   StrutStyle get strutStyle => StrutStyle(
@@ -49,7 +49,7 @@ class _LyricsStyle {
       alpha: LyricConstants.notPlayedDarkAlpha,
     ),
     weight: _weight,
-    letterSpacing: _letterSpaing
+    letterSpacing: _letterSpacing
   );
 
   TextStyle get tsLyricStyle => lyricStyle.copyWith(fontSize: _baseSize * 0.9);
@@ -164,9 +164,9 @@ class _LyricsRenderState extends State<LyricsRender> {
                   }
 
                   // 接受这些信号也重建
-                  final useSpringscroll =
+                  final useSpringScroll =
                       _settingController.useSpringScroll.value;
-                  if (useSpringscroll) {
+                  if (useSpringScroll) {
                     _lyricController.springController ??=
                         SpringListController();
                   } else {
@@ -227,12 +227,12 @@ class _LyricsRenderState extends State<LyricsRender> {
                       textAlign: textAlign,
                       showTranslate: showTranslate,
                       showRoma: showRoma,
-                      useSpringScroll: useSpringscroll,
+                      useSpringScroll: useSpringScroll,
                       useBlur: useBlur,
                     );
                   }
 
-                  return useSpringscroll
+                  return useSpringScroll
                       ? SpringListView(
                           key: ValueKey(currentSongPath),
                           length: c.lineTextList.length,
@@ -510,7 +510,7 @@ class _StaggeredLyricItem extends StatelessWidget {
           ),
         );
 
-        return BlurableLine(
+        return BlurLine(
           blurSigma: blurSigma,
           child: TextButton(
             onPressed: () => onClick(startTime),

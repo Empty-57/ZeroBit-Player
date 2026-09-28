@@ -5,11 +5,11 @@ import '../../tools/paint_cache.dart';
 const flag=true;
 
 /// 合成层模糊组件
-class BlurableLine extends StatelessWidget {
+class BlurLine extends StatelessWidget {
   final Widget child;
   final int blurSigma;
 
-  const BlurableLine({super.key, required this.child, this.blurSigma = 0})
+  const BlurLine({super.key, required this.child, this.blurSigma = 0})
     : assert(blurSigma >= 0 && blurSigma <= 4, 'blurSigma 必须在 0 到 4 之间');
 
   @override
@@ -26,14 +26,14 @@ class BlurableLine extends StatelessWidget {
 }
 
 /// 字形模糊组件
-class BlurableText extends StatelessWidget {
+class BlurText extends StatelessWidget {
   final String text;
   final TextStyle? style;
   final StrutStyle? strutStyle;
   final TextAlign? textAlign;
   final int blurSigma;
 
-  const BlurableText(
+  const BlurText(
     this.text, {
     super.key,
     this.style,

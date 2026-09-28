@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:zerobit_player/components/lyric/blurable_widget.dart';
+import 'package:zerobit_player/components/lyric/blur_widget.dart';
 import 'package:zerobit_player/components/lyric/lyric_arg_constants.dart';
 import 'package:zerobit_player/components/lyric/word_render.dart';
 import 'package:zerobit_player/controller/lyric_ctrl.dart';
@@ -33,7 +33,7 @@ class LrcLyricWidget extends StatelessWidget {
             ? style.color?.withValues(alpha: highLightAlpha)
             : style.color,
       ),
-      child: BlurableText(text, textAlign: textAlign, blurSigma: blurSigma),
+      child: BlurText(text, textAlign: textAlign, blurSigma: blurSigma),
     );
   }
 }
@@ -71,7 +71,7 @@ class KaraOkLyricWidget extends StatelessWidget {
         final word = entry.lyricWord;
         final furigana = entry.furigana;
 
-        final wordWidget = BlurableText(
+        final wordWidget = BlurText(
           word,
           style: style,
           strutStyle: strutStyle,
@@ -86,7 +86,7 @@ class KaraOkLyricWidget extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            BlurableText(
+            BlurText(
               furigana,
               style: furiganaLyricStyle,
               textAlign: TextAlign.center,
@@ -180,7 +180,7 @@ class KaraOkLyricWidget extends StatelessWidget {
         curve: Curves.easeInOut,
         tween: ColorTween(begin: beginColor, end: targetColor),
         builder: (_, color, __) {
-          return BlurableText(
+          return BlurText(
             word,
             style: style.copyWith(color: color),
             strutStyle: strutStyle,
@@ -249,7 +249,7 @@ class KaraOkLyricWidget extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      BlurableText(
+                      BlurText(
                         furigana,
                         style: furiganaLyricStyle,
                         textAlign: TextAlign.center,
