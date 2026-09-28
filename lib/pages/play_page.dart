@@ -1000,7 +1000,7 @@ class _PlayPageState extends State<PlayPage> {
                                         SpectrogramStyleType.rect =>
                                           SpectrogramWidget(
                                             gradient: spectrogramBarGradient,
-                                            lenth: spectrogramBarLength,
+                                            length: spectrogramBarLength,
                                             barWidth: spectrogramBarWidth,
                                             paddingWidth:
                                                 spectrogramPaddingWidth,
