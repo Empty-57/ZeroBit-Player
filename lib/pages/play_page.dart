@@ -726,12 +726,12 @@ class _PlayPageState extends State<PlayPage> {
       ctx: context,
       size: '2xl',
       color: mixColor,
-      weight: FontWeight.w100,
+      weight: FontWeight.w300,
     );
     final timeTotalStyle = generalTextStyle(
       ctx: context,
       size: 'md',
-      weight: FontWeight.w100,
+      weight: FontWeight.w300,
       color: mixSubColor,
     );
     final titleStyle = generalTextStyle(
@@ -744,7 +744,7 @@ class _PlayPageState extends State<PlayPage> {
       ctx: context,
       size: 'md',
       color: mixSubColor,
-      weight: FontWeight.w100,
+      weight: FontWeight.w300,
     );
 
     final spectrogramBarGradient = LinearGradient(
@@ -875,7 +875,7 @@ class _PlayPageState extends State<PlayPage> {
                                     }
 
                                     final detailTextStyle = titleStyle.copyWith(
-                                      fontWeight: FontWeight.w100,
+                                      fontWeight: FontWeight.w300,
                                       fontSize: titleStyle.fontSize! - 3,
                                     );
 
