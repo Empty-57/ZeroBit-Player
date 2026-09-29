@@ -222,11 +222,22 @@ Future<void> _annotateWordsForLine(
   if (words.isEmpty) return;
   final text = words.map((w) => w.lyricWord).join();
   if (text.trim().isEmpty) return;
-  // 整词分析保留熟字训和连浊，同时保留上下文，使分析更精确。
-  final phonemes = cache[text] ??= await JapaneseAnalyzer.getWords(
-    text,
-    monoRuby: false,
-  );
+
+  var phonemes = cache[text];
+  if (phonemes == null) {
+    // 整词分析保留熟字训和连浊，同时保留上下文，使分析更精确。
+    phonemes = await JapaneseAnalyzer.getWords(text, monoRuby: false);
+    // 连续汉字的复合词再用单字分析细化，让假名落到各自的汉字上；
+    // 细分读音与整词读音不一致时自动回退，熟字训仍按整词注音。
+    if (canRefinePhonemes(phonemes)) {
+      phonemes = refinePhonemes(
+        phonemes,
+        await JapaneseAnalyzer.getWords(text, monoRuby: true),
+      );
+    }
+    cache[text] = phonemes;
+  }
+
   alignJapaneseFurigana(words, phonemes);
 }
 
@@ -413,8 +424,6 @@ Future<List<LyricEntry>> _mergeTranslations(
   String? lyricDataTs, {
   String type = LyricFormat.lrc,
 }) async {
-  final isJapaneseSong = JapaneseDetector.isJapaneseSong(mainEntries);
-
   // LRC / byWordLrc 系列：从 mainEntries 自身提取翻译（同时间戳多行）
   if ((type == LyricFormat.lrc || type == LyricFormat.byWordLrc) &&
       (lyricDataTs == null || lyricDataTs.isEmpty)) {
@@ -436,7 +445,11 @@ Future<List<LyricEntry>> _mergeTranslations(
       type == LyricFormat.byWordLrc;
 
   if (isVerbatimFormat) {
-    await _applyJapaneseFurigana(mainEntries, isJapaneseSong);
+    // 翻译、注音行已从 mainEntries 中剥离，此时统计假名占比才不会被稀释
+    await _applyJapaneseFurigana(
+      mainEntries,
+      JapaneseDetector.isJapaneseSong(mainEntries),
+    );
   }
 
   return mainEntries;
@@ -538,11 +551,12 @@ void _handleThreeLineGroup(
 
 void _handleSingleLineGroup(LyricEntry entry) {
   // 只有一条时，检查 " / " 拆分
-  if (entry is String && entry.lyricText.contains(' / ')) {
-    final parts = entry.lyricText.split(' / ');
-    entry.lyricText = parts[0].trim();
-    entry.translate = parts[1].trim();
-  }
+  final text = entry.lyricText;
+  if (text is! String) return;
+  final idx = text.indexOf(' / ');
+  if (idx < 0) return;
+  entry.lyricText = text.substring(0, idx).trim();
+  entry.translate = text.substring(idx + 3).trim();
 }
 
 /// 将 roma 条目的文字写入 primary.roma
@@ -602,7 +616,8 @@ List<LyricEntry> _mergeKrcTranslations(
         case 1: // 翻译
           final translateList = content['lyricContent'];
           if (translateList is List && translateList.isNotEmpty) {
-            for (var i = 0; i < translateList.length; i++) {
+            final count = min(translateList.length, mainEntries.length);
+            for (var i = 0; i < count; i++) {
               final ts = (translateList[i] as List).first as String;
               mainEntries[i].translate = ts.trim();
             }
@@ -610,7 +625,8 @@ List<LyricEntry> _mergeKrcTranslations(
         case 0: // 注音
           final romaList = content['lyricContent'];
           if (romaList is List && romaList.isNotEmpty) {
-            for (var i = 0; i < romaList.length; i++) {
+            final count = min(romaList.length, mainEntries.length);
+            for (var i = 0; i < count; i++) {
               mainEntries[i].roma = (romaList[i] as List).join();
             }
           }
