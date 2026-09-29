@@ -7,7 +7,6 @@ import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/statistics_cache_model.dart';
 import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
-import 'package:zerobit_player/tools/func/func_extension.dart';
 
 const double _coverSize = 48.0;
 const double _itemSpacing = 16.0;
@@ -68,7 +67,7 @@ class MusicTile extends StatelessWidget {
         final textStyle = isPlaying ? highLightTitleStyle : titleStyle;
 
         return TextButton(
-          onPressed: _onTileTapped.throttle(ms: isMulSelect.value ? 10 : 500),
+          onPressed: _onTileTapped,
           style: TextButton.styleFrom(
             shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
             backgroundColor: isSelected
@@ -171,7 +170,7 @@ class StatisticsMusicTile extends StatelessWidget {
     final rankColor = rank < 4 ? primaryColor : null;
 
     return TextButton(
-      onPressed: _onTileTapped.throttle(ms: 500),
+      onPressed: _onTileTapped,
       style: TextButton.styleFrom(
         shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
       ),

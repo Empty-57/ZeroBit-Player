@@ -294,13 +294,13 @@ void main() async {
       onButtonClick: (action) {
         switch (action) {
           case TaskbarButtonAction.prev:
-            audioController.audioToPrevious.throttle(ms: 500)();
+            audioController.audioToPreviousThrottled;
             break;
           case TaskbarButtonAction.toggle:
-            audioController.audioToggle.throttle(ms: 300)();
+            audioController.audioToggleThrottled;
             break;
           case TaskbarButtonAction.next:
-            audioController.audioToNext.throttle(ms: 500)();
+            audioController.audioToNextThrottled;
             break;
         }
       },

@@ -226,7 +226,7 @@ class _VolumeSetBtn extends StatelessWidget {
               if (newVol != currentVol) {
                 settingController.volume.value = newVol;
                 audioController.audioSetVolume(vol: newVol);
-                settingController.putCache.throttle(ms: 500)();
+                settingController.putCacheDebounce();
               }
             }
           },
@@ -260,7 +260,7 @@ class _SkipBackBtn extends StatelessWidget {
       icon: PhosphorIconsFill.skipBack,
       size: size,
       color: color,
-      fn: audioController.audioToPrevious.throttle(ms: 500),
+      fn: audioController.audioToPreviousThrottled,
     );
   }
 }
@@ -282,7 +282,7 @@ class _PlayToggleBtn extends StatelessWidget {
           icon: isPlaying ? PhosphorIconsFill.pause : PhosphorIconsFill.play,
           size: size,
           color: color,
-          fn: audioController.audioToggle.throttle(ms: 300),
+          fn: audioController.audioToggleThrottled,
         );
       },
     );
@@ -302,7 +302,7 @@ class _SkipForwardBtn extends StatelessWidget {
       icon: PhosphorIconsFill.skipForward,
       size: size,
       color: color,
-      fn: audioController.audioToNext.throttle(ms: 500),
+      fn: audioController.audioToNextThrottled,
     );
   }
 }

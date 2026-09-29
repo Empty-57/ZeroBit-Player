@@ -177,6 +177,10 @@ class ControlBar extends StatelessWidget {
     final height = MediaQuery.sizeOf(context).height;
     final width = MediaQuery.sizeOf(context).width;
 
+    final void Function() toggleShowDesktopThrottle = settingController
+        .setShowDesktopLyrics
+        .throttle();
+
     return MouseRegion(
       onEnter: (_) => isBarHover.value = true,
       onExit: (_) => isBarHover.value = false,
@@ -344,8 +348,9 @@ class ControlBar extends StatelessWidget {
                                               bottom: itemHeight * 2,
                                             ),
                                             itemBuilder: (context, index) {
+                                              final item = itemsList[index];
                                               return _PlayQueueItem(
-                                                item: itemsList[index],
+                                                item: item,
                                                 itemHeight: itemHeight,
                                                 titleStyle: titleStyle,
                                                 highLightTitleStyle:
@@ -353,6 +358,11 @@ class ControlBar extends StatelessWidget {
                                                 subStyle: subStyle,
                                                 highLightSubStyle:
                                                     highLightSubStyle,
+                                                playThrottle: () =>
+                                                    audioController
+                                                        .audioPlayThrottled(
+                                                          item,
+                                                        ),
                                               );
                                             },
                                           );
@@ -411,9 +421,7 @@ class ControlBar extends StatelessWidget {
                                   : PhosphorIconsLight.creditCard,
                               size: PlayPageConstant.ctrlBtnMinSize,
                               color: mixColor,
-                              fn: () async {
-                                settingController.setShowDesktopLyrics();
-                              }.throttle(),
+                              fn: toggleShowDesktopThrottle,
                             ),
                           ),
                         ],
@@ -437,6 +445,7 @@ class _PlayQueueItem extends StatelessWidget {
   final TextStyle highLightTitleStyle;
   final TextStyle subStyle;
   final TextStyle highLightSubStyle;
+  final void Function() playThrottle;
 
   const _PlayQueueItem({
     required this.item,
@@ -445,15 +454,15 @@ class _PlayQueueItem extends StatelessWidget {
     required this.highLightTitleStyle,
     required this.subStyle,
     required this.highLightSubStyle,
+    required this.playThrottle,
   });
 
   @override
   Widget build(BuildContext context) {
     final AudioController audioController = AudioController.instance;
+    ;
     return TextButton(
-      onPressed: () async {
-        await audioController.audioPlay(metadata: item);
-      }.throttle(ms: 300),
+      onPressed: playThrottle,
       style: TextButton.styleFrom(
         shape: const RoundedRectangleBorder(
           borderRadius: PlayPageConstant.borderRadius,

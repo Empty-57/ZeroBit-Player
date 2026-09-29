@@ -261,11 +261,7 @@ class SideBar extends StatelessWidget {
                                           final items =
                                               c.playListCacheItems[index];
                                           return TextButton(
-                                            onPressed: () async {
-                                              await c.audioPlay(
-                                                metadata: items,
-                                              );
-                                            }.throttle(ms: 300),
+                                            onPressed: ()=>c.audioPlayThrottled(items),
                                             style: TextButton.styleFrom(
                                               shape:
                                                   const RoundedRectangleBorder(

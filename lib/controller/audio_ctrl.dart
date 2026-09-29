@@ -117,7 +117,7 @@ class AudioController {
   List<String> romaList = [];
 
   bool showLyricRender = false;
-  String currentlyricType = LyricFormat.lrc;
+  String currentLyricType = LyricFormat.lrc;
   bool _isFftCleared = true;
   String currentAudioSource = AudioSource.allMusic;
 
@@ -127,6 +127,13 @@ class AudioController {
 
   late final void Function(double pos) throttledSeek =
       ((double pos) => audioSetPositon(pos: pos)).throttleArgs(ms: 500);
+  late final VoidCallback audioToPreviousThrottled = audioToPrevious.throttle();
+  late final VoidCallback audioToNextThrottled = audioToNext.throttle();
+  late final VoidCallback audioToggleThrottled = audioToggle.throttle(ms: 300);
+  late final void Function(MusicCache) audioPlayThrottled =
+      ((MusicCache metadata) => audioPlay(
+        metadata: metadata,
+      )).throttleArgs(ms: 300);
 
   EffectCleanup? _metadataCleanup;
 
@@ -280,13 +287,13 @@ class AudioController {
     final parsedLrc = lyrics?.parsedLrc;
     showLyricRender = parsedLrc?.isNotEmpty ?? false;
     if (showLyricRender) {
-      currentlyricType = lyrics!.type;
+      currentLyricType = lyrics!.type;
       lineTextList = parsedLrc!.map((v) => v.lyricText).toList();
       translateList = parsedLrc.map((v) => v.translate).toList();
       startTime = parsedLrc.map((v) => v.start).toList();
       romaList = parsedLrc.map((v) => v.roma).toList();
     } else {
-      currentlyricType = LyricFormat.lrc;
+      currentLyricType = LyricFormat.lrc;
       lineTextList.clear();
       translateList.clear();
       startTime.clear();

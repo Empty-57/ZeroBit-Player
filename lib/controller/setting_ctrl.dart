@@ -20,6 +20,7 @@ import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/tools/func/sync_cache.dart';
 
 import '../desktop_lyrics_sever.dart';
+import '../tools/func/func_extension.dart';
 import '../windows_taskbar_thumbnail.dart';
 import 'audio_ctrl.dart';
 
@@ -241,6 +242,8 @@ class SettingController {
             ?.findAncestorWidgetOfExactType<EditableText>() !=
         null;
   }
+
+  late final void Function() putCacheDebounce=putCache.debounce();
 
   void init() async {
     await _initHive();

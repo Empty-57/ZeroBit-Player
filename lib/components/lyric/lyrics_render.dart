@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -209,7 +211,7 @@ class _LyricsRenderState extends State<LyricsRender> {
 
                   Widget creatLyricItem(int index) {
                     if (index < 0 ||
-                        (c.currentlyricType == LyricFormat.lrc &&
+                        (c.currentLyricType == LyricFormat.lrc &&
                             c.lineTextList[index].isEmpty &&
                             c.translateList[index].isEmpty)) {
                       return const SizedBox.shrink();
@@ -219,7 +221,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                       index: index,
                       onClick: c.throttledSeek,
                       lyricController: _lyricController,
-                      lrcType: c.currentlyricType,
+                      lrcType: c.currentLyricType,
                       lineText: c.lineTextList[index],
                       translateText: c.translateList[index],
                       romaText: c.romaList[index],

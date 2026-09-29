@@ -288,6 +288,8 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   late TextStyle _subStyle;
   late TextStyle _highLightSubStyle;
 
+  late final void Function() _playAllThrottle;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -327,6 +329,8 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     _scrollControllerGrid = ScrollController(
       initialScrollOffset: initialOffset,
     );
+
+    _playAllThrottle=(()=>widget.controller.play(widget.audioSource)).throttle();
   }
 
   @override
@@ -338,10 +342,6 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     _selectedList.dispose();
 
     super.dispose();
-  }
-
-  void _playAll() {
-    widget.controller.play(widget.audioSource);
   }
 
   @override
@@ -433,7 +433,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       spacing: 8,
       children: [
         GeneralBtn(
-          fn: _playAll.throttle(ms: 500),
+          fn: _playAllThrottle,
           icon: PhosphorIconsLight.play,
           btnHeight: btnHeight,
           btnWidth: 96,

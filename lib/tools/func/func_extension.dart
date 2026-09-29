@@ -1,45 +1,39 @@
 import 'dart:async';
 
-extension DebounceExtension on Function {
-  void Function() debounce({int ms = 500}) {
-    Timer? debounceTimer;
-    return () {
-      if (debounceTimer?.isActive ?? false) debounceTimer?.cancel();
-      debounceTimer = Timer(Duration(milliseconds: ms), () {
-        this();
-      });
-    };
-  }
-}
-
-bool _throttleIsAllowed = true;
-
-extension ThrottleExtension on Function {
+extension ThrottleExtension on void Function() {
   void Function() throttle({int ms = 500}) {
-    Timer? throttleTimer;
+    DateTime? lastInvocation;
     return () {
-      if (!_throttleIsAllowed) return;
-      _throttleIsAllowed = false;
+      final now = DateTime.now();
+      final last = lastInvocation;
+      if (last != null && now.difference(last).inMilliseconds < ms) return;
+      lastInvocation = now;
       this();
-      throttleTimer?.cancel();
-      throttleTimer = Timer(Duration(milliseconds: ms), () {
-        _throttleIsAllowed = true;
-      });
     };
   }
 }
 
 extension ThrottleExtensionArgs<T> on void Function(T) {
   void Function(T) throttleArgs({int ms = 500}) {
-    bool isAllowed = true;
-    Timer? throttleTimer;
+    DateTime? lastInvocation;
     return (T arg) {
-      if (!isAllowed) return;
-      isAllowed = false;
+      final now = DateTime.now();
+      final last = lastInvocation;
+      if (last != null && now.difference(last).inMilliseconds < ms) return;
+      lastInvocation = now;
       this(arg);
-      throttleTimer?.cancel();
-      throttleTimer = Timer(Duration(milliseconds: ms), () {
-        isAllowed = true;
+    };
+  }
+}
+
+extension DebounceExtension on void Function() {
+  void Function() debounce({int ms = 500}) {
+    Timer? timer;
+    return () {
+      timer?.cancel();
+      timer = Timer(Duration(milliseconds: ms), () {
+        timer = null;
+        this();
       });
     };
   }

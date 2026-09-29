@@ -263,12 +263,61 @@ class _PlayPageState extends State<PlayPage> {
   final _isBarHover = signal(false);
   final _isCoverViewModeBarHover = signal(false);
 
+  late final VoidCallback _fontSizeAddFn;
+  late final VoidCallback _fontSizeDecFn;
+  late final VoidCallback _fontWeightAddFn;
+  late final VoidCallback _fontWeightDecFn;
+
   @override
   void initState() {
     super.initState();
     _playQueueScrollController = ScrollController();
     _menuController = MenuController();
     _playQueueMenuController = MenuController();
+    _fontSizeAddFn = () {
+      if (_settingController.lrcFontSize.value <
+          SettingController.lrcFontSizeMax) {
+        batch(() {
+          _settingController.lrcFontSize.value++;
+          _audioController.lyricRenderRevision.value++;
+          _lyricController.springController?.cachedScreenHeight = 0.0;
+        });
+        _settingController.putCache(isSaveFolders: false);
+      }
+    }.throttle(ms: 300);
+
+    _fontSizeDecFn = () {
+      if (_settingController.lrcFontSize.value >
+          SettingController.lrcFontSizeMin) {
+        batch(() {
+          _settingController.lrcFontSize.value--;
+          _audioController.lyricRenderRevision.value++;
+          _lyricController.springController?.cachedScreenHeight = 0.0;
+        });
+        _settingController.putCache(isSaveFolders: false);
+      }
+    }.throttle(ms: 300);
+
+    _fontWeightAddFn = () {
+      if (_settingController.lrcFontWeight.value <
+          SettingController.lrcFontWeightMax) {
+        batch(() {
+          _settingController.lrcFontWeight.value++;
+          _audioController.lyricRenderRevision.value++;
+        });
+        _settingController.putCache(isSaveFolders: false);
+      }
+    }.throttle(ms: 300);
+    _fontWeightDecFn = () {
+      if (_settingController.lrcFontWeight.value >
+          SettingController.lrcFontWeightMin) {
+        batch(() {
+          _settingController.lrcFontWeight.value--;
+          _audioController.lyricRenderRevision.value++;
+        });
+        _settingController.putCache(isSaveFolders: false);
+      }
+    }.throttle(ms: 300);
   }
 
   @override
@@ -350,12 +399,12 @@ class _PlayPageState extends State<PlayPage> {
             _createMenuIconBtn(
               toolTip: '增大',
               icon: PhosphorIconsLight.plus,
-              fn: addFn.throttle(ms: 300),
+              fn: addFn,
             ),
             _createMenuIconBtn(
               toolTip: '减小',
               icon: PhosphorIconsLight.minus,
-              fn: decFn.throttle(ms: 300),
+              fn: decFn,
             ),
           ],
         ),
@@ -413,54 +462,16 @@ class _PlayPageState extends State<PlayPage> {
         builder: (context) => _createInfoBar(
           text: "字号 ${_settingController.lrcFontSize.value}",
           darkColorScheme: darkColorScheme,
-          addFn: () {
-            if (_settingController.lrcFontSize.value <
-                SettingController.lrcFontSizeMax) {
-              batch(() {
-                _settingController.lrcFontSize.value++;
-                _audioController.lyricRenderRevision.value++;
-                _lyricController.springController?.cachedScreenHeight = 0.0;
-              });
-              _settingController.putCache(isSaveFolders: false);
-            }
-          },
-          decFn: () {
-            if (_settingController.lrcFontSize.value >
-                SettingController.lrcFontSizeMin) {
-              batch(() {
-                _settingController.lrcFontSize.value--;
-                _audioController.lyricRenderRevision.value++;
-                _lyricController.springController?.cachedScreenHeight = 0.0;
-              });
-              _settingController.putCache(isSaveFolders: false);
-            }
-          },
+          addFn: _fontSizeAddFn,
+          decFn: _fontSizeDecFn,
         ),
       ),
       SignalBuilder(
         builder: (context) => _createInfoBar(
           text: "字重 ${_settingController.lrcFontWeight.value * 100 + 100}",
           darkColorScheme: darkColorScheme,
-          addFn: () {
-            if (_settingController.lrcFontWeight.value <
-                SettingController.lrcFontWeightMax) {
-              batch(() {
-                _settingController.lrcFontWeight.value++;
-                _audioController.lyricRenderRevision.value++;
-              });
-              _settingController.putCache(isSaveFolders: false);
-            }
-          },
-          decFn: () {
-            if (_settingController.lrcFontWeight.value >
-                SettingController.lrcFontWeightMin) {
-              batch(() {
-                _settingController.lrcFontWeight.value--;
-                _audioController.lyricRenderRevision.value++;
-              });
-              _settingController.putCache(isSaveFolders: false);
-            }
-          },
+          addFn: _fontWeightAddFn,
+          decFn: _fontWeightDecFn,
         ),
       ),
       divider,
