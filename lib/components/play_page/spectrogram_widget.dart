@@ -308,14 +308,14 @@ const double _waveGlowSigma = 4.0;
 /// 波形图
 // TODO: Memory Leak
 class WaveSpectrogramWidget extends StatefulWidget {
-  final double lenth;
+  final double length;
   final double width;
   final Color color;
   final bool isFill;
 
   const WaveSpectrogramWidget({
     super.key,
-    required this.lenth,
+    required this.length,
     required this.width,
     this.isFill = false,
     required this.color,
@@ -525,7 +525,7 @@ class _WaveSpectrogramWidgetState extends State<WaveSpectrogramWidget> {
     final fft = _feed.values;
     if (fft.isEmpty) return;
 
-    final int limit = widget.lenth.toInt();
+    final int limit = widget.length.toInt();
     final int usable = fft.length < limit ? fft.length : limit;
     if (usable < _wavePointCount) return;
 

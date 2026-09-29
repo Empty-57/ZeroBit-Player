@@ -132,8 +132,9 @@ List<(int, int, String)> _splitReading(String surface, String reading) {
       return;
     }
     final next = runs[index + 1];
-    final anchor = surface.substring(next.$1, next.$2);
-    var end = reading.indexOf(anchor, (pos + 1).clamp(0, reading.length - 1));
+    final subEnd = next.$2.clamp(0, surface.length);
+    final anchor = surface.substring(next.$1.clamp(0, subEnd), subEnd);
+    var end = reading.indexOf(anchor, (pos + 1).clamp(0, reading.length));
     while (end >= 0 && budget > 0 && solutions.length < 2) {
       path.add((run.$1, run.$2, reading.substring(pos, end)));
       visit(index + 1, end);

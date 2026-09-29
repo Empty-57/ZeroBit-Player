@@ -1009,7 +1009,7 @@ class _PlayPageState extends State<PlayPage> {
                                         SpectrogramStyleType.wave =>
                                           WaveSpectrogramWidget(
                                             color: activeTrackCover,
-                                            lenth: spectrogramBarLength,
+                                            length: spectrogramBarLength,
                                             width: width,
                                             isFill:
                                                 style ==
