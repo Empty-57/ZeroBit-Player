@@ -199,6 +199,14 @@ class _LyricsRenderState extends State<LyricsRender> {
                       ? TextAlign.center
                       : TextAlign.right;
 
+                  final buttonStyle = TextButton.styleFrom(
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: LyricConstants.borderRadius,
+                    ),
+                    padding: lrcPadding,
+                    overlayColor: hoverColor,
+                  );
+
                   Widget creatLyricItem(int index) {
                     if (index < 0 ||
                         (c.currentlyricType == LyricFormat.lrc &&
@@ -221,6 +229,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                       romaLyricStyle: romaLyricStyle,
                       furiganaLyricStyle: furiganaLyricStyle,
                       interludeLyricStyle: interludeLyricStyle,
+                      buttonStyle: buttonStyle,
                       strutStyle: strutStyle,
                       hoverColor: hoverColor,
                       lrcAlignment: lrcAlignment,
@@ -375,6 +384,7 @@ class _StaggeredLyricItem extends StatelessWidget {
   final TextStyle romaLyricStyle;
   final TextStyle interludeLyricStyle;
   final TextStyle furiganaLyricStyle;
+  final ButtonStyle buttonStyle;
   final StrutStyle strutStyle;
   final Color? hoverColor;
 
@@ -405,6 +415,7 @@ class _StaggeredLyricItem extends StatelessWidget {
     required this.onClick,
     required this.furiganaLyricStyle,
     required this.showKana,
+    required this.buttonStyle,
   });
 
   Widget _createAnimatedScaleWidget({
@@ -538,13 +549,7 @@ class _StaggeredLyricItem extends StatelessWidget {
           blurSigma: blurSigma,
           child: TextButton(
             onPressed: () => onClick(startTime),
-            style: TextButton.styleFrom(
-              shape: const RoundedRectangleBorder(
-                borderRadius: LyricConstants.borderRadius,
-              ),
-              padding: lrcPadding,
-              overlayColor: hoverColor,
-            ),
+            style: buttonStyle,
             child: content,
           ),
         );

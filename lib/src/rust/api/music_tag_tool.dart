@@ -3,9 +3,8 @@
 
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
-
 import '../frb_generated.dart';
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `edit_cover`, `edit_embedded_lyric`, `edit_tags`, `get_cover`, `get_duration_with_win`, `get_embedded_lyric`, `get_tag`, `handle_get_eof_error`, `new`, `parse_gain`, `parse_peak`, `render_tags`
 
