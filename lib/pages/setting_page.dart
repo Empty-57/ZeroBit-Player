@@ -1871,9 +1871,9 @@ class _DesktopLyricsTab extends StatelessWidget {
         ),
         _SettingSwitchItem(
           text: '显示日语假名',
-          value: _desktopLyricsSettingController.showFurigana,
+          value: _desktopLyricsSettingController.showKana,
           onChanged: (val) =>
-              _desktopLyricsSettingController.setShowFurigana(value: val),
+              _desktopLyricsSettingController.setShowKana(value: val),
         ),
         _SettingSwitchItem(
           text: '边框',

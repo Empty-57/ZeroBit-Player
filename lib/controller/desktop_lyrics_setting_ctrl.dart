@@ -35,7 +35,7 @@ class DesktopLyricsSettingController {
 
   final lyricsSwitchAnimateMode = signal(1); // 0 无动画 1 淡入淡出 2滑动 3 缩放
 
-  final showFurigana = signal(true);
+  final showKana = signal(true);
 
   static const Map<int, String> lrcAlignmentMap = {
     0: '左对齐',
@@ -97,8 +97,8 @@ class DesktopLyricsSettingController {
       lyricsSwitchAnimateMode.value =
           prefs!.getInt(DesktopSharedPreferencesKey.lyricsSwitchAnimateMode) ??
           1;
-      showFurigana.value =
-          prefs!.getBool(DesktopSharedPreferencesKey.showFurigana) ?? false;
+      showKana.value =
+          prefs!.getBool(DesktopSharedPreferencesKey.showKana) ?? false;
     });
   }
 
@@ -322,15 +322,15 @@ class DesktopLyricsSettingController {
     prefs!.setInt(DesktopSharedPreferencesKey.lyricsSwitchAnimateMode, mode);
   }
 
-  void setShowFurigana({required bool value}) {
-    showFurigana.value = value;
+  void setShowKana({required bool value}) {
+    showKana.value = value;
     _desktopLyricsSever.sendCmd(
-      cmdType: SeverCmdType.setShowFurigana,
-      cmdData: showFurigana.value,
+      cmdType: SeverCmdType.setShowKana,
+      cmdData: showKana.value,
     );
     if (prefs == null) {
       return;
     }
-    prefs!.setBool(DesktopSharedPreferencesKey.showFurigana,value);
+    prefs!.setBool(DesktopSharedPreferencesKey.showKana,value);
   }
 }

@@ -244,8 +244,8 @@ class DesktopLyricsSever {
         _desktopLyricsSettingController.showDoubleLine.value,
     DesktopSharedPreferencesKey.lyricsSwitchAnimateMode:
         _desktopLyricsSettingController.lyricsSwitchAnimateMode.value,
-    DesktopSharedPreferencesKey.showFurigana:
-        _desktopLyricsSettingController.showFurigana.value,
+    DesktopSharedPreferencesKey.showKana:
+        _desktopLyricsSettingController.showKana.value,
   },
 );
   }

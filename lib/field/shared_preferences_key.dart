@@ -45,5 +45,5 @@ abstract class DesktopSharedPreferencesKey {
   static const showDoubleLine = 'desk_showDoubleLine';
   static const useDynamicOverlayColor = 'desk_useDynamicOverlayColor';
   static const lyricsSwitchAnimateMode = 'desk_lyricsSwitchAnimateMode';
-  static const showFurigana = 'desk_showFurigana';
+  static const showKana = 'desk_showKana';
 }
