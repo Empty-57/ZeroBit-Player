@@ -1675,6 +1675,7 @@ class _PlayTab extends StatelessWidget {
         ),
         _SettingSwitchItem(
           text: '交叉渐入渐出',
+          tooltip: '切歌时上一首淡出、下一首淡入并短暂重叠，同时自动跳过音频首尾的静音（独占模式下不生效）',
           value: _settingController.useCrossfade,
           onChanged: (val) => _settingController.setUseCrossfade(value: val),
         ),
