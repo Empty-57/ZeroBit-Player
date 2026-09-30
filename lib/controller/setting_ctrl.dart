@@ -791,7 +791,7 @@ class SettingController {
     _setBoolPref(
       SharedPreferencesKey.useCrossfade,
       useCrossfade,
-      overrideValue: value,
+      overrideValue: useCrossfade.value,
     );
   }
 
