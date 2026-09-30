@@ -459,9 +459,9 @@ class SettingController {
 
     await hotKeyManager.unregisterAll();
 
-    _registerHotKey(hotKeyToggle.value, _audioController.audioToggle);
-    _registerHotKey(hotKeyNext.value, _audioController.audioToNext);
-    _registerHotKey(hotKeyPrevious.value, _audioController.audioToPrevious);
+    _registerHotKey(hotKeyToggle.value, _audioController.audioToggleThrottled);
+    _registerHotKey(hotKeyNext.value, _audioController.audioToNextThrottled);
+    _registerHotKey(hotKeyPrevious.value, _audioController.audioToPreviousThrottled);
     _registerHotKey(hotKeyFullScreen.value, _myWindowListener.toggleFullScreen);
   }
 
