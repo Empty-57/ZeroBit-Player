@@ -69,7 +69,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => 195264679;
+  int get rustContentHash => -1004604598;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -134,6 +134,8 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiBassResume();
 
+  Future<void> crateApiBassSetCrossfadeDuration({required int durationMs});
+
   Future<void> crateApiBassSetEqParams({
     required int freCenterIndex,
     required double gain,
@@ -146,9 +148,15 @@ abstract class RustLibApi extends BaseApi {
     required double peak,
   });
 
+  Future<void> crateApiBassSetSilenceThreshold({required double thresholdDb});
+
+  Future<void> crateApiBassSetSkipSilence({required bool enabled});
+
   Future<void> crateApiBassSetSpeed({required double speed});
 
-  Future<void> crateApiBassSetUseFade({required bool value});
+  Future<void> crateApiBassSetUseCrossfade({required bool value});
+
+  Future<void> crateApiBassSetUseVolumeFade({required bool value});
 
   Future<void> crateApiBassSetVolume({required double vol});
 
@@ -789,6 +797,37 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "resume", argNames: []);
 
   @override
+  Future<void> crateApiBassSetCrossfadeDuration({required int durationMs}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_u_32(durationMs, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 22,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiBassSetCrossfadeDurationConstMeta,
+        argValues: [durationMs],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiBassSetCrossfadeDurationConstMeta =>
+      const TaskConstMeta(
+        debugName: "set_crossfade_duration",
+        argNames: ["durationMs"],
+      );
+
+  @override
   Future<void> crateApiBassSetEqParams({
     required int freCenterIndex,
     required double gain,
@@ -802,7 +841,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 22,
+            funcId: 23,
             port: port_,
           );
         },
@@ -832,7 +871,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 23,
+            funcId: 24,
             port: port_,
           );
         },
@@ -864,7 +903,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 24,
+            funcId: 25,
             port: port_,
           );
         },
@@ -885,6 +924,65 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   );
 
   @override
+  Future<void> crateApiBassSetSilenceThreshold({required double thresholdDb}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_f_32(thresholdDb, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 26,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiBassSetSilenceThresholdConstMeta,
+        argValues: [thresholdDb],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiBassSetSilenceThresholdConstMeta =>
+      const TaskConstMeta(
+        debugName: "set_silence_threshold",
+        argNames: ["thresholdDb"],
+      );
+
+  @override
+  Future<void> crateApiBassSetSkipSilence({required bool enabled}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_bool(enabled, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 27,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiBassSetSkipSilenceConstMeta,
+        argValues: [enabled],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiBassSetSkipSilenceConstMeta =>
+      const TaskConstMeta(debugName: "set_skip_silence", argNames: ["enabled"]);
+
+  @override
   Future<void> crateApiBassSetSpeed({required double speed}) {
     return handler.executeNormal(
       NormalTask(
@@ -894,7 +992,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 25,
+            funcId: 28,
             port: port_,
           );
         },
@@ -913,7 +1011,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "set_speed", argNames: ["speed"]);
 
   @override
-  Future<void> crateApiBassSetUseFade({required bool value}) {
+  Future<void> crateApiBassSetUseCrossfade({required bool value}) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
@@ -922,7 +1020,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 26,
+            funcId: 29,
             port: port_,
           );
         },
@@ -930,15 +1028,46 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApiBassSetUseFadeConstMeta,
+        constMeta: kCrateApiBassSetUseCrossfadeConstMeta,
         argValues: [value],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiBassSetUseFadeConstMeta =>
-      const TaskConstMeta(debugName: "set_use_fade", argNames: ["value"]);
+  TaskConstMeta get kCrateApiBassSetUseCrossfadeConstMeta =>
+      const TaskConstMeta(debugName: "set_use_crossfade", argNames: ["value"]);
+
+  @override
+  Future<void> crateApiBassSetUseVolumeFade({required bool value}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_bool(value, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 30,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiBassSetUseVolumeFadeConstMeta,
+        argValues: [value],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiBassSetUseVolumeFadeConstMeta =>
+      const TaskConstMeta(
+        debugName: "set_use_volume_fade",
+        argNames: ["value"],
+      );
 
   @override
   Future<void> crateApiBassSetVolume({required double vol}) {
@@ -950,7 +1079,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 27,
+            funcId: 31,
             port: port_,
           );
         },
@@ -977,7 +1106,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 28,
+            funcId: 32,
             port: port_,
           );
         },
@@ -1007,7 +1136,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 29,
+              funcId: 33,
               port: port_,
             );
           },
@@ -1045,7 +1174,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 30,
+            funcId: 34,
             port: port_,
           );
         },
@@ -1076,7 +1205,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 31,
+            funcId: 35,
             port: port_,
           );
         },
@@ -1103,7 +1232,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 32,
+            funcId: 36,
             port: port_,
           );
         },
@@ -1131,7 +1260,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 33,
+            funcId: 37,
             port: port_,
           );
         },
@@ -1161,7 +1290,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 34,
+            funcId: 38,
             port: port_,
           );
         },

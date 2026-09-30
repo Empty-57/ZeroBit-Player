@@ -10,7 +10,7 @@ use once_cell::sync::{Lazy, OnceCell};
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
 use std::ptr::null_mut;
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering};
 use std::sync::Mutex;
 use std::time::Duration;
 use std::{env, iter, thread};
@@ -72,9 +72,9 @@ const WASAPI_BUFFER: f32 = 0.05;
 static TARGET_VOLUME: Mutex<f32> = Mutex::new(1.0);
 static TARGET_SPEED: Mutex<f32> = Mutex::new(1.0);
 static REPLAYGAIN_SCALE: Mutex<f32> = Mutex::new(1.0);
-static USE_FADE: AtomicBool = AtomicBool::new(true);
+static USE_VOLUME_FADE: AtomicBool = AtomicBool::new(true);
 
-const FADE_DURATION: u32 = 500;
+const VOLUME_FADE_DURATION: u32 = 500;
 
 const PLUGIN_NAME: [&str; 8] = [
     "bassflac.dll",
@@ -117,6 +117,7 @@ static FX_LIB: OnceCell<Library> = OnceCell::new();
 static WASEXCLUSIVE: AtomicBool = AtomicBool::new(false);
 
 fn notify_state(state: u32) {
+    CURRENT_STATE.store(state, Ordering::SeqCst);
     if let Ok(lock) = AUDIO_EVENT.lock() {
         if let Some(sink) = lock.as_ref() {
             let _ = sink.add(state);
@@ -124,29 +125,100 @@ fn notify_state(state: u32) {
     }
 }
 
-unsafe extern "C" fn on_end_sync(
+const ACTION_NONE: usize = 0;
+const ACTION_PAUSE: usize = 1;
+const ACTION_STOP: usize = 2;
+const ACTION_FREE: usize = 3;
+
+static SKIP_SILENCE: AtomicBool = AtomicBool::new(true);
+// 静音判定阈值（单位 dB，通常 -50.0dB 到 -60.0dB 为最佳，-50dB 体验最干净）
+static SILENCE_THRESHOLD_DB: Mutex<f32> = Mutex::new(-50.0);
+
+const MAX_HEAD_SCAN_SECS: f64 = 10.0; // 头部最多扫描前 10 秒
+const MAX_TAIL_SCAN_SECS: f64 = 15.0; // 尾部最多扫描后 15 秒
+
+// 记录当前逻辑状态
+static CURRENT_STATE: AtomicU32 = AtomicU32::new(USER_STOPPED);
+
+// 当前挂起的淡出动作令牌
+static PENDING_ACTION: AtomicUsize = AtomicUsize::new(ACTION_NONE);
+
+static USE_CROSSFADE: AtomicBool = AtomicBool::new(true);
+static CROSSFADE_DURATION: AtomicU32 = AtomicU32::new(3000);
+
+// 正在淡出待销毁的旧流句柄
+static OUTGOING_STREAM: AtomicU32 = AtomicU32::new(0);
+
+/// 旧流音量降到 0 后的自毁回调
+unsafe extern "C" fn on_old_stream_fade_out_sync(
     _handle: c_uint,
-    _channel: c_uint,
+    channel: c_uint,
     _data: c_uint,
     _user: *mut c_void,
 ) {
-    notify_state(USER_ENDED);
+    if let Ok(api_lock) = BASS_API.lock() {
+        if let Some(api) = api_lock.as_ref() {
+            (api.chan_free)(channel);
+        }
+    }
+    // 如果原子变量里记录的还是这个 channel，则清零
+    let _ = OUTGOING_STREAM.compare_exchange(channel, 0, Ordering::SeqCst, Ordering::Relaxed);
 }
 
-// unsafe extern "C" fn on_fade_out_pause_sync(
-//     _handle: c_uint,
-//     _channel: c_uint,
-//     _data: c_uint,
-//     _user: *mut c_void,
-// ) {
-//     if let Ok(mut api_lock) = BASS_API.lock() {
-//         if let Some(api) = api_lock.as_mut() {
-//             if api.stream_handle != 0 {
-//                 let _ = api.pause(false);
-//             }
-//         }
-//     }
-// }
+unsafe extern "C" fn on_slide_action_sync(
+    _handle: c_uint,
+    channel: c_uint,
+    _data: c_uint,
+    user: *mut c_void,
+) {
+    // 检查并消费当前挂起的动作，如果为 ACTION_NONE，则忽略
+    let action = PENDING_ACTION.swap(ACTION_NONE, Ordering::SeqCst);
+    if action == ACTION_NONE {
+        return;
+    }
+    if let Ok(mut api_lock) = BASS_API.lock() {
+        if let Some(api) = api_lock.as_mut() {
+            match action {
+                ACTION_PAUSE => {
+                    if WASEXCLUSIVE.load(Ordering::SeqCst) {
+                        let _ = (api.wasapi_stop)(FALSE);
+                    } else {
+                        let _ = (api.pause)(channel);
+                    }
+                }
+                ACTION_STOP => {
+                    if WASEXCLUSIVE.load(Ordering::SeqCst) {
+                        let _ = (api.wasapi_stop)(TRUE);
+                    } else {
+                        let _ = (api.stop)(channel);
+                    }
+                }
+                ACTION_FREE => {
+                    // 当淡出结束时自动释放旧流
+                    let _ = (api.chan_free)(channel);
+                }
+                _ => {}
+            }
+        }
+    }
+}
+
+unsafe extern "C" fn on_end_sync(
+    _handle: c_uint,
+    channel: c_uint,
+    _data: c_uint,
+    _user: *mut c_void,
+) {
+    if let Ok(api_lock) = BASS_API.lock() {
+        if let Some(api) = api_lock.as_ref() {
+            // 只有当前主控流触发的结束事件才向 Flutter 上报
+            // 正在后台淡出的旧流在物理结束时静默忽略
+            if api.stream_handle != 0 && channel == api.stream_handle {
+                notify_state(USER_ENDED);
+            }
+        }
+    }
+}
 
 fn calculate_dynamic_bandwidth_linear(f_center: f32) -> f32 {
     let min_freq = *F_CENTER.first().unwrap_or(&80.0);
@@ -379,12 +451,8 @@ impl BassApi {
         if self.stream_handle == 0 {
             return Ok(());
         }
-        let user_vol = *TARGET_VOLUME.lock().map_err(|e| e.to_string())?;
-        let rg_scale = *REPLAYGAIN_SCALE.lock().map_err(|e| e.to_string())?;
-
-        let final_vol = (user_vol * rg_scale).clamp(0.0, 1.0);
-
-        let ok = unsafe { (self.set_attr)(self.stream_handle, BASS_ATTRIB_VOL, final_vol) };
+        let target_vol = Self::calc_target_vol();
+        let ok = unsafe { (self.set_attr)(self.stream_handle, BASS_ATTRIB_VOL, target_vol) };
         self.or_err_(ok)
     }
 
@@ -429,79 +497,214 @@ impl BassApi {
         self.apply_volume()
     }
 
-    fn fade_in(&mut self) -> Result<(), String> {
-        if !USE_FADE.load(Ordering::Relaxed) {
-            return Ok(());
-        }
-        let ok = unsafe {
-            if self.stream_handle == 0 {
-                return Ok(());
-            }
-            (self.slide_attr)(self.stream_handle, BASS_ATTRIB_VOL, -1.0, 0);
-            (self.set_attr)(self.stream_handle, BASS_ATTRIB_VOL, 0.0)
-        };
-        self.or_err_(ok)?;
-
-        let user_vol = *TARGET_VOLUME.lock().map_err(|e| e.to_string())?;
-        let rg_scale = *REPLAYGAIN_SCALE.lock().map_err(|e| e.to_string())?;
-        let target_vol = (user_vol * rg_scale).clamp(0.0, 1.0);
-
-        unsafe {
-            let result = (self.slide_attr)(
-                self.stream_handle,
-                BASS_ATTRIB_VOL,
-                target_vol,
-                FADE_DURATION,
-            );
-            self.or_err_(result)
-        }
+    fn calc_target_vol() -> f32 {
+        let user_vol = TARGET_VOLUME.lock().map(|v| *v).unwrap_or(1.0);
+        let rg_scale = REPLAYGAIN_SCALE.lock().map(|rg| *rg).unwrap_or(1.0);
+        (user_vol * rg_scale).clamp(0.0, 1.0)
     }
 
-    fn fade_out(&mut self) -> Result<(), String> {
-        if !USE_FADE.load(Ordering::Relaxed) {
-            return Ok(());
-        }
-
+    fn fade_in(&mut self) -> Result<(), String> {
         if self.stream_handle == 0 {
             return Ok(());
         }
-        unsafe {
-            // if is_pause {
-            //     self.set_sync(BASS_SYNC_SLIDE, Some(on_fade_out_pause_sync))
-            //         .map_err(|err| {
-            //             self.chan_free();
-            //             err
-            //         })?;
-            // }
 
-            // 之后需要将需要淡出的方法都改造成回调触发
-            let result = (self.slide_attr)(self.stream_handle, BASS_ATTRIB_VOL, 0.0, FADE_DURATION);
-            thread::sleep(Duration::from_millis(FADE_DURATION as u64));
+        let target_vol = Self::calc_target_vol();
+
+        if !USE_VOLUME_FADE.load(Ordering::Relaxed) {
+            let ok = unsafe { (self.set_attr)(self.stream_handle, BASS_ATTRIB_VOL, target_vol) };
+            return self.or_err_(ok);
+        }
+
+        let res = unsafe {
+            (self.slide_attr)(
+                self.stream_handle,
+                BASS_ATTRIB_VOL,
+                target_vol,
+                VOLUME_FADE_DURATION,
+            )
+        };
+        self.or_err_(res)
+    }
+
+    fn fade_out_and_action(&mut self, action: usize) -> Result<(), String> {
+        if self.stream_handle == 0 {
+            return Ok(());
+        }
+        // 如果未开启淡入淡出，立刻执行
+        if !USE_VOLUME_FADE.load(Ordering::Relaxed) {
+            return self.execute_action_immediate(action);
+        }
+
+        // 记录即将执行的动作
+        PENDING_ACTION.store(action, Ordering::SeqCst);
+
+        unsafe {
+            // 注册一次性 slide 监听
+            self.set_sync(
+                self.stream_handle,
+                BASS_SYNC_SLIDE,
+                0,
+                true,
+                Some(on_slide_action_sync),
+                action as *mut c_void,
+            )?;
+
+            // 启动音量向 0 的滑动
+            let result = (self.slide_attr)(
+                self.stream_handle,
+                BASS_ATTRIB_VOL,
+                0.0,
+                VOLUME_FADE_DURATION,
+            );
             self.or_err_(result)
         }
     }
 
-    fn set_sync(&mut self, sync_type: u32, call_back: SYNCPROC) -> Result<(), String> {
+    fn execute_action_immediate(&mut self, action: usize) -> Result<(), String> {
+        match action {
+            ACTION_PAUSE => {
+                if WASEXCLUSIVE.load(Ordering::SeqCst) {
+                    let res = unsafe { (self.wasapi_stop)(FALSE) };
+                    self.or_err_(res)?;
+                } else {
+                    let res = unsafe { (self.pause)(self.stream_handle) };
+                    self.or_err_(res)?;
+                }
+            }
+            ACTION_STOP => {
+                if WASEXCLUSIVE.load(Ordering::SeqCst) {
+                    let res = unsafe { (self.wasapi_stop)(TRUE) };
+                    self.or_err_(res)?;
+                } else {
+                    let res = unsafe { (self.stop)(self.stream_handle) };
+                    self.or_err_(res)?;
+                }
+            }
+            ACTION_FREE => {
+                self.chan_free();
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+
+    fn scan_sound_chunk(
+        &mut self,
+        handle: u32,
+        start_bytes: u64,
+        max_bytes: u64,
+        threshold: f32,
+        find_first: bool,
+    ) -> Option<u64> {
+        unsafe { (self.set_pos)(handle, start_bytes, BASS_POS_BYTE) };
+
+        let mut buffer = [0.0f32; 1024];
+        let buf_bytes = (buffer.len() * size_of::<f32>()) as u32;
+
+        let mut scanned = 0u64;
+        let mut matched_pos = None;
+
+        while scanned < max_bytes {
+            let to_read = (max_bytes - scanned).min(buf_bytes as u64) as u32;
+            let read = unsafe {
+                (self.chan_get_data)(handle, buffer.as_mut_ptr() as *mut c_void, to_read)
+            };
+            if read == 0 || read == !0 {
+                break;
+            }
+
+            let samples = (read as usize) / size_of::<f32>();
+            for (i, &sample) in buffer[..samples].iter().enumerate() {
+                if sample.abs() > threshold {
+                    let pos = start_bytes + scanned + (i * size_of::<f32>()) as u64;
+                    if find_first {
+                        return Some(pos); // 头部命中立即返回
+                    }
+                    matched_pos = Some(pos); // 尾部持续刷新
+                }
+            }
+            scanned += read as u64;
+        }
+
+        matched_pos
+    }
+
+    fn detect_audio_boundaries(&mut self, decode_handle: u32) -> (f64, f64) {
+        let total_bytes = unsafe { (self.get_len)(decode_handle, BASS_POS_BYTE) };
+        if total_bytes == 0 || total_bytes == !0 {
+            return (0.0, 0.0);
+        }
+        let total_sec = unsafe { (self.bytes2sec)(decode_handle, total_bytes) };
+        if total_sec <= 10.0 {
+            return (0.0, total_sec);
+        }
+
+        let threshold_db = *SILENCE_THRESHOLD_DB
+            .lock()
+            .unwrap_or(Mutex::new(-50.0).lock().unwrap());
+        let threshold_linear = 10.0f32.powf(threshold_db / 20.0);
+
+        // 扫描头部，寻找第一个发声点
+        let max_head_bytes =
+            unsafe { (self.sec2bytes)(decode_handle, MAX_HEAD_SCAN_SECS.min(total_sec / 2.0)) };
+        let start_sec =
+            match self.scan_sound_chunk(decode_handle, 0, max_head_bytes, threshold_linear, true) {
+                Some(pos) => unsafe { (self.bytes2sec)(decode_handle, pos) }.max(0.0),
+                None => 0.0,
+            };
+
+        // 扫描尾部，寻找最后一个发声点
+        let tail_sec = MAX_TAIL_SCAN_SECS.min(total_sec / 2.0);
+        let tail_bytes = unsafe { (self.sec2bytes)(decode_handle, tail_sec) };
+        let scan_start_bytes = total_bytes.saturating_sub(tail_bytes);
+
+        let end_sec = match self.scan_sound_chunk(
+            decode_handle,
+            scan_start_bytes,
+            tail_bytes,
+            threshold_linear,
+            false,
+        ) {
+            Some(pos) => (unsafe { (self.bytes2sec)(decode_handle, pos) } + 0.1).min(total_sec),
+            None => total_sec,
+        };
+
+        // 扫描完成后，将解码句柄倒带重置回 0 字节位置，防止回传到dart端的数据超出范围
         unsafe {
-            let sync_handle = (self.bass_set_sync)(
-                self.stream_handle,
-                sync_type | BASS_SYNC_ONETIME,
-                0,
-                call_back,
-                null_mut(),
-            );
+            (self.set_pos)(decode_handle, 0, BASS_POS_BYTE);
+        }
+
+        (start_sec, end_sec)
+    }
+
+    fn set_sync(
+        &mut self,
+        handle: u32,
+        sync_type: u32,
+        param: u64,
+        once: bool,
+        call_back: SYNCPROC,
+        user: *mut c_void,
+    ) -> Result<(), String> {
+        let flag = if once {
+            sync_type | BASS_SYNC_ONETIME
+        } else {
+            sync_type
+        };
+
+        unsafe {
+            let sync_handle = (self.bass_set_sync)(handle, flag, param, call_back, user);
             self.or_err_(sync_handle as i32)
         }
     }
 
-    fn create_stream(&mut self, path: String) -> Result<(), String> {
-        self.stop()?;
-        self.chan_free();
+    fn setup_stream(&mut self, path: String) -> Result<u32, String> {
         let wide: Vec<u16> = OsStr::new(&path)
             .encode_wide()
             .chain(iter::once(0))
             .collect();
 
+        // 创建解码源流
         let handle = unsafe {
             (self.stream_create)(
                 0,
@@ -511,9 +714,17 @@ impl BassApi {
                 BASS_UNICODE | BASS_ASYNCFILE | BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT,
             )
         };
-
         self.or_err_(handle as i32)?;
 
+        // 探测首尾静音边界
+        let (start_sec, end_sec) =
+            if SKIP_SILENCE.load(Ordering::Relaxed) || USE_CROSSFADE.load(Ordering::Relaxed) {
+                self.detect_audio_boundaries(handle)
+            } else {
+                (0.0, 0.0)
+            };
+
+        // 创建 Tempo 变调/变速流
         let fx_flag = if WASEXCLUSIVE.load(Ordering::SeqCst) {
             BASS_FX_FREESOURCE | BASS_STREAM_DECODE
         } else {
@@ -521,28 +732,132 @@ impl BassApi {
         };
         let fx_handle = unsafe { (self.fx_tempo_create)(handle, fx_flag) };
         if fx_handle == 0 || fx_handle == u32::MAX {
-            // Tempo 流创建失败时，BASS_FX_FREESOURCE 尚未接管源流，需要手动释放。
             let err_code = unsafe { (self.error_get_code)() };
-            unsafe {
-                (self.stream_free)(handle);
-            }
+            unsafe { (self.stream_free)(handle) };
             return Err(get_err_info(err_code)
                 .unwrap_or_else(|| format!("Unknown BASS error | ERR_CODE<{}>", err_code)));
         }
-        self.stream_handle = fx_handle;
-        if let Err(err) = self.set_sync(BASS_SYNC_END, Some(on_end_sync)) {
-            self.chan_free();
-            return Err(err);
+
+        // 定位初始播放位置
+        let initial_pos = if start_sec > 0.02 { start_sec } else { 0.0 };
+        let start_bytes = unsafe { (self.sec2bytes)(fx_handle, initial_pos) };
+        unsafe { (self.set_pos)(fx_handle, start_bytes, BASS_POS_BYTE) };
+
+        // 立即向 Flutter 广播初始进度，杜绝 Slider 越界
+        if let Ok(lock) = PROGRESS_LISTEN.lock() {
+            if let Some(sink) = lock.as_ref() {
+                let _ = sink.add(initial_pos);
+            }
         }
+
+        // 设置换歌触发点（若开启 Crossfade，则提前 cf_sec 触发下一曲）
+        let total_bytes = unsafe { (self.get_len)(fx_handle, BASS_POS_BYTE) };
+        let total_len = unsafe { (self.bytes2sec)(fx_handle, total_bytes) };
+
+        let current_speed = TARGET_SPEED.lock().map(|s| *s).unwrap_or(1.0);
+
+        let cf_sec =
+            if USE_CROSSFADE.load(Ordering::Relaxed) && !WASEXCLUSIVE.load(Ordering::SeqCst) {
+                (CROSSFADE_DURATION.load(Ordering::Relaxed) as f64) / 1000.0
+            } else {
+                0.0
+            };
+
+        let cf_sec = cf_sec * (current_speed as f64);
+        let trigger_sec = end_sec - cf_sec;
+
+        if trigger_sec > initial_pos + 1.0 && trigger_sec < total_len - 0.2 {
+            let end_bytes = unsafe { (self.sec2bytes)(fx_handle, trigger_sec) };
+            if end_bytes != !0 {
+                self.set_sync(
+                    fx_handle,
+                    BASS_SYNC_POS,
+                    end_bytes,
+                    true,
+                    Some(on_end_sync),
+                    null_mut(),
+                )?;
+            }
+        }
+
+        // 兜底物理结尾监听
+        self.set_sync(
+            fx_handle,
+            BASS_SYNC_END,
+            0,
+            true,
+            Some(on_end_sync),
+            null_mut(),
+        )?;
+
+        // 将控制句柄正式切换到新流并初始化 EQ
+        self.stream_handle = fx_handle;
+        self.path = Some(path);
         self.set_all_eq_params();
+        Ok(fx_handle)
+    }
+    fn create_stream(&mut self, path: String) -> Result<(), String> {
+        self.stop()?;
+        self.chan_free();
+        self.setup_stream(path)?;
+        Ok(())
+    }
+
+    /// 交叉渐变切歌
+    fn play_file_crossfade(&mut self, path: String) -> Result<(), String> {
+        let old_handle = self.stream_handle;
+        let cf_ms = CROSSFADE_DURATION.load(Ordering::Relaxed);
+
+        // 构建新流，旧流此时仍在播放并正常发声
+        let new_handle = self.setup_stream(path)?;
+
+        // 旧流平滑淡出，结束时同步方法自动释放流
+        let prev_outgoing = OUTGOING_STREAM.swap(old_handle, Ordering::SeqCst);
+        if prev_outgoing != 0 {
+            unsafe {
+                (self.chan_free)(prev_outgoing);
+            }
+        }
+        self.set_sync(
+            old_handle,
+            BASS_SYNC_SLIDE,
+            0,
+            true,
+            Some(on_old_stream_fade_out_sync),
+            null_mut(),
+        )?;
+        unsafe {
+            (self.slide_attr)(old_handle, BASS_ATTRIB_VOL, 0.0, cf_ms);
+        }
+
+        // 新流从音量 0 开始起播并向目标音量淡入
+        let target_vol = Self::calc_target_vol();
+        unsafe {
+            (self.set_attr)(new_handle, BASS_ATTRIB_VOL, 0.0);
+            (self.bass_start)();
+            (self.play)(new_handle, FALSE);
+            (self.slide_attr)(new_handle, BASS_ATTRIB_VOL, target_vol, cf_ms);
+        }
+
+        notify_state(USER_PLAYING);
         Ok(())
     }
 
     fn play_file(&mut self, path: String) -> Result<(), String> {
-        self.create_stream(path.clone())?;
-        self.path = Some(path);
-        self.apply_volume()?;
-        self.resume()
+        let current_state = CURRENT_STATE.load(Ordering::SeqCst);
+        let is_crossfade_eligible = USE_CROSSFADE.load(Ordering::Relaxed)
+            && !WASEXCLUSIVE.load(Ordering::SeqCst)
+            && self.stream_handle != 0
+            && (current_state == USER_PLAYING || current_state == USER_ENDED); //歌曲自然放完自动切歌(USER_ENDED)
+
+        if is_crossfade_eligible {
+            self.play_file_crossfade(path)
+        } else {
+            self.create_stream(path.clone())?;
+            self.path = Some(path);
+            self.apply_volume()?;
+            self.resume()
+        }
     }
 
     fn set_all_eq_params(&mut self) {
@@ -634,61 +949,34 @@ impl BassApi {
     }
 
     fn resume(&mut self) -> Result<(), String> {
+        // 一旦恢复播放，立即作废任何挂起的动作
+        PENDING_ACTION.store(ACTION_NONE, Ordering::SeqCst);
         if WASEXCLUSIVE.load(Ordering::SeqCst) {
             self.apply_wasapi_init()?;
             let active = unsafe { (self.wasapi_is_started)() };
-            if active == TRUE {
-                return Ok(());
+            if active != TRUE {
+                let result = unsafe { (self.wasapi_start)() };
+                self.or_err_(result)?;
             }
-            let result = unsafe { (self.wasapi_start)() };
-            self.or_err_(result)?;
         } else {
             let result = unsafe { (self.bass_start)() };
             self.or_err_(result)?;
             let result = unsafe { (self.play)(self.stream_handle, FALSE) };
-            self.fade_in()?;
             self.or_err_(result)?;
         }
+        self.fade_in()?;
         notify_state(USER_PLAYING);
         Ok(())
     }
 
     fn pause(&mut self) -> Result<(), String> {
         notify_state(USER_PAUSED);
-        if WASEXCLUSIVE.load(Ordering::SeqCst) {
-            let active = unsafe { (self.wasapi_is_started)() };
-            if active == FALSE {
-                return Ok(());
-            }
-            let result = unsafe { (self.wasapi_stop)(FALSE) };
-            self.or_err_(result)?;
-        } else {
-            self.fade_out()?;
-            let result = unsafe { (self.pause)(self.stream_handle) };
-            self.or_err_(result)?;
-        }
-        Ok(())
+        self.fade_out_and_action(ACTION_PAUSE)
     }
 
     fn stop(&mut self) -> Result<(), String> {
-        if self.stream_handle == 0 {
-            return Ok(());
-        }
-
-        if WASEXCLUSIVE.load(Ordering::SeqCst) {
-            let active = unsafe { (self.wasapi_is_started)() };
-            if active == FALSE {
-                return Ok(());
-            }
-            let result = unsafe { (self.wasapi_stop)(TRUE) };
-            self.or_err_(result)?;
-        } else {
-            self.fade_out()?;
-            let result = unsafe { (self.stop)(self.stream_handle) };
-            self.or_err_(result)?;
-        }
         notify_state(USER_STOPPED);
-        Ok(())
+        self.fade_out_and_action(ACTION_STOP)
     }
 
     fn chan_get_data(&mut self) -> Option<Vec<f32>> {
@@ -749,18 +1037,10 @@ impl BassApi {
     }
 
     fn toggle(&mut self) -> Result<(), String> {
-        if let Some(state) = self.get_state() {
-            match state {
-                BASS_ACTIVE_STOPPED | BASS_ACTIVE_PAUSED_DEVICE => {
-                    unsafe { (self.bass_start)() };
-                    Ok(self.resume()?)
-                }
-                BASS_ACTIVE_PLAYING => Ok(self.pause()?),
-                BASS_ACTIVE_PAUSED => Ok(self.resume()?),
-                _ => Ok(()),
-            }
-        } else {
-            Ok(())
+        match CURRENT_STATE.load(Ordering::SeqCst) {
+            USER_PLAYING => self.pause(),
+            USER_PAUSED | USER_STOPPED => self.resume(),
+            _ => Ok(()),
         }
     }
 
@@ -813,12 +1093,17 @@ impl BassApi {
         if self.stream_handle == 0 {
             return Ok(());
         }
-        self.fade_out()?;
+        let outgoing = OUTGOING_STREAM.swap(0, Ordering::SeqCst);
+        if outgoing != 0 {
+            unsafe {
+                (self.chan_free)(outgoing);
+            }
+        }
+
         let bytes = unsafe { (self.sec2bytes)(self.stream_handle, pos) };
-        unsafe { (self.set_pos)(self.stream_handle, bytes, BASS_POS_BYTE) };
-        self.fade_in()?;
-        let err_code = unsafe { (self.error_get_code)() };
-        self.or_err_(err_code)
+        let ok = unsafe { (self.set_pos)(self.stream_handle, bytes, BASS_POS_BYTE) };
+        self.apply_volume()?;
+        self.or_err_(ok)
     }
 
     fn set_speed(&mut self, mut speed: f32) {
@@ -848,20 +1133,20 @@ impl BassApi {
         }
     }
 
-    fn get_state(&self) -> Option<u32> {
-        if self.stream_handle == 0 {
-            None
-        } else if WASEXCLUSIVE.load(Ordering::SeqCst) {
-            let active = unsafe { (self.wasapi_is_started)() };
-            if active == TRUE {
-                Some(BASS_ACTIVE_PLAYING)
-            } else {
-                Some(BASS_ACTIVE_PAUSED)
-            }
-        } else {
-            Some(unsafe { (self.is_active)(self.stream_handle) })
-        }
-    }
+    // fn get_state(&self) -> Option<u32> {
+    //     if self.stream_handle == 0 {
+    //         None
+    //     } else if WASEXCLUSIVE.load(Ordering::SeqCst) {
+    //         let active = unsafe { (self.wasapi_is_started)() };
+    //         if active == TRUE {
+    //             Some(BASS_ACTIVE_PLAYING)
+    //         } else {
+    //             Some(BASS_ACTIVE_PAUSED)
+    //         }
+    //     } else {
+    //         Some(unsafe { (self.is_active)(self.stream_handle) })
+    //     }
+    // }
 
     // fn stream_free(&mut self) {
     //     if self.stream_handle != 0 {
@@ -878,6 +1163,15 @@ impl BassApi {
             };
             self.stream_handle = 0;
         }
+
+        // 清理可能遗留的淡出流
+        let outgoing = OUTGOING_STREAM.swap(0, Ordering::SeqCst);
+        if outgoing != 0 {
+            unsafe {
+                (self.chan_free)(outgoing);
+            }
+        }
+
         notify_state(USER_STOPPED);
     }
 
@@ -1143,6 +1437,28 @@ pub fn get_chan_data() -> Option<Vec<f32>> {
 }
 
 #[flutter_rust_bridge::frb]
-pub fn set_use_fade(value: bool) {
-    USE_FADE.store(value, Ordering::Relaxed);
+pub fn set_use_volume_fade(value: bool) {
+    USE_VOLUME_FADE.store(value, Ordering::Relaxed);
+}
+
+#[flutter_rust_bridge::frb]
+pub fn set_use_crossfade(value: bool) {
+    USE_CROSSFADE.store(value, Ordering::Relaxed);
+}
+
+#[flutter_rust_bridge::frb]
+pub fn set_crossfade_duration(duration_ms: u32) {
+    CROSSFADE_DURATION.store(duration_ms, Ordering::Relaxed);
+}
+
+#[flutter_rust_bridge::frb]
+pub fn set_skip_silence(enabled: bool) {
+    SKIP_SILENCE.store(enabled, Ordering::Relaxed);
+}
+
+#[flutter_rust_bridge::frb]
+pub fn set_silence_threshold(threshold_db: f32) {
+    if let Ok(mut lock) = SILENCE_THRESHOLD_DB.lock() {
+        *lock = threshold_db;
+    }
 }

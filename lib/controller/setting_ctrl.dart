@@ -20,6 +20,7 @@ import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/tools/func/sync_cache.dart';
 
 import '../desktop_lyrics_sever.dart';
+import '../src/rust/api/bass.dart' as bass;
 import '../tools/func/func_extension.dart';
 import '../windows_taskbar_thumbnail.dart';
 import 'audio_ctrl.dart';
@@ -78,8 +79,11 @@ class SettingController {
   final useReplayGain = signal(false);
   final useTaskBarCtrl = signal(true);
   final useVolumeFade = signal(true);
-  final useCrossfade = signal(false);
   final spectrogramStyle = signal(0); // 0：无，1：柱状图，2：波形图，3：波浪
+  final useCrossfade = signal(false);
+  final crossfadeDuration = signal(2000.0); // 200 ~ 5000 ms
+  final useSkipSilence = signal(false);
+  final silenceThresholdDb = signal(-50.0); // -70.0 ~ -30.0 dB
 
   static const minGain = -12.0;
   static const maxGain = 12.0;
@@ -243,7 +247,7 @@ class SettingController {
         null;
   }
 
-  late final void Function() putCacheDebounce=putCache.debounce();
+  late final void Function() putCacheDebounce = putCache.debounce();
 
   void init() async {
     await _initHive();
@@ -260,8 +264,13 @@ class SettingController {
         await setEqParams(freCenterIndex: v.$1, gain: v.$2);
       }
 
-      await setUseFade(value: useVolumeFade.value);
-      // TODO
+      await bass.setUseVolumeFade(value: useVolumeFade.value);
+      await setUseCrossfade(value: useCrossfade.value);
+      await bass.setCrossfadeDuration(
+        durationMs: crossfadeDuration.value.toInt(),
+      );
+      await setSkipSilence(enabled: useSkipSilence.value);
+      await setSilenceThreshold(thresholdDb: silenceThresholdDb.value);
     }());
   }
 
@@ -364,6 +373,14 @@ class SettingController {
           prefs?.getDouble(SharedPreferencesKey.lrcLetterSpacing) ?? 0.0;
       lyricSource.value = prefs?.getInt(SharedPreferencesKey.lyricSource) ?? 0;
       showKana.value = prefs?.getBool(SharedPreferencesKey.showKana) ?? true;
+      useCrossfade.value =
+          prefs?.getBool(SharedPreferencesKey.useCrossfade) ?? false;
+      crossfadeDuration.value =
+          prefs?.getDouble(SharedPreferencesKey.crossfadeDuration) ?? 2000.0;
+      useSkipSilence.value =
+          prefs?.getBool(SharedPreferencesKey.useSkipSilence) ?? false;
+      silenceThresholdDb.value =
+          prefs?.getDouble(SharedPreferencesKey.silenceThresholdDb) ?? -50.0;
     });
 
     // 提取快捷键解析逻辑，消除冗余
@@ -461,7 +478,10 @@ class SettingController {
 
     _registerHotKey(hotKeyToggle.value, _audioController.audioToggleThrottled);
     _registerHotKey(hotKeyNext.value, _audioController.audioToNextThrottled);
-    _registerHotKey(hotKeyPrevious.value, _audioController.audioToPreviousThrottled);
+    _registerHotKey(
+      hotKeyPrevious.value,
+      _audioController.audioToPreviousThrottled,
+    );
     _registerHotKey(hotKeyFullScreen.value, _myWindowListener.toggleFullScreen);
   }
 
@@ -778,30 +798,43 @@ class SettingController {
     overrideValue: value,
   );
 
-  Future<void> setUseCrossfade({required bool value}) async {
-    final prev = useCrossfade.value;
-    useCrossfade.value = value;
-    try {
-      // TODO
-    } catch (e, stackTrace) {
-      LoggerUni.w('设置交叉淡化失败', e, stackTrace);
-      showSnackBar(title: 'Err', msg: 'settingERR | $e');
-      useCrossfade.value = prev;
-    }
-    _setBoolPref(
-      SharedPreferencesKey.useCrossfade,
-      useCrossfade,
-      overrideValue: useCrossfade.value,
-    );
-  }
-
   void setUseVolumeFade({required bool value}) {
     _setBoolPref(
       SharedPreferencesKey.useVolumeFade,
       useVolumeFade,
       overrideValue: value,
     );
-    unawaited(setUseFade(value: useVolumeFade.value));
+    unawaited(bass.setUseVolumeFade(value: value));
+  }
+
+  Future<void> setUseCrossfade({required bool value}) async {
+    _setBoolPref(
+      SharedPreferencesKey.useCrossfade,
+      useCrossfade,
+      overrideValue: value,
+    );
+    unawaited(bass.setUseCrossfade(value: value));
+  }
+
+  void setCrossfadeDuration({required double value}) {
+    crossfadeDuration.value = value;
+    prefs?.setDouble(SharedPreferencesKey.crossfadeDuration, value);
+    unawaited(bass.setCrossfadeDuration(durationMs: value.toInt()));
+  }
+
+  void setUseSkipSilence({required bool value}) {
+    _setBoolPref(
+      SharedPreferencesKey.useSkipSilence,
+      useSkipSilence,
+      overrideValue: value,
+    );
+    unawaited(setSkipSilence(enabled: value));
+  }
+
+  void setSilenceThresholdDb({required double value}) {
+    silenceThresholdDb.value = value;
+    prefs?.setDouble(SharedPreferencesKey.silenceThresholdDb, value);
+    unawaited(setSilenceThreshold(thresholdDb: value));
   }
 
   void setExclusiveMode({required bool use}) async {

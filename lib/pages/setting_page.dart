@@ -1366,6 +1366,36 @@ class _LrcLetterSpacingSlider extends StatelessWidget {
   }
 }
 
+class _SilenceThresholdDbSlider extends StatelessWidget {
+  const _SilenceThresholdDbSlider();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SliderItem(
+      min: -70.0,
+      max: -30.0,
+      divisions: 20,
+      listenValue: _settingController.silenceThresholdDb,
+      onChangeEnd: (v) => _settingController.setSilenceThresholdDb(value: v),
+    );
+  }
+}
+
+class _CrossfadeDurationSlider extends StatelessWidget {
+  const _CrossfadeDurationSlider();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SliderItem(
+      min: 200.0,
+      max: 5000.0,
+      divisions: 48,
+      listenValue: _settingController.crossfadeDuration,
+      onChangeEnd: (v) => _settingController.setCrossfadeDuration(value: v),
+    );
+  }
+}
+
 class SettingPage extends StatefulWidget {
   const SettingPage({super.key});
 
@@ -1674,10 +1704,26 @@ class _PlayTab extends StatelessWidget {
           onChanged: (val) => _settingController.setUseVolumeFade(value: val),
         ),
         _SettingSwitchItem(
+          text: '无缝播放',
+          tooltip: '切歌时跳过音频首尾的静音',
+          value: _settingController.useSkipSilence,
+          onChanged: (val) => _settingController.setUseSkipSilence(value: val),
+        ),
+        const _SettingItem(
+          text: '静音阈值（DB）',
+          tooltip: '低于这个值的音量则视为静音',
+          child: _SilenceThresholdDbSlider(),
+        ),
+        _SettingSwitchItem(
           text: '交叉渐入渐出',
           tooltip: '切歌时上一首淡出、下一首淡入并短暂重叠，同时自动跳过音频首尾的静音（独占模式下不生效）',
           value: _settingController.useCrossfade,
           onChanged: (val) => _settingController.setUseCrossfade(value: val),
+        ),
+        const _SettingItem(
+          text: '过渡时间（MS）',
+          tooltip: '渐入渐出的时长',
+          child: _CrossfadeDurationSlider(),
         ),
         _SettingSwitchItem(
           text: '使用任务栏缩略图工具栏控制播放',

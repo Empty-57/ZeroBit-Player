@@ -19,11 +19,14 @@ abstract class SharedPreferencesKey {
   static const useAutoUpdate = 'useAutoUpdate';
   static const useTransparencyBackground = 'useTransparencyBackground';
   static const useVolumeFade = 'useVolumeFade';
-  static const useCrossfade = 'useCrossfade';
   static const spectrogramStyle = 'spectrogramStyle';
   static const lrcLetterSpacing = 'lrcLetterSpacing';
   static const lyricSource = 'lyricSource';
   static const showKana = 'showKana';
+  static const useCrossfade = 'useCrossfade';
+  static const crossfadeDuration = 'crossfadeDuration';
+  static const useSkipSilence = 'useSkipSilence';
+  static const silenceThresholdDb = 'silenceThresholdDb';
 }
 
 abstract class DesktopSharedPreferencesKey {
