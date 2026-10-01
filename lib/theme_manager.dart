@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:signals/signals_flutter.dart';
 import 'controller/setting_ctrl.dart';
 
 class ThemeService {
@@ -28,12 +28,12 @@ class ThemeService {
       colorScheme: scheme,
       fontFamily: _settingController.fontFamily.value,
       scrollbarTheme: ScrollbarThemeData(
-        thumbColor: WidgetStateProperty.all(
+        thumbColor: WidgetStatePropertyAll(
           scheme.secondary.withValues(alpha: 0.8),
         ),
-        thickness: WidgetStatePropertyAll(_thickness),
-        trackVisibility: WidgetStatePropertyAll(false),
-        radius: Radius.circular(_radius),
+        thickness: const WidgetStatePropertyAll(4.0),
+        trackVisibility: const WidgetStatePropertyAll(false),
+        radius: const Radius.circular(8.0),
         interactive: true,
       ),
       textButtonTheme: TextButtonThemeData(
@@ -49,18 +49,24 @@ class ThemeService {
     );
   }
 
-  ThemeData get lightTheme => _createThemeData(
-    scheme: _createColorsScheme(brightness: Brightness.light),
+  late final _lightThemeComputed = computed(
+    () => _createThemeData(
+      scheme: _createColorsScheme(brightness: Brightness.light),
+    ),
   );
 
-  ThemeData get darkTheme => _createThemeData(
-    scheme: _createColorsScheme(brightness: Brightness.dark),
+  late final _darkThemeComputed = computed(
+    () => _createThemeData(
+      scheme: _createColorsScheme(brightness: Brightness.dark),
+    ),
   );
+
+  ThemeData get lightTheme => _lightThemeComputed.value;
+  ThemeData get darkTheme => _darkThemeComputed.value;
 
   void setThemeMode() {
     _settingController.themeMode.value =
         _settingController.themeMode.value == 'dark' ? 'light' : 'dark';
-
     _settingController.putCache();
   }
 }
