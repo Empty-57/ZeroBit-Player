@@ -4,8 +4,8 @@ import 'dart:math';
 
 import 'package:zerobit_player/logger.dart';
 
-import 'japanese_analyzer.dart';
 import 'furigana_alignment.dart';
+import 'japanese_analyzer.dart';
 import 'lyric_model.dart';
 
 // ─────────────────────────── 正则表达式 ───────────────────────────
