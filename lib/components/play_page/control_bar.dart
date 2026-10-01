@@ -460,7 +460,6 @@ class _PlayQueueItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AudioController audioController = AudioController.instance;
-    ;
     return TextButton(
       onPressed: playThrottle,
       style: TextButton.styleFrom(
