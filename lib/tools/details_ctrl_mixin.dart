@@ -82,11 +82,10 @@ mixin DetailsPageControllerBase {
   AudioController get audioController => AudioController.instance;
 
   void play(String audioSource, {MusicCache? metadata}) {
-    final audioCtrl = audioController;
-    if (audioCtrl.currentAudioSource != audioSource ||
-        audioCtrl.playListCacheItems.length != items.length) {
-      audioCtrl.currentAudioSource = audioSource;
-      audioCtrl.playListCacheItems.value = [...items];
+    if (audioController.currentAudioSource != audioSource ||
+        audioController.playListCacheItems.length != items.length) {
+      audioController.currentAudioSource = audioSource;
+      audioController.playListCacheItems.value = [...items];
       _settingController.lastAudioInfo[SettingController
           .lastAudioPlayPathListKey] = items
           .map((v) => v.path)
@@ -104,9 +103,9 @@ mixin DetailsPageControllerBase {
     final metadataToPlay =
         metadata ??
         (_settingController.playMode.value == PlayModeType.random
-            ? items[Random().nextInt(items.length)]
+            ? items[audioController.pickNextRandomIndex()??0]
             : items[0]);
-    audioCtrl.audioPlay(metadata: metadataToPlay);
+    audioController.audioPlay(metadata: metadataToPlay);
   }
 
   void itemReSort({required String operateArea}) async {

@@ -701,26 +701,31 @@ class AudioController {
     lyricRenderRevision.value++;
   }
 
-  void _pickNextRandomIndex() {
-    final length = playListCacheItems.length;
-    if (length == 0) return;
-
-    if (_unplayedIndex.isEmpty || currentIndex.value >= length) {
-      _unplayedIndex.clear();
-      final pool = List.generate(length, (i) => i);
-      if (length > 1) {
-        pool.remove(currentIndex.value); // 避免连续随机到同一首
-      }
-      pool.shuffle();
-      _unplayedIndex.addAll(pool);
-    }
-    currentIndex.value = _unplayedIndex.removeLast();
+  int? pickNextRandomIndex() {
+  final length = playListCacheItems.length;
+  if (length == 0) return null;
+  if (length == 1) {
+    return 0;
   }
+  _unplayedIndex.removeWhere((index) => index >= length);
+  if (_unplayedIndex.isEmpty) {
+    final pool = List.generate(length, (i) => i)..shuffle();
+    if (pool.last == currentIndex.value) {
+      final lastIdx = pool.length - 1;
+      final temp = pool[0];
+      pool[0] = pool[lastIdx];
+      pool[lastIdx] = temp;
+    }
+    _unplayedIndex.addAll(pool);
+  }
+
+  return _unplayedIndex.removeLast();
+}
 
   Future<void> _maybeRandomPlay() async {
     if (_settingController.playMode.value == PlayModeType.random &&
         playListCacheItems.length > 1) {
-      _pickNextRandomIndex();
+      currentIndex.value = pickNextRandomIndex() ?? 0;
     }
 
     if (_hasNextAudioMetadata != null) {
