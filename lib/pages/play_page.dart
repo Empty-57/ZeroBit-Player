@@ -294,6 +294,72 @@ class _PlayPageState extends State<PlayPage> {
   late final VoidCallback _fontWeightAddFn;
   late final VoidCallback _fontWeightDecFn;
 
+  late Color _mixColor;
+  late Color _mixSubColor;
+  late Color _activeTrackCover;
+  late Color _inactiveTrackCover;
+  late TextStyle _timeCurrentStyle;
+  late TextStyle _timeTotalStyle;
+  late TextStyle _titleStyle;
+  late TextStyle _subTitleStyle;
+  late LinearGradient _spectrogramBarGradient;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final theme = Theme.of(context); // 建立对主题色的依赖
+
+    // 获取暗色配色（优先使用当前上下文的主题方案）
+    final darkColorScheme = theme.brightness == Brightness.dark
+        ? theme.colorScheme
+        : _themeService.darkTheme.colorScheme;
+    final primaryColor = darkColorScheme.primary;
+
+    _mixColor = Color.lerp(primaryColor, Colors.white, 0.3) ?? primaryColor;
+    _mixSubColor =
+        Color.lerp(primaryColor.withValues(alpha: 0.8), Colors.white, 0.3) ??
+        primaryColor;
+
+    _activeTrackCover = _mixColor;
+    _inactiveTrackCover = _mixColor.withValues(alpha: 0.2);
+
+    _timeCurrentStyle = generalTextStyle(
+      ctx: context,
+      size: '2xl',
+      color: _mixColor,
+      weight: FontWeight.w300,
+    );
+    _timeTotalStyle = generalTextStyle(
+      ctx: context,
+      size: 'md',
+      weight: FontWeight.w300,
+      color: _mixSubColor,
+    );
+    _titleStyle = generalTextStyle(
+      ctx: context,
+      size: '2xl',
+      color: _mixColor,
+      weight: FontWeight.w600,
+    );
+    _subTitleStyle = generalTextStyle(
+      ctx: context,
+      size: 'md',
+      color: _mixSubColor,
+      weight: FontWeight.w300,
+    );
+
+    _spectrogramBarGradient = LinearGradient(
+      begin: Alignment.bottomCenter,
+      end: Alignment.topCenter,
+      colors: [
+        _activeTrackCover.withValues(alpha: 0.0),
+        _activeTrackCover.withValues(alpha: 0.2),
+        _activeTrackCover.withValues(alpha: 0.5),
+      ],
+      stops: const [0.0, 0.45, 1.0],
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -711,54 +777,6 @@ class _PlayPageState extends State<PlayPage> {
     final maxCoverConstraint = (halfWidth - 32).clamp(150.0, 500.0);
     final double coverSize = (width * 0.3).clamp(200.0, maxCoverConstraint);
 
-    Theme.of(context);//建立对主题色的依赖，主题色变化的时候更新颜色
-    final darkColorScheme = _themeService.darkTheme.colorScheme;
-    final primaryColor = darkColorScheme.primary;
-
-    final mixColor =
-        Color.lerp(primaryColor, Colors.white, 0.3) ?? primaryColor;
-    final mixSubColor =
-        Color.lerp(primaryColor.withValues(alpha: 0.8), Colors.white, 0.3) ??
-        primaryColor;
-
-    final activeTrackCover = mixColor;
-    final inactiveTrackCover = mixColor.withValues(alpha: 0.2);
-
-    final timeCurrentStyle = generalTextStyle(
-      ctx: context,
-      size: '2xl',
-      color: mixColor,
-      weight: FontWeight.w300,
-    );
-    final timeTotalStyle = generalTextStyle(
-      ctx: context,
-      size: 'md',
-      weight: FontWeight.w300,
-      color: mixSubColor,
-    );
-    final titleStyle = generalTextStyle(
-      ctx: context,
-      size: '2xl',
-      color: mixColor,
-      weight: FontWeight.w600,
-    );
-    final subTitleStyle = generalTextStyle(
-      ctx: context,
-      size: 'md',
-      color: mixSubColor,
-      weight: FontWeight.w300,
-    );
-
-    final spectrogramBarGradient = LinearGradient(
-      begin: Alignment.bottomCenter,
-      end: Alignment.topCenter,
-      colors: [
-        activeTrackCover.withValues(alpha: 0.0),
-        activeTrackCover.withValues(alpha: 0.2),
-        activeTrackCover.withValues(alpha: 0.5),
-      ],
-      stops: const [0.0, 0.45, 1.0],
-    );
     final spectrogramBarLength = AudioController.bassDataFFT512 * 0.5625; // 144
     final spectrogramBarWidth =
         (width * PlayPageConstant.spectrogramWidthFactor) /
@@ -805,12 +823,16 @@ class _PlayPageState extends State<PlayPage> {
                           controller: _menuController,
                           style: MenuStyle(
                             backgroundColor: WidgetStatePropertyAll(
-                              darkColorScheme.surfaceContainer.withValues(
-                                alpha: 0.8,
-                              ),
+                              _themeService
+                                  .darkTheme
+                                  .colorScheme
+                                  .surfaceContainer
+                                  .withValues(alpha: 0.8),
                             ),
                           ),
-                          menuChildren: _buildMenuItems(darkColorScheme),
+                          menuChildren: _buildMenuItems(
+                            _themeService.darkTheme.colorScheme,
+                          ),
                           child: Stack(
                             children: [
                               SignalBuilder(
@@ -878,8 +900,8 @@ class _PlayPageState extends State<PlayPage> {
                                         width: coverSize,
                                         child: _CoverSide(
                                           coverSize: coverSize,
-                                          titleStyle: titleStyle,
-                                          subTitleStyle: subTitleStyle,
+                                          titleStyle: _titleStyle,
+                                          subTitleStyle: _subTitleStyle,
                                         ),
                                       ),
 
@@ -891,10 +913,10 @@ class _PlayPageState extends State<PlayPage> {
                                             metadata: _audioController
                                                 .currentMetadata
                                                 .value,
-                                            style: titleStyle.copyWith(
+                                            style: _titleStyle.copyWith(
                                               fontWeight: FontWeight.w300,
                                               fontSize:
-                                                  titleStyle.fontSize! - 3,
+                                                  _titleStyle.fontSize! - 3,
                                             ),
                                           ),
                                         ),
@@ -929,28 +951,28 @@ class _PlayPageState extends State<PlayPage> {
                                               PhosphorIconsFill.textbox,
                                               PhosphorIconsLight.textbox,
                                               0,
-                                              mixColor,
+                                              _mixColor,
                                             ),
                                             _buildModeBtn(
                                               '仅封面',
                                               PhosphorIconsFill.image,
                                               PhosphorIconsLight.image,
                                               1,
-                                              mixColor,
+                                              _mixColor,
                                             ),
                                             _buildModeBtn(
                                               '详情',
                                               PhosphorIconsFill.note,
                                               PhosphorIconsLight.note,
                                               2,
-                                              mixColor,
+                                              _mixColor,
                                             ),
                                             _buildModeBtn(
                                               '仅歌词',
                                               PhosphorIconsFill.articleNyTimes,
                                               PhosphorIconsLight.articleNyTimes,
                                               3,
-                                              mixColor,
+                                              _mixColor,
                                             ),
                                           ],
                                         ),
@@ -974,7 +996,7 @@ class _PlayPageState extends State<PlayPage> {
                                         const SizedBox.shrink(),
                                       SpectrogramStyleType.rect =>
                                         SpectrogramWidget(
-                                          gradient: spectrogramBarGradient,
+                                          gradient: _spectrogramBarGradient,
                                           length: spectrogramBarLength,
                                           barWidth: spectrogramBarWidth,
                                           paddingWidth: spectrogramPaddingWidth,
@@ -982,7 +1004,7 @@ class _PlayPageState extends State<PlayPage> {
                                       SpectrogramStyleType.waveform ||
                                       SpectrogramStyleType
                                           .wave => WaveSpectrogramWidget(
-                                        color: activeTrackCover,
+                                        color: _activeTrackCover,
                                         length: spectrogramBarLength,
                                         width: width,
                                         isFill:
@@ -999,11 +1021,11 @@ class _PlayPageState extends State<PlayPage> {
                       ),
                     ),
                     ControlBar(
-                      mixColor: mixColor,
-                      activeTrackCover: activeTrackCover,
-                      inactiveTrackCover: inactiveTrackCover,
-                      timeCurrentStyle: timeCurrentStyle,
-                      timeTotalStyle: timeTotalStyle,
+                      mixColor: _mixColor,
+                      activeTrackCover: _activeTrackCover,
+                      inactiveTrackCover: _inactiveTrackCover,
+                      timeCurrentStyle: _timeCurrentStyle,
+                      timeTotalStyle: _timeTotalStyle,
                       playQueueScrollController: _playQueueScrollController,
                       playQueueMenuController: _playQueueMenuController,
                       isBarHover: _isBarHover,
