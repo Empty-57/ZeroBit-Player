@@ -711,6 +711,7 @@ class _PlayPageState extends State<PlayPage> {
     final maxCoverConstraint = (halfWidth - 32).clamp(150.0, 500.0);
     final double coverSize = (width * 0.3).clamp(200.0, maxCoverConstraint);
 
+    Theme.of(context);//建立对主题色的依赖，主题色变化的时候更新颜色
     final darkColorScheme = _themeService.darkTheme.colorScheme;
     final primaryColor = darkColorScheme.primary;
 
