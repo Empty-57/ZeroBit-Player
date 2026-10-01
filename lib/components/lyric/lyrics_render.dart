@@ -115,8 +115,9 @@ class _LyricsRenderState extends State<LyricsRender> {
   @override
   Widget build(BuildContext context) {
     Color? mixColor = lrcStylePackage.mixColor;
-    final height = MediaQuery.sizeOf(context).height;
-    final width = MediaQuery.sizeOf(context).width;
+    final size=MediaQuery.sizeOf(context);
+    final height = size.height;
+    final width = size.width;
 
     final dynamicPadding = width / 2 * (1 - 1 / LyricConstants.lrcScale);
     return MouseRegion(
