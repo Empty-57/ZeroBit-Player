@@ -38,6 +38,7 @@ abstract class LyricConstants {
     TextAlign.right,
   ];
   static const gradientStops = <double>[0.0, 0.333, 0.666];
+  static const shaderOffsetFactor = -0.666;
   static const double lrcScale = 1.1;
 
   static const List<WrapAlignment> lrcWrapAlign = [
