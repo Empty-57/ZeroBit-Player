@@ -72,7 +72,27 @@ class LyricController {
     _debounceTimer?.cancel();
     _delayTimer?.cancel();
     _currentLine = null;
+    springController?.dispose();
+    springController = null;
     lrcViewScrollController = null;
+  }
+
+  /// 同步弹性滚动控制器的存在性。
+  void syncSpringController({required bool enabled}) {
+    if (enabled) {
+      springController ??= SpringListController();
+      return;
+    }
+    final SpringListController? old = springController;
+    if (old == null) return;
+    springController = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) => old.dispose());
+  }
+
+  /// 换歌时重建 [ItemScrollController]。
+  void recreateViewScrollController() {
+    if (lrcViewScrollController == null) return; // 歌词页未挂载
+    lrcViewScrollController = ItemScrollController();
   }
 
   void lineUpdatedReset() {

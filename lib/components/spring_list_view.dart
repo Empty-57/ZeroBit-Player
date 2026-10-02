@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/rendering.dart';
+import 'package:zerobit_player/components/widget/smooth_transform.dart';
 import 'package:zerobit_player/logger.dart';
 
 class _JumpSignal {
@@ -44,6 +45,10 @@ class SpringListController {
 
   int? _cachedVisibleItemCount;
   double cachedScreenHeight = 0.0;
+
+  bool _disposed = false;
+
+  bool get isDisposed => _disposed;
 
   int getVisibleItemCount() {
     final scrollBox = _scrollAreaKey.currentContext?.findRenderObject();
@@ -100,7 +105,7 @@ class SpringListController {
   }
 
   void nextLyric(int nextIndex) {
-    if (nextIndex >= _totalLength) return;
+    if (_disposed || nextIndex >= _totalLength) return;
 
     final nextBoxKey = getBoxKey(nextIndex);
     double deltaY = 60.0;
@@ -145,6 +150,8 @@ class SpringListController {
   }
 
   void dispose() {
+    if (_disposed) return;
+    _disposed = true;
     _boxKeys.clear();
     _cachedVisibleItemCount = null;
     cachedScreenHeight = 0.0;
@@ -291,7 +298,9 @@ class _SpringItemState extends State<_SpringItem>
     super.initState();
     // 使用无边界控制器，它的 value 直接代表 Y 轴的偏移像素(deltaY)。
     // 控制器在行真正进入动画范围时才创建，避免整首歌词常驻 ticker。
-    widget.controller._jumpNotifier.addListener(_onJumpSignal);
+    if (!widget.controller.isDisposed) {
+      widget.controller._jumpNotifier.addListener(_onJumpSignal);
+    }
   }
 
   void _onJumpSignal() {
@@ -399,10 +408,15 @@ class _SpringItemState extends State<_SpringItem>
 
   @override
   void dispose() {
-    widget.controller._jumpNotifier.removeListener(_onJumpSignal);
     _delayTimer?.cancel();
     _animController?.dispose();
-    widget.controller._boxKeys.remove(widget.index);
+    final controller = widget.controller;
+    if (!controller.isDisposed) {
+      controller._jumpNotifier.removeListener(_onJumpSignal);
+      if (identical(controller._boxKeys[widget.index], widget.boxKey)) {
+        controller._boxKeys.remove(widget.index);
+      }
+    }
     super.dispose();
   }
 
@@ -415,10 +429,10 @@ class _SpringItemState extends State<_SpringItem>
     return AnimatedBuilder(
       animation: controller,
       builder: (context, child) {
-        return Transform.translate(
-          filterQuality: .low,
-          offset: Offset(0, controller.value), // 直接应用物理控制器的值
-          child: child,
+        return SmoothTranslate(
+          dy: controller.value, // 直接应用物理控制器的值
+          isAnimating: controller.isAnimating,
+          child: child!,
         );
       },
       child: RepaintBoundary(key: widget.boxKey, child: widget.child),

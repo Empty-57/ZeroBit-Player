@@ -19,19 +19,21 @@ class FFTFeed {
   ValueNotifier<List<double>> get fft => _audioController.audioFFT;
 
   void attach() {
-    if (_ref++ > 0) {
-      return;
-    }
+    _ref++;
+    if (_ref > 1) return;
+
     LoggerUni.i('FFT数据流已连接 Ref: $_ref');
+    _fetchTimer?.cancel();
     _fetchTimer = Timer.periodic(_fetchInterval, (_) {
       _audioController.getAudioFFt();
     });
   }
 
   void detach() {
-    if (--_ref > 0) {
-      return;
-    }
+    if (_ref <= 0) return;
+    _ref--;
+    if (_ref > 0) return;
+
     LoggerUni.i('FFT数据流已释放 Ref: $_ref');
     _fetchTimer?.cancel();
     _fetchTimer = null;

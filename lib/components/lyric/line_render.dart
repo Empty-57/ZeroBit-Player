@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:zerobit_player/components/lyric/blur_widget.dart';
 import 'package:zerobit_player/components/lyric/lyric_arg_constants.dart';
 import 'package:zerobit_player/components/lyric/word_render.dart';
+import 'package:zerobit_player/components/widget/smooth_transform.dart';
 import 'package:zerobit_player/controller/lyric_ctrl.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
@@ -263,6 +264,7 @@ class KaraOkLyricWidget extends StatelessWidget {
           final floatingDelay = dura * (1000 * 0.2);
 
           return _SyllableFloatWidget(
+            key: ValueKey('float_${entry.lyricWord}_$wordIndex'),
             isFloating: isFloating,
             duration: isFloating ? floatingDuration : 600,
             delay: isFloating ? floatingDelay : 0,
@@ -286,6 +288,7 @@ class _SyllableFloatWidget extends StatefulWidget {
   final Widget child;
 
   const _SyllableFloatWidget({
+    super.key,
     required this.isFloating,
     required this.duration,
     required this.delay,
@@ -343,6 +346,7 @@ class _SyllableFloatWidgetState extends State<_SyllableFloatWidget>
 
   @override
   Widget build(BuildContext context) {
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -351,10 +355,10 @@ class _SyllableFloatWidgetState extends State<_SyllableFloatWidget>
           LyricConstants.floatingY,
           _controller.value,
         )!;
-        return Transform.translate(
-          offset: Offset(0, dy),
-          filterQuality: FilterQuality.low,
-          child: child,
+        return SmoothTranslate(
+          dy: dy,
+          isAnimating: dy != LyricConstants.floatingY && dy != 0,
+          child: child!,
         );
       },
       child: widget.child,

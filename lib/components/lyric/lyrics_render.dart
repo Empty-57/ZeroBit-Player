@@ -90,9 +90,9 @@ class _LyricsRenderState extends State<LyricsRender> {
   @override
   void initState() {
     super.initState();
-    if (_settingController.useSpringScroll.value) {
-      _lyricController.springController = SpringListController();
-    }
+    _lyricController.syncSpringController(
+      enabled: _settingController.useSpringScroll.value,
+    );
     _lyricController.lrcViewScrollController = ItemScrollController();
 
     // 首次进入页面时，跳转到当前行
@@ -106,8 +106,8 @@ class _LyricsRenderState extends State<LyricsRender> {
   @override
   void dispose() {
     _lyricController.springController?.dispose();
-    _lyricController.lrcViewScrollController = null;
     _lyricController.springController = null;
+    _lyricController.lrcViewScrollController = null;
     _isHover.dispose();
     super.dispose();
   }
@@ -167,12 +167,10 @@ class _LyricsRenderState extends State<LyricsRender> {
                   // 接受这些信号也重建
                   final useSpringScroll =
                       _settingController.useSpringScroll.value;
-                  if (useSpringScroll) {
-                    _lyricController.springController ??=
-                        SpringListController();
-                  } else {
-                    _lyricController.springController = null;
-                  }
+                  // 关闭弹性滚动时旧控制器会被延后到帧末释放，不会被直接丢弃
+                  _lyricController.syncSpringController(
+                    enabled: useSpringScroll,
+                  );
                   final lrcAlignment = _settingController.lrcAlignment.value;
                   final showRoma = _settingController.showRoma.value;
                   final showTranslate = _settingController.showTranslate.value;

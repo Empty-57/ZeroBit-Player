@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/lyric/lyric_arg_constants.dart';
 import 'package:zerobit_player/components/lyric/word_render.dart';
+import 'package:zerobit_player/components/widget/smooth_transform.dart';
 import 'package:zerobit_player/controller/lyric_ctrl.dart';
 
 class _InterludeTransition extends StatefulWidget {
@@ -207,11 +208,10 @@ class _BreathingDotsState extends State<_BreathingDots>
     return AnimatedBuilder(
       animation: _scaleAnimation,
       builder: (context, child) {
-        return Transform.scale(
+        return SmoothScale(
           alignment: LyricConstants.lrcScaleAlignment[widget.lrcAlignment],
           scale: _scaleAnimation.value,
-          filterQuality: FilterQuality.low, // 保持低质量抗锯齿，防止抖动
-          child: child,
+          child: child!,
         );
       },
       child: ValueListenableBuilder(

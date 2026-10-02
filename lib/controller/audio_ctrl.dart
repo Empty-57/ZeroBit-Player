@@ -284,6 +284,7 @@ class AudioController {
     _lyricController.currentLineIndex.value = -1;
     _lyricController.interludeProcess.value = 0;
     _lyricController.showInterlude.value = false;
+    _lyricController.recreateViewScrollController();
     final parsedLrc = lyrics?.parsedLrc;
     showLyricRender = parsedLrc?.isNotEmpty ?? false;
     if (showLyricRender) {

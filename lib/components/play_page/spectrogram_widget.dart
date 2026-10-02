@@ -53,10 +53,13 @@ class _SpectrumFeed {
 
   /// 挂载动画并启动拉取和插值
   void attach() {
-    if (_ref++ > 0) {
-      return;
-    }
+    _ref++;
+    if (_ref > 1) return;
+
     LoggerUni.i('频谱图资源已挂载 Ref: $_ref');
+    // 释放旧资源
+    _animController?.removeListener(_onAnimationTick);
+    _animController?.dispose();
     _animController = AnimationController(
       vsync: _tickerProvider,
       duration: _lerpDuration,
@@ -69,14 +72,16 @@ class _SpectrumFeed {
 
   /// 卸载动画并释放全部资源
   void detach() {
-    if (--_ref > 0) {
-      return;
-    }
+    if (_ref <= 0) return;
+    _ref--;
+    if (_ref > 0) return;
+
     LoggerUni.i('频谱图资源已释放 Ref: $_ref');
     // 先取消监听，再 dispose controller
     // 顺序重要：防止 cancel 期间还有回调触发
     fftFeed.fft.removeListener(_onFFTUpdated);
     fftFeed.detach();
+    _animController?.removeListener(_onAnimationTick);
     _animController?.dispose();
     _animController = null;
 
@@ -139,7 +144,6 @@ class _SpectrumFeed {
 
 const double pixelFactor = 0.7;
 
-// TODO MemoryLeak
 /// 柱状频谱图
 class SpectrogramWidget extends StatefulWidget {
   final LinearGradient gradient;
@@ -432,6 +436,18 @@ class _WaveSpectrogramWidgetState extends State<WaveSpectrogramWidget> {
   @override
   void dispose() {
     _feed.detach();
+    _disposeShaders();
+    super.dispose();
+  }
+
+  void _disposeShaders() {
+    _fillShader1?.dispose();
+    _lineShader1?.dispose();
+    _glowShader1?.dispose();
+    _fillShader2?.dispose();
+    _lineShader2?.dispose();
+    _glowShader2?.dispose();
+
     _fillShader1 = null;
     _lineShader1 = null;
     _glowShader1 = null;
@@ -447,6 +463,8 @@ class _WaveSpectrogramWidgetState extends State<WaveSpectrogramWidget> {
     if (_fillShader1 != null && size == _lastSize && color == _cachedColor) {
       return;
     }
+    // 尺寸或配色变了，先释放上一批再重建
+    _disposeShaders();
     _lastSize = size;
     _cachedColor = color;
 

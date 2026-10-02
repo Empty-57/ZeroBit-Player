@@ -785,9 +785,8 @@ class _PlayPageState extends State<PlayPage> {
         width * PlayPageConstant.spectrogramWidthFactorDiff;
 
     return Focus(
-      autofocus: true,
-      onKeyEvent: _onKeyEvent,
-      child: ExcludeSemantics(
+        autofocus: true,
+        onKeyEvent: _onKeyEvent,
         child: BlurWithCoverBackground(
           cover: _audioController.currentSmallCover,
           useGradient: false,
@@ -1038,7 +1037,6 @@ class _PlayPageState extends State<PlayPage> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }

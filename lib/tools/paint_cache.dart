@@ -49,13 +49,15 @@ class GradientShaderCache {
     final _ShaderKey key = _ShaderKey(gradient, rect);
 
     final ui.Shader? cached = _cache[key];
-    if (cached != null) return cached;
+    if (cached != null) {
+      _cache.remove(key);
+      _cache[key] = cached;
+      return cached;
+    }
 
-    if (_cache.length >= maxSize) {
-      for (final s in _cache.values) {
-        s.dispose();
-      }
-      _cache.clear();
+    while (_cache.length >= maxSize) {
+      final _ShaderKey oldest = _cache.keys.first;
+      _cache.remove(oldest)?.dispose();
     }
 
     final ui.Shader created = gradient.createShader(rect);
@@ -63,7 +65,12 @@ class GradientShaderCache {
     return created;
   }
 
-  void clear() => _cache.clear();
+  void clear() {
+    for (final ui.Shader s in _cache.values) {
+      s.dispose();
+    }
+    _cache.clear();
+  }
 }
 
 class _ShaderKey {

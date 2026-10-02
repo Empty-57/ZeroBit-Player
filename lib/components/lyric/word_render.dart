@@ -2,21 +2,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:zerobit_player/components/lyric/lyric_arg_constants.dart';
-
-class _ScaledTranslateGradientTransform extends GradientTransform {
-  final double dx;
-  final double translateGradientScale;
-  const _ScaledTranslateGradientTransform({
-    required this.dx,
-    required this.translateGradientScale,
-  });
-
-  @override
-  Matrix4 transform(Rect bounds, {TextDirection? textDirection}) {
-    return Matrix4.diagonal3Values(translateGradientScale, 1, 1)
-      ..setTranslationRaw(translateGradientScale * dx, 0, 0);
-  }
-}
+import 'package:zerobit_player/components/lyric/progress_shader_mask.dart';
+import 'package:zerobit_player/components/widget/smooth_transform.dart';
 
 class HighlightedWord extends StatefulWidget {
   final String text;
@@ -114,27 +101,34 @@ class HighlightedWordState extends State<HighlightedWord> {
   }
 
   Widget _shaderMaskWrap(Widget child) {
-    return ShaderMask(
-      shaderCallback: (bounds) {
-        // 颜色平均分三段：高亮区 过渡区 透明区
-        // 在动画开始的时候，覆盖到 Text 上的应该是透明区，应该先把整个遮罩层应该向左移动
-        // 但是因为遮罩层放大了3倍，所以应该用 -0.666 * bounds.width 得到透明区位置，负号为向左
-        // 随着 progress 增大 遮罩会逐渐向右移动
-        final double dx = (-0.666 * bounds.width) * (1 - widget.progress);
-        return LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: widget.gradientColors,
-          stops: LyricConstants.gradientStops,
-          transform: _ScaledTranslateGradientTransform(
-            dx: dx,
-            translateGradientScale: widget.translateGradientScale,
-          ),
-        ).createShader(bounds);
-      },
-      blendMode: BlendMode.dstIn,
+    return ProgressShaderMask(
+      progress: widget.progress,
+      scale: widget.translateGradientScale,
+      gradientColors: widget.gradientColors,
       child: child,
     );
+
+    // return ShaderMask(
+    //   shaderCallback: (bounds) {
+    //     // 颜色平均分三段：高亮区 过渡区 透明区
+    //     // 在动画开始的时候，覆盖到 Text 上的应该是透明区，应该先把整个遮罩层应该向左移动
+    //     // 但是因为遮罩层放大了3倍，所以应该用 -0.666 * bounds.width 得到透明区位置，负号为向左
+    //     // 随着 progress 增大 遮罩会逐渐向右移动
+    //     final double dx = (-0.666 * bounds.width) * (1 - widget.progress);
+    //     return LinearGradient(
+    //       begin: Alignment.centerLeft,
+    //       end: Alignment.centerRight,
+    //       colors: widget.gradientColors,
+    //       stops: LyricConstants.gradientStops,
+    //       transform: _ScaledTranslateGradientTransform(
+    //         dx: dx,
+    //         translateGradientScale: widget.translateGradientScale,
+    //       ),
+    //     ).createShader(bounds);
+    //   },
+    //   blendMode: BlendMode.dstIn,
+    //   child: child,
+    // );
   }
 
   @override
@@ -192,10 +186,9 @@ class HighlightedWordState extends State<HighlightedWord> {
       )!;
 
       // glow 层
-      glowChildren[i] = Transform.scale(
+      glowChildren[i] = SmoothScale(
         alignment: Alignment.bottomCenter,
         scale: scale,
-        filterQuality: FilterQuality.low,
         child: Text(
           char,
           style: _normalStyle.copyWith(
