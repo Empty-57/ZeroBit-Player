@@ -51,7 +51,12 @@ class GradientShaderCache {
     final ui.Shader? cached = _cache[key];
     if (cached != null) return cached;
 
-    if (_cache.length >= maxSize) _cache.clear();
+    if (_cache.length >= maxSize) {
+      for (final s in _cache.values) {
+        s.dispose();
+      }
+      _cache.clear();
+    }
 
     final ui.Shader created = gradient.createShader(rect);
     _cache[key] = created;
