@@ -76,6 +76,17 @@ class _SeekSlideWidget extends StatefulWidget {
 class _SeekSlideWidgetState extends State<_SeekSlideWidget> {
   final _isSeekBarDragging = ValueNotifier<bool>(false);
   final _seekDraggingValue = ValueNotifier<double>(0.0);
+  late final Listenable _mergedListenable;
+
+  @override
+  void initState() {
+    super.initState();
+    _mergedListenable = Listenable.merge([
+      widget.audioController.currentMs100,
+      _isSeekBarDragging,
+      _seekDraggingValue,
+    ]);
+  }
 
   @override
   void dispose() {
@@ -90,11 +101,7 @@ class _SeekSlideWidgetState extends State<_SeekSlideWidget> {
       canRequestFocus: false,
       descendantsAreFocusable: false,
       child: ListenableBuilder(
-        listenable: Listenable.merge([
-          widget.audioController.currentMs100,
-          _isSeekBarDragging,
-          _seekDraggingValue,
-        ]),
+        listenable: _mergedListenable,
         builder: (_, _) {
           final pathIsEmpty =
               widget.audioController.currentMetadata.value.path.isEmpty;
