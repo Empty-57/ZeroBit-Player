@@ -993,13 +993,16 @@ class _PlayPageState extends State<PlayPage> {
                                     return switch (style) {
                                       SpectrogramStyleType.none =>
                                         const SizedBox.shrink(),
-                                      SpectrogramStyleType.rect =>
-                                        SpectrogramWidget(
-                                          gradient: _spectrogramBarGradient,
-                                          length: spectrogramBarLength,
-                                          barWidth: spectrogramBarWidth,
-                                          paddingWidth: spectrogramPaddingWidth,
-                                        ),
+                                      SpectrogramStyleType.rect ||
+                                      SpectrogramStyleType
+                                          .pixel => SpectrogramWidget(
+                                        gradient: _spectrogramBarGradient,
+                                        length: spectrogramBarLength,
+                                        barWidth: spectrogramBarWidth,
+                                        paddingWidth: spectrogramPaddingWidth,
+                                        isPixelStyle:
+                                            style == SpectrogramStyleType.pixel,
+                                      ),
                                       SpectrogramStyleType.waveform ||
                                       SpectrogramStyleType
                                           .wave => WaveSpectrogramWidget(

@@ -136,6 +136,9 @@ class _SpectrumFeed {
     frame.value++;
   }
 }
+
+const double pixelFactor = 0.7;
+
 // TODO MemoryLeak
 /// 柱状频谱图
 class SpectrogramWidget extends StatefulWidget {
@@ -143,13 +146,19 @@ class SpectrogramWidget extends StatefulWidget {
   final double length;
   final double barWidth;
   final double paddingWidth;
+  final bool isPixelStyle;
+  final double pixelBlockHeight;
+  final double pixelBlockGap;
+
   const SpectrogramWidget({
     super.key,
     required this.gradient,
     required this.length,
     required this.barWidth,
     required this.paddingWidth,
-  });
+    this.isPixelStyle = false,
+  }) : pixelBlockHeight = barWidth * pixelFactor,
+       pixelBlockGap = barWidth * 0.25;
 
   @override
   State<SpectrogramWidget> createState() => SpectrogramWidgetState();
@@ -165,7 +174,7 @@ class SpectrogramWidgetState extends State<SpectrogramWidget> {
   ui.Shader? _cachedShader;
   Size _lastSize = Size.zero;
 
-  /// 复用的端点缓冲区：存每根柱子的坐标 (x1, y1 , x2, y2)，一次 drawRawPoints 全部画完
+  /// 复用的端点缓冲区：存坐标 (x1, y1 , x2, y2)，一次 drawRawPoints 全部画完
   Float32List _points = Float32List(0);
 
   @override
@@ -176,6 +185,7 @@ class SpectrogramWidgetState extends State<SpectrogramWidget> {
 
   @override
   void dispose() {
+    _cachedShader?.dispose();
     _cachedShader = null;
     _feed.detach();
     super.dispose();
@@ -186,6 +196,7 @@ class SpectrogramWidgetState extends State<SpectrogramWidget> {
         _cachedColor == null ||
         size != _lastSize ||
         widget.gradient.colors[0] != _cachedColor) {
+      _cachedShader?.dispose();
       _lastSize = size;
       _cachedColor = widget.gradient.colors[0];
       _cachedShader = widget.gradient.createShader(
@@ -195,8 +206,14 @@ class SpectrogramWidgetState extends State<SpectrogramWidget> {
     return _cachedShader!;
   }
 
-  Float32List _getPoints(int barCount) {
-    final int need = barCount * 4;
+  Float32List _getPoints(int barCount, double totalHeight) {
+    final int maxBlocksPerBar = widget.isPixelStyle
+        ? (totalHeight / (widget.pixelBlockHeight + widget.pixelBlockGap))
+                  .ceil() +
+              1
+        : 1;
+
+    final int need = barCount * maxBlocksPerBar * 4;
     if (_points.length != need) {
       _points = Float32List(need);
     }
@@ -210,6 +227,8 @@ class SpectrogramWidgetState extends State<SpectrogramWidget> {
       PlayPageConstant.spectrogramHeight,
     );
 
+    final barCount = widget.length.toInt();
+
     return RepaintBoundary(
       child: SizedBox(
         width: size.width,
@@ -218,11 +237,14 @@ class SpectrogramWidgetState extends State<SpectrogramWidget> {
           painter: _SpectrogramPainter(
             frame: _feed.frame,
             feed: _feed,
-            points: _getPoints(widget.length.toInt()),
+            points: _getPoints(barCount, size.height),
             shader: _getShader(size),
-            length: widget.length.toInt(),
+            length: barCount,
             barWidth: widget.barWidth,
             paddingWidth: widget.paddingWidth,
+            isPixelStyle: widget.isPixelStyle,
+            pixelBlockHeight: widget.pixelBlockHeight,
+            pixelBlockGap: widget.pixelBlockGap,
           ),
         ),
       ),
@@ -237,6 +259,9 @@ class _SpectrogramPainter extends SignalCustomPainter {
   final int length;
   final double barWidth;
   final double paddingWidth;
+  final bool isPixelStyle;
+  final double pixelBlockHeight;
+  final double pixelBlockGap;
 
   _SpectrogramPainter({
     required Signal<double> frame,
@@ -246,11 +271,14 @@ class _SpectrogramPainter extends SignalCustomPainter {
     required this.length,
     required this.barWidth,
     required this.paddingWidth,
+    required this.isPixelStyle,
+    required this.pixelBlockHeight,
+    required this.pixelBlockGap,
   }) : super(signals: [frame]);
 
   final Paint _paint = Paint()
     ..style = PaintingStyle.stroke
-    // 平头端点：高度为 0 的线段不会留下任何像素，省掉逐根的跳过判断
+    // 平头端点：高度为 0 的线段不会留下任何像素
     ..strokeCap = StrokeCap.butt;
 
   @override
@@ -262,28 +290,59 @@ class _SpectrogramPainter extends SignalCustomPainter {
     if (count <= 0 || points.length < count * 4) return;
 
     final double height = size.height;
+    int pointOffset = 0;
 
-    // 设定柱子起始坐标
-    for (int i = 0; i < count; i++) {
-      final double x = i * barWidth + paddingWidth;
-      final double h = fft[i] * height;
-      final int o = i * 4;
-      points[o] = x;
-      points[o + 1] = height;
-      points[o + 2] = x;
-      points[o + 3] = h < 0.5 ? height : height - h;
+    if (isPixelStyle) {
+      final double step = pixelBlockHeight + pixelBlockGap;
+
+      for (int i = 0; i < count; i++) {
+        final double x = i * barWidth + paddingWidth;
+        final double h = (fft[i] * height).clamp(0.0, height);
+
+        // 高度小于一个块的高度时不渲染
+        if (h < pixelBlockHeight) continue;
+
+        final int numBlocks = (h / step).floor();
+
+        for (int b = 0; b < numBlocks; b++) {
+          final double yBottom = height - (b * step);
+          final double yTop = yBottom - pixelBlockHeight;
+
+          points[pointOffset] = x;
+          points[pointOffset + 1] = yBottom;
+          points[pointOffset + 2] = x;
+          points[pointOffset + 3] = yTop;
+          pointOffset += 4;
+        }
+      }
+
+      _paint
+        ..shader = shader
+        ..strokeWidth = barWidth * pixelFactor;
+    } else {
+      for (int i = 0; i < count; i++) {
+        final double x = i * barWidth + paddingWidth;
+        final double h = fft[i] * height;
+
+        points[pointOffset] = x;
+        points[pointOffset + 1] = height;
+        points[pointOffset + 2] = x;
+        points[pointOffset + 3] = h < 0.5 ? height : height - h;
+        pointOffset += 4;
+      }
+
+      _paint
+        ..shader = shader
+        ..strokeWidth = barWidth * 0.5;
     }
 
-    _paint
-      ..shader = shader
-      ..strokeWidth = barWidth * 0.5;
+    if (pointOffset == 0) return;
 
-    // 只取实际写入的那一段，避免 fft 变短时把上一帧残留的端点画出来
     canvas.drawRawPoints(
       ui.PointMode.lines,
-      count * 4 == points.length
+      pointOffset == points.length
           ? points
-          : Float32List.sublistView(points, 0, count * 4),
+          : Float32List.sublistView(points, 0, pointOffset),
       _paint,
     );
   }
@@ -293,7 +352,10 @@ class _SpectrogramPainter extends SignalCustomPainter {
       old.shader != shader ||
       old.length != length ||
       old.barWidth != barWidth ||
-      old.paddingWidth != paddingWidth;
+      old.paddingWidth != paddingWidth ||
+      old.isPixelStyle != isPixelStyle ||
+      old.pixelBlockHeight != pixelBlockHeight ||
+      old.pixelBlockGap != pixelBlockGap;
 }
 
 /// 波形采样点数量：少于 FFT 的 256 个点，聚合之后曲线才够柔和

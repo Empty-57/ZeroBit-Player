@@ -131,6 +131,7 @@ class SettingController {
   static const Map<int, String> spectrogramStyleMap = {
     SpectrogramStyleType.none: '无',
     SpectrogramStyleType.rect: '柱状图',
+    SpectrogramStyleType.pixel: '像素',
     // SpectrogramStyleType.waveform: '波形图',
     // SpectrogramStyleType.wave: '波浪',
   };
