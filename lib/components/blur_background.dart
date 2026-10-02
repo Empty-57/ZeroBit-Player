@@ -85,7 +85,12 @@ class BlurWithCoverBackground extends StatelessWidget {
 
                 final rawCover = Transform.scale(
                   scale: coverScale,
-                  child: SizedBox.expand(child: LoadU8Cover(data: coverBytes)),
+                  child: SizedBox.expand(
+                    child: LoadU8Cover(
+                      key: ValueKey(coverBytes),
+                      data: coverBytes,
+                    ),
+                  ),
                 );
 
                 return Opacity(
