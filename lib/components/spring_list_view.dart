@@ -431,7 +431,10 @@ class _SpringItemState extends State<_SpringItem>
       builder: (context, child) {
         return SmoothTranslate(
           dy: controller.value, // 直接应用物理控制器的值
-          isAnimating: controller.isAnimating,
+          useFilterQuality:
+              !(controller.isCompleted ||
+                  controller.isDismissed), // TODO 这里还是会出现抖动，考虑常开useFilterQuality
+          // useFilterQuality: true,
           child: child!,
         );
       },

@@ -346,7 +346,6 @@ class _SyllableFloatWidgetState extends State<_SyllableFloatWidget>
 
   @override
   Widget build(BuildContext context) {
-
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -357,7 +356,8 @@ class _SyllableFloatWidgetState extends State<_SyllableFloatWidget>
         )!;
         return SmoothTranslate(
           dy: dy,
-          isAnimating: dy != LyricConstants.floatingY && dy != 0,
+          // useFilterQuality: !(_controller.isCompleted||_controller.isDismissed), // TODO 这里还是会出现抖动，考虑常开useFilterQuality
+          useFilterQuality: true,
           child: child!,
         );
       },

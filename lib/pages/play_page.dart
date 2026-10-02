@@ -784,7 +784,8 @@ class _PlayPageState extends State<PlayPage> {
     final spectrogramPaddingWidth =
         width * PlayPageConstant.spectrogramWidthFactorDiff;
 
-    return Focus(
+    return ExcludeSemantics(
+      child: Focus(
         autofocus: true,
         onKeyEvent: _onKeyEvent,
         child: BlurWithCoverBackground(
@@ -1037,6 +1038,7 @@ class _PlayPageState extends State<PlayPage> {
             ],
           ),
         ),
-      );
+      ),
+    );
   }
 }

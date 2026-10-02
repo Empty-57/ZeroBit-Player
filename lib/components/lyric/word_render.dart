@@ -187,8 +187,9 @@ class HighlightedWordState extends State<HighlightedWord> {
 
       // glow 层
       glowChildren[i] = SmoothScale(
-        alignment: Alignment.bottomCenter,
         scale: scale,
+        alignment: Alignment.bottomCenter,
+        useFilterQuality: scale != 1.0,
         child: Text(
           char,
           style: _normalStyle.copyWith(

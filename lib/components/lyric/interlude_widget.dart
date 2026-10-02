@@ -209,8 +209,9 @@ class _BreathingDotsState extends State<_BreathingDots>
       animation: _scaleAnimation,
       builder: (context, child) {
         return SmoothScale(
-          alignment: LyricConstants.lrcScaleAlignment[widget.lrcAlignment],
           scale: _scaleAnimation.value,
+          alignment: LyricConstants.lrcScaleAlignment[widget.lrcAlignment],
+          useFilterQuality: _scaleAnimation.isAnimating,
           child: child!,
         );
       },
