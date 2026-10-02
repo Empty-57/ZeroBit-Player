@@ -791,7 +791,6 @@ class _PlayPageState extends State<PlayPage> {
         child: BlurWithCoverBackground(
           cover: _audioController.currentSmallCover,
           useGradient: false,
-          sigma: 256,
           useMask: true,
           radius: 0,
           meshEnable: true,
