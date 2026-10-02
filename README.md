@@ -212,7 +212,7 @@ flutter_rust_bridge_codegen generate --watch
 ### 赞助
 
 - [爱发电](https://ifdian.net/a/emp57)
-- [赞赏码](https://cdn.phototourl.com/free/2026-08-23-f6647569-7a61-4255-93f7-23bfaf87dd39.jpg)
+- [赞赏码](screenshot/zansang.jpg)
 
 ## 桌面歌词展示
 ![show](screenshot/12.png)
