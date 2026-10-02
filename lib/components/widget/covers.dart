@@ -77,6 +77,7 @@ class _LoadU8CoverState extends State<LoadU8Cover> {
   void didUpdateWidget(LoadU8Cover oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.data != oldWidget.data) {
+      unawaited(_imageProvider?.evict());
       _imageProvider = null;
       _triggerLoad();
     }
@@ -182,6 +183,7 @@ class _LoadLocalOrNetCoverState extends State<LoadLocalOrNetCover> {
   void didUpdateWidget(LoadLocalOrNetCover oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.music.path != oldWidget.music.path) {
+      unawaited(_imageProvider?.evict());
       _imageProvider = null;
       _triggerLoad();
     }
