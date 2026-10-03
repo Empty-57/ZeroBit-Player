@@ -784,218 +784,208 @@ class _PlayPageState extends State<PlayPage> {
     final spectrogramPaddingWidth =
         width * PlayPageConstant.spectrogramWidthFactorDiff;
 
-    return ExcludeSemantics(
-      child: Focus(
-        autofocus: true,
-        onKeyEvent: _onKeyEvent,
-        child: BlurWithCoverBackground(
-          cover: _audioController.currentSmallCover,
-          useGradient: false,
-          useMask: true,
-          radius: 0,
-          meshEnable: true,
-          onlyDarkMode: true,
-          isPlayPage: true,
-          child: Column(
-            children: [
-              const WindowControllerBar(
-                isNestedRoute: false,
-                showLogo: false,
-                useCaretDown: true,
-                useSearch: false,
-                useThemeSwitch: false,
-                onlyDarkMode: true,
-                useBlur: false,
-              ),
-              Expanded(
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onSecondaryTapDown: (details) => _menuController.isOpen
-                            ? _menuController.close()
-                            : _menuController.open(
-                                position: details.localPosition,
-                              ),
-                        child: MenuAnchor(
-                          consumeOutsideTap: true,
-                          controller: _menuController,
-                          style: MenuStyle(
-                            backgroundColor: WidgetStatePropertyAll(
-                              _themeService
-                                  .darkTheme
-                                  .colorScheme
-                                  .surfaceContainer
-                                  .withValues(alpha: 0.8),
+    return Focus(
+      autofocus: true,
+      onKeyEvent: _onKeyEvent,
+      child: BlurWithCoverBackground(
+        cover: _audioController.currentSmallCover,
+        useGradient: false,
+        useMask: true,
+        radius: 0,
+        meshEnable: true,
+        onlyDarkMode: true,
+        isPlayPage: true,
+        child: Column(
+          children: [
+            const WindowControllerBar(
+              isNestedRoute: false,
+              showLogo: false,
+              useCaretDown: true,
+              useSearch: false,
+              useThemeSwitch: false,
+              onlyDarkMode: true,
+              useBlur: false,
+            ),
+            Expanded(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onSecondaryTapDown: (details) => _menuController.isOpen
+                          ? _menuController.close()
+                          : _menuController.open(
+                              position: details.localPosition,
                             ),
+                      child: MenuAnchor(
+                        consumeOutsideTap: true,
+                        controller: _menuController,
+                        style: MenuStyle(
+                          backgroundColor: WidgetStatePropertyAll(
+                            _themeService.darkTheme.colorScheme.surfaceContainer
+                                .withValues(alpha: 0.8),
                           ),
-                          menuChildren: _buildMenuItems(
-                            _themeService.darkTheme.colorScheme,
-                          ),
-                          child: Stack(
-                            children: [
-                              SignalBuilder(
-                                builder: (context) {
-                                  final mode = _coverViewMode.value;
-                                  final coverOffsetInHalf =
-                                      (halfWidth - coverSize) / 2;
-                                  final detailWidth = halfWidth - 100;
+                        ),
+                        menuChildren: _buildMenuItems(
+                          _themeService.darkTheme.colorScheme,
+                        ),
+                        child: Stack(
+                          children: [
+                            SignalBuilder(
+                              builder: (context) {
+                                final mode = _coverViewMode.value;
+                                final coverOffsetInHalf =
+                                    (halfWidth - coverSize) / 2;
+                                final detailWidth = halfWidth - 100;
 
-                                  final (
-                                    lyricsRight,
-                                    lyricsOpacity,
-                                  ) = switch (mode) {
-                                    0 || 3 => (0.0, 1.0),
-                                    _ => (-halfWidth, 0.0),
-                                  };
+                                final (
+                                  lyricsRight,
+                                  lyricsOpacity,
+                                ) = switch (mode) {
+                                  0 || 3 => (0.0, 1.0),
+                                  _ => (-halfWidth, 0.0),
+                                };
 
-                                  final coverLeft = switch (mode) {
-                                    0 => coverOffsetInHalf, // 居中于左半区
-                                    1 => (width - coverSize) / 2, // 居中于全屏
-                                    3 => -halfWidth, // 移出左侧屏幕
-                                    _ =>
-                                      halfWidth + coverOffsetInHalf, // 居中于右半区
-                                  };
+                                final coverLeft = switch (mode) {
+                                  0 => coverOffsetInHalf, // 居中于左半区
+                                  1 => (width - coverSize) / 2, // 居中于全屏
+                                  3 => -halfWidth, // 移出左侧屏幕
+                                  _ => halfWidth + coverOffsetInHalf, // 居中于右半区
+                                };
 
-                                  final (
-                                    detailLeft,
-                                    detailOpacity,
-                                  ) = (mode == 2)
-                                      ? (detailWidth / 4, 1.0)
-                                      : (-halfWidth, 0.0);
+                                final (detailLeft, detailOpacity) = (mode == 2)
+                                    ? (detailWidth / 4, 1.0)
+                                    : (-halfWidth, 0.0);
 
-                                  final lyricsWidth = (mode == 3)
-                                      ? width
-                                      : halfWidth;
+                                final lyricsWidth = (mode == 3)
+                                    ? width
+                                    : halfWidth;
 
-                                  Widget buildAnimatedWidget({
-                                    double? left,
-                                    double? right,
-                                    required double width,
-                                    required Widget child,
-                                  }) {
-                                    return AnimatedPositioned(
-                                      duration: 300.ms,
-                                      curve: Curves.fastOutSlowIn,
-                                      top: 0,
-                                      bottom: 0,
-                                      left: left,
-                                      right: right,
-                                      width: width,
-                                      child: child,
-                                    );
-                                  }
+                                Widget buildAnimatedWidget({
+                                  double? left,
+                                  double? right,
+                                  required double width,
+                                  required Widget child,
+                                }) {
+                                  return AnimatedPositioned(
+                                    duration: 300.ms,
+                                    curve: Curves.fastOutSlowIn,
+                                    top: 0,
+                                    bottom: 0,
+                                    left: left,
+                                    right: right,
+                                    width: width,
+                                    child: child,
+                                  );
+                                }
 
-                                  return Stack(
-                                    children: [
-                                      buildAnimatedWidget(
-                                        right: lyricsRight,
-                                        width: lyricsWidth,
-                                        child: const _LyricsSide(),
+                                return Stack(
+                                  children: [
+                                    buildAnimatedWidget(
+                                      right: lyricsRight,
+                                      width: lyricsWidth,
+                                      child: const _LyricsSide(),
+                                    ),
+
+                                    buildAnimatedWidget(
+                                      left: coverLeft,
+                                      width: coverSize,
+                                      child: _CoverSide(
+                                        coverSize: coverSize,
+                                        titleStyle: _titleStyle,
+                                        subTitleStyle: _subTitleStyle,
                                       ),
+                                    ),
 
-                                      buildAnimatedWidget(
-                                        left: coverLeft,
-                                        width: coverSize,
-                                        child: _CoverSide(
-                                          coverSize: coverSize,
-                                          titleStyle: _titleStyle,
-                                          subTitleStyle: _subTitleStyle,
-                                        ),
-                                      ),
-
-                                      buildAnimatedWidget(
-                                        left: detailLeft,
-                                        width: detailWidth,
-                                        child: SignalBuilder(
-                                          builder: (_) => _MetadataDetailSide(
-                                            metadata: _audioController
-                                                .currentMetadata
-                                                .value,
-                                            style: _titleStyle.copyWith(
-                                              fontWeight: FontWeight.w300,
-                                              fontSize:
-                                                  _titleStyle.fontSize! - 3,
-                                            ),
+                                    buildAnimatedWidget(
+                                      left: detailLeft,
+                                      width: detailWidth,
+                                      child: SignalBuilder(
+                                        builder: (_) => _MetadataDetailSide(
+                                          metadata: _audioController
+                                              .currentMetadata
+                                              .value,
+                                          style: _titleStyle.copyWith(
+                                            fontWeight: FontWeight.w300,
+                                            fontSize: _titleStyle.fontSize! - 3,
                                           ),
                                         ),
                                       ),
-                                    ],
-                                  );
-                                },
-                              ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
 
-                              Positioned(
-                                left: 8,
-                                top: height / 2 - 36 * 4,
-                                child: MouseRegion(
-                                  onEnter: (_) =>
-                                      _isCoverViewModeBarHover.value = true,
-                                  onExit: (_) =>
-                                      _isCoverViewModeBarHover.value = false,
-                                  child: SignalBuilder(
-                                    builder: (_) {
-                                      final isHover =
-                                          _isCoverViewModeBarHover.value;
-                                      return AnimatedOpacity(
-                                        opacity: isHover ? 1.0 : 0.0,
-                                        duration: const Duration(
-                                          milliseconds: 150,
-                                        ),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            _buildModeBtn(
-                                              '封面+歌词',
-                                              PhosphorIconsFill.textbox,
-                                              PhosphorIconsLight.textbox,
-                                              0,
-                                              _mixColor,
-                                            ),
-                                            _buildModeBtn(
-                                              '仅封面',
-                                              PhosphorIconsFill.image,
-                                              PhosphorIconsLight.image,
-                                              1,
-                                              _mixColor,
-                                            ),
-                                            _buildModeBtn(
-                                              '详情',
-                                              PhosphorIconsFill.note,
-                                              PhosphorIconsLight.note,
-                                              2,
-                                              _mixColor,
-                                            ),
-                                            _buildModeBtn(
-                                              '仅歌词',
-                                              PhosphorIconsFill.articleNyTimes,
-                                              PhosphorIconsLight.articleNyTimes,
-                                              3,
-                                              _mixColor,
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  ),
+                            Positioned(
+                              left: 8,
+                              top: height / 2 - 36 * 4,
+                              child: MouseRegion(
+                                onEnter: (_) =>
+                                    _isCoverViewModeBarHover.value = true,
+                                onExit: (_) =>
+                                    _isCoverViewModeBarHover.value = false,
+                                child: SignalBuilder(
+                                  builder: (_) {
+                                    final isHover =
+                                        _isCoverViewModeBarHover.value;
+                                    return AnimatedOpacity(
+                                      opacity: isHover ? 1.0 : 0.0,
+                                      duration: const Duration(
+                                        milliseconds: 150,
+                                      ),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          _buildModeBtn(
+                                            '封面+歌词',
+                                            PhosphorIconsFill.textbox,
+                                            PhosphorIconsLight.textbox,
+                                            0,
+                                            _mixColor,
+                                          ),
+                                          _buildModeBtn(
+                                            '仅封面',
+                                            PhosphorIconsFill.image,
+                                            PhosphorIconsLight.image,
+                                            1,
+                                            _mixColor,
+                                          ),
+                                          _buildModeBtn(
+                                            '详情',
+                                            PhosphorIconsFill.note,
+                                            PhosphorIconsLight.note,
+                                            2,
+                                            _mixColor,
+                                          ),
+                                          _buildModeBtn(
+                                            '仅歌词',
+                                            PhosphorIconsFill.articleNyTimes,
+                                            PhosphorIconsLight.articleNyTimes,
+                                            3,
+                                            _mixColor,
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
+                            ),
 
-                              // --- 频谱图 ---
-                              Positioned(
-                                left: 0,
-                                bottom: 0,
-                                child: SignalBuilder(
-                                  builder: (context) {
-                                    final style = _settingController
-                                        .spectrogramStyle
-                                        .value;
-                                    return switch (style) {
-                                      SpectrogramStyleType.none =>
-                                        const SizedBox.shrink(),
-                                      SpectrogramStyleType.rect ||
-                                      SpectrogramStyleType
-                                          .pixel => SpectrogramWidget(
+                            // --- 频谱图 ---
+                            Positioned(
+                              left: 0,
+                              bottom: 0,
+                              child: SignalBuilder(
+                                builder: (context) {
+                                  final style =
+                                      _settingController.spectrogramStyle.value;
+                                  return switch (style) {
+                                    SpectrogramStyleType.none =>
+                                      const SizedBox.shrink(),
+                                    SpectrogramStyleType.rect ||
+                                    SpectrogramStyleType.pixel =>
+                                      SpectrogramWidget(
                                         gradient: _spectrogramBarGradient,
                                         length: spectrogramBarLength,
                                         barWidth: spectrogramBarWidth,
@@ -1003,40 +993,39 @@ class _PlayPageState extends State<PlayPage> {
                                         isPixelStyle:
                                             style == SpectrogramStyleType.pixel,
                                       ),
-                                      SpectrogramStyleType.waveform ||
-                                      SpectrogramStyleType
-                                          .wave => WaveSpectrogramWidget(
+                                    SpectrogramStyleType.waveform ||
+                                    SpectrogramStyleType.wave =>
+                                      WaveSpectrogramWidget(
                                         color: _activeTrackCover,
                                         length: spectrogramBarLength,
                                         width: width,
                                         isFill:
                                             style == SpectrogramStyleType.wave,
                                       ),
-                                      _ => const SizedBox.shrink(),
-                                    };
-                                  },
-                                ),
+                                    _ => const SizedBox.shrink(),
+                                  };
+                                },
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    ControlBar(
-                      mixColor: _mixColor,
-                      activeTrackCover: _activeTrackCover,
-                      inactiveTrackCover: _inactiveTrackCover,
-                      timeCurrentStyle: _timeCurrentStyle,
-                      timeTotalStyle: _timeTotalStyle,
-                      playQueueScrollController: _playQueueScrollController,
-                      playQueueMenuController: _playQueueMenuController,
-                      isBarHover: _isBarHover,
-                    ),
-                  ],
-                ),
+                  ),
+                  ControlBar(
+                    mixColor: _mixColor,
+                    activeTrackCover: _activeTrackCover,
+                    inactiveTrackCover: _inactiveTrackCover,
+                    timeCurrentStyle: _timeCurrentStyle,
+                    timeTotalStyle: _timeTotalStyle,
+                    playQueueScrollController: _playQueueScrollController,
+                    playQueueMenuController: _playQueueMenuController,
+                    isBarHover: _isBarHover,
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

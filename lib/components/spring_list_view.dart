@@ -433,7 +433,8 @@ class _SpringItemState extends State<_SpringItem>
           dy: controller.value, // 直接应用物理控制器的值
           useFilterQuality:
               !(controller.isCompleted ||
-                  controller.isDismissed), // TODO 这里还是会出现抖动，考虑常开useFilterQuality
+                  controller
+                      .isDismissed), // TODO 这里还是会出现抖动，考虑常开useFilterQuality
           // useFilterQuality: true,
           child: child!,
         );

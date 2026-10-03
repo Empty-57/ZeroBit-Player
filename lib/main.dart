@@ -736,15 +736,19 @@ class MainFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeService themeService = ThemeService.instance;
     final SettingController settingController = SettingController.instance;
-    return SignalBuilder(
-      builder: (context) => MaterialApp.router(
-        routerConfig: _router,
-        theme: themeService.lightTheme,
-        darkTheme: themeService.darkTheme,
-        themeMode: settingController.themeMode.value == 'dark'
-            ? ThemeMode.dark
-            : ThemeMode.light,
-        debugShowCheckedModeBanner: false,
+    // 整个 App 外层套 ExcludeSemantics，规避 Flutter Windows 引擎的一个未修 bug: AccessibilityBridge 中的空父级解引用
+    // issue #175041 / #192689 / #193410 / #193715，以及 PR #190903
+    return ExcludeSemantics(
+      child: SignalBuilder(
+        builder: (context) => MaterialApp.router(
+          routerConfig: _router,
+          theme: themeService.lightTheme,
+          darkTheme: themeService.darkTheme,
+          themeMode: settingController.themeMode.value == 'dark'
+              ? ThemeMode.dark
+              : ThemeMode.light,
+          debugShowCheckedModeBanner: false,
+        ),
       ),
     );
   }
@@ -804,73 +808,71 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return ExcludeSemantics(
-      child: Stack(
-        children: [
-          const WindowBackgroundImage(),
-          const WindowBackgroundOverlay(),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              const WindowControllerBar(),
-              Expanded(
-                flex: 1,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsetsGeometry.all(8),
-                      child: SideBar(
-                        btnList: const <Widget>[
-                          SideBarBtn(
-                            label: '音乐',
-                            icon: PhosphorIconsLight.musicNoteSimple,
-                            localIndex: AppRoutes.homeOrder,
-                          ),
-                          SideBarBtn(
-                            label: '艺术家',
-                            icon: PhosphorIconsLight.userFocus,
-                            localIndex: AppRoutes.artistPreviewOrder,
-                          ),
-                          SideBarBtn(
-                            label: '专辑',
-                            icon: PhosphorIconsLight.vinylRecord,
-                            localIndex: AppRoutes.albumPreviewOrder,
-                          ),
-                          SideBarBtn(
-                            label: '歌单',
-                            icon: PhosphorIconsLight.playlist,
-                            localIndex: AppRoutes.playListPreviewOrder,
-                          ),
-                          SideBarBtn(
-                            label: '文件夹',
-                            icon: PhosphorIconsLight.folders,
-                            localIndex: AppRoutes.foldersPreviewOrder,
-                          ),
-                          SideBarBtn(
-                            label: '统计',
-                            icon: PhosphorIconsLight.chartLine,
-                            localIndex: AppRoutes.statisticsOrder,
-                          ),
-                          SideBarBtn(
-                            label: '设置',
-                            icon: PhosphorIconsLight.gearSix,
-                            localIndex: AppRoutes.settingOrder,
-                          ),
-                        ],
-                      ),
+    return Stack(
+      children: [
+        const WindowBackgroundImage(),
+        const WindowBackgroundOverlay(),
+        Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const WindowControllerBar(),
+            Expanded(
+              flex: 1,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsetsGeometry.all(8),
+                    child: SideBar(
+                      btnList: const <Widget>[
+                        SideBarBtn(
+                          label: '音乐',
+                          icon: PhosphorIconsLight.musicNoteSimple,
+                          localIndex: AppRoutes.homeOrder,
+                        ),
+                        SideBarBtn(
+                          label: '艺术家',
+                          icon: PhosphorIconsLight.userFocus,
+                          localIndex: AppRoutes.artistPreviewOrder,
+                        ),
+                        SideBarBtn(
+                          label: '专辑',
+                          icon: PhosphorIconsLight.vinylRecord,
+                          localIndex: AppRoutes.albumPreviewOrder,
+                        ),
+                        SideBarBtn(
+                          label: '歌单',
+                          icon: PhosphorIconsLight.playlist,
+                          localIndex: AppRoutes.playListPreviewOrder,
+                        ),
+                        SideBarBtn(
+                          label: '文件夹',
+                          icon: PhosphorIconsLight.folders,
+                          localIndex: AppRoutes.foldersPreviewOrder,
+                        ),
+                        SideBarBtn(
+                          label: '统计',
+                          icon: PhosphorIconsLight.chartLine,
+                          localIndex: AppRoutes.statisticsOrder,
+                        ),
+                        SideBarBtn(
+                          label: '设置',
+                          icon: PhosphorIconsLight.gearSix,
+                          localIndex: AppRoutes.settingOrder,
+                        ),
+                      ],
                     ),
-                    Expanded(child: widget.child),
-                  ],
-                ),
+                  ),
+                  Expanded(child: widget.child),
+                ],
               ),
-            ],
-          ),
-          const PlayBar(),
-        ],
-      ),
+            ),
+          ],
+        ),
+        const PlayBar(),
+      ],
     );
   }
 }

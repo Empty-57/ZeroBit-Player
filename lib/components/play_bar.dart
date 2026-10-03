@@ -115,13 +115,11 @@ class PlayBar extends StatelessWidget {
           right: rightOffset,
           child: ClipRRect(
             borderRadius: _coverBorderRadius,
-            child: ExcludeSemantics(
-              child: Column(
-                children: [
-                  _buildSlider(context, audioCtrlWidget),
-                  _buildPlayBarBody(context, audioCtrlWidget),
-                ],
-              ),
+            child: Column(
+              children: [
+                _buildSlider(context, audioCtrlWidget),
+                _buildPlayBarBody(context, audioCtrlWidget),
+              ],
             ),
           ),
         );

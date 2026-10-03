@@ -208,10 +208,11 @@ class _BreathingDotsState extends State<_BreathingDots>
     return AnimatedBuilder(
       animation: _scaleAnimation,
       builder: (context, child) {
+        final double scale = _scaleAnimation.value;
         return SmoothScale(
-          scale: _scaleAnimation.value,
+          scale: scale,
           alignment: LyricConstants.lrcScaleAlignment[widget.lrcAlignment],
-          useFilterQuality: _scaleAnimation.isAnimating,
+          useFilterQuality: scale != 1.0,
           child: child!,
         );
       },
