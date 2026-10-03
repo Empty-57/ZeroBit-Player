@@ -18,6 +18,7 @@ import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
 import '../../field/set_constants.dart';
+import '../nil.dart';
 import '../widget/audio_ctrl_btn.dart';
 
 class _LyricsStyle {
@@ -153,6 +154,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                   LoggerUni.i("LyricRenderReBuild");
                   if (!c.showLyricRender) {
                     return Center(
+                      key: const ValueKey('no_lyrics_placeholder'),
                       child: Text(
                         "无歌词",
                         style: lyricsStyle.copyWith(
@@ -244,7 +246,7 @@ class _LyricsRenderState extends State<LyricsRender> {
 
                   return useSpringScroll
                       ? SpringListView(
-                          key: ValueKey(currentSongPath),
+                          key: ValueKey('spring_$currentSongPath'),
                           length: c.lineTextList.length,
                           controller: _lyricController.springController!,
                           itemBuilder: (int index) {
@@ -255,7 +257,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                           canRequestFocus: false,
                           descendantsAreFocusable: false,
                           child: ScrollablePositionedList.builder(
-                            key: ValueKey(currentSongPath),
+                            key: ValueKey('positioned_$currentSongPath'),
                             itemCount: c.lineTextList.length,
                             initialScrollIndex: 0,
                             initialAlignment: 0.4,
@@ -453,7 +455,7 @@ class _StaggeredLyricItem extends StatelessWidget {
 
         final isPointerScrolling = lyricController.isPointerScroll.value;
         if (!renderWidget && useSpringScroll && !isPointerScrolling) {
-          return const SizedBox.shrink(); // ?
+          return nil; // ?
         }
 
         final isCurrent = index == currentLineIndex;
@@ -475,6 +477,7 @@ class _StaggeredLyricItem extends StatelessWidget {
             children: [
               if (index == 0)
                 InterludeWidget(
+                  key: const ValueKey('prelude'),
                   lyricController: lyricController,
                   lrcAlignment: lrcAlignment,
                   interludeLyricStyle: interludeLyricStyle,
@@ -534,6 +537,7 @@ class _StaggeredLyricItem extends StatelessWidget {
               ),
               if (isCurrent || isPrevLine)
                 InterludeWidget(
+                  key: const ValueKey('interlude'),
                   lyricController: lyricController,
                   lrcAlignment: lrcAlignment,
                   interludeLyricStyle: interludeLyricStyle,
