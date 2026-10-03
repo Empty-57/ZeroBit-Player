@@ -66,8 +66,10 @@ class _LoadU8CoverState extends State<LoadU8Cover> {
     final dprSize = (sideLength * _dpr).round();
     _cacheResolution =
         dprSize >
-            (_coverCoverResolutionMap[widget.coverResolutionFlag] ??
-                _maxSmallCoverResolution)
+                (_coverCoverResolutionMap[widget.coverResolutionFlag] ??
+                    _maxSmallCoverResolution) &&
+            (widget.coverResolutionFlag == .small ||
+                widget.coverResolutionFlag == .middle)
         ? _maxSmallCoverResolution
         : dprSize;
     _triggerLoad(isInit: true);
@@ -172,8 +174,10 @@ class _LoadLocalOrNetCoverState extends State<LoadLocalOrNetCover> {
     final dprSize = (sideLength * _dpr).round();
     _cacheResolution =
         dprSize >
-            (_coverCoverResolutionMap[widget.coverResolutionFlag] ??
-                _maxSmallCoverResolution)
+                (_coverCoverResolutionMap[widget.coverResolutionFlag] ??
+                    _maxSmallCoverResolution) &&
+            (widget.coverResolutionFlag == .small ||
+                widget.coverResolutionFlag == .middle)
         ? _maxSmallCoverResolution
         : dprSize;
     _triggerLoad(isInit: true);
