@@ -1,3 +1,4 @@
+use image::codecs::jpeg::JpegEncoder;
 use image::{load_from_memory, ImageFormat};
 use lofty::config::{ParseOptions, ParsingMode, WriteOptions};
 use lofty::error::{ErrorKind as LoftyErrorKind, LoftyError};
@@ -450,7 +451,7 @@ pub fn get_cover(path: String, size_flag: CoverQuality) -> Option<Vec<u8>> {
             }
         };
 
-        let (cover_width, cover_height)= match size_flag {
+        let (cover_width, cover_height) = match size_flag {
             CoverQuality::Low => (200, 200),
             CoverQuality::Middle => (600, 600),
             CoverQuality::High => (1000, 1000),
@@ -463,17 +464,15 @@ pub fn get_cover(path: String, size_flag: CoverQuality) -> Option<Vec<u8>> {
             image_data.thumbnail(cover_width, cover_height)
         };
 
-        let mut output_bytes = Vec::new();
-        match image_data
-            .to_rgb8()
-            .write_to(&mut Cursor::new(&mut output_bytes), ImageFormat::Jpeg)
-        {
-            Ok(_) => Some(output_bytes),
-            Err(err) => {
-                println!("Error resize cover: {}", err);
-                None
-            }
-        }
+        let mut cursor = Cursor::new(Vec::with_capacity(64 * 1024));
+        let encoder = JpegEncoder::new_with_quality(&mut cursor, 85);
+
+        image_data
+            .into_rgb8()
+            .write_with_encoder(encoder)
+            .map(|_| cursor.into_inner())
+            .inspect_err(|err| eprintln!("Error resize cover: {err}"))
+            .ok()
     } else {
         None
     }
