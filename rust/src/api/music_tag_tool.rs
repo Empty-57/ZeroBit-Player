@@ -450,15 +450,18 @@ pub fn get_cover(path: String, size_flag: CoverQuality) -> Option<Vec<u8>> {
             }
         };
 
-        let (cover_size, filter_type) = match size_flag {
-            CoverQuality::Low => ((150, 150), image::imageops::FilterType::Triangle),
-            CoverQuality::Middle => ((450, 450), image::imageops::FilterType::Triangle),
-            CoverQuality::High => ((800, 800), image::imageops::FilterType::Lanczos3),
+        let (cover_width, cover_height)= match size_flag {
+            CoverQuality::Low => (200, 200),
+            CoverQuality::Middle => (600, 600),
+            CoverQuality::High => (1000, 1000),
         };
 
-        let (cover_witdh, cover_height) = cover_size;
-
-        let image_data = image_data.resize(cover_witdh, cover_height, filter_type);
+        let image_data = if image_data.width() <= cover_width && image_data.height() <= cover_height
+        {
+            image_data
+        } else {
+            image_data.thumbnail(cover_width, cover_height)
+        };
 
         let mut output_bytes = Vec::new();
         match image_data

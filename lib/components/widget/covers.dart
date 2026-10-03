@@ -14,14 +14,9 @@ const double _coverSize = 48.0;
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 final double _dpr = PlatformDispatcher.instance.views.first.devicePixelRatio;
 
-// CoverQuality.low 返回的缩略图最长边就是150
-const int _maxSmallCoverResolution = 150;
-
-// CoverQuality.middle 返回的缩略图最长边就是450
-const int _maxMiddleCoverResolution = 450;
-
-// CoverQuality.high 返回的缩略图最长边就是800
-const int _maxBigCoverResolution = 800;
+const int _maxSmallCoverResolution = 200;
+const int _maxMiddleCoverResolution = 600;
+const int _maxBigCoverResolution = 1000;
 
 const _coverCoverResolutionMap = <CoverResolutionFlag, int>{
   CoverResolutionFlag.small: _maxSmallCoverResolution,
@@ -64,14 +59,10 @@ class _LoadU8CoverState extends State<LoadU8Cover> {
     super.initState();
     final sideLength = widget.width ?? widget.height ?? _coverSize;
     final dprSize = (sideLength * _dpr).round();
-    _cacheResolution =
-        dprSize >
-                (_coverCoverResolutionMap[widget.coverResolutionFlag] ??
-                    _maxSmallCoverResolution) &&
-            (widget.coverResolutionFlag == .small ||
-                widget.coverResolutionFlag == .middle)
-        ? _maxSmallCoverResolution
-        : dprSize;
+    final maxResolution =
+        _coverCoverResolutionMap[widget.coverResolutionFlag] ??
+        _maxMiddleCoverResolution;
+    _cacheResolution = dprSize.clamp(1, maxResolution);
     _triggerLoad(isInit: true);
   }
 
@@ -114,6 +105,7 @@ class _LoadU8CoverState extends State<LoadU8Cover> {
         height: widget.height,
         fit: BoxFit.cover,
         gaplessPlayback: true,
+        filterQuality: .medium,
         frameBuilder: widget.useFrameBuilderCallback
             ? (context, child, frame, wasSynchronouslyLoaded) {
                 if (wasSynchronouslyLoaded) return child;
@@ -172,14 +164,10 @@ class _LoadLocalOrNetCoverState extends State<LoadLocalOrNetCover> {
     super.initState();
     final sideLength = widget.width ?? widget.height ?? _coverSize;
     final dprSize = (sideLength * _dpr).round();
-    _cacheResolution =
-        dprSize >
-                (_coverCoverResolutionMap[widget.coverResolutionFlag] ??
-                    _maxSmallCoverResolution) &&
-            (widget.coverResolutionFlag == .small ||
-                widget.coverResolutionFlag == .middle)
-        ? _maxSmallCoverResolution
-        : dprSize;
+    final maxResolution =
+        _coverCoverResolutionMap[widget.coverResolutionFlag] ??
+        _maxMiddleCoverResolution;
+    _cacheResolution = dprSize.clamp(1, maxResolution);
     _triggerLoad(isInit: true);
   }
 
@@ -292,6 +280,7 @@ class _LoadLocalOrNetCoverState extends State<LoadLocalOrNetCover> {
           height: widget.height,
           fit: BoxFit.cover,
           gaplessPlayback: true,
+          filterQuality: .medium,
           frameBuilder: widget.useFrameBuilderCallback
               ? (context, child, frame, wasSynchronouslyLoaded) {
                   if (wasSynchronouslyLoaded) return child;
