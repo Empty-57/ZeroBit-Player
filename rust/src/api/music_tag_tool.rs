@@ -352,7 +352,11 @@ impl AudioMetadata {
                 }
             };
 
-            let image_data = image_data.resize(800, 800, image::imageops::FilterType::Lanczos3);
+            let image_data = if image_data.width() <= 1000 && image_data.height() <= 1000 {
+                image_data
+            } else {
+                image_data.thumbnail(1000, 1000)
+            };
 
             let mut output_bytes = Vec::new();
             image_data
