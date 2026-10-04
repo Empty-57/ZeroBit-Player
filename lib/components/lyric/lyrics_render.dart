@@ -1,6 +1,5 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:signals/signals_flutter.dart';
@@ -289,7 +288,7 @@ class _LyricsRenderState extends State<LyricsRender> {
               child: SignalBuilder(
                 builder: (context) => AnimatedOpacity(
                   opacity: _isHover.value ? 1.0 : 0.0,
-                  duration: 150.ms,
+                  duration: const Duration(milliseconds: 150),
                   child: Column(
                     spacing: 4.0,
                     children: [
