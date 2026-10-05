@@ -22,7 +22,6 @@ import 'package:zerobit_player/components/window_background.dart';
 import 'package:zerobit_player/components/window_ctrl_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/statistics_ctrl.dart';
-import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/adapters/scalable_setting_adapters.dart';
 import 'package:zerobit_player/hive_manager/adapters/statistics_cache_adapter.dart';
