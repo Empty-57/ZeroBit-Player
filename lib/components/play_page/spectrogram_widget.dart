@@ -454,7 +454,6 @@ class _WaveSpectrogramWidgetState extends State<WaveSpectrogramWidget> {
     _fillShader2 = null;
     _lineShader2 = null;
     _glowShader2 = null;
-    super.dispose();
   }
 
   /// 构建主波与辅波的双套着色器
