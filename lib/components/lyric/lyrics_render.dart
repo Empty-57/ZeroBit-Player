@@ -115,7 +115,7 @@ class _LyricsRenderState extends State<LyricsRender> {
   @override
   Widget build(BuildContext context) {
     Color? mixColor = lrcStylePackage.mixColor;
-    final size=MediaQuery.sizeOf(context);
+    final size = MediaQuery.sizeOf(context);
     final height = size.height;
     final width = size.width;
 
@@ -180,8 +180,8 @@ class _LyricsRenderState extends State<LyricsRender> {
                   final currentSongPath = c.currentPath.peek();
 
                   final lrcPadding = EdgeInsets.only(
-                    top: 16,
-                    bottom: 16,
+                    top: 8,
+                    bottom: 8,
                     left: lrcAlignment == LrcAlignmentType.right
                         ? dynamicPadding
                         : lrcAlignment == LrcAlignmentType.center
@@ -198,14 +198,6 @@ class _LyricsRenderState extends State<LyricsRender> {
                       : lrcAlignment == LrcAlignmentType.center
                       ? TextAlign.center
                       : TextAlign.right;
-
-                  final buttonStyle = TextButton.styleFrom(
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: LyricConstants.borderRadius,
-                    ),
-                    padding: lrcPadding,
-                    overlayColor: hoverColor,
-                  );
 
                   Widget creatLyricItem(int index) {
                     if (index < 0 ||
@@ -229,7 +221,6 @@ class _LyricsRenderState extends State<LyricsRender> {
                       romaLyricStyle: romaLyricStyle,
                       furiganaLyricStyle: furiganaLyricStyle,
                       interludeLyricStyle: interludeLyricStyle,
-                      buttonStyle: buttonStyle,
                       strutStyle: strutStyle,
                       hoverColor: hoverColor,
                       lrcAlignment: lrcAlignment,
@@ -384,9 +375,8 @@ class _StaggeredLyricItem extends StatelessWidget {
   final TextStyle romaLyricStyle;
   final TextStyle interludeLyricStyle;
   final TextStyle furiganaLyricStyle;
-  final ButtonStyle buttonStyle;
   final StrutStyle strutStyle;
-  final Color? hoverColor;
+  final Color hoverColor;
 
   final void Function(double) onClick;
 
@@ -415,7 +405,6 @@ class _StaggeredLyricItem extends StatelessWidget {
     required this.onClick,
     required this.furiganaLyricStyle,
     required this.showKana,
-    required this.buttonStyle,
   });
 
   Widget _createAnimatedScaleWidget({
@@ -547,15 +536,55 @@ class _StaggeredLyricItem extends StatelessWidget {
           ),
         );
 
-        return BlurLine(
-          blurSigma: blurSigma,
-          child: TextButton(
-            onPressed: () => onClick(startTime),
-            style: buttonStyle,
-            child: content,
-          ),
+        return _LyricLineContainer(
+          onTap: () => onClick(startTime),
+          padding: lrcPadding,
+          hoverColor: hoverColor,
+          child: BlurLine(blurSigma: blurSigma, child: content),
         );
       },
+    );
+  }
+}
+
+class _LyricLineContainer extends StatefulWidget {
+  final VoidCallback onTap;
+  final EdgeInsets padding;
+  final Color hoverColor;
+  final Widget child;
+
+  const _LyricLineContainer({
+    required this.onTap,
+    required this.padding,
+    required this.hoverColor,
+    required this.child,
+  });
+
+  @override
+  State<_LyricLineContainer> createState() => _LyricLineContainerState();
+}
+
+class _LyricLineContainerState extends State<_LyricLineContainer> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        child: Container(
+          padding: widget.padding,
+          decoration: BoxDecoration(
+            color: _isHovered ? widget.hoverColor : Colors.transparent,
+            borderRadius: LyricConstants.borderRadius,
+          ),
+          child: widget.child,
+        ),
+      ),
     );
   }
 }
