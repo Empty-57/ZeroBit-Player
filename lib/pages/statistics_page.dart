@@ -386,15 +386,14 @@ class _StatisticsArtistTile extends StatelessWidget {
                   spacing: 8,
                   children: [
                     SizedBox(
-                      width: maxWidth * 0.05,
                       child: Text(
-                        '${(ratio * 100).toStringAsFixed(2)}%',
+                        '${(ratio * 100).toStringAsFixed(2).padLeft(6, ' ')}%',
                         style: subTextStyle,
-                        textAlign: TextAlign.right,
+                        textAlign: TextAlign.left,
                       ),
                     ),
                     Container(
-                      width: maxWidth * 0.75 * ratio,
+                      width: maxWidth * 0.9 * ratio,
                       height: 2,
                       decoration: BoxDecoration(
                         borderRadius: _borderRadius,

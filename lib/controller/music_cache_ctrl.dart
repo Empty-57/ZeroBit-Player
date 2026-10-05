@@ -78,6 +78,7 @@ class MusicCacheController with DetailsPageControllerBase {
 
   void loadData() {
     items.value = _musicCacheBox.getAll();
+    itemsMap.value = {for (final v in items.value) v.path: v};
     itemReSort(operateArea: OperateArea.allMusic);
     _groupItems();
   }
@@ -134,6 +135,7 @@ class MusicCacheController with DetailsPageControllerBase {
     await _musicCacheBox.del(
       key: md5.convert(utf8.encode(metadata.path)).toString(),
     );
+    itemsMap.remove(metadata.path);
     _groupItems(); // 数据删除后重新分组
   }
 
@@ -200,6 +202,7 @@ class MusicCacheController with DetailsPageControllerBase {
       key: md5.convert(utf8.encode(path)).toString(),
     );
     items[index] = newCache;
+    itemsMap[path] = newCache;
 
     _groupItems(); // 数据修改后重新分组
 

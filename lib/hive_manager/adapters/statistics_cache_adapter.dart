@@ -10,6 +10,7 @@ class StatisticsCacheAdapter extends TypeAdapter<StatisticsCache> {
   StatisticsCache read(BinaryReader reader) {
     return StatisticsCache(
       title: reader.readString(),
+      path: reader.readString(),
       playedCount: reader.readInt(),
       playedTime: reader.readDouble(),
       recordTimestamp: reader.readInt(),
@@ -19,6 +20,7 @@ class StatisticsCacheAdapter extends TypeAdapter<StatisticsCache> {
   @override
   void write(BinaryWriter writer, StatisticsCache obj) {
     writer.writeString(obj.title);
+    writer.writeString(obj.path);
     writer.writeInt(obj.playedCount);
     writer.writeDouble(obj.playedTime);
     writer.writeInt(obj.recordTimestamp);

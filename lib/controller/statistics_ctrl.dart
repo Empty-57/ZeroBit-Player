@@ -111,6 +111,7 @@ class StatisticsController {
       playedStatisticsList.add(
         StatisticsCache(
           title: metadata.title,
+          path: metadata.path,
           playedCount: isRecordCount ? 1 : 0,
           playedTime: delta,
           recordTimestamp: DateTime.now().millisecondsSinceEpoch,
@@ -120,6 +121,7 @@ class StatisticsController {
       final oldData = playedStatisticsList[index];
       playedStatisticsList[index] = StatisticsCache(
         title: oldData.title,
+        path: oldData.path,
         playedCount: oldData.playedCount + (isRecordCount ? 1 : 0),
         playedTime: oldData.playedTime + delta,
         recordTimestamp: DateTime.now().millisecondsSinceEpoch,
@@ -222,19 +224,12 @@ class StatisticsController {
       return b.recordTimestamp.compareTo(a.recordTimestamp);
     });
 
-    final musicMap = {
-      for (final item in _musicCacheController.items) item.title: item,
-    };
-
-    final temp = playedStatisticsList
-        .map((stat) {
-          final music = musicMap[stat.title];
-          return music != null
-              ? _RankedMusicItem(metadata: music, statistics: stat)
-              : null;
-        })
-        .nonNulls
-        .toList(); // 过滤null
+    final musicMap = _musicCacheController.itemsMap;
+    final temp = [
+      for (final stat in playedStatisticsList)
+        if (musicMap[stat.path] case final music?)
+          _RankedMusicItem(metadata: music, statistics: stat),
+    ];
 
     batch(() {
       playedTop50.value = temp.take(50).toList();

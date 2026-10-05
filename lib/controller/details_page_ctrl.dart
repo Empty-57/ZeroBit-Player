@@ -69,10 +69,11 @@ class DetailsPageController with DetailsPageControllerBase {
     String operateArea, {
     bool loadCover = true,
   }) async {
-    final pathSet = pathList.toSet();
-    items.value = _musicCacheController.items
-        .where((v) => pathSet.contains(v.path))
-        .toList();
+    final map = _musicCacheController.itemsMap;
+    items.value = [
+      for (final path in pathList)
+        if (map[path] case final item?) item,
+    ];
 
     itemReSort(operateArea: operateArea);
     if (loadCover) {

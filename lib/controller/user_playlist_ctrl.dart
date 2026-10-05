@@ -1,6 +1,7 @@
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/widget/get_snack_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/hive_box.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
@@ -13,17 +14,48 @@ class UserPlayListController {
   final items = listSignal(<UserPlayListCache>[]);
   final _userPlayListCacheBox = HiveBox.userPlayListCacheBox;
   AudioController get _audioController => AudioController.instance;
+  MusicCacheController get _musicCacheController =>
+      MusicCacheController.instance;
 
   List<String> get allUserKey => items.map((e) => e.userKey).toList();
 
   final songDeletedSignal = signal(<String>[]);
 
-  void init() {
-    _loadData();
-  }
+  void loadData() async {
+    final rawPlaylists = _userPlayListCacheBox.getAll();
+    if (rawPlaylists.isEmpty) {
+      items.value = const [];
+      return;
+    }
+    final map = _musicCacheController.itemsMap.peek();
 
-  void _loadData() {
-    items.value = _userPlayListCacheBox.getAll();
+    bool hasDeadLinks = false;
+    final List<UserPlayListCache> cleanList = [];
+    final Map<String, UserPlayListCache> changedMap = {};
+
+    for (final playlist in rawPlaylists) {
+      final originalPaths = playlist.pathList;
+      final bool isDirty = originalPaths.any((p) => !map.containsKey(p));
+      if (!isDirty) {
+        cleanList.add(playlist);
+      } else {
+        hasDeadLinks = true;
+        final validPaths = [
+          for (final p in originalPaths)
+            if (map.containsKey(p)) p,
+        ];
+        final updated = UserPlayListCache(
+          userKey: playlist.userKey,
+          pathList: validPaths,
+        );
+        cleanList.add(updated);
+        changedMap[playlist.userKey] = updated;
+      }
+    }
+    items.value = cleanList;
+    if (hasDeadLinks && changedMap.isNotEmpty) {
+      await _userPlayListCacheBox.putAll(data: changedMap);
+    }
   }
 
   String _getDisplayName(String userKey) => userKey.split('_')[0];

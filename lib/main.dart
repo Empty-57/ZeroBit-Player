@@ -201,7 +201,6 @@ void main() async {
   DesktopLyricsSettingController.instance.init();
   SettingController.instance.init();
   AudioController.instance.init();
-  UserPlayListController.instance.init();
   DesktopLyricsSever.instance.init();
   await TrayManagerService.instance.init();
   WindowController.instance.init();

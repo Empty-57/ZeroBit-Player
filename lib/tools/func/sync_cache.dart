@@ -12,6 +12,8 @@ import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 
+import '../../controller/user_playlist_ctrl.dart';
+
 const Set<String> supportedExts = {
   '.aac',
   '.ape',
@@ -135,6 +137,7 @@ Future<void> syncCache() async {
   musicCacheCtrl.currentScanAudio.value = '';
   musicCacheCtrl.items.clear();
   musicCacheCtrl.loadData();
+  UserPlayListController.instance.loadData();
 
   audioCtrl.playListCacheItems.value = [...musicCacheCtrl.items];
   audioCtrl.syncCurrentIndex();

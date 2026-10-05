@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:signals/signals_flutter.dart';
@@ -26,9 +27,7 @@ Future<List<MusicCache>> _sortFilesByTime(
     final batchResults = await Future.wait(
       batch.map((m) async {
         try {
-          final file = File(m.path);
-          final exists = await file.exists();
-          final time = exists ? await getTime(file) : DateTime.now();
+          final time = await getTime(File(m.path));
           return (m, time);
         } catch (_) {
           return (m, DateTime.now());
@@ -43,7 +42,7 @@ Future<List<MusicCache>> _sortFilesByTime(
     pairs.sort(
       (a, b) => descending ? b.$2.compareTo(a.$2) : a.$2.compareTo(b.$2),
     );
-    return pairs.map((p) => p.$1).toList();
+    return [for (final p in pairs) p.$1];
   } else {
     return compute(_sortPairs, (pairs, descending));
   }
@@ -55,27 +54,24 @@ List<MusicCache> _sortPairs((List<(MusicCache, DateTime)>, bool) args) {
   pairs.sort(
     (a, b) => descending ? b.$2.compareTo(a.$2) : a.$2.compareTo(b.$2),
   );
-  return pairs.map((p) => p.$1).toList();
+  return [for (final p in pairs) p.$1];
 }
 
 List<MusicCache> _sortPairs2((List<MusicCache>, int, bool) args) {
-  final (pairs, type, descending) = args;
-  pairs.sort(
-    (a, b) => descending
-        ? getSortType(
-            type: type,
-            data: b,
-          ).compareTo(getSortType(type: type, data: a))
-        : getSortType(
-            type: type,
-            data: a,
-          ).compareTo(getSortType(type: type, data: b)),
+  final (list, type, descending) = args;
+  final decorated = [
+    for (final item in list) (item, getSortType(type: type, data: item)),
+  ];
+  decorated.sort(
+    (a, b) => descending ? b.$2.compareTo(a.$2) : a.$2.compareTo(b.$2),
   );
-  return pairs.map((p) => p).toList();
+
+  return [for (final d in decorated) d.$1];
 }
 
 mixin DetailsPageControllerBase {
   final ListSignal<MusicCache> items = listSignal([]);
+  final itemsMap = mapSignal(<String, MusicCache>{});
   final Signal<Uint8List> headCover = signal(kTransparentImage);
   final SettingController _settingController = SettingController.instance;
   AudioController get audioController => AudioController.instance;
@@ -102,7 +98,7 @@ mixin DetailsPageControllerBase {
     final metadataToPlay =
         metadata ??
         (_settingController.playMode.value == PlayModeType.random
-            ? items[audioController.pickNextRandomIndex()??0]
+            ? items[audioController.pickNextRandomIndex() ?? 0]
             : items[0]);
     audioController.audioPlay(metadata: metadataToPlay);
   }
