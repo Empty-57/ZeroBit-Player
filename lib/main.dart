@@ -584,6 +584,8 @@ CustomTransitionPage<void> _buildNormalPage({
   );
 }
 
+final CurveTween _playPageFadeCurve = CurveTween(curve: Curves.fastOutSlowIn);
+
 // 播放页面切换动画构造函数
 CustomTransitionPage<void> _buildPlayPage({
   required GoRouterState state,
@@ -599,10 +601,7 @@ CustomTransitionPage<void> _buildPlayPage({
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       return FadeTransition(
-        opacity: CurvedAnimation(
-          parent: animation,
-          curve: Curves.fastOutSlowIn,
-        ),
+        opacity: animation.drive(_playPageFadeCurve),
         child: child,
       );
     },
@@ -745,6 +744,7 @@ class MainFrame extends StatelessWidget {
           themeMode: settingController.themeMode.value == 'dark'
               ? ThemeMode.dark
               : ThemeMode.light,
+          // themeAnimationStyle: AnimationStyle.noAnimation,
           debugShowCheckedModeBanner: false,
         ),
       ),

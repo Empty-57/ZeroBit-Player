@@ -7,11 +7,8 @@ class ThemeService {
   static final instance = ThemeService._();
   final SettingController _settingController = SettingController.instance;
 
-  final _contrastLevel = 0.0;
-  final _dynamicSchemeVariant = DynamicSchemeVariant.tonalSpot;
-
-  final _thickness = 4.0;
-  final _radius = 8.0;
+  static const double _contrastLevel = 0.0;
+  static const _dynamicSchemeVariant = DynamicSchemeVariant.tonalSpot;
 
   ColorScheme _createColorsScheme({required Brightness brightness}) {
     return ColorScheme.fromSeed(
@@ -38,6 +35,7 @@ class ThemeService {
       ),
       textButtonTheme: TextButtonThemeData(
         style: ButtonStyle(
+          // animationDuration: Duration.zero,
           mouseCursor: WidgetStateProperty.resolveWith<MouseCursor>((states) {
             if (states.contains(WidgetState.disabled)) {
               return SystemMouseCursors.basic;
