@@ -520,6 +520,10 @@ class AudioController {
   void _setThemeColor({required int color}) {
     if (!_settingController.dynamicThemeColor.value) return;
 
+    // 同色直接跳过：themeColor 变更会让 ThemeData 重算并触发整棵 widget 树重建，
+    // 相邻歌曲主色相同时没必要付这个代价
+    if (_settingController.themeColor.value == color) return;
+
     _settingController.themeColor.value = color;
     if (_desktopLyricsSettingController.useDynamicOverlayColor.value) {
       _desktopLyricsSettingController.setDynamicOverlayColor(color);
@@ -703,25 +707,25 @@ class AudioController {
   }
 
   int? pickNextRandomIndex() {
-  final length = playListCacheItems.length;
-  if (length == 0) return null;
-  if (length == 1) {
-    return 0;
-  }
-  _unplayedIndex.removeWhere((index) => index >= length);
-  if (_unplayedIndex.isEmpty) {
-    final pool = List.generate(length, (i) => i)..shuffle();
-    if (pool.last == currentIndex.value) {
-      final lastIdx = pool.length - 1;
-      final temp = pool[0];
-      pool[0] = pool[lastIdx];
-      pool[lastIdx] = temp;
+    final length = playListCacheItems.length;
+    if (length == 0) return null;
+    if (length == 1) {
+      return 0;
     }
-    _unplayedIndex.addAll(pool);
-  }
+    _unplayedIndex.removeWhere((index) => index >= length);
+    if (_unplayedIndex.isEmpty) {
+      final pool = List.generate(length, (i) => i)..shuffle();
+      if (pool.last == currentIndex.value) {
+        final lastIdx = pool.length - 1;
+        final temp = pool[0];
+        pool[0] = pool[lastIdx];
+        pool[lastIdx] = temp;
+      }
+      _unplayedIndex.addAll(pool);
+    }
 
-  return _unplayedIndex.removeLast();
-}
+    return _unplayedIndex.removeLast();
+  }
 
   Future<void> _maybeRandomPlay() async {
     if (_settingController.playMode.value == PlayModeType.random &&
