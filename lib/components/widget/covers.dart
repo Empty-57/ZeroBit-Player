@@ -83,9 +83,10 @@ class _LoadU8CoverState extends State<LoadU8Cover> {
   }
 
   void _applyImageData(Uint8List data) {
-    final provider = ResizeImage.resizeIfNeeded(
-      _cacheResolution,
-      _cacheResolution,
+    final provider = ResizeImage(
+      width: _cacheResolution,
+      height: _cacheResolution,
+      policy: .fit,
       MemoryImage(data),
     );
     _imageProvider = provider;
@@ -189,9 +190,10 @@ class _LoadLocalOrNetCoverState extends State<LoadLocalOrNetCover> {
   }
 
   void _applyImageData(Uint8List data) {
-    final provider = ResizeImage.resizeIfNeeded(
-      _cacheResolution,
-      _cacheResolution,
+    final provider = ResizeImage(
+      width: _cacheResolution,
+      height: _cacheResolution,
+      policy: .fit,
       MemoryImage(data),
     );
     _imageProvider = provider;
