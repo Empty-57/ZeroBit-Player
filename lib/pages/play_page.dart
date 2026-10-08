@@ -33,6 +33,8 @@ import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
 import 'package:zerobit_player/tools/paint_cache.dart';
 
+import '../components/tilt3d.dart';
+
 const LinearGradient _lyricsFadeGradient = LinearGradient(
   begin: Alignment.topCenter,
   end: Alignment.bottomCenter,
@@ -132,49 +134,65 @@ class _CoverSideState extends State<_CoverSide> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Hero(
-            tag: 'playingCover',
-            createRectTween: (begin, end) {
-              return MaterialRectArcTween(begin: begin, end: end);
-            },
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: PlayPageConstant.borderRadius,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    offset: const Offset(0, 2),
-                    blurRadius: 8,
+          SignalBuilder(
+            builder: (context) {
+              final useTilt = SettingController.instance.useTilt3DCover.value;
+
+              final innerContent = Hero(
+                tag: 'playingCover',
+                createRectTween: (begin, end) {
+                  return MaterialRectArcTween(begin: begin, end: end);
+                },
+                child: ClipRRect(
+                  borderRadius: PlayPageConstant.borderRadius,
+                  child: AnimatedSwitcher(
+                    duration: 300.ms,
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    transitionBuilder: (child, anim) => FadeTransition(
+                      opacity: Tween(begin: 0.5, end: 1.0).animate(anim),
+                      child: ScaleTransition(
+                        scale: Tween(begin: 1.15, end: 1.0).animate(anim),
+                        child: child,
+                      ),
+                    ),
+                    child: LoadU8Cover(
+                      key: ValueKey(audioController.coverRevision.value),
+                      data: audioController.currentCover,
+                      coverResolutionFlag: CoverResolutionFlag.big,
+                      size: widget.coverSize,
+                      evictOnDispose: false,
+                    ),
                   ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: PlayPageConstant.borderRadius,
-                child: SignalBuilder(
-                  builder: (context) {
-                    return AnimatedSwitcher(
-                      duration: 300.ms,
-                      switchInCurve: Curves.easeOutCubic,
-                      switchOutCurve: Curves.easeInCubic,
-                      transitionBuilder: (child, anim) => FadeTransition(
-                        opacity: Tween(begin: 0.5, end: 1.0).animate(anim),
-                        child: ScaleTransition(
-                          scale: Tween(begin: 1.15, end: 1.0).animate(anim),
-                          child: child,
-                        ),
-                      ),
-                      child: LoadU8Cover(
-                        data: audioController.currentCover,
-                        coverResolutionFlag: CoverResolutionFlag.big,
-                        key: ValueKey(audioController.coverRevision.value),
-                        size: widget.coverSize,
-                        evictOnDispose: false,
-                      ),
-                    );
-                  },
                 ),
-              ),
-            ),
+              );
+
+              if (useTilt) {
+                return SizedBox(
+                  width: widget.coverSize,
+                  height: widget.coverSize,
+                  child: Tilt3D(
+                    borderRadius: PlayPageConstant.borderRadius,
+                    glareColor: widget.titleStyle.color ?? Colors.white,
+                    child: innerContent,
+                  ),
+                );
+              }
+
+              return DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: PlayPageConstant.borderRadius,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      offset: const Offset(0, 2),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                child: innerContent,
+              );
+            },
           ),
           Container(
             width: widget.coverSize - 24,

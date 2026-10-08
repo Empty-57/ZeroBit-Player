@@ -43,6 +43,7 @@ class SettingController {
   final backgroundImageBlur = signal(4.0); // 0-36
   final useTransparencyBackground = signal(false);
   final useAutoUpdate = signal(true);
+  final useTilt3DCover = signal(true);
 
   // 歌词状态
   final lrcAlignment = signal(0); // 012 左中右
@@ -386,6 +387,8 @@ class SettingController {
           prefs?.getBool(SharedPreferencesKey.useSkipSilence) ?? false;
       silenceThresholdDb.value =
           prefs?.getDouble(SharedPreferencesKey.silenceThresholdDb) ?? -50.0;
+      useTilt3DCover.value =
+          prefs?.getBool(SharedPreferencesKey.useTilt3DCover) ?? true;
     });
 
     // 提取快捷键解析逻辑，消除冗余
@@ -839,6 +842,12 @@ class SettingController {
     SharedPreferencesKey.useTransparencyBackground,
     useTransparencyBackground,
     overrideValue: value,
+  );
+
+  void setUseTilt3DCover({required bool val}) => _setBoolPref(
+    SharedPreferencesKey.useTilt3DCover,
+    useTilt3DCover,
+    overrideValue: val,
   );
 
   void setUseVolumeFade({required bool value}) {

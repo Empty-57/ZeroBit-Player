@@ -27,6 +27,7 @@ abstract class SharedPreferencesKey {
   static const crossfadeDuration = 'crossfadeDuration';
   static const useSkipSilence = 'useSkipSilence';
   static const silenceThresholdDb = 'silenceThresholdDb';
+  static const useTilt3DCover = 'useTilt3DCover';
 }
 
 abstract class DesktopSharedPreferencesKey {

@@ -1913,6 +1913,12 @@ class _LyricsTab extends StatelessWidget {
           ],
         ),
         _SettingSwitchItem(
+          text: '使用3D封面',
+          tooltip: '会跟随鼠标位置进行动画，此效果比较占用性能',
+          value: _settingController.useTilt3DCover,
+          onChanged: (val) => _settingController.setUseTilt3DCover(val: val),
+        ),
+        _SettingSwitchItem(
           text: '使用动态背景',
           tooltip: '此效果比较占用性能',
           value: _settingController.useMesh,
