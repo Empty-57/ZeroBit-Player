@@ -271,6 +271,9 @@ class PlayBar extends StatelessWidget {
         children: [
           Hero(
             tag: 'playingCover',
+            createRectTween: (begin, end) {
+              return MaterialRectArcTween(begin: begin, end: end);
+            },
             child: ClipRRect(
               borderRadius: _coverBorderRadius,
               child: SignalBuilder(

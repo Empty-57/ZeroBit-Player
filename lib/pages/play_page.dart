@@ -134,6 +134,9 @@ class _CoverSideState extends State<_CoverSide> {
         children: [
           Hero(
             tag: 'playingCover',
+            createRectTween: (begin, end) {
+              return MaterialRectArcTween(begin: begin, end: end);
+            },
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: PlayPageConstant.borderRadius,
