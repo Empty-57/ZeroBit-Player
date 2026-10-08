@@ -34,17 +34,14 @@ class MusicCacheController with DetailsPageControllerBase {
   final _searchText = signal('');
 
   late final searchResult = computed<List<MusicCache>>(() {
-    final query = _searchText.value.trim();
+    final query = _searchText.value.trim().toLowerCase();
     if (query.isEmpty) {
       return const [];
     }
-    final escaped = RegExp.escape(query);
-    final regex = RegExp(escaped, caseSensitive: false);
 
     return items.where((v) {
-      final fields = [v.title, v.artist, v.album];
-
-      return fields.any((value) => regex.hasMatch(value));
+      final searchTarget = '${v.title} ${v.artist} ${v.album}'.toLowerCase();
+      return searchTarget.contains(query);
     }).toList();
   });
 

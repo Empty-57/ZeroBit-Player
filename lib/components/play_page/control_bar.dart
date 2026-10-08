@@ -1,8 +1,6 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
@@ -12,10 +10,11 @@ import 'package:zerobit_player/components/widget/audio_ctrl_btn.dart';
 import 'package:zerobit_player/components/widget/rect_value_indicator.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
-import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/general_style.dart';
+
+import '../play_queue_menu_anchor.dart';
 
 class _GradientSliderTrackShape extends SliderTrackShape {
   final double activeTrackHeight;
@@ -170,11 +169,6 @@ class ControlBar extends StatelessWidget {
       size: 'sm',
       color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
     );
-
-    const double itemHeight = 64;
-    final playQueueController = playQueueMenuController;
-
-    final height = MediaQuery.sizeOf(context).height;
     final width = MediaQuery.sizeOf(context).width;
 
     final void Function() toggleShowDesktopThrottle = settingController
@@ -308,109 +302,26 @@ class ControlBar extends StatelessWidget {
                             ),
                           ),
                           NetLrcDialog(color: mixColor),
-                          MenuAnchor(
-                            consumeOutsideTap: true,
-                            menuChildren: [
-                              Container(
-                                height: height - 200,
-                                width: width / 2,
-                                color: Colors.transparent,
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  spacing: 8.0,
-                                  children: [
-                                    Text(
-                                      "播放队列",
-                                      style: generalTextStyle(
-                                        ctx: context,
-                                        size: 'xl',
-                                        weight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 1,
-                                      child: SignalBuilder(
-                                        builder: (context) {
-                                          final itemsList = audioController
-                                              .playListCacheItems;
-                                          return ListView.builder(
-                                            scrollCacheExtent:
-                                                const ScrollCacheExtent.pixels(
-                                                  itemHeight * 1,
-                                                ),
-                                            itemCount: itemsList.length,
-                                            itemExtent: itemHeight,
-                                            controller:
-                                                playQueueScrollController,
-                                            padding: const EdgeInsets.only(
-                                              bottom: itemHeight * 2,
-                                            ),
-                                            itemBuilder: (context, index) {
-                                              final item = itemsList[index];
-                                              return _PlayQueueItem(
-                                                item: item,
-                                                itemHeight: itemHeight,
-                                                titleStyle: titleStyle,
-                                                highLightTitleStyle:
-                                                    highLightTitleStyle,
-                                                subStyle: subStyle,
-                                                highLightSubStyle:
-                                                    highLightSubStyle,
-                                                playThrottle: () =>
-                                                    audioController
-                                                        .audioPlayThrottled(
-                                                          item,
-                                                        ),
-                                              );
-                                            },
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                            onOpen: () {
-                              SchedulerBinding.instance.addPostFrameCallback((
-                                _,
-                              ) {
-                                if (playQueueScrollController.hasClients) {
-                                  playQueueScrollController.jumpTo(
-                                    (itemHeight *
-                                            audioController.currentIndex.value)
-                                        .clamp(
-                                          0.0,
-                                          playQueueScrollController
-                                              .position
-                                              .maxScrollExtent,
-                                        ),
-                                  );
-                                }
-                              });
+                          PlayQueueMenuAnchor(
+                            titleStyle: titleStyle,
+                            highLightTitleStyle: highLightTitleStyle,
+                            subStyle: subStyle,
+                            highLightSubStyle: highLightSubStyle,
+                            builder: (c) {
+                              return GenIconBtn(
+                                tooltip: '播放列表',
+                                icon: PhosphorIconsLight.queue,
+                                size: PlayPageConstant.ctrlBtnMinSize,
+                                color: mixColor,
+                                fn: () {
+                                  if (c.isOpen) {
+                                    c.close();
+                                  } else {
+                                    c.open();
+                                  }
+                                },
+                              );
                             },
-                            style: MenuStyle(
-                              backgroundColor: WidgetStatePropertyAll(
-                                Theme.of(context).colorScheme.surfaceContainer
-                                    .withValues(alpha: 0.8),
-                              ),
-                            ),
-                            controller: playQueueController,
-                            child: GenIconBtn(
-                              tooltip: '播放列表',
-                              icon: PhosphorIconsLight.queue,
-                              size: PlayPageConstant.ctrlBtnMinSize,
-                              color: mixColor,
-                              fn: () {
-                                if (playQueueController.isOpen) {
-                                  playQueueController.close();
-                                } else {
-                                  playQueueController.open();
-                                }
-                              },
-                            ),
                           ),
                           audioCtrlWidget.equalizerSet,
                           SignalBuilder(
@@ -432,70 +343,6 @@ class ControlBar extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PlayQueueItem extends StatelessWidget {
-  final MusicCache item;
-  final double itemHeight;
-  final TextStyle titleStyle;
-  final TextStyle highLightTitleStyle;
-  final TextStyle subStyle;
-  final TextStyle highLightSubStyle;
-  final void Function() playThrottle;
-
-  const _PlayQueueItem({
-    required this.item,
-    required this.itemHeight,
-    required this.titleStyle,
-    required this.highLightTitleStyle,
-    required this.subStyle,
-    required this.highLightSubStyle,
-    required this.playThrottle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final AudioController audioController = AudioController.instance;
-    return TextButton(
-      onPressed: playThrottle,
-      style: TextButton.styleFrom(
-        shape: const RoundedRectangleBorder(
-          borderRadius: PlayPageConstant.borderRadius,
-        ),
-      ),
-      child: SizedBox.expand(
-        child: SignalBuilder(
-          builder: (context) {
-            final isCurrent = audioController.currentPath.value == item.path;
-            final currentTitleStyle = isCurrent
-                ? highLightTitleStyle
-                : titleStyle;
-            final currentSubStyle = isCurrent ? highLightSubStyle : subStyle;
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title,
-                  style: currentTitleStyle,
-                  softWrap: true,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-                Text(
-                  "${item.artist} - ${item.album}",
-                  style: currentSubStyle,
-                  softWrap: true,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-              ],
-            );
-          },
         ),
       ),
     );

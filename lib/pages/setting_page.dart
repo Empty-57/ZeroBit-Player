@@ -557,14 +557,7 @@ Widget _getFontFamilyDialog(
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 8,
                           ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(4),
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.outline.withValues(
-                                alpha: 0.3,
-                              ),
-                            ),
-                          ),
+                          border: const OutlineInputBorder(),
                         ),
                         onChanged: (val) => searchQuery.value = val,
                       ),
