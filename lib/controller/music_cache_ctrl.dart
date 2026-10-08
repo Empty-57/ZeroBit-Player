@@ -35,16 +35,39 @@ class MusicCacheController with DetailsPageControllerBase {
   final currentScanAudio = signal('');
   final _searchText = signal('');
 
+  bool _isSubsequence(String target, String q) {
+    int i = 0;
+    for (int j = 0; j < target.length && i < q.length; j++) {
+      if (target[j] == q[i]) i++;
+    }
+    return i == q.length;
+  }
+
+  int _getScore(MusicCache v, String query) {
+    final title = v.title.toLowerCase();
+
+    if (title.startsWith(query)) return 4;
+    if (title.contains(query)) return 3;
+    final full = '$title ${v.artist} ${v.album}'.toLowerCase();
+    if (full.contains(query)) return 2;
+    if (_isSubsequence(full, query)) return 1;
+    return 0;
+  }
+
   late final searchResult = computed<List<MusicCache>>(() {
     final query = _searchText.value.trim().toLowerCase();
-    if (query.isEmpty) {
-      return const [];
-    }
+    if (query.isEmpty) return const [];
 
-    return items.where((v) {
-      final searchTarget = '${v.title} ${v.artist} ${v.album}'.toLowerCase();
-      return searchTarget.contains(query);
-    }).toList();
+    final scoredList = <(MusicCache, int)>[];
+    for (final item in items) {
+      final score = _getScore(item, query);
+      if (score > 0) {
+        scoredList.add((item, score));
+      }
+    }
+    scoredList.sort((a, b) => b.$2.compareTo(a.$2));
+
+    return scoredList.map((e) => e.$1).toList();
   });
 
   static final _alphaRegex = RegExp(r'[A-Z]');
