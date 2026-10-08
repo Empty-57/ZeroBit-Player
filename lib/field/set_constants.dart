@@ -22,13 +22,13 @@ abstract class LrcAlignmentType {
   static const int right = 2;
 }
 
-abstract class PlayModeType{
+abstract class PlayModeType {
   static const int loop = 0;
   static const int queue = 1;
   static const int random = 2;
 }
 
-abstract class LyricSourceType{
+abstract class LyricSourceType {
   static const int local = 0;
   static const int embedded = 1;
   static const int net = 2;

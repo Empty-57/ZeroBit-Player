@@ -330,7 +330,9 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       initialScrollOffset: initialOffset,
     );
 
-    _playAllThrottle=(()=>widget.controller.play(widget.audioSource)).throttle();
+    _playAllThrottle = (() => widget.controller.play(
+      widget.audioSource,
+    )).throttle();
   }
 
   @override

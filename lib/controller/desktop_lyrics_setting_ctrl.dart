@@ -331,6 +331,6 @@ class DesktopLyricsSettingController {
     if (prefs == null) {
       return;
     }
-    prefs!.setBool(DesktopSharedPreferencesKey.showKana,value);
+    prefs!.setBool(DesktopSharedPreferencesKey.showKana, value);
   }
 }

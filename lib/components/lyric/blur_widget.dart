@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../tools/paint_cache.dart';
 
-const flag=true;
+const flag = true;
 
 /// 合成层模糊组件
 class BlurLine extends StatelessWidget {
@@ -14,7 +14,7 @@ class BlurLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if(!flag){
+    if (!flag) {
       return child;
     }
     return ImageFiltered(
@@ -55,7 +55,7 @@ class BlurText extends StatelessWidget {
   Widget build(BuildContext context) {
     final int sigma = blurSigma.clamp(0, 4);
 
-    if (sigma == 0||flag) {
+    if (sigma == 0 || flag) {
       return Text(
         text,
         style: style,

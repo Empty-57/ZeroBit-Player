@@ -204,50 +204,50 @@ class DesktopLyricsSever {
 
   void _sendConfig() {
     sendCmd(
-  cmdType: SeverCmdType.putConfig,
-  cmdData: {
-    DesktopSharedPreferencesKey.fontFamily:
-        _desktopLyricsSettingController.fontFamily.value,
-    DesktopSharedPreferencesKey.fontSize:
-        _desktopLyricsSettingController.fontSize.value,
-    DesktopSharedPreferencesKey.fontWeight:
-        _desktopLyricsSettingController.fontWeight.value,
-    DesktopSharedPreferencesKey.overlayColor:
-        _desktopLyricsSettingController.useDynamicOverlayColor.value
+      cmdType: SeverCmdType.putConfig,
+      cmdData: {
+        DesktopSharedPreferencesKey.fontFamily:
+            _desktopLyricsSettingController.fontFamily.value,
+        DesktopSharedPreferencesKey.fontSize:
+            _desktopLyricsSettingController.fontSize.value,
+        DesktopSharedPreferencesKey.fontWeight:
+            _desktopLyricsSettingController.fontWeight.value,
+        DesktopSharedPreferencesKey.overlayColor:
+            _desktopLyricsSettingController.useDynamicOverlayColor.value
             ? _settingController.themeColor.value
             : _desktopLyricsSettingController.overlayColor.value,
-    DesktopSharedPreferencesKey.underColor:
-        _desktopLyricsSettingController.useDynamicOverlayColor.value
+        DesktopSharedPreferencesKey.underColor:
+            _desktopLyricsSettingController.useDynamicOverlayColor.value
             ? 0xFFD4D8E5
             : _desktopLyricsSettingController.underColor.value,
-    DesktopSharedPreferencesKey.fontOpacity:
-        _desktopLyricsSettingController.fontOpacity.value,
-    DesktopSharedPreferencesKey.dx:
-        _desktopLyricsSettingController.windowDx,
-    DesktopSharedPreferencesKey.dy:
-        _desktopLyricsSettingController.windowDy,
-    DesktopSharedPreferencesKey.windowWidth:
-        _desktopLyricsSettingController.windowWidth,
-    DesktopSharedPreferencesKey.windowHeight:
-        _desktopLyricsSettingController.windowHeight,
-    DesktopSharedPreferencesKey.isIgnoreMouseEvents:
-        _desktopLyricsSettingController.isIgnoreMouseEvents.value,
-    DesktopSharedPreferencesKey.lrcAlignment:
-        _desktopLyricsSettingController.lrcAlignment.value,
-    DesktopSharedPreferencesKey.displayMode:
-        _desktopLyricsSettingController.useVerticalDisplayMode.value,
-    DesktopSharedPreferencesKey.useStroke:
-        _desktopLyricsSettingController.useStroke.value,
-    DesktopSharedPreferencesKey.strokeColor:
-        _desktopLyricsSettingController.strokeColor.value,
-    DesktopSharedPreferencesKey.showDoubleLine:
-        _desktopLyricsSettingController.showDoubleLine.value,
-    DesktopSharedPreferencesKey.lyricsSwitchAnimateMode:
-        _desktopLyricsSettingController.lyricsSwitchAnimateMode.value,
-    DesktopSharedPreferencesKey.showKana:
-        _desktopLyricsSettingController.showKana.value,
-  },
-);
+        DesktopSharedPreferencesKey.fontOpacity:
+            _desktopLyricsSettingController.fontOpacity.value,
+        DesktopSharedPreferencesKey.dx:
+            _desktopLyricsSettingController.windowDx,
+        DesktopSharedPreferencesKey.dy:
+            _desktopLyricsSettingController.windowDy,
+        DesktopSharedPreferencesKey.windowWidth:
+            _desktopLyricsSettingController.windowWidth,
+        DesktopSharedPreferencesKey.windowHeight:
+            _desktopLyricsSettingController.windowHeight,
+        DesktopSharedPreferencesKey.isIgnoreMouseEvents:
+            _desktopLyricsSettingController.isIgnoreMouseEvents.value,
+        DesktopSharedPreferencesKey.lrcAlignment:
+            _desktopLyricsSettingController.lrcAlignment.value,
+        DesktopSharedPreferencesKey.displayMode:
+            _desktopLyricsSettingController.useVerticalDisplayMode.value,
+        DesktopSharedPreferencesKey.useStroke:
+            _desktopLyricsSettingController.useStroke.value,
+        DesktopSharedPreferencesKey.strokeColor:
+            _desktopLyricsSettingController.strokeColor.value,
+        DesktopSharedPreferencesKey.showDoubleLine:
+            _desktopLyricsSettingController.showDoubleLine.value,
+        DesktopSharedPreferencesKey.lyricsSwitchAnimateMode:
+            _desktopLyricsSettingController.lyricsSwitchAnimateMode.value,
+        DesktopSharedPreferencesKey.showKana:
+            _desktopLyricsSettingController.showKana.value,
+      },
+    );
   }
 
   Future<void> _messageHandle(dynamic msg) async {
