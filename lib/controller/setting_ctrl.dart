@@ -239,6 +239,8 @@ class SettingController {
 
   SharedPreferences? prefs;
 
+  bool _isHotKeyRegistered = false;
+
   /// 检查当前是否在输入框内，防止快捷键冲突
   static bool get isTextFieldFocused {
     final primaryFocus = FocusManager.instance.primaryFocus;
@@ -254,6 +256,8 @@ class SettingController {
     await _initHive();
     await _initPrefs();
     _initBassSet();
+
+    _initFocusListener();
     await initHotKey();
   }
 
@@ -449,6 +453,20 @@ class SettingController {
         .toList();
   }
 
+  void _initFocusListener() {
+    FocusManager.instance.addListener(_handleFocusChange);
+  }
+
+  void _handleFocusChange() {
+    final shouldRegister = !isTextFieldFocused;
+    if (shouldRegister == _isHotKeyRegistered) return;
+    if (shouldRegister && !_isHotKeyRegistered) {
+      _registerAllHotKeys();
+    } else if (!shouldRegister && _isHotKeyRegistered) {
+      _unregisterAllHotKeys();
+    }
+  }
+
   Future<void> initHotKey() async {
     final scope = HotKeyScope.inapp; //目前只在应用范围内生效
     // final scope=hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp;
@@ -475,24 +493,48 @@ class SettingController {
       );
     });
 
-    await hotKeyManager.unregisterAll();
+    await _unregisterAllHotKeys();
 
-    _registerHotKey(hotKeyToggle.value, _audioController.audioToggleThrottled);
-    _registerHotKey(hotKeyNext.value, _audioController.audioToNextThrottled);
-    _registerHotKey(
-      hotKeyPrevious.value,
-      _audioController.audioToPreviousThrottled,
-    );
-    _registerHotKey(hotKeyFullScreen.value, _myWindowListener.toggleFullScreen);
+    if (!isTextFieldFocused) {
+      await _registerAllHotKeys();
+    }
   }
 
-  void _registerHotKey(HotKey hotKey, VoidCallback action) async {
+  Future<void> _registerHotKey(HotKey hotKey, VoidCallback action) async {
     await hotKeyManager.register(
       hotKey,
       keyDownHandler: (_) {
-        if (!isTextFieldFocused) action();
+        action();
       },
     );
+  }
+
+  Future<void> _registerAllHotKeys() async {
+    if (_isHotKeyRegistered) return;
+    _isHotKeyRegistered = true;
+
+    await _registerHotKey(
+      hotKeyToggle.value,
+      _audioController.audioToggleThrottled,
+    );
+    await _registerHotKey(
+      hotKeyNext.value,
+      _audioController.audioToNextThrottled,
+    );
+    await _registerHotKey(
+      hotKeyPrevious.value,
+      _audioController.audioToPreviousThrottled,
+    );
+    await _registerHotKey(
+      hotKeyFullScreen.value,
+      _myWindowListener.toggleFullScreen,
+    );
+  }
+
+  Future<void> _unregisterAllHotKeys() async {
+    if (!_isHotKeyRegistered) return;
+    _isHotKeyRegistered = false;
+    await hotKeyManager.unregisterAll();
   }
 
   // 数据保存与业务方法
