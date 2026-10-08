@@ -488,27 +488,42 @@ Widget _getFontFamilyDialog(
   String label,
   void Function(int i) fn,
 ) {
-  final height = MediaQuery.sizeOf(context).height;
-  final width = MediaQuery.sizeOf(context).width;
+  final size = MediaQuery.sizeOf(context);
+  final height = size.height;
+  final width = size.width;
+
   return GeneralBtn(
     fn: () {
+      final searchQuery = signal<String>(
+        '',
+        options: SignalOptions(autoDispose: true),
+      );
+      final filteredFonts = computed<List<(int, String)>>(() {
+        final q = searchQuery.value.trim().toLowerCase();
+        final indexedList = _fontsList.indexed;
+        if (q.isEmpty) return indexedList.toList();
+        return indexedList
+            .where((item) => item.$2.toLowerCase().contains(q))
+            .toList();
+      }, options: ComputedOptions(autoDispose: true));
+
       showDialog(
         barrierDismissible: true,
         context: context,
-        builder: (BuildContext context) {
+        builder: (BuildContext dialogContext) {
+          final theme = Theme.of(dialogContext);
+
           return AlertDialog(
             title: const Text("选择字体"),
             titleTextStyle: generalTextStyle(
-              ctx: context,
+              ctx: dialogContext,
               size: 'xl',
               weight: FontWeight.w600,
             ),
-
-            shape: RoundedRectangleBorder(
+            shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(4)),
             ),
-            backgroundColor: Theme.of(context).colorScheme.surface,
-
+            backgroundColor: theme.colorScheme.surface,
             actionsAlignment: MainAxisAlignment.end,
             actions: <Widget>[
               SizedBox(
@@ -521,41 +536,105 @@ Widget _getFontFamilyDialog(
                   children: [
                     Text(
                       "当前字体: $label",
-                      style: generalTextStyle(ctx: context, size: 'md'),
+                      style: generalTextStyle(ctx: dialogContext, size: 'md'),
                     ),
-                    Expanded(
-                      flex: 1,
-                      child: ListView.builder(
-                        scrollCacheExtent: const ScrollCacheExtent.pixels(
-                          36 * 1,
-                        ),
-                        itemCount: _fontsList.length,
-                        itemExtent: 36,
-                        itemBuilder: (context, index) {
-                          return TextButton(
-                            onPressed: () {
-                              fn(index);
-                              Navigator.pop(context);
-                            },
-                            style: TextButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4),
+
+                    SizedBox(
+                      height: 36,
+                      child: TextField(
+                        style: generalTextStyle(ctx: dialogContext, size: 'sm'),
+                        cursorHeight: 16,
+                        decoration: InputDecoration(
+                          hintText: '搜索字体名称...',
+                          hintStyle: generalTextStyle(
+                            ctx: dialogContext,
+                            size: 'sm',
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.5,
+                            ),
+                          ),
+                          prefixIcon: const Icon(Icons.search, size: 18),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(4),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.outline.withValues(
+                                alpha: 0.3,
                               ),
                             ),
-                            child: Container(
-                              alignment: Alignment.centerLeft,
+                          ),
+                        ),
+                        onChanged: (val) => searchQuery.value = val,
+                      ),
+                    ),
+
+                    Expanded(
+                      child: SignalBuilder(
+                        builder: (context) {
+                          final list = filteredFonts.value;
+
+                          if (list.isEmpty) {
+                            return Center(
                               child: Text(
-                                _fontsList[index],
+                                "未找到匹配字体",
                                 style: generalTextStyle(
                                   ctx: context,
                                   size: 'md',
-                                  fontFamily: _fontsList[index],
+                                  color: theme.colorScheme.onSurface,
                                 ),
-                                softWrap: false,
-                                overflow: TextOverflow.fade,
-                                maxLines: 1,
                               ),
+                            );
+                          }
+
+                          return ListView.builder(
+                            scrollCacheExtent: const ScrollCacheExtent.pixels(
+                              36 * 3,
                             ),
+                            itemCount: list.length,
+                            itemExtent: 36,
+                            itemBuilder: (context, index) {
+                              final (originalIndex, fontName) = list[index];
+                              final isCurrent = fontName == label;
+
+                              return TextButton(
+                                onPressed: () {
+                                  fn(originalIndex);
+                                  Navigator.pop(dialogContext);
+                                },
+                                style: TextButton.styleFrom(
+                                  backgroundColor: isCurrent
+                                      ? theme.colorScheme.primary.withValues(
+                                          alpha: 0.1,
+                                        )
+                                      : null,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                                child: Container(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    fontName,
+                                    style: generalTextStyle(
+                                      ctx: context,
+                                      size: 'md',
+                                      fontFamily: fontName,
+                                      weight: isCurrent
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: isCurrent
+                                          ? theme.colorScheme.primary
+                                          : null,
+                                    ),
+                                    softWrap: false,
+                                    overflow: TextOverflow.fade,
+                                    maxLines: 1,
+                                  ),
+                                ),
+                              );
+                            },
                           );
                         },
                       ),
