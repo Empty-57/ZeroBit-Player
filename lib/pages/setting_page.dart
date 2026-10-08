@@ -1728,7 +1728,7 @@ class _GeneralTab extends StatelessWidget {
         const _SettingItem(text: 'API源', child: _ApiDropMenu()),
         const _SettingItem(text: '首选歌词来源', child: _LyricsSourceRadio()),
         _SettingSwitchItem(
-          text: '自动保存获取的歌词',
+          text: '自动保存获取的歌词到本地',
           value: _settingController.autoDownloadLrc,
           onChanged: (val) {
             _settingController.autoDownloadLrc.value = val;
