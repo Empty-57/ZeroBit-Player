@@ -165,6 +165,7 @@ class _CoverSideState extends State<_CoverSide> {
                         coverResolutionFlag: CoverResolutionFlag.big,
                         key: ValueKey(audioController.coverRevision.value),
                         size: widget.coverSize,
+                        evictOnDispose: false,
                       ),
                     );
                   },

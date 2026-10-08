@@ -269,17 +269,21 @@ class PlayBar extends StatelessWidget {
       child: Row(
         spacing: 8,
         children: [
-          SignalBuilder(
-            builder: (context) {
-              final cover = c.currentSmallCover.value;
-              return Hero(
-                tag: 'playingCover',
-                child: ClipRRect(
-                  borderRadius: _coverBorderRadius,
-                  child: LoadU8Cover(data: cover, size: _coverSize),
-                ),
-              );
-            },
+          Hero(
+            tag: 'playingCover',
+            child: ClipRRect(
+              borderRadius: _coverBorderRadius,
+              child: SignalBuilder(
+                builder: (context) {
+                  final cover = c.currentSmallCover.value;
+                  return LoadU8Cover(
+                    data: cover,
+                    size: _coverSize,
+                    evictOnDispose: false,
+                  );
+                },
+              ),
+            ),
           ),
           Expanded(
             child: Column(

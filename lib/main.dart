@@ -584,7 +584,12 @@ CustomTransitionPage<void> _buildNormalPage({
   );
 }
 
-final CurveTween _playPageFadeCurve = CurveTween(curve: Curves.fastOutSlowIn);
+final CurveTween _playPageCurve = CurveTween(curve: Curves.fastOutSlowIn);
+
+final Tween<Offset> _playPageSlideTween = Tween<Offset>(
+  begin: Offset(0.0, 0.2),
+  end: Offset.zero,
+);
 
 // 播放页面切换动画构造函数
 CustomTransitionPage<void> _buildPlayPage({
@@ -600,9 +605,12 @@ CustomTransitionPage<void> _buildPlayPage({
     transitionDuration: 300.ms,
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return FadeTransition(
-        opacity: animation.drive(_playPageFadeCurve),
-        child: child,
+      return SlideTransition(
+        position: _playPageSlideTween.animate(animation.drive(_playPageCurve)),
+        child: FadeTransition(
+          opacity: animation.drive(_playPageCurve),
+          child: child,
+        ),
       );
     },
   );

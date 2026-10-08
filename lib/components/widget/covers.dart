@@ -30,6 +30,7 @@ class LoadU8Cover extends StatefulWidget {
   final double? width;
   final double? height;
   final bool useFrameBuilderCallback;
+  final bool evictOnDispose;
 
   const LoadU8Cover({
     super.key,
@@ -39,6 +40,7 @@ class LoadU8Cover extends StatefulWidget {
     double? width,
     double? height,
     this.useFrameBuilderCallback = true,
+    this.evictOnDispose = true,
   }) : assert(
          size == null || (width == null && height == null),
          '[参数冲突]：size 与 (width/height) 互斥，不可同时设置',
@@ -78,7 +80,9 @@ class _LoadU8CoverState extends State<LoadU8Cover> {
 
   @override
   void dispose() {
-    unawaited(_imageProvider?.evict());
+    if (widget.evictOnDispose) {
+      unawaited(_imageProvider?.evict());
+    }
     super.dispose();
   }
 
