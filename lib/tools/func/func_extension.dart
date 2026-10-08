@@ -38,3 +38,16 @@ extension DebounceExtension on void Function() {
     };
   }
 }
+
+extension DebounceExtensionArgs<T> on void Function(T) {
+  void Function(T) debounceArgs({int ms = 500}) {
+    Timer? timer;
+    return (T arg) {
+      timer?.cancel();
+      timer = Timer(Duration(milliseconds: ms), () {
+        timer = null;
+        this(arg);
+      });
+    };
+  }
+}

@@ -126,7 +126,7 @@ class _LyricsRenderState extends State<LyricsRender> {
       child: Listener(
         onPointerSignal: (event) {
           if (event is PointerScrollEvent) {
-            _lyricController.pointerScroll();
+            _lyricController.pointerScrollDebounce();
           }
         },
         child: Stack(

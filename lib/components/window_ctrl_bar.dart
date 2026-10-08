@@ -107,7 +107,7 @@ class _SearchDialogContentState extends State<_SearchDialogContent> {
                   border: OutlineInputBorder(),
                   labelText: '搜索',
                 ),
-                onChanged: widget.cacheCtrl.onInputChanged,
+                onChanged: widget.cacheCtrl.onInputChangedDebounce,
               ),
               Expanded(
                 flex: 1,

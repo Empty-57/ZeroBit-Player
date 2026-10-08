@@ -8,6 +8,7 @@ import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
+import '../tools/func/func_extension.dart';
 import 'audio_ctrl.dart';
 
 class LyricController {
@@ -51,8 +52,16 @@ class LyricController {
   /// 可视区歌词行数量的一半
   int visibleItemCount = 10;
 
-  Timer? _debounceTimer;
   Timer? _delayTimer;
+
+  late final void Function() pointerScrollDebounce = (() {
+    isPointerScroll.value = true;
+    _delayTimer?.cancel();
+    _delayTimer = Timer(const Duration(seconds: 3), () {
+      isPointerScroll.value = false;
+      scrollToCenter();
+    });
+  }).debounce(ms: 100);
 
   static const double _showIntervalLowLimit =
       0.95; // 间奏进度下限, 最后一个词过渡到 95% 就开始显示间奏, 给出场动画稍微预留一些时间
@@ -69,7 +78,6 @@ class LyricController {
     isPointerScroll.dispose();
     currentLineIndex.dispose();
     showInterlude.dispose();
-    _debounceTimer?.cancel();
     _delayTimer?.cancel();
     _currentLine = null;
     springController?.dispose();
@@ -252,19 +260,6 @@ class LyricController {
 
     wordProgress.value += _wordProgressIncrement;
     _updateInterludeState();
-  }
-
-  void pointerScroll() {
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 100), () {
-      isPointerScroll.value = true;
-
-      _delayTimer?.cancel();
-      _delayTimer = Timer(const Duration(seconds: 3), () {
-        isPointerScroll.value = false;
-        scrollToCenter();
-      });
-    });
   }
 
   void _springScrollToCenter() {

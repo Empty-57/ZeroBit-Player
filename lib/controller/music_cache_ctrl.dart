@@ -12,6 +12,8 @@ import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 
+import '../tools/func/func_extension.dart';
+
 class MusicCacheController with DetailsPageControllerBase {
   MusicCacheController._();
   static final MusicCacheController instance = MusicCacheController._();
@@ -50,22 +52,15 @@ class MusicCacheController with DetailsPageControllerBase {
   // 用于通知  DetailsPageBaseController 进行数据更改
   final songUpdatedSignal = signal<MusicCache?>(null);
 
-  Timer? _debounceTimer;
+  late final void Function(String) onInputChangedDebounce = ((String text) {
+    _searchText.value = text;
+  }).debounceArgs();
 
   void resetSearch() {
-    _debounceTimer?.cancel();
     _searchText.value = '';
   }
 
-  void onInputChanged(String text) {
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-      _searchText.value = text;
-    });
-  }
-
   void dispose() {
-    _debounceTimer?.cancel();
     currentScanAudio.dispose();
     _searchText.dispose();
     searchResult.dispose();

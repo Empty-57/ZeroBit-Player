@@ -15,6 +15,8 @@ import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import 'package:zerobit_player/tools/lrcTool/parse_lyrics.dart';
 import 'package:zerobit_player/tools/lrcTool/save_lyric.dart';
 
+import '../../tools/func/func_extension.dart';
+
 class _LrcSearchController {
   final AudioController _audioController = AudioController.instance;
   final SettingController _settingController = SettingController.instance;
@@ -26,7 +28,12 @@ class _LrcSearchController {
     () => (query: _queryText.value, offset: currentNetLrcOffset.value),
   );
 
-  Timer? _debounceTimer;
+  late final void Function(String) onInputChangedDebounce = ((String text) {
+    batch(() {
+      currentNetLrcOffset.value = 0;
+      _queryText.value = text;
+    });
+  }).debounceArgs();
 
   late final searchResults = computedAsync<List<SearchLrcModel>>(
     () async {
@@ -56,7 +63,6 @@ class _LrcSearchController {
   );
 
   void setInitialQuery() {
-    _debounceTimer?.cancel();
     final text =
         "${_audioController.currentMetadata.value.title} - ${_audioController.currentMetadata.value.artist}";
     batch(() {
@@ -65,18 +71,7 @@ class _LrcSearchController {
     });
   }
 
-  void onInputChanged(String text) {
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-      batch(() {
-        currentNetLrcOffset.value = 0;
-        _queryText.value = text;
-      });
-    });
-  }
-
   void dispose() {
-    _debounceTimer?.cancel();
     searchResults.dispose();
     _searchParams.dispose();
     _queryText.dispose();
@@ -153,7 +148,12 @@ class _SearchResultItem extends StatelessWidget {
         audioController.refreshLyrics();
 
         if (settingController.autoDownloadLrc.value) {
-          unawaited(saveLyrics(path: audioController.currentPath.value, lrcData: v.lyric));
+          unawaited(
+            saveLyrics(
+              path: audioController.currentPath.value,
+              lrcData: v.lyric,
+            ),
+          );
         }
       },
       style: TextButton.styleFrom(
@@ -318,7 +318,7 @@ class _NetLrcDialogContentState extends State<_NetLrcDialogContent> {
                     border: OutlineInputBorder(),
                     labelText: '搜索歌词',
                   ),
-                  onChanged: _controller.onInputChanged,
+                  onChanged: _controller.onInputChangedDebounce,
                 ),
               ),
               GenIconBtn(

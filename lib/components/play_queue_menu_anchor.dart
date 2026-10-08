@@ -7,6 +7,7 @@ import 'package:zerobit_player/components/play_page/play_page_constant.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 
+import '../tools/func/func_extension.dart';
 import '../tools/func/general_style.dart';
 
 /// 可复用的播放队列
@@ -49,6 +50,9 @@ class _PlayQueueMenuAnchorState extends State<PlayQueueMenuAnchor> {
 
   final _searchQuery = signal<String>('');
   late final Computed<List<MusicCache>> _filteredList;
+  late final void Function(String) onInputChangedDebounce = ((String text) {
+    _searchQuery.value = text;
+  }).debounceArgs();
 
   @override
   void initState() {
@@ -181,7 +185,7 @@ class _PlayQueueMenuAnchorState extends State<PlayQueueMenuAnchor> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                     border: const OutlineInputBorder(),
                   ),
-                  onChanged: (val) => _searchQuery.value = val,
+                  onChanged: onInputChangedDebounce,
                 ),
               ),
               Expanded(
