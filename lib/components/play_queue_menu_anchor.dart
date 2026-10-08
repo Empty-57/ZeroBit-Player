@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/play_page/play_page_constant.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 
 import '../tools/func/func_extension.dart';
+import '../tools/func/fuzzy_search.dart';
 import '../tools/func/general_style.dart';
 
 /// 可复用的播放队列
@@ -60,14 +62,8 @@ class _PlayQueueMenuAnchorState extends State<PlayQueueMenuAnchor> {
     _filteredList = computed(() {
       final q = _searchQuery.value.trim().toLowerCase();
       final allItems = AudioController.instance.playListCacheItems.peek();
-
       if (q.isEmpty) return allItems;
-
-      return allItems.where((item) {
-        final searchTarget = '${item.title} ${item.artist} ${item.album}'
-            .toLowerCase();
-        return searchTarget.contains(q);
-      }).toList();
+      return fuzzySearch(allItems, q);
     });
   }
 
@@ -155,36 +151,40 @@ class _PlayQueueMenuAnchorState extends State<PlayQueueMenuAnchor> {
               ),
               SizedBox(
                 height: 36,
-                child: TextField(
-                  controller: _searchController,
-                  style: generalTextStyle(ctx: context, size: 'sm'),
-                  cursorHeight: 16,
-                  decoration: InputDecoration(
-                    hintText: '搜索歌名、歌手或专辑...',
-                    hintStyle: generalTextStyle(
-                      ctx: context,
-                      size: 'sm',
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                child: DefaultTextEditingShortcuts(
+                  child: TextField(
+                    controller: _searchController,
+                    style: generalTextStyle(ctx: context, size: 'sm'),
+                    cursorHeight: 16,
+                    decoration: InputDecoration(
+                      hintText: '搜索歌名、歌手或专辑...',
+                      hintStyle: generalTextStyle(
+                        ctx: context,
+                        size: 'sm',
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.4,
+                        ),
+                      ),
+                      prefixIcon: const Icon(Icons.search, size: 18),
+                      suffixIcon: SignalBuilder(
+                        builder: (context) {
+                          if (_searchQuery.value.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+                          return IconButton(
+                            icon: const Icon(Icons.clear, size: 16),
+                            onPressed: () {
+                              _searchController.clear();
+                              _searchQuery.value = '';
+                            },
+                          );
+                        },
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                      border: const OutlineInputBorder(),
                     ),
-                    prefixIcon: const Icon(Icons.search, size: 18),
-                    suffixIcon: SignalBuilder(
-                      builder: (context) {
-                        if (_searchQuery.value.isEmpty) {
-                          return const SizedBox.shrink();
-                        }
-                        return IconButton(
-                          icon: const Icon(Icons.clear, size: 16),
-                          onPressed: () {
-                            _searchController.clear();
-                            _searchQuery.value = '';
-                          },
-                        );
-                      },
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                    border: const OutlineInputBorder(),
+                    onChanged: onInputChangedDebounce,
                   ),
-                  onChanged: onInputChangedDebounce,
                 ),
               ),
               Expanded(

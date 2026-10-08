@@ -13,6 +13,7 @@ import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 
 import '../tools/func/func_extension.dart';
+import '../tools/func/fuzzy_search.dart';
 
 class MusicCacheController with DetailsPageControllerBase {
   MusicCacheController._();
@@ -35,44 +36,10 @@ class MusicCacheController with DetailsPageControllerBase {
   final currentScanAudio = signal('');
   final _searchText = signal('');
 
-  bool _isSubsequence(String target, String q) {
-    int i = 0;
-    for (int j = 0; j < target.length && i < q.length; j++) {
-      if (target[j] == q[i]) i++;
-    }
-    return i == q.length;
-  }
-
-  int _getScore(MusicCache v, String query) {
-    final title = v.title.toLowerCase();
-    if (title.startsWith(query)) return 4;
-    final artist = v.artist.toLowerCase();
-    final album = v.album.toLowerCase();
-    if (title.contains(query) ||
-        artist.startsWith(query) ||
-        album.startsWith(query)) {
-      return 3;
-    }
-    final full = '$title $artist $album';
-    if (full.contains(query)) return 2;
-    if (_isSubsequence(full, query)) return 1;
-    return 0;
-  }
-
   late final searchResult = computed<List<MusicCache>>(() {
     final query = _searchText.value.trim().toLowerCase();
     if (query.isEmpty) return const [];
-
-    final scoredList = <(MusicCache, int)>[];
-    for (final item in items) {
-      final score = _getScore(item, query);
-      if (score > 0) {
-        scoredList.add((item, score));
-      }
-    }
-    scoredList.sort((a, b) => b.$2.compareTo(a.$2));
-
-    return scoredList.map((e) => e.$1).toList();
+    return fuzzySearch(items, query);
   });
 
   static final _alphaRegex = RegExp(r'[A-Z]');
