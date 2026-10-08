@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/play_page/play_page_constant.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
@@ -61,7 +60,7 @@ class _PlayQueueMenuAnchorState extends State<PlayQueueMenuAnchor> {
 
     _filteredList = computed(() {
       final q = _searchQuery.value.trim().toLowerCase();
-      final allItems = AudioController.instance.playListCacheItems.peek();
+      final allItems = AudioController.instance.playListCacheItems.value;
       if (q.isEmpty) return allItems;
       return fuzzySearch(allItems, q);
     });
