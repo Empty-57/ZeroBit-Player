@@ -7,11 +7,11 @@
 </p>
 </div>
 <div align="center">
-  <a href="https://deepwiki.com/Empty-57/ZeroBit-Player"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+  <a href="https://deepwiki.com/Empty-57/ZeroBit-Player"><img src="https://img.shields.io/badge/DeepWiki-Zerobit--Player-blue" alt="DeepWiki"></a>
   <img src="https://badgen.net/github/release/Empty-57/ZeroBit-Player?icon=github" alt="Version">
   <img src="https://img.shields.io/badge/Platform-Windows-blue" alt="Platform">
-  <img src="https://img.shields.io/badge/Flutter-3.44+-0044aa" alt="Flutter">
-  <img src="https://img.shields.io/badge/Rust-1.92+-black" alt="Rust">
+  <img src="https://img.shields.io/badge/Flutter-3.44+-0044aa?logo=flutter" alt="Flutter">
+  <img src="https://img.shields.io/badge/Rust-1.92+-black?logo=rust" alt="Rust">
   <img src="https://img.shields.io/github/downloads/Empty-57/ZeroBit-Player/total" alt="Downloads">
   <img src="https://img.shields.io/badge/License-GPL--3.0-green" alt="License">
 <a href="https://wakatime.com/badge/user/7dfa2142-9f15-461d-ba44-2a9e14966a3b/project/e540bf5c-e190-4823-b0bd-02e367cbfa2b"><img src="https://wakatime.com/badge/user/7dfa2142-9f15-461d-ba44-2a9e14966a3b/project/e540bf5c-e190-4823-b0bd-02e367cbfa2b.svg" alt="wakatime"></a>
@@ -20,7 +20,6 @@
 <p align="center">Logo来源：阿里巴巴矢量图库</p>
 
 ---
-
 ![show](screenshot/7.png)
 
 前往 **[官方文档](https://empty-57.github.io/ZeroBit-Player/)** 查看更多信息
