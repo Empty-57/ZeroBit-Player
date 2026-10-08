@@ -45,10 +45,15 @@ class MusicCacheController with DetailsPageControllerBase {
 
   int _getScore(MusicCache v, String query) {
     final title = v.title.toLowerCase();
-
     if (title.startsWith(query)) return 4;
-    if (title.contains(query)) return 3;
-    final full = '$title ${v.artist} ${v.album}'.toLowerCase();
+    final artist = v.artist.toLowerCase();
+    final album = v.album.toLowerCase();
+    if (title.contains(query) ||
+        artist.startsWith(query) ||
+        album.startsWith(query)) {
+      return 3;
+    }
+    final full = '$title $artist $album';
     if (full.contains(query)) return 2;
     if (_isSubsequence(full, query)) return 1;
     return 0;
