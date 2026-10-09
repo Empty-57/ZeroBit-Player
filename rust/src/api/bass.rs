@@ -596,7 +596,9 @@ impl BassApi {
         threshold: f32,
         find_first: bool,
     ) -> Option<u64> {
-        unsafe { (self.set_pos)(handle, start_bytes, BASS_POS_BYTE) };
+        if unsafe { (self.set_pos)(handle, start_bytes, BASS_POS_BYTE) } == FALSE {
+            return None;
+        }
 
         let mut buffer = [0.0f32; 1024];
         let buf_bytes = (buffer.len() * size_of::<f32>()) as u32;

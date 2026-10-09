@@ -28,6 +28,7 @@ pub const BASS_WASAPI_SAMPLES: u32 = 32;
 pub const BASS_WASAPI_DITHER: u32 = 64;
 pub const BASS_WASAPI_RAW: u32 = 128;
 pub const BASS_WASAPI_ASYNC: u32 = 0x100;
+pub const BASS_STREAM_PRESCAN: u32 = 0x20000;
 
 pub const BASS_SYNC_POS: u32 = 0;
 pub const BASS_SYNC_END: u32 = 2;
@@ -48,9 +49,9 @@ pub const BASS_SYNC_MIXTIME: u32 = 0x40000000; // flag: sync at mixtime, else at
 pub const BASS_SYNC_ONETIME: u32 = 0x80000000; // flag: sync only once, else continuously
 pub const BASS_DEVICE_REINIT: u32 = 0x80;
 
-pub const BASS_FX_DX8_PARAMEQ			:u32=7;
+pub const BASS_FX_DX8_PARAMEQ: u32 = 7;
 
-pub const  BASS_DATA_FFT512	 :u32= 0x80000001;	// 512 FFT
-pub const  BASS_DATA_FFT1024 :u32=	0x80000002;	// 1024 FFT
-pub const  BASS_DATA_FFT2048 :u32=	0x80000003;	// 2048 FFT
-pub const  BASS_DATA_AVAILABLE :u32=	0;
+pub const BASS_DATA_FFT512: u32 = 0x80000001; // 512 FFT
+pub const BASS_DATA_FFT1024: u32 = 0x80000002; // 1024 FFT
+pub const BASS_DATA_FFT2048: u32 = 0x80000003; // 2048 FFT
+pub const BASS_DATA_AVAILABLE: u32 = 0;
