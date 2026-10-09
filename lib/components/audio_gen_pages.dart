@@ -698,8 +698,9 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   }
 
   Widget _buildMusicList() {
-    final height = MediaQuery.sizeOf(context).height;
-    final width = MediaQuery.sizeOf(context).width;
+    final size = MediaQuery.sizeOf(context);
+    final height = size.height;
+    final width = size.width;
     return RawMenuAnchor(
       controller: _musicMenuCtrl._menuController,
       consumeOutsideTaps: false,

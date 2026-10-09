@@ -168,14 +168,12 @@ class _CoverSideState extends State<_CoverSide> {
               );
 
               if (useTilt) {
-                return SizedBox(
+                return Tilt3D(
                   width: widget.coverSize,
                   height: widget.coverSize,
-                  child: Tilt3D(
-                    borderRadius: PlayPageConstant.borderRadius,
-                    glareColor: widget.titleStyle.color ?? Colors.white,
-                    child: innerContent,
-                  ),
+                  borderRadius: PlayPageConstant.borderRadius,
+                  glareColor: widget.titleStyle.color ?? Colors.white,
+                  child: innerContent,
                 );
               }
 
@@ -838,8 +836,9 @@ class _PlayPageState extends State<PlayPage> {
                           : _menuController.open(
                               position: details.localPosition,
                             ),
+                      onTapDown: (_) => _menuController.close(),
                       child: MenuAnchor(
-                        consumeOutsideTap: true,
+                        consumeOutsideTap: false,
                         controller: _menuController,
                         style: MenuStyle(
                           backgroundColor: WidgetStatePropertyAll(

@@ -40,6 +40,8 @@ class Tilt3D extends StatefulWidget {
   final double scale;
   final bool enableGlare;
   final Color glareColor;
+  final double width;
+  final double height;
 
   const Tilt3D({
     super.key,
@@ -49,6 +51,8 @@ class Tilt3D extends StatefulWidget {
     this.scale = 1.04,
     this.enableGlare = true,
     this.glareColor = Colors.white,
+    required this.width,
+    required this.height,
   });
 
   @override
@@ -93,110 +97,113 @@ class _Tilt3DState extends State<Tilt3D> {
   @override
   Widget build(BuildContext context) {
     final rbWarpedChild = RepaintBoundary(child: widget.child);
+    return SizedBox(
+      width: widget.width,
+      height: widget.height,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final size = Size(constraints.maxWidth, constraints.maxHeight);
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final size = Size(constraints.maxWidth, constraints.maxHeight);
+          return MouseRegion(
+            onHover: (e) => _onHover(e, size),
+            onExit: _onExit,
+            cursor: SystemMouseCursors.basic,
+            child: SignalBuilder(
+              builder: (context) {
+                final target = _targetData.value;
+                final isHovering = _isHover.value;
 
-        return MouseRegion(
-          onHover: (e) => _onHover(e, size),
-          onExit: _onExit,
-          cursor: SystemMouseCursors.basic,
-          child: SignalBuilder(
-            builder: (context) {
-              final target = _targetData.value;
-              final isHovering = _isHover.value;
+                return TweenAnimationBuilder<_TiltData>(
+                  tween: _TiltDataTween(
+                    begin: const _TiltData(offset: Offset.zero, scale: 1.0),
+                    end: target,
+                  ),
+                  duration: Duration(milliseconds: isHovering ? 150 : 400),
+                  curve: Curves.easeOutCubic,
+                  child: rbWarpedChild,
+                  builder: (context, current, child) {
+                    final transform = Matrix4.identity()
+                      ..setEntry(3, 2, 0.0012) // 设置 m32 透视除数
+                      ..rotateX(
+                        current.offset.dy * widget.maxAngle,
+                      ) // 上下移动控制绕 X 轴旋转
+                      ..rotateY(
+                        -current.offset.dx * widget.maxAngle,
+                      ) // 左右移动控制绕 Y 轴旋转
+                      ..scaleByDouble(current.scale, current.scale, 1.0, 1.0);
 
-              return TweenAnimationBuilder<_TiltData>(
-                tween: _TiltDataTween(
-                  begin: const _TiltData(offset: Offset.zero, scale: 1.0),
-                  end: target,
-                ),
-                duration: Duration(milliseconds: isHovering ? 150 : 400),
-                curve: Curves.easeOutCubic,
-                child: rbWarpedChild,
-                builder: (context, current, child) {
-                  final transform = Matrix4.identity()
-                    ..setEntry(3, 2, 0.0012) // 设置 m32 透视除数
-                    ..rotateX(
-                      current.offset.dy * widget.maxAngle,
-                    ) // 上下移动控制绕 X 轴旋转
-                    ..rotateY(
-                      -current.offset.dx * widget.maxAngle,
-                    ) // 左右移动控制绕 Y 轴旋转
-                    ..scaleByDouble(current.scale, current.scale, 1.0, 1.0);
+                    // 计算当前动画进展比例
+                    final scaleDelta = (widget.scale - 1.0).abs();
+                    final progress = scaleDelta > 0.001
+                        ? ((current.scale - 1.0) / scaleDelta).clamp(0.0, 1.0)
+                        : (isHovering ? 1.0 : 0.0);
 
-                  // 计算当前动画进展比例
-                  final scaleDelta = (widget.scale - 1.0).abs();
-                  final progress = scaleDelta > 0.001
-                      ? ((current.scale - 1.0) / scaleDelta).clamp(0.0, 1.0)
-                      : (isHovering ? 1.0 : 0.0);
-
-                  return Transform(
-                    filterQuality: FilterQuality.low,
-                    transform: transform,
-                    alignment: FractionalOffset.center,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: widget.borderRadius,
-                        // 阴影平滑过渡
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(
-                              alpha: lerpDouble(0.15, 0.35, progress)!,
+                    return Transform(
+                      filterQuality: FilterQuality.low,
+                      transform: transform,
+                      alignment: FractionalOffset.center,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: widget.borderRadius,
+                          // 阴影平滑过渡
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(
+                                alpha: lerpDouble(0.15, 0.35, progress)!,
+                              ),
+                              offset: Offset(
+                                -current.offset.dx * 12,
+                                lerpDouble(
+                                  2.0,
+                                  12.0 - current.offset.dy * 10,
+                                  progress,
+                                )!,
+                              ),
+                              blurRadius: lerpDouble(8.0, 16.0, progress)!,
                             ),
-                            offset: Offset(
-                              -current.offset.dx * 12,
-                              lerpDouble(
-                                2.0,
-                                12.0 - current.offset.dy * 10,
-                                progress,
-                              )!,
-                            ),
-                            blurRadius: lerpDouble(8.0, 16.0, progress)!,
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: widget.borderRadius,
-                        child: Stack(
-                          fit: StackFit.passthrough,
-                          children: [
-                            child!,
-                            // 反光层
-                            if (widget.enableGlare && progress > 0.01)
-                              Positioned.fill(
-                                child: IgnorePointer(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      gradient: RadialGradient(
-                                        center: Alignment(
-                                          current.offset.dx,
-                                          current.offset.dy,
-                                        ),
-                                        radius: 1.2,
-                                        colors: [
-                                          widget.glareColor.withValues(
-                                            alpha: 0.2 * progress,
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: widget.borderRadius,
+                          child: Stack(
+                            fit: StackFit.passthrough,
+                            children: [
+                              child!,
+                              // 反光层
+                              if (widget.enableGlare && progress > 0.01)
+                                Positioned.fill(
+                                  child: IgnorePointer(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        gradient: RadialGradient(
+                                          center: Alignment(
+                                            current.offset.dx,
+                                            current.offset.dy,
                                           ),
-                                          Colors.transparent,
-                                        ],
+                                          radius: 1.2,
+                                          colors: [
+                                            widget.glareColor.withValues(
+                                              alpha: 0.2 * progress,
+                                            ),
+                                            Colors.transparent,
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        );
-      },
+                    );
+                  },
+                );
+              },
+            ),
+          );
+        },
+      ),
     );
   }
 }
