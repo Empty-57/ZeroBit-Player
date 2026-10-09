@@ -64,7 +64,9 @@ class JapaneseAnalyzer {
     String text, {
     bool monoRuby = true,
   }) async {
-    if (!Platform.isWindows || text.trim().isEmpty) return const [];
+    if (!Platform.isWindows || text.trim().isEmpty || text.length > 100) {
+      return const [];
+    }
 
     try {
       final List<dynamic>? result = await _channel.invokeMethod('getWords', {

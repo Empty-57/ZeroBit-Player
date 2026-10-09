@@ -131,7 +131,7 @@ const ACTION_STOP: usize = 2;
 const ACTION_FREE: usize = 3;
 
 static SKIP_SILENCE: AtomicBool = AtomicBool::new(true);
-// 静音判定阈值（单位 dB，通常 -50.0dB 到 -60.0dB 为最佳，-50dB 体验最干净）
+// 静音判定阈值（通常 -50.0dB 到 -60.0dB）
 static SILENCE_THRESHOLD_DB: Mutex<f32> = Mutex::new(-50.0);
 
 const MAX_HEAD_SCAN_SECS: f64 = 10.0; // 头部最多扫描前 10 秒
@@ -665,7 +665,7 @@ impl BassApi {
             threshold_linear,
             false,
         ) {
-            Some(pos) => (unsafe { (self.bytes2sec)(decode_handle, pos) } + 0.1).min(total_sec),
+            Some(pos) => unsafe { (self.bytes2sec)(decode_handle, pos) }.min(total_sec),
             None => total_sec,
         };
 
@@ -766,7 +766,7 @@ impl BassApi {
         let cf_sec = cf_sec * (current_speed as f64);
         let trigger_sec = end_sec - cf_sec;
 
-        if trigger_sec > initial_pos + 1.0 && trigger_sec < total_len - 0.2 {
+        if trigger_sec > initial_pos + 0.1 && trigger_sec < total_len - 0.1 {
             let end_bytes = unsafe { (self.sec2bytes)(fx_handle, trigger_sec) };
             if end_bytes != !0 {
                 self.set_sync(

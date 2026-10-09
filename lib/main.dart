@@ -7,6 +7,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:go_router/go_router.dart';
@@ -69,6 +70,9 @@ int _countSec = 0;
 int _countSec30 = 0;
 
 const String configDirectory = 'zerobit_config';
+
+/// Skia GPU 资源缓存上限
+const int _skiaResourceCacheMaxBytes = 64 * 1024 * 1024;
 
 StreamSubscription? _audioEventSub;
 StreamSubscription? _progressSub;
@@ -162,6 +166,19 @@ void main() async {
 
   // 最多缓存 10MB，超过就会清理（默认100MB）
   PaintingBinding.instance.imageCache.maximumSizeBytes = 10 * 1024 * 1024;
+
+  // 设置 Skia GPU 资源缓存上限
+  // 过小的值会导致纹理复用率下降，导致动画不流畅
+  unawaited(
+    SystemChannels.skia
+        .invokeMethod<void>(
+          'Skia.setResourceCacheMaxBytes',
+          _skiaResourceCacheMaxBytes,
+        )
+        .catchError((Object e, StackTrace s) {
+          LoggerUni.w('设置 Skia 资源缓存上限失败', e, s);
+        }),
+  );
 
   try {
     await loadLib();
