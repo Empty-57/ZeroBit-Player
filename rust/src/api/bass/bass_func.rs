@@ -89,6 +89,5 @@ pub struct BASS_DX8_PARAMEQ {
     pub fGain: f32,
 }
 
-
 pub(crate) type BASS_ChannelGetData =
-    unsafe extern "C" fn(handle: c_uint, buffer: *mut c_void,length: c_uint) -> c_uint;
+    unsafe extern "C" fn(handle: c_uint, buffer: *mut c_void, length: c_uint) -> c_uint;

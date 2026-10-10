@@ -66,7 +66,7 @@ class SpringListController {
     if (_cachedVisibleItemCount != null &&
         (cachedScreenHeight - currentHeight).abs() < 0.1) {
       _visibleItemCount = _cachedVisibleItemCount!;
-      LoggerUni.i('visibleLine> $_visibleItemCount | hitCache');
+      LoggerUni.d('visibleLine> $_visibleItemCount | hitCache');
       return _visibleItemCount;
     }
 
@@ -99,7 +99,7 @@ class SpringListController {
       final visibleLineCount = (cachedScreenHeight / minHeights).ceil();
       _visibleItemCount = max((visibleLineCount ~/ 2) + 1, 2);
       _cachedVisibleItemCount = _visibleItemCount;
-      LoggerUni.i('visibleLine> $_visibleItemCount | calc');
+      LoggerUni.d('visibleLine> $_visibleItemCount | calc');
     }
     return _visibleItemCount;
   }

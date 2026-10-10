@@ -12,6 +12,7 @@ import 'api/bass/basswasapi_func.dart';
 import 'api/get_fonts.dart';
 import 'api/music_tag_tool.dart';
 import 'api/smtc.dart';
+import 'api/trim_memory.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';

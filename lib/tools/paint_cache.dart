@@ -4,7 +4,7 @@ import 'package:flutter/painting.dart';
 
 /// ImageFilter缓存类
 class ImageFilterCache {
-  ImageFilterCache._();
+  const ImageFilterCache._();
 
   static final Map<int, ui.ImageFilter> _blurCache = {};
 
@@ -35,7 +35,7 @@ class ImageFilterCache {
   }
 
   /// 释放缓存
-  static void clearCache() => _blurCache.clear();
+  static void clear() => _blurCache.clear();
 }
 
 /// 按 (矩形尺寸 + 渐变参数) 缓存 [ui.Shader]。

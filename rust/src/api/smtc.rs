@@ -12,7 +12,6 @@ use windows::Storage::Streams::{
     DataWriter, InMemoryRandomAccessStream, RandomAccessStreamReference,
 };
 
-
 struct MediaPlayerInstance {
     player: MediaPlayer,
     smtc: SystemMediaTransportControls,
@@ -38,11 +37,8 @@ pub fn init_smtc() -> Result<(), String> {
     smtc.SetIsPauseEnabled(true).map_err(|e| e.to_string())?;
     smtc.SetIsPlayEnabled(true).map_err(|e| e.to_string())?;
     smtc.SetIsPreviousEnabled(true).map_err(|e| e.to_string())?;
-    
-    *MEDIA_INSTANCE.lock().unwrap() = Some(MediaPlayerInstance {
-        player,
-        smtc,
-    });
+
+    *MEDIA_INSTANCE.lock().unwrap() = Some(MediaPlayerInstance { player, smtc });
 
     Ok(())
 }
@@ -68,14 +64,25 @@ pub fn smtc_update_state(state: SMTCState) -> Result<(), String> {
         SMTCState::Playing => MediaPlaybackStatus::Playing,
         SMTCState::Paused => MediaPlaybackStatus::Paused,
     };
-    MEDIA_INSTANCE.lock()
+    MEDIA_INSTANCE
+        .lock()
         .unwrap()
         .as_ref()
         .unwrap()
         .smtc
         .SetPlaybackStatus(state)
         .map_err(|e| e.to_string())?;
-    MEDIA_INSTANCE.lock().unwrap().as_ref().unwrap().smtc.DisplayUpdater().map_err(|e|e.to_string())?.Update().map_err(|e|e.to_string()).unwrap_or(());
+    MEDIA_INSTANCE
+        .lock()
+        .unwrap()
+        .as_ref()
+        .unwrap()
+        .smtc
+        .DisplayUpdater()
+        .map_err(|e| e.to_string())?
+        .Update()
+        .map_err(|e| e.to_string())
+        .unwrap_or(());
     Ok(())
 }
 
@@ -86,7 +93,13 @@ pub fn smtc_update_metadata(
     album: String,
     cover_src: Vec<u8>,
 ) -> Result<(), windows::core::Error> {
-    let updater = MEDIA_INSTANCE.lock().unwrap().as_ref().unwrap().smtc.DisplayUpdater()?;
+    let updater = MEDIA_INSTANCE
+        .lock()
+        .unwrap()
+        .as_ref()
+        .unwrap()
+        .smtc
+        .DisplayUpdater()?;
 
     updater.SetType(MediaPlaybackType::Music)?;
 
@@ -109,15 +122,29 @@ pub fn smtc_update_metadata(
     updater.SetThumbnail(&RandomAccessStreamReference::CreateFromStream(&stream)?)?;
     updater.Update()?;
 
-    if !MEDIA_INSTANCE.lock().unwrap().as_ref().unwrap().smtc.IsEnabled()? {
-        MEDIA_INSTANCE.lock().unwrap().as_ref().unwrap().smtc.SetIsEnabled(true)?;
+    if !MEDIA_INSTANCE
+        .lock()
+        .unwrap()
+        .as_ref()
+        .unwrap()
+        .smtc
+        .IsEnabled()?
+    {
+        MEDIA_INSTANCE
+            .lock()
+            .unwrap()
+            .as_ref()
+            .unwrap()
+            .smtc
+            .SetIsEnabled(true)?;
     }
     Ok(())
 }
 
 #[flutter_rust_bridge::frb]
 pub fn smtc_control_events(sink: StreamSink<SMTCControlEvent>) {
-    MEDIA_INSTANCE.lock()
+    MEDIA_INSTANCE
+        .lock()
         .unwrap()
         .as_ref()
         .unwrap()
@@ -131,21 +158,34 @@ pub fn smtc_control_events(sink: StreamSink<SMTCControlEvent>) {
                 SystemMediaTransportControlsButton::Pause => SMTCControlEvent::Pause,
                 SystemMediaTransportControlsButton::Next => SMTCControlEvent::Next,
                 SystemMediaTransportControlsButton::Previous => SMTCControlEvent::Previous,
-                _=> SMTCControlEvent::Unknown,
+                _ => SMTCControlEvent::Unknown,
             };
             sink.add(event).unwrap_or_else(|e| {
-            eprintln!("SMTC Event ERR: {:?}", e);
-        });
+                eprintln!("SMTC Event ERR: {:?}", e);
+            });
             Ok(())
         }))
         .unwrap();
 }
 
 #[flutter_rust_bridge::frb]
-pub fn smtc_clear(){
-    let updater = MEDIA_INSTANCE.lock().unwrap().as_ref().unwrap().smtc.DisplayUpdater().unwrap();
+pub fn smtc_clear() {
+    let updater = MEDIA_INSTANCE
+        .lock()
+        .unwrap()
+        .as_ref()
+        .unwrap()
+        .smtc
+        .DisplayUpdater()
+        .unwrap();
     updater.ClearAll().unwrap();
     updater.Update().unwrap();
-    MEDIA_INSTANCE.lock().unwrap().as_ref().unwrap().smtc.SetIsEnabled(false).unwrap();
+    MEDIA_INSTANCE
+        .lock()
+        .unwrap()
+        .as_ref()
+        .unwrap()
+        .smtc
+        .SetIsEnabled(false)
+        .unwrap();
 }
-

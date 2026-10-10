@@ -30,25 +30,23 @@ pub(crate) extern "C" fn dummy_wasapi_proc(
 }
 
 pub(crate) type BASS_WASAPI_Init = unsafe extern "C" fn(
-    device: c_int,     // -1 = 默认设备
-    freq: c_uint,      //输出采样率(hz): 0 与设备一致，或者指定采样率
-    chans: c_uint,     //声道
-    flags: c_uint,     //初始化选项标志 独占: BASS_WASAPI_EXCLUSIVE | BASS_WASAPI_AUTOFORMAT
-    buffer: c_float,   // 缓冲区秒数
-    period: c_float,   // 设备周期（0 = 默认）
-    proc: *mut WASAPIPROC,  // 回调指针，或 NULL
-    user: *mut c_void, // 回调用户参数
+    device: c_int,         // -1 = 默认设备
+    freq: c_uint,          //输出采样率(hz): 0 与设备一致，或者指定采样率
+    chans: c_uint,         //声道
+    flags: c_uint,         //初始化选项标志 独占: BASS_WASAPI_EXCLUSIVE | BASS_WASAPI_AUTOFORMAT
+    buffer: c_float,       // 缓冲区秒数
+    period: c_float,       // 设备周期（0 = 默认）
+    proc: *mut WASAPIPROC, // 回调指针，或 NULL
+    user: *mut c_void,     // 回调用户参数
 ) -> c_int;
 
-pub(crate) type BASS_WASAPI_GetData = unsafe extern "C" fn(
-    buffer: *mut c_void,
-    length: c_uint,
-) -> c_uint;
+pub(crate) type BASS_WASAPI_GetData =
+    unsafe extern "C" fn(buffer: *mut c_void, length: c_uint) -> c_uint;
 
 pub(crate) type BASS_WASAPI_Start = unsafe extern "C" fn() -> c_int;
 
 pub(crate) type BASS_WASAPI_Free = unsafe extern "C" fn() -> c_int;
 
-pub(crate) type BASS_WASAPI_Stop= unsafe extern "C" fn(reset:c_int) -> c_int;
+pub(crate) type BASS_WASAPI_Stop = unsafe extern "C" fn(reset: c_int) -> c_int;
 
 pub(crate) type BASS_WASAPI_IsStarted = unsafe extern "C" fn() -> c_int;

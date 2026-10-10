@@ -4,6 +4,7 @@ import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/desktop_lyrics_sever.dart';
 import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/smtc.dart';
+import 'package:zerobit_player/tools/memory_manager.dart';
 
 class WindowController with WindowListener {
   WindowController._();
@@ -36,6 +37,7 @@ class WindowController with WindowListener {
   }
 
   Future<void> closeAndClean() async {
+    // void onWindowClose() 不可用
     try {
       await smtcClear();
       await _desktopLyricsSever.close();
@@ -59,6 +61,16 @@ class WindowController with WindowListener {
   }
 
   @override
+  void onWindowBlur() {
+    MemoryManager.startTrim('onWindowBlur');
+  }
+
+  @override
+  void onWindowFocus() {
+    MemoryManager.cancelTrim('onWindowFocus');
+  }
+
+  @override
   void onWindowUnmaximize() {
     isMaximized.value = false;
     _settingController.lastWindowInfo[SettingController
@@ -70,7 +82,7 @@ class WindowController with WindowListener {
   @override
   void onWindowResized() async {
     final size = await windowManager.getSize();
-    LoggerUni.i('now size | width: ${size.width} height: ${size.height}');
+    LoggerUni.d('now size | width: ${size.width} height: ${size.height}');
 
     var windowInfoSize =
         _settingController.lastWindowInfo[SettingController.lastWindowSizeKey]
@@ -87,7 +99,7 @@ class WindowController with WindowListener {
   @override
   void onWindowMoved() async {
     final position = await windowManager.getPosition();
-    LoggerUni.i('now position | x: ${position.dx} y: ${position.dy}');
+    LoggerUni.d('now position | x: ${position.dx} y: ${position.dy}');
 
     var windowInfoPosition =
         _settingController.lastWindowInfo[SettingController

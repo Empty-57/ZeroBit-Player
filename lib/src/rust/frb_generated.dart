@@ -9,6 +9,7 @@ import 'api/bass/basswasapi_func.dart';
 import 'api/get_fonts.dart';
 import 'api/music_tag_tool.dart';
 import 'api/smtc.dart';
+import 'api/trim_memory.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';
@@ -69,7 +70,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => -1004604598;
+  int get rustContentHash => 578413290;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -178,6 +179,8 @@ abstract class RustLibApi extends BaseApi {
   Future<void> crateApiBassSwitchExclusiveMode({required bool exclusive});
 
   Future<void> crateApiBassToggle();
+
+  Future<bool> crateApiTrimMemoryTrimMemory();
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -1307,6 +1310,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kCrateApiBassToggleConstMeta =>
       const TaskConstMeta(debugName: "toggle", argNames: []);
+
+  @override
+  Future<bool> crateApiTrimMemoryTrimMemory() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 39,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTrimMemoryTrimMemoryConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTrimMemoryTrimMemoryConstMeta =>
+      const TaskConstMeta(debugName: "trim_memory", argNames: []);
 
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw) {
