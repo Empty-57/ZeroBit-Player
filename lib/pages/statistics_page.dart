@@ -346,10 +346,10 @@ class _StatisticsArtistTile extends StatelessWidget {
     final tertiaryColor = Theme.of(context).colorScheme.tertiary;
     final rankColor = rank < 4 ? primaryColor : null;
 
-    double ratio = 0;
-
-    if (StatisticsController.instance.totalPlayedCountRaw > 0) {
-      ratio = playedCount / StatisticsController.instance.totalPlayedCountRaw;
+    double ratio = 0.0;
+    final totalCount = StatisticsController.instance.totalPlayedCountRaw;
+    if (totalCount > 0) {
+      ratio = (playedCount / totalCount).clamp(0.0, 1.0);
     }
 
     return TextButton(
