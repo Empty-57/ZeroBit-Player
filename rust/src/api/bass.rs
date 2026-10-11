@@ -10,7 +10,7 @@ use once_cell::sync::{Lazy, OnceCell};
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
 use std::ptr::null_mut;
-use std::sync::atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Mutex;
 use std::time::Duration;
 use std::{env, iter, thread};
@@ -56,6 +56,11 @@ struct BassApi {
     fx_set_params: Symbol<'static, BASS_FXSetParameters>,
     stream_handle: u32,
     path: Option<String>,
+    /// 本曲末尾静音点（Sec）。为 None 表示本曲不做静音跳过处理。
+    /// 切歌的触发点由它减去当前倍速对应的过渡时长现算，见 [`BassApi::report_end_event`]。
+    current_end_sec: Option<f64>,
+    /// 本曲的结束事件是否已触发，避免同一首歌重复上报 USER_ENDED
+    ended_fired: bool,
 }
 
 static BASS_API: Lazy<Mutex<Option<BassApi>>> = Lazy::new(|| Mutex::new(None));
@@ -146,8 +151,42 @@ static PENDING_ACTION: AtomicUsize = AtomicUsize::new(ACTION_NONE);
 static USE_CROSSFADE: AtomicBool = AtomicBool::new(true);
 static CROSSFADE_DURATION: AtomicU32 = AtomicU32::new(3000);
 
-// 正在淡出待销毁的旧流句柄
-static OUTGOING_STREAM: AtomicU32 = AtomicU32::new(0);
+/// 播放流世代号，每次 [`BassApi::setup_stream`] 自增。
+///
+/// sync 回调通过 `user` 指针携带创建时的世代号，回调里比对世代号即可丢弃陈旧事件。
+/// 不能用句柄比较代替，BASS 可能会复用
+static STREAM_GENERATION: AtomicU64 = AtomicU64::new(0);
+
+/// 正在淡出待销毁的旧流句柄。
+///
+/// 留多个槽位是为了让快速连续切歌时，上一条还在淡出的流能自然放完，
+/// 而不是被下一次切歌立刻 free 掉造成声音突断。
+const OUTGOING_SLOTS: usize = 3;
+static OUTGOING_STREAMS: [AtomicU32; OUTGOING_SLOTS] =
+    [AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0)];
+static OUTGOING_CURSOR: AtomicUsize = AtomicUsize::new(0);
+
+/// 登记一条淡出流，返回最早的旧流句柄
+fn push_outgoing(handle: u32) -> u32 {
+    let idx = OUTGOING_CURSOR.fetch_add(1, Ordering::SeqCst) % OUTGOING_SLOTS;
+    OUTGOING_STREAMS[idx].swap(handle, Ordering::SeqCst)
+}
+
+/// 从槽位中置0已经释放的淡出流
+fn forget_outgoing(handle: u32) {
+    for slot in OUTGOING_STREAMS.iter() {
+        let _ = slot.compare_exchange(handle, 0, Ordering::SeqCst, Ordering::Relaxed);
+    }
+}
+
+/// 返回并置0全部淡出流句柄
+fn drain_outgoing() -> [u32; OUTGOING_SLOTS] {
+    let mut taken = [0u32; OUTGOING_SLOTS];
+    for (i, slot) in OUTGOING_STREAMS.iter().enumerate() {
+        taken[i] = slot.swap(0, Ordering::SeqCst);
+    }
+    taken
+}
 
 /// 旧流音量降到 0 后的自毁回调
 unsafe extern "C" fn on_old_stream_fade_out_sync(
@@ -161,8 +200,7 @@ unsafe extern "C" fn on_old_stream_fade_out_sync(
             (api.chan_free)(channel);
         }
     }
-    // 如果原子变量里记录的还是这个 channel，则清零
-    let _ = OUTGOING_STREAM.compare_exchange(channel, 0, Ordering::SeqCst, Ordering::Relaxed);
+    forget_outgoing(channel);
 }
 
 unsafe extern "C" fn on_slide_action_sync(
@@ -203,21 +241,22 @@ unsafe extern "C" fn on_slide_action_sync(
     }
 }
 
+/// 物理结尾兜底回调。
+///
+/// 播放结束的正常触发点由进度轮询负责（见 [`BassApi::report_end_event`]），
+/// 这里只处理"真的放到文件尾"的情况。
 unsafe extern "C" fn on_end_sync(
     _handle: c_uint,
-    channel: c_uint,
+    _channel: c_uint,
     _data: c_uint,
-    _user: *mut c_void,
+    user: *mut c_void,
 ) {
-    if let Ok(api_lock) = BASS_API.lock() {
-        if let Some(api) = api_lock.as_ref() {
-            // 只有当前主控流触发的结束事件才向 Flutter 上报
-            // 正在后台淡出的旧流在物理结束时静默忽略
-            if api.stream_handle != 0 && channel == api.stream_handle {
-                notify_state(USER_ENDED);
-            }
-        }
+    let generation = user as u64;
+    //根据世代号判断，只有当前流的结束事件才上报 ,这里刻意不拿锁判断是因为回调运行在 BASS 播放线程上，可能造成阻塞卡顿
+    if generation != STREAM_GENERATION.load(Ordering::SeqCst) {
+        return;
     }
+    notify_state(USER_ENDED);
 }
 
 fn calculate_dynamic_bandwidth_linear(f_center: f32) -> f32 {
@@ -370,6 +409,8 @@ impl BassApi {
                 fx_set_params,
                 stream_handle: 0,
                 path: None,
+                current_end_sec: None,
+                ended_fired: false,
             })
         }
     }
@@ -475,14 +516,24 @@ impl BassApi {
                     None
                 };
 
+                let mut crossfade_due = false;
                 if let Some(sink) = sink_opt {
                     if let Ok(mut api_lock) = BASS_API.lock() {
                         if let Some(api) = api_lock.as_mut() {
                             if api.stream_handle != 0 {
-                                let _ = sink.add(api.get_pos());
+                                let pos = api.get_pos();
+                                let _ = sink.add(pos);
+                                // 放在进度轮询里按位置判定是否上报结束更精确
+                                crossfade_due = api.report_end_event(pos);
                             }
                         }
                     }
+                }
+
+                // 在释放 BASS_API 锁之后才广播，Dart 收到 USER_ENDED 会立刻回调
+                // play_file 建新流，那里同样要拿这把锁
+                if crossfade_due {
+                    notify_state(USER_ENDED);
                 }
             }
         });
@@ -668,15 +719,66 @@ impl BassApi {
             false,
         ) {
             Some(pos) => unsafe { (self.bytes2sec)(decode_handle, pos) }.min(total_sec),
-            None => total_sec,
+            // 整个尾部窗口都没声音，则回退到窗口起点
+            None => unsafe { (self.bytes2sec)(decode_handle, scan_start_bytes) }.max(start_sec),
         };
 
-        // 扫描完成后，将解码句柄倒带重置回 0 字节位置，防止回传到dart端的数据超出范围
-        unsafe {
-            (self.set_pos)(decode_handle, 0, BASS_POS_BYTE);
+        (start_sec, end_sec)
+    }
+
+    /// 用一条临时解码流探测首尾静音边界。
+    ///
+    /// 不影响播放流，且探测更准确
+    fn scan_boundaries(&mut self, wide: &[u16]) -> (f64, f64) {
+        let scan_handle = unsafe {
+            (self.stream_create)(
+                0,
+                wide.as_ptr() as *const c_void,
+                0,
+                0,
+                BASS_UNICODE | BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT,
+            )
+        };
+        if scan_handle == 0 || scan_handle == u32::MAX {
+            return (0.0, 0.0);
         }
 
-        (start_sec, end_sec)
+        let boundaries = self.detect_audio_boundaries(scan_handle);
+        unsafe {
+            (self.stream_free)(scan_handle);
+        }
+        boundaries
+    }
+
+    /// 判断是否该上报结束音频结束事件，[`USE_CROSSFADE`] 和 [`SKIP_SILENCE`]的值会影响其上报的时间
+    fn report_end_event(&mut self, pos: f64) -> bool {
+        if self.ended_fired {
+            return false;
+        }
+        // 只在真正出声时推进过渡
+        if CURRENT_STATE.load(Ordering::SeqCst) != USER_PLAYING {
+            return false;
+        }
+        let Some(end_sec) = self.current_end_sec else {
+            return false;
+        };
+
+        // 过渡时长倍速换算
+        // 开了交叉过渡且不是独占模式才计算过渡延迟
+        let cf_sec =
+            if USE_CROSSFADE.load(Ordering::Relaxed) && !WASEXCLUSIVE.load(Ordering::Relaxed) {
+                (CROSSFADE_DURATION.load(Ordering::Relaxed) as f64) / 1000.0
+            } else {
+                0.0
+            };
+        let speed = TARGET_SPEED.lock().map(|s| *s as f64).unwrap_or(1.0);
+        let trigger_sec = end_sec - cf_sec * speed;
+
+        if trigger_sec <= 0.0 || pos < trigger_sec {
+            return false;
+        }
+        self.ended_fired = true;
+        true
     }
 
     fn set_sync(
@@ -706,6 +808,14 @@ impl BassApi {
             .chain(iter::once(0))
             .collect();
 
+        // 用一条临时流探测静音边界，再建播放流，播放流全程不被影响
+        let (start_sec, end_sec) =
+            if SKIP_SILENCE.load(Ordering::Relaxed) || USE_CROSSFADE.load(Ordering::Relaxed) {
+                self.scan_boundaries(&wide)
+            } else {
+                (0.0, 0.0)
+            };
+
         // 创建解码源流
         let handle = unsafe {
             (self.stream_create)(
@@ -717,14 +827,6 @@ impl BassApi {
             )
         };
         self.or_err_(handle as i32)?;
-
-        // 探测首尾静音边界
-        let (start_sec, end_sec) =
-            if SKIP_SILENCE.load(Ordering::Relaxed) || USE_CROSSFADE.load(Ordering::Relaxed) {
-                self.detect_audio_boundaries(handle)
-            } else {
-                (0.0, 0.0)
-            };
 
         // 创建 Tempo 变调/变速流
         let fx_flag = if WASEXCLUSIVE.load(Ordering::SeqCst) {
@@ -741,9 +843,15 @@ impl BassApi {
         }
 
         // 定位初始播放位置
-        let initial_pos = if start_sec > 0.02 { start_sec } else { 0.0 };
-        let start_bytes = unsafe { (self.sec2bytes)(fx_handle, initial_pos) };
-        unsafe { (self.set_pos)(fx_handle, start_bytes, BASS_POS_BYTE) };
+        let mut initial_pos = 0.0;
+        if start_sec > 0.02 {
+            let start_bytes = unsafe { (self.sec2bytes)(fx_handle, start_sec) };
+            if start_bytes != !0
+                && unsafe { (self.set_pos)(fx_handle, start_bytes, BASS_POS_BYTE) } != FALSE
+            {
+                initial_pos = start_sec;
+            }
+        }
 
         // 立即向 Flutter 广播初始进度，杜绝 Slider 越界
         if let Ok(lock) = PROGRESS_LISTEN.lock() {
@@ -752,44 +860,25 @@ impl BassApi {
             }
         }
 
-        // 设置换歌触发点（若开启 Crossfade，则提前 cf_sec 触发下一曲）
-        let total_bytes = unsafe { (self.get_len)(fx_handle, BASS_POS_BYTE) };
-        let total_len = unsafe { (self.bytes2sec)(fx_handle, total_bytes) };
+        // 记录末尾静音点，交叉过渡的触发点由进度轮询按当前倍速现算
+        let cf_enabled =
+            USE_CROSSFADE.load(Ordering::Relaxed) || SKIP_SILENCE.load(Ordering::Relaxed);
+        self.current_end_sec = if cf_enabled && end_sec > initial_pos {
+            Some(end_sec)
+        } else {
+            None
+        };
+        self.ended_fired = false;
 
-        let current_speed = TARGET_SPEED.lock().map(|s| *s).unwrap_or(1.0);
-
-        let cf_sec =
-            if USE_CROSSFADE.load(Ordering::Relaxed) && !WASEXCLUSIVE.load(Ordering::SeqCst) {
-                (CROSSFADE_DURATION.load(Ordering::Relaxed) as f64) / 1000.0
-            } else {
-                0.0
-            };
-
-        let cf_sec = cf_sec * (current_speed as f64);
-        let trigger_sec = end_sec - cf_sec;
-
-        if trigger_sec > initial_pos + 0.1 && trigger_sec < total_len - 0.1 {
-            let end_bytes = unsafe { (self.sec2bytes)(fx_handle, trigger_sec) };
-            if end_bytes != !0 {
-                self.set_sync(
-                    fx_handle,
-                    BASS_SYNC_POS,
-                    end_bytes,
-                    true,
-                    Some(on_end_sync),
-                    null_mut(),
-                )?;
-            }
-        }
-
-        // 兜底物理结尾监听
+        // 兜底物理结尾监听。世代号随 user 指针带入回调，用于丢弃陈旧流的结束事件
+        let generation = STREAM_GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
         self.set_sync(
             fx_handle,
             BASS_SYNC_END,
             0,
             true,
             Some(on_end_sync),
-            null_mut(),
+            generation as *mut c_void,
         )?;
 
         // 将控制句柄正式切换到新流并初始化 EQ
@@ -813,13 +902,22 @@ impl BassApi {
         // 构建新流，旧流此时仍在播放并正常发声
         let new_handle = self.setup_stream(path)?;
 
-        // 旧流平滑淡出，结束时同步方法自动释放流
-        let prev_outgoing = OUTGOING_STREAM.swap(old_handle, Ordering::SeqCst);
-        if prev_outgoing != 0 {
+        // 登记旧流并拿出最早的流销毁
+        let evicted = push_outgoing(old_handle);
+        if evicted != 0 {
             unsafe {
-                (self.chan_free)(prev_outgoing);
+                (self.chan_free)(evicted);
             }
         }
+
+        // 这里是为了清除旧流仍可能进行的滑动，时间设为0使其马上跑自毁回调，释放旧流
+        let mut old_vol: f32 = 0.0;
+        unsafe {
+            (self.get_attr)(old_handle, BASS_ATTRIB_VOL, &mut old_vol as *mut _);
+            (self.slide_attr)(old_handle, BASS_ATTRIB_VOL, old_vol, 0);
+        }
+
+        // 旧流平滑淡出，结束时同步方法自动释放流
         self.set_sync(
             old_handle,
             BASS_SYNC_SLIDE,
@@ -1095,15 +1193,19 @@ impl BassApi {
         if self.stream_handle == 0 {
             return Ok(());
         }
-        let outgoing = OUTGOING_STREAM.swap(0, Ordering::SeqCst);
-        if outgoing != 0 {
-            unsafe {
-                (self.chan_free)(outgoing);
+        // seek了则马上取消淡出流
+        for outgoing in drain_outgoing() {
+            if outgoing != 0 {
+                unsafe {
+                    (self.chan_free)(outgoing);
+                }
             }
         }
 
         let bytes = unsafe { (self.sec2bytes)(self.stream_handle, pos) };
         let ok = unsafe { (self.set_pos)(self.stream_handle, bytes, BASS_POS_BYTE) };
+        // seek 后重新判定结束点，往回跳要能再次触发，往前跳过触发点则直接切换
+        self.ended_fired = false;
         self.apply_volume()?;
         self.or_err_(ok)
     }
@@ -1167,12 +1269,16 @@ impl BassApi {
         }
 
         // 清理可能遗留的淡出流
-        let outgoing = OUTGOING_STREAM.swap(0, Ordering::SeqCst);
-        if outgoing != 0 {
-            unsafe {
-                (self.chan_free)(outgoing);
+        for outgoing in drain_outgoing() {
+            if outgoing != 0 {
+                unsafe {
+                    (self.chan_free)(outgoing);
+                }
             }
         }
+
+        self.current_end_sec = None;
+        self.ended_fired = false;
 
         notify_state(USER_STOPPED);
     }
