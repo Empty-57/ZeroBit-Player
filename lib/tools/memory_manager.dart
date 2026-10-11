@@ -13,12 +13,10 @@ class MemoryManager {
 
   static Timer? _timer;
   static Timer? _loopTimer;
-  static const int _baseDuration = 30;
-  static const Duration _maxTrimWaitDuration = Duration(
-    seconds: _baseDuration,
-  );
+  static const int _baseDuration = 60;
+  static const Duration _maxTrimWaitDuration = Duration(seconds: _baseDuration);
   static const Duration _maxLoopTrimCycleDuration = Duration(
-    seconds: _baseDuration * 4,
+    seconds: _baseDuration * 2,
   );
   static const int _trimLimitOnBlur = 150;
   static const int _trimLimitOnFocus = 230;
@@ -26,9 +24,11 @@ class MemoryManager {
 
   static double _toMB(int bytes) => (bytes / (1 << 20));
 
+  static int get _currentRss => ProcessInfo.currentRss;
+
   static void printUsage([String label = 'Status']) {
     // 获取当前进程占用的物理内存
-    final currentRss = ProcessInfo.currentRss;
+    final currentRss = _currentRss;
     final maxRss = ProcessInfo.maxRss;
 
     // 获取 ImageCache占用
@@ -58,11 +58,10 @@ class MemoryManager {
   static void startLoopTrim([String label = 'Status']) {
     _loopTimer?.cancel();
     _loopTimer = Timer.periodic(_maxLoopTrimCycleDuration, (_) async {
-      final currentRss = ProcessInfo.currentRss;
       final limit = await windowManager.isFocused()
           ? _trimLimitOnFocus
           : _trimLimitOnBlur;
-      if (_toMB(currentRss) < limit) {
+      if (_toMB(_currentRss) < limit) {
         printUsage('$label Trim Canceled');
         return;
       }
@@ -76,7 +75,9 @@ class MemoryManager {
     _timer?.cancel();
     _timer = Timer(_maxTrimWaitDuration, () {
       _timer = null;
-      trimMemory(label);
+      if (_toMB(_currentRss) < _trimLimitOnBlur) {
+        trimMemory(label);
+      }
     });
   }
 

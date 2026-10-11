@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:zerobit_player/components/lyric/blur_widget.dart';
 import 'package:zerobit_player/components/lyric/lyric_arg_constants.dart';
 import 'package:zerobit_player/components/lyric/word_render.dart';
-import 'package:zerobit_player/components/widget/smooth_transform.dart';
 import 'package:zerobit_player/controller/lyric_ctrl.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
@@ -354,11 +353,10 @@ class _SyllableFloatWidgetState extends State<_SyllableFloatWidget>
           LyricConstants.floatingY,
           _controller.value,
         )!;
-        return SmoothTranslate(
-          dy: dy,
-          // useFilterQuality: !(_controller.isCompleted||_controller.isDismissed), // TODO 这里还是会出现抖动，考虑常开useFilterQuality
-          useFilterQuality: true,
-          child: child!,
+        return Transform.translate(
+          filterQuality: .low,
+          offset: Offset(0, dy), // 直接应用物理控制器的值
+          child: child,
         );
       },
       child: widget.child,

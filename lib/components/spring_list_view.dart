@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/rendering.dart';
-import 'package:zerobit_player/components/widget/smooth_transform.dart';
 import 'package:zerobit_player/logger.dart';
 
 class _JumpSignal {
@@ -429,14 +428,10 @@ class _SpringItemState extends State<_SpringItem>
     return AnimatedBuilder(
       animation: controller,
       builder: (context, child) {
-        return SmoothTranslate(
-          dy: controller.value, // 直接应用物理控制器的值
-          useFilterQuality:
-              !(controller.isCompleted ||
-                  controller
-                      .isDismissed), // TODO 这里还是会出现抖动，考虑常开useFilterQuality
-          // useFilterQuality: true,
-          child: child!,
+        return Transform.translate(
+          filterQuality: .low,
+          offset: Offset(0, controller.value), // 直接应用物理控制器的值
+          child: child,
         );
       },
       child: RepaintBoundary(key: widget.boxKey, child: widget.child),

@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:zerobit_player/components/lyric/lyric_arg_constants.dart';
 import 'package:zerobit_player/components/lyric/progress_shader_mask.dart';
-import 'package:zerobit_player/components/widget/smooth_transform.dart';
 
 class HighlightedWord extends StatefulWidget {
   final String text;
@@ -186,10 +185,10 @@ class HighlightedWordState extends State<HighlightedWord> {
       )!;
 
       // glow 层
-      glowChildren[i] = SmoothScale(
+      glowChildren[i] = Transform.scale(
         scale: scale,
         alignment: Alignment.bottomCenter,
-        useFilterQuality: scale != 1.0,
+        filterQuality: scale != 1.0 ? .low : null,
         child: Text(
           char,
           style: _normalStyle.copyWith(
