@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/tools/paint_cache.dart';
 import '../src/rust/api/trim_memory.dart' as rust_api;
@@ -11,8 +12,19 @@ class MemoryManager {
   const MemoryManager._();
 
   static Timer? _timer;
-  static final Duration _maxWaitDuration = Duration(milliseconds: 30000);
+  static Timer? _loopTimer;
+  static const int _baseDuration = 30;
+  static const Duration _maxTrimWaitDuration = Duration(
+    seconds: _baseDuration,
+  );
+  static const Duration _maxLoopTrimCycleDuration = Duration(
+    seconds: _baseDuration * 4,
+  );
+  static const int _trimLimitOnBlur = 150;
+  static const int _trimLimitOnFocus = 230;
   static int _lastRss = 0;
+
+  static double _toMB(int bytes) => (bytes / (1 << 20));
 
   static void printUsage([String label = 'Status']) {
     // 获取当前进程占用的物理内存
@@ -29,27 +41,40 @@ class MemoryManager {
     if (_lastRss != 0) {
       final diff = currentRss - _lastRss;
       final sign = diff >= 0 ? '+' : '';
-      deltaStr =
-          ' (相比上次: $sign${(diff / (1024 * 1024)).toStringAsFixed(2)} MB)';
+      deltaStr = ' (相比上次: $sign${_toMB(diff).toStringAsFixed(2)} MB)';
     }
     _lastRss = currentRss;
-
-    String toMB(int bytes) => (bytes / (1024 * 1024)).toStringAsFixed(2);
 
     final info =
         '''
 [Memory Track: $label]
-实际物理内存 (RSS) : ${toMB(currentRss)} MB $deltaStr
-历史峰值内存       : ${toMB(maxRss)} MB
-图片缓存           : ${toMB(imgBytes)} MB ($imgCount 张图片)''';
+实际物理内存 (RSS) : ${_toMB(currentRss).toStringAsFixed(2)} MB $deltaStr
+历史峰值内存       : ${_toMB(maxRss).toStringAsFixed(2)} MB
+图片缓存           : ${_toMB(imgBytes).toStringAsFixed(2)} MB ($imgCount 张图片)''';
     LoggerUni.d(info);
   }
 
-  /// 会在 [_maxWaitDuration]ms 之后调用 [trimMemory] 方法
+  /// 启动循环修剪 每 [_maxLoopTrimCycleDuration] s 尝试修剪一次
+  static void startLoopTrim([String label = 'Status']) {
+    _loopTimer?.cancel();
+    _loopTimer = Timer.periodic(_maxLoopTrimCycleDuration, (_) async {
+      final currentRss = ProcessInfo.currentRss;
+      final limit = await windowManager.isFocused()
+          ? _trimLimitOnFocus
+          : _trimLimitOnBlur;
+      if (_toMB(currentRss) < limit) {
+        printUsage('$label Trim Canceled');
+        return;
+      }
+      trimMemory(label);
+    });
+  }
+
+  /// 会在 [_maxTrimWaitDuration] s 之后调用 [trimMemory] 方法
   static void startTrim([String label = 'Status']) {
     printUsage(label);
     _timer?.cancel();
-    _timer = Timer(_maxWaitDuration, () {
+    _timer = Timer(_maxTrimWaitDuration, () {
       _timer = null;
       trimMemory(label);
     });
@@ -79,7 +104,7 @@ class MemoryManager {
     try {
       await rust_api.trimMemory();
     } catch (e, s) {
-      LoggerUni.e('强制修建工作集内存失败', e, s);
+      LoggerUni.e('强制修剪工作集内存失败', e, s);
     }
     printUsage('$label After Trim');
   }

@@ -46,6 +46,7 @@ import 'package:zerobit_player/src/rust/api/smtc.dart';
 import 'package:zerobit_player/src/rust/frb_generated.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/sync_cache.dart';
+import 'package:zerobit_player/tools/memory_manager.dart';
 import 'package:zerobit_player/tools/version_checker.dart';
 import 'package:zerobit_player/tray.dart';
 import 'package:zerobit_player/windows_taskbar_thumbnail.dart';
@@ -67,12 +68,11 @@ import 'theme_manager.dart';
 
 int _countMs100 = 0;
 int _countSec = 0;
-int _countSec30 = 0;
 
 const String configDirectory = 'zerobit_config';
 
 /// Skia GPU 资源缓存上限
-const int _skiaResourceCacheMaxBytes = 64 * 1024 * 1024;
+const int _skiaResourceCacheMaxBytes = 64 << 20;
 
 StreamSubscription? _audioEventSub;
 StreamSubscription? _progressSub;
@@ -165,7 +165,7 @@ void main() async {
   PaintingBinding.instance.imageCache.maximumSize = 100;
 
   // 最多缓存 10MB，超过就会清理（默认100MB）
-  PaintingBinding.instance.imageCache.maximumSizeBytes = 10 * 1024 * 1024;
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 10 << 20;
 
   // 设置 Skia GPU 资源缓存上限
   // 过小的值会导致纹理复用率下降，导致动画不流畅
@@ -323,6 +323,8 @@ void main() async {
   } catch (e, stackTrace) {
     LoggerUni.w('初始化 Windows 任务栏缩略图控制失败', e, stackTrace);
   }
+
+  MemoryManager.startLoopTrim('Loop');
 }
 
 void _initLeakTracking() {
@@ -376,7 +378,6 @@ Future<void> initStream(AudioController audioController) async {
   await _smtcSub?.cancel();
   _countMs100 = 0;
   _countSec = 0;
-  _countSec30 = 0;
 
   //音频状态流
   try {
@@ -417,7 +418,6 @@ Future<void> initStream(AudioController audioController) async {
 
         _countMs100++;
         _countSec++;
-        _countSec30++;
 
         if (_countMs100 > 4) {
           _countMs100 = 0;
@@ -428,17 +428,6 @@ Future<void> initStream(AudioController audioController) async {
         if (_countSec > 49) {
           _countSec = 0;
           audioController.currentSec.value = data;
-        }
-
-        if (_countSec30 > 1499) {
-          _countSec30 = 0;
-          StatisticsController.instance.updateStatistics();
-          StatisticsController.instance.saveStatistics().then(
-            (_) => LoggerUni.i("听歌统计数据自动保存成功"),
-            onError: (e, stackTrace) {
-              LoggerUni.e("自动保存统计数据失败", e, stackTrace);
-            },
-          );
         }
       },
       onError: (e, stackTrace) {
