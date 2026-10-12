@@ -195,10 +195,10 @@ class StatisticsController {
   /// 聚合结果的版本号。写入统计时自增，驱动下面几个 computed 重算。
   final statsRevision = signal(0);
 
-  /// 最近 [_heatmapWeeks] 周热力图
+  /// 热力图
   late final heatmap = computed(() {
     statsRevision.value;
-    return _buildHeatmap(weekCount: _heatmapWeeks);
+    return _buildHeatmap();
   });
 
   /// 收听习惯概览（常听时段 / 日均 / 连续天数 / 最多日期）
@@ -221,8 +221,11 @@ class StatisticsController {
   Timer? _updateLoopTimer;
   static const Duration _updateDuration = Duration(seconds: 30);
 
-  /// 热力图展示的周数
-  static const int _heatmapWeeks = 52;
+  /// 热力图展示的最大周数
+  static const int _heatmapMaxWeeks = 52;
+
+  /// 热力图展示的最小周数
+  static const int _heatmapMinWeeks = 8;
 
   /// 按日数据保留天数，超出的在启动时清理
   static const int _dailyRetentionDays = 400;
@@ -484,9 +487,14 @@ class StatisticsController {
 
   //聚合计算
 
-  HeatmapData _buildHeatmap({required int weekCount}) {
+  HeatmapData _buildHeatmap() {
     final today = StatKeys.atMidnight(DateTime.now());
     // 从「本周周一往前推 weekCount-1 周」开始，保证最后一列是本周
+    final weekCount = (_dailyStats.length / 7).ceil().clamp(
+      _heatmapMinWeeks,
+      _heatmapMaxWeeks,
+    );
+
     final firstMonday = StatKeys.mondayOf(
       today,
     ).subtract(Duration(days: (weekCount - 1) * 7));

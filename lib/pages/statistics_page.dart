@@ -603,6 +603,7 @@ class _StatisticsArtistTile extends StatelessWidget {
                     Expanded(
                       child: FractionallySizedBox(
                         widthFactor: ratio,
+                        alignment: .centerLeft,
                         child: Container(
                           height: 2,
                           decoration: BoxDecoration(
