@@ -142,7 +142,7 @@ class _Tilt3DState extends State<Tilt3D> {
                       filterQuality: FilterQuality.low,
                       transform: transform,
                       alignment: FractionalOffset.center,
-                      child: Container(
+                      child: DecoratedBox(
                         decoration: BoxDecoration(
                           borderRadius: widget.borderRadius,
                           // 阴影平滑过渡

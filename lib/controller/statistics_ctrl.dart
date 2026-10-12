@@ -241,7 +241,7 @@ class StatisticsController {
       updateStatistics();
       _saveStatistics().then(
         (_) => LoggerUni.i("听歌统计数据自动保存成功"),
-        onError: (e, stackTrace) {
+        onError: (Object e, StackTrace stackTrace) {
           LoggerUni.e("自动保存统计数据失败", e, stackTrace);
         },
       );
@@ -744,7 +744,7 @@ class StatisticsController {
   String _formatBytes(int bytes, [int decimals = 2]) {
     if (bytes <= 0) return "0 B";
     const suffixes = ["B", "KB", "MB", "GB", "TB", "PB"];
-    var i = (log(bytes) / log(1024)).floor();
+    final i = (log(bytes) / log(1024)).floor();
     return '${(bytes / pow(1024, i)).toStringAsFixed(decimals)} ${suffixes[i]}';
   }
 

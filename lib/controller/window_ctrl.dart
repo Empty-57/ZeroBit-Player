@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:signals/signals_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
@@ -22,7 +24,7 @@ class WindowController with WindowListener {
     windowManager.addListener(this);
   }
 
-  void toggleMaximize() async {
+  Future<void> toggleMaximize() async {
     if (await windowManager.isMaximized()) {
       await windowManager.unmaximize();
       isMaximized.value = false;
@@ -32,7 +34,7 @@ class WindowController with WindowListener {
     }
   }
 
-  void toggleFullScreen() async {
+  Future<void> toggleFullScreen() async {
     final isFullScreen_ = await windowManager.isFullScreen();
     await windowManager.setFullScreen(!isFullScreen_);
     isFullScreen.value = !isFullScreen_;
@@ -82,7 +84,7 @@ class WindowController with WindowListener {
   }
 
   @override
-  void onWindowResized() async {
+  Future<void> onWindowResized() async {
     final size = await windowManager.getSize();
     LoggerUni.d('now size | width: ${size.width} height: ${size.height}');
 
@@ -94,12 +96,12 @@ class WindowController with WindowListener {
 
       _settingController.lastWindowInfo[SettingController.lastWindowSizeKey] =
           windowInfoSize;
-      _settingController.putScalableCache();
+      unawaited(_settingController.putScalableCache());
     }
   }
 
   @override
-  void onWindowMoved() async {
+  Future<void> onWindowMoved() async {
     final position = await windowManager.getPosition();
     LoggerUni.d('now position | x: ${position.dx} y: ${position.dy}');
 
@@ -113,7 +115,7 @@ class WindowController with WindowListener {
       _settingController.lastWindowInfo[SettingController
               .lastWindowPositonKey] =
           windowInfoPosition;
-      _settingController.putScalableCache();
+      unawaited(_settingController.putScalableCache());
     }
   }
 }

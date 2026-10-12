@@ -109,7 +109,7 @@ class PlayBar extends StatelessWidget {
                 2 -
             _barWidthHalf;
         return AnimatedPositioned(
-          duration: Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 300),
           curve: Curves.easeOutCubic,
           bottom: _bottom,
           right: rightOffset,
@@ -360,7 +360,7 @@ class PlayBar extends StatelessWidget {
   // 构建时间显示
   Widget _buildTimeDisplay(AudioController c, TextStyle timeTextStyle) {
     // 用最长的可能字符串测量宽度
-    final maxText = "00:00 / 00:00";
+    const maxText = "00:00 / 00:00";
     final tp = TextPainter(
       text: TextSpan(text: maxText, style: timeTextStyle),
       textDirection: TextDirection.ltr,

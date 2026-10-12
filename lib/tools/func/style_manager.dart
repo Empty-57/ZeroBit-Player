@@ -15,6 +15,8 @@ abstract final class AppFontSize {
 }
 
 abstract final class AppIconSize {
+  /// 行内辅助图标，配 [AppFontSize.sm] / [AppFontSize.xs] 使用
+  static const double xs = 14.0;
   static const double sm = 18.0;
   static const double md = 20.0;
   static const double lg = 22.0;

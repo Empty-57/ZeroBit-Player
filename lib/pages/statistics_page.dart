@@ -207,7 +207,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
     return Container(
       alignment: Alignment.centerLeft,
-      padding: EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
+      padding: const EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/widget/get_snack_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
@@ -24,7 +26,7 @@ class UserPlayListController {
 
   final songDeletedSignal = signal(<String>[]);
 
-  void loadData() async {
+  void loadData() {
     final rawPlaylists = _userPlayListCacheBox.getAll();
     if (rawPlaylists.isEmpty) {
       items.value = const [];
@@ -57,7 +59,7 @@ class UserPlayListController {
     }
     items.value = cleanList;
     if (hasDeadLinks && changedMap.isNotEmpty) {
-      await _userPlayListCacheBox.putAll(data: changedMap);
+      unawaited(_userPlayListCacheBox.putAll(data: changedMap));
     }
   }
 
@@ -80,7 +82,7 @@ class UserPlayListController {
     return true;
   }
 
-  Future<void> createPlayList({required String userKey}) async {
+  void createPlayList({required String userKey}) {
     final cleanName = userKey.trim();
 
     if (!_isValidName(cleanName)) return;
@@ -93,12 +95,12 @@ class UserPlayListController {
       userKey: fullUserKey,
     );
 
-    await _userPlayListCacheBox.put(data: newPlaylist, key: fullUserKey);
+    unawaited(_userPlayListCacheBox.put(data: newPlaylist, key: fullUserKey));
     items.add(newPlaylist);
   }
 
-  Future<void> removePlayList({required String userKey}) async {
-    await _userPlayListCacheBox.del(key: userKey);
+  void removePlayList({required String userKey}) {
+    unawaited(_userPlayListCacheBox.del(key: userKey));
     items.removeWhere((v) => v.userKey == userKey);
   }
 
@@ -130,7 +132,7 @@ class UserPlayListController {
   }
 
   /// 用于向自定义歌单添加所选的音频
-  void addToAudioList({
+  Future<void> addToAudioList({
     required MusicCache metadata,
     required String userKey,
   }) async {
@@ -170,7 +172,7 @@ class UserPlayListController {
   }
 
   /// 用于向自定义歌单添加所选的所有音频
-  void addAllToAudioList({
+  Future<void> addAllToAudioList({
     required List<MusicCache> selectedList,
     required String userKey,
   }) async {
@@ -260,7 +262,7 @@ class UserPlayListController {
   }
 
   /// 用于从自定义歌单删除所有所选的音频
-  void audioRemoveAll({
+  Future<void> audioRemoveAll({
     required String userKey,
     required List<MusicCache> removeList,
   }) async {

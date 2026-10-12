@@ -778,8 +778,8 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         child: SignalBuilder(
           builder: (context) {
             final viewMode = _settingController.viewModeMap[widget.operateArea];
-            final extent = const ScrollCacheExtent.pixels(_itemHeight * 4);
-            final padding = const EdgeInsets.only(bottom: _itemHeight * 2);
+            const extent = ScrollCacheExtent.pixels(_itemHeight * 4);
+            const padding = EdgeInsets.only(bottom: _itemHeight * 2);
             return viewMode!
                 ? ListView.builder(
                     scrollCacheExtent: extent,
@@ -849,9 +849,9 @@ class _AudioGenPagesState extends State<AudioGenPages> {
           return;
         }
 
-        RenderBox overlayBox =
+        final RenderBox overlayBox =
             Overlay.of(context).context.findRenderObject() as RenderBox;
-        Offset overlayOffset = overlayBox.globalToLocal(e.globalPosition);
+        final Offset overlayOffset = overlayBox.globalToLocal(e.globalPosition);
         _musicMenuCtrl.openMenu(
           overlayOffset: overlayOffset,
           metadata: metadata,

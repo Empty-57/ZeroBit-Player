@@ -305,8 +305,8 @@ class _LoadLocalOrNetCoverState extends State<LoadLocalOrNetCover> {
     return Container(
       height: widget.height,
       width: widget.width,
-      decoration: BoxDecoration(
-        color: const Color(0x1A808080),
+      decoration: const BoxDecoration(
+        color: Color(0x1A808080),
         borderRadius: _coverBorderRadius,
       ),
     );

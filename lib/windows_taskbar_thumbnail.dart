@@ -10,7 +10,7 @@ class WindowsTaskbarThumbnail {
   );
 
   static void init({
-    required Function(TaskbarButtonAction action) onButtonClick,
+    required void Function(TaskbarButtonAction action) onButtonClick,
   }) {
     if (!Platform.isWindows) return;
     _channel.setMethodCallHandler((call) async {

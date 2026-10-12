@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
@@ -232,7 +234,9 @@ class PlayListPreviewPage extends StatelessWidget {
                   if (result != null &&
                       result.trim().isNotEmpty &&
                       result != displayName) {
-                    c.renamePlayList(oldKey: item.userKey, newKey: result);
+                    unawaited(
+                      c.renamePlayList(oldKey: item.userKey, newKey: result),
+                    );
                   }
                 },
                 btnHeight: 48,

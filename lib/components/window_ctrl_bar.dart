@@ -32,7 +32,7 @@ class _SearchDialog extends StatelessWidget {
     return _ControllerButton(
       icon: PhosphorIconsLight.magnifyingGlass,
       fn: () {
-        showDialog(
+        showDialog<void>(
           barrierDismissible: true,
           context: context,
           builder: (BuildContext context) {
@@ -90,7 +90,7 @@ class _SearchDialogContentState extends State<_SearchDialogContent> {
         size: AppFontSize.xl,
         weight: FontWeight.w600,
       ),
-      shape: RoundedRectangleBorder(borderRadius: _borderRadius),
+      shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
       backgroundColor: Theme.of(context).colorScheme.surface,
       actionsAlignment: MainAxisAlignment.end,
       actions: <Widget>[
@@ -120,7 +120,7 @@ class _SearchDialogContentState extends State<_SearchDialogContent> {
                     ),
                     itemCount: widget.cacheCtrl.searchResult.value.length,
                     itemExtent: _itemHeight,
-                    padding: EdgeInsets.only(bottom: _itemHeight * 2),
+                    padding: const EdgeInsets.only(bottom: _itemHeight * 2),
                     itemBuilder: (context, index) {
                       final items = widget.cacheCtrl.searchResult.value[index];
                       final menuController = MenuController();
@@ -129,7 +129,7 @@ class _SearchDialogContentState extends State<_SearchDialogContent> {
                           widget.ctrl.searchInsert(metadata: items);
                         },
                         style: TextButton.styleFrom(
-                          shape: RoundedRectangleBorder(
+                          shape: const RoundedRectangleBorder(
                             borderRadius: _borderRadius,
                           ),
                         ),
@@ -298,7 +298,7 @@ class WindowControllerBar extends StatelessWidget {
 
     final content = Container(
       height: _controllerBarHeight,
-      padding: EdgeInsets.only(left: 16, top: 0, right: 4, bottom: 0),
+      padding: const EdgeInsets.only(left: 16, top: 0, right: 4, bottom: 0),
       color: Theme.of(
         context,
       ).colorScheme.surfaceContainer.withValues(alpha: useBlur ? 0.4 : 0.0),
@@ -308,7 +308,7 @@ class WindowControllerBar extends StatelessWidget {
         spacing: 0,
         children: <Widget>[
           Padding(
-            padding: EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: 8),
             child: _ControllerButton(
               onlyDarkMode: onlyDarkMode,
               icon: useCaretDown
@@ -365,7 +365,7 @@ class WindowControllerBar extends StatelessWidget {
 
           if (useThemeSwitch)
             Padding(
-              padding: EdgeInsets.only(right: 8, left: 8),
+              padding: const EdgeInsets.only(right: 8, left: 8),
               child: SignalBuilder(
                 builder: (context) => _ControllerButton(
                   onlyDarkMode: onlyDarkMode,
@@ -384,7 +384,7 @@ class WindowControllerBar extends StatelessWidget {
             builder: (context) => Visibility(
               visible: !windowController.isFullScreen.value,
               child: Padding(
-                padding: EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.only(right: 8),
                 child: _ControllerButton(
                   onlyDarkMode: onlyDarkMode,
                   icon: PhosphorIconsLight.minus,

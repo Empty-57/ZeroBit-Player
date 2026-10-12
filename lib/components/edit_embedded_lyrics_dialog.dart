@@ -31,7 +31,7 @@ class EditEmbeddedLyricsDialog extends StatelessWidget {
     return GeneralBtn(
       fn: () {
         menuController.close();
-        showDialog(
+        showDialog<void>(
           context: context,
           barrierDismissible: true,
           builder: (BuildContext context) {
@@ -127,7 +127,7 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final border = const OutlineInputBorder();
+    const border = OutlineInputBorder();
     final hintStyle = context.createTextStyle(
       size: AppFontSize.sm,
       opacity: 0.8,

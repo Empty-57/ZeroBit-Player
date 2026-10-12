@@ -53,7 +53,7 @@ class AudioController {
   final coverRevision = signal(0);
 
   late final Signal<MusicCache> currentMetadata = signal(
-    MusicCache(
+    const MusicCache(
       title: '',
       artist: '',
       album: '',
@@ -98,10 +98,10 @@ class AudioController {
   final navigationIsExtend = signal(true);
 
   static final _defaultPalette = <Color>[
-    Color(0xFF035B2D),
-    Color(0xFF2A6F97),
-    Color(0xFF014F86),
-    Color(0xFF037081),
+    const Color(0xFF035B2D),
+    const Color(0xFF2A6F97),
+    const Color(0xFF014F86),
+    const Color(0xFF037081),
   ];
 
   final coverPalette = listSignal([..._defaultPalette]);
@@ -113,7 +113,7 @@ class AudioController {
   int reTryCount = 0;
 
   // 这里预先缓存已处理歌词数据
-  List lineTextList = [];
+  List<dynamic> lineTextList = [];
   List<String> translateList = [];
   List<double> startTime = [];
   List<String> romaList = [];
@@ -177,7 +177,7 @@ class AudioController {
       ParsedLyricModel? lyrics = results[2] as ParsedLyricModel?;
 
       Uint8List? bigCover = localCovers.$1;
-      Uint8List smallCover = localCovers.$2 ?? kTransparentImage;
+      final Uint8List smallCover = localCovers.$2 ?? kTransparentImage;
 
       // 更新系统UI
       final title = metadata.title;
@@ -246,7 +246,7 @@ class AudioController {
 
   /// 读本地封面
   Future<(Uint8List?, Uint8List?)> _loadLocalCovers(String path) async {
-    Uint8List? smallCover = CoverLRUCache.get(path);
+    final Uint8List? smallCover = CoverLRUCache.get(path);
 
     final bigFuture = getCover(path: path, sizeFlag: CoverQuality.high);
     final smallFuture = smallCover != null

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
@@ -50,7 +51,7 @@ class _FolderManagerDialog extends StatelessWidget {
     return GeneralBtn(
       fn: () {
         var foldersClone = [..._settingController.folders];
-        showDialog(
+        showDialog<String?>(
           barrierDismissible: true,
           context: context,
           builder: (BuildContext context) {
@@ -61,7 +62,7 @@ class _FolderManagerDialog extends StatelessWidget {
                 weight: FontWeight.w600,
               ),
 
-              shape: RoundedRectangleBorder(
+              shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(4)),
               ),
               backgroundColor: Theme.of(context).colorScheme.surface,
@@ -162,9 +163,8 @@ class _FolderManagerDialog extends StatelessWidget {
                             children: [
                               GeneralBtn(
                                 fn: () async {
-                                  String? selectedDirectory = await FilePicker
-                                      .platform
-                                      .getDirectoryPath();
+                                  final String? selectedDirectory =
+                                      await FilePicker.getDirectoryPath();
                                   if (selectedDirectory != null &&
                                       !_settingController.folders.contains(
                                         selectedDirectory,
@@ -423,7 +423,7 @@ class _ColorPickerDialogState extends State<_ColorPickerDialog> {
               pickerAreaHeightPercent: 0.7,
               enableAlpha: widget.enableAlpha,
               displayThumbColor: true,
-              labelTypes: [],
+              labelTypes: const [],
               portraitOnly: true,
               hexInputBar: false,
               hexInputController: _hexController,
@@ -497,7 +497,7 @@ Widget _getFontFamilyDialog(
     fn: () {
       final searchQuery = signal<String>(
         '',
-        options: SignalOptions(autoDispose: true),
+        options: const SignalOptions(autoDispose: true),
       );
       final filteredFonts = computed<List<(int, String)>>(() {
         final q = searchQuery.value.trim().toLowerCase();
@@ -506,9 +506,9 @@ Widget _getFontFamilyDialog(
         return indexedList
             .where((item) => item.$2.toLowerCase().contains(q))
             .toList();
-      }, options: ComputedOptions(autoDispose: true));
+      }, options: const ComputedOptions(autoDispose: true));
 
-      showDialog(
+      showDialog<void>(
         barrierDismissible: true,
         context: context,
         builder: (BuildContext dialogContext) {
@@ -666,7 +666,7 @@ class _FontFamilyDialog extends StatelessWidget {
   }
 }
 
-List<GeneralBtn<dynamic>> _getFontSizeList(
+List<GeneralBtn> _getFontSizeList(
   void Function(int) fn, {
   int min = SettingController.lrcFontSizeMin,
   int max = SettingController.lrcFontSizeMax,
@@ -683,7 +683,7 @@ List<GeneralBtn<dynamic>> _getFontSizeList(
   }).toList();
 }
 
-List<GeneralBtn<dynamic>> _getFontWeightList(void Function(int) fn) {
+List<GeneralBtn> _getFontWeightList(void Function(int) fn) {
   return List.generate(
     SettingController.lrcFontWeightMax + 1,
     (index) => index,
@@ -805,7 +805,7 @@ class _CheckVersionState extends State<_CheckVersion>
     if (_loading) return;
 
     setState(() => _loading = true);
-    _loadingController.repeat();
+    unawaited(_loadingController.repeat());
 
     await VersionChecker.checkAndShowDialog(
       context,
@@ -1116,7 +1116,7 @@ Widget _createHotKeyItem(
             await _settingController.initHotKey();
             return;
           }
-          showDialog(
+          await showDialog<void>(
             barrierDismissible: true,
             context: context,
             builder: (BuildContext context) {
@@ -1134,7 +1134,7 @@ Widget _createHotKeyItem(
                   weight: FontWeight.w100,
                 ),
 
-                shape: RoundedRectangleBorder(
+                shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(4)),
                 ),
                 backgroundColor: Theme.of(context).colorScheme.surface,
@@ -1162,17 +1162,17 @@ Widget _createHotKeyItem(
                 ],
               );
             },
-          ).then((_) async {
+          ).then((_) {
             if (_settingController.checkHotConflict(hotKey_.value, prefKey)) {
               hotKey_.value = prev;
               showSnackBar(
                 title: 'Err',
                 msg: '快捷键已被占用，请更换。',
-                duration: Duration(milliseconds: 1000),
+                duration: const Duration(milliseconds: 1000),
               );
             }
-            await fn(hotKey_.value);
-            await _settingController.initHotKey();
+            unawaited(fn(hotKey_.value));
+            unawaited(_settingController.initHotKey());
           });
         },
         icon: PhosphorIconsLight.option,
@@ -1302,15 +1302,11 @@ class _BackgroundImagePathPicker extends StatelessWidget {
         GeneralBtn(
           fn: () async {
             try {
-              final result = await FilePicker.platform.pickFiles(
-                type: FileType.image,
-              );
-              if (result != null && result.paths.isNotEmpty) {
-                _settingController.backgroundImagePath.value =
-                    result.paths.first!;
-                _settingController.setBackgroundImagePath(
-                  value: result.paths.first!,
-                );
+              final result = await FilePicker.pickFile(type: FileType.image);
+              final path = result?.path;
+              if (path != null && path.isNotEmpty) {
+                _settingController.backgroundImagePath.value = path;
+                _settingController.setBackgroundImagePath(value: path);
               } else {
                 showSnackBar(title: 'ERR', msg: '发生未知问题');
               }

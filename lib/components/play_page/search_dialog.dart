@@ -157,7 +157,7 @@ class _SearchResultItem extends StatelessWidget {
         }
       },
       style: TextButton.styleFrom(
-        shape: RoundedRectangleBorder(
+        shape: const RoundedRectangleBorder(
           borderRadius: PlayPageConstant.borderRadius,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -236,7 +236,7 @@ class NetLrcDialog extends StatelessWidget {
       size: PlayPageConstant.ctrlBtnMinSize,
       color: color,
       fn: () {
-        showDialog(
+        showDialog<void>(
           barrierDismissible: true,
           context: context,
           builder: (context) => AlertDialog(

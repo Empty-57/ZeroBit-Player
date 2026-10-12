@@ -3,8 +3,8 @@ class SettingCache {
   final int apiIndex;
   final double volume;
   final List<String> folders;
-  final Map sortMap;
-  final Map viewModeMap;
+  final Map<dynamic, dynamic> sortMap;
+  final Map<dynamic, dynamic> viewModeMap;
   final bool isReverse;
   final int themeColor;
   final int playMode;

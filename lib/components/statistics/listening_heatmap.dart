@@ -70,14 +70,14 @@ class ListeningHeatmap extends StatelessWidget {
       child: SingleChildScrollView(
         scrollDirection: .horizontal,
         child: Padding(
-          padding: EdgeInsetsGeometry.only(right: 8),
+          padding: const EdgeInsetsGeometry.only(right: 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 列标签：每月
               Row(
                 children: [
-                  SizedBox(width: _weekLabelWidth),
+                  const SizedBox(width: _weekLabelWidth),
                   for (int i = 0; i < data.weeks.length; i++)
                     () {
                       final m = data.weeks[i].first.date.month;
@@ -130,7 +130,7 @@ class _HeatmapCellTile extends StatelessWidget {
   Widget build(BuildContext context) {
     // 未来的格子只占位，不画色块，避免读成「那天没听」
     if (cell.isFuture) {
-      return SizedBox(
+      return const SizedBox(
         width: _cellSize + _cellGap * 2,
         height: _cellSize + _cellGap * 2,
       );

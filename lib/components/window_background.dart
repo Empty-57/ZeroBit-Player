@@ -26,7 +26,7 @@ class WindowBackgroundImage extends StatelessWidget {
             File(path),
             fit: BoxFit.cover,
             gaplessPlayback: true,
-            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
             cacheWidth: blur > 0 ? 960 : 1920, // 固定解码宽度不重复解码
           );
 

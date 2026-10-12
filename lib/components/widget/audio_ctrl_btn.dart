@@ -215,7 +215,7 @@ class _VolumeSetBtn extends StatelessWidget {
       style: const MenuStyle(
         padding: WidgetStatePropertyAll(EdgeInsets.only(top: 16)),
       ),
-      builder: (ctx, MenuController controller, __) {
+      builder: (ctx, MenuController controller, _) {
         return Listener(
           onPointerSignal: (pointerSignal) {
             if (pointerSignal is PointerScrollEvent) {
@@ -433,7 +433,7 @@ class _EqualizerBtn extends StatelessWidget {
     final height = MediaQuery.sizeOf(context).height;
     final width = MediaQuery.sizeOf(context).width;
 
-    showDialog(
+    showDialog<void>(
       barrierDismissible: true,
       context: context,
       builder: (BuildContext context) {

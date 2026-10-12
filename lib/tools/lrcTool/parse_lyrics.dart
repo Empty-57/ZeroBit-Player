@@ -196,7 +196,7 @@ class JapaneseDetector {
 
 /// 遍历逐字歌词行并注入假名。
 Future<void> _applyJapaneseFurigana(
-  List<LyricEntry> entries,
+  List<LyricEntry<dynamic>> entries,
   bool isSongJapanese,
 ) async {
   // 解析期间复用副歌分析结果，结束后释放缓存。
@@ -245,7 +245,7 @@ Future<void> _annotateWordsForLine(
 // ─────────────────────────── 基础 LRC 解析 ───────────────────────────
 
 /// 将整首 LRC 文本解析成时间 + 文本的列表
-List<LyricEntry> _parseLyrics(String text) {
+List<LyricEntry<dynamic>> _parseLyrics(String text) {
   // 用于剥离行内时间戳的正则
   final reg1 = RegExp(r'<\d{2}:\d{2}\.\d{2,3}>');
   final reg2 = RegExp(r'\[\d{2}:\d{2}\.\d{2,3}\]');
@@ -266,7 +266,7 @@ List<LyricEntry> _parseLyrics(String text) {
           return null;
         }
       })
-      .whereType<LyricEntry>()
+      .whereType<LyricEntry<dynamic>>()
       .toList();
 }
 
@@ -333,7 +333,7 @@ List<WordEntry> _enhancedAndWordByWordLrcAnalysis(
   return words;
 }
 
-(List<LyricEntry>, String) _lrcAnalysis(String lrcContent) {
+(List<LyricEntry<dynamic>>, String) _lrcAnalysis(String lrcContent) {
   final lrcType = detectLrcType(lrcContent);
 
   final RegExp? reg = switch (lrcType) {
@@ -348,7 +348,7 @@ List<WordEntry> _enhancedAndWordByWordLrcAnalysis(
   }
 
   final bool isWordByWord = reg == _wordByWordLrcWordRegex;
-  final List<LyricEntry> segments = [];
+  final List<LyricEntry<dynamic>> segments = [];
   for (final m in _lrcLineRegex.allMatches(lrcContent)) {
     final start = _parseTime(m[1]!, m[2]!);
 
@@ -421,8 +421,8 @@ List<WordEntry> _processWords(
 // ─────────────────────────── 翻译合并 ───────────────────────────
 
 /// 合并主歌词与翻译歌词
-Future<List<LyricEntry>> _mergeTranslations(
-  List<LyricEntry> mainEntries,
+Future<List<LyricEntry<dynamic>>> _mergeTranslations(
+  List<LyricEntry<dynamic>> mainEntries,
   String? lyricDataTs, {
   String type = LyricFormat.lrc,
 }) async {
@@ -458,18 +458,18 @@ Future<List<LyricEntry>> _mergeTranslations(
 }
 
 /// LRC 内嵌翻译合并（同时间戳多行）
-List<LyricEntry> _mergeLrcInlineTranslations(
-  List<LyricEntry> mainEntries,
+List<LyricEntry<dynamic>> _mergeLrcInlineTranslations(
+  List<LyricEntry<dynamic>> mainEntries,
   String type,
 ) {
   // 按时间分组
-  final Map<double, List<LyricEntry>> grouped = {};
+  final Map<double, List<LyricEntry<dynamic>>> grouped = {};
   for (final e in mainEntries) {
     grouped.putIfAbsent(e.start, () => []).add(e);
   }
 
   // 统计最大同时间行数（用于区分 [原文+翻译] 还是 [注音+原文]）
-  int maxSameLine = grouped.values.fold(
+  final int maxSameLine = grouped.values.fold(
     0,
     (m, g) => g.length > m ? g.length : m,
   );
@@ -503,12 +503,12 @@ List<LyricEntry> _mergeLrcInlineTranslations(
 }
 
 void _handleTwoLineGroup(
-  List<LyricEntry> group,
-  List<LyricEntry> mainEntries,
+  List<LyricEntry<dynamic>> group,
+  List<LyricEntry<dynamic>> mainEntries,
   int maxSameLine,
 ) {
-  LyricEntry primary;
-  LyricEntry trans;
+  LyricEntry<dynamic> primary;
+  LyricEntry<dynamic> trans;
 
   if (maxSameLine >= 3) {
     // 同时间戳行数为 3 的情况，可能是 [原文+翻译] 或 [注音+原文]，根据字符密度判断
@@ -536,8 +536,8 @@ void _handleTwoLineGroup(
 }
 
 void _handleThreeLineGroup(
-  List<LyricEntry> group,
-  List<LyricEntry> mainEntries,
+  List<LyricEntry<dynamic>> group,
+  List<LyricEntry<dynamic>> mainEntries,
 ) {
   // 同一时间点 3 条：第 0 条注音，第 1 条原文，第 2 条翻译
   final roma = group[0];
@@ -551,7 +551,7 @@ void _handleThreeLineGroup(
     ..remove(trans); // 合并进入primary后删除重复项目
 }
 
-void _handleSingleLineGroup(LyricEntry entry) {
+void _handleSingleLineGroup(LyricEntry<dynamic> entry) {
   // 只有一条时，检查 " / " 拆分
   final text = entry.lyricText;
   if (text is! String) return;
@@ -562,7 +562,7 @@ void _handleSingleLineGroup(LyricEntry entry) {
 }
 
 /// 将 roma 条目的文字写入 primary.roma
-void _applyRoma(LyricEntry roma, LyricEntry primary) {
+void _applyRoma(LyricEntry<dynamic> roma, LyricEntry<dynamic> primary) {
   if (roma.lyricText is String) {
     primary.roma = roma.lyricText as String;
   } else if (roma.lyricText is List<WordEntry>) {
@@ -573,7 +573,7 @@ void _applyRoma(LyricEntry roma, LyricEntry primary) {
 }
 
 /// 将 trans 条目的文字写入 primary.translate
-void _applyTranslate(LyricEntry trans, LyricEntry primary) {
+void _applyTranslate(LyricEntry<dynamic> trans, LyricEntry<dynamic> primary) {
   if (trans.lyricText is String) {
     primary.translate = (trans.lyricText as String).trim();
   } else if (trans.lyricText is List<WordEntry> &&
@@ -583,7 +583,7 @@ void _applyTranslate(LyricEntry trans, LyricEntry primary) {
 }
 
 /// 修正 byWordLrc 末尾单词的 duration, byWordLrc 每一行最后一个词为空白符 代表本行的结束时间
-void _fixByWordLrcLastWordDuration(List<LyricEntry> mainEntries) {
+void _fixByWordLrcLastWordDuration(List<LyricEntry<dynamic>> mainEntries) {
   for (var i = 0; i < mainEntries.length - 1; i++) {
     double duration = 0.0;
 
@@ -604,8 +604,8 @@ void _fixByWordLrcLastWordDuration(List<LyricEntry> mainEntries) {
 }
 
 /// KRC 翻译合并（从 JSON lyricDataTs 提取）
-List<LyricEntry> _mergeKrcTranslations(
-  List<LyricEntry> mainEntries,
+List<LyricEntry<dynamic>> _mergeKrcTranslations(
+  List<LyricEntry<dynamic>> mainEntries,
   String lyricDataTs,
 ) {
   try {
@@ -641,8 +641,8 @@ List<LyricEntry> _mergeKrcTranslations(
 }
 
 /// 按时间匹配翻译（QRC / YRC 等）
-List<LyricEntry> _mergeByTimeMatch(
-  List<LyricEntry> mainEntries,
+List<LyricEntry<dynamic>> _mergeByTimeMatch(
+  List<LyricEntry<dynamic>> mainEntries,
   String? lyricDataTs,
   String type,
 ) {
@@ -653,7 +653,8 @@ List<LyricEntry> _mergeByTimeMatch(
   final transQueue = _parseLyrics(lyricDataTs);
   if (transQueue.isEmpty) return mainEntries;
 
-  final String Function(LyricEntry) getTranslate = type == LyricFormat.qrc
+  final String Function(LyricEntry<dynamic>) getTranslate =
+      type == LyricFormat.qrc
       ? (e) => e.lyricText == '//' ? ' ' : e.lyricText as String
       : (e) => e.lyricText as String;
 
@@ -661,14 +662,14 @@ List<LyricEntry> _mergeByTimeMatch(
   int lastMatchedMainIdx = -1;
 
   // 最大容许的时间漂移
-  final double maxDrift = 5.0;
+  const double maxDrift = 5.0;
 
   for (final te in transQueue) {
     int minDiffIdx = -1; // 最小时间差的索引
     double minDiff = double.infinity; // 当前找到的最小时间差
 
     // 强制从上一次匹配成功的下一行开始找，防止覆盖数据
-    int startIndex = lastMatchedMainIdx + 1;
+    final int startIndex = lastMatchedMainIdx + 1;
 
     for (int i = startIndex; i < mainEntries.length; i++) {
       final currMain = mainEntries[i];
@@ -714,7 +715,7 @@ List<LyricEntry> _mergeByTimeMatch(
 // ─────────────────────────── 公开 API ───────────────────────────
 
 /// 解析 LRC 格式歌词并合并翻译
-Future<List<LyricEntry>?> parseLrc({
+Future<List<LyricEntry<dynamic>>?> parseLrc({
   String? lyricData,
   String? lyricDataTs = '',
 }) async {
@@ -724,7 +725,7 @@ Future<List<LyricEntry>?> parseLrc({
 }
 
 /// 解析逐字格式歌词（KRC / QRC / YRC）并合并翻译
-Future<List<LyricEntry>?> parseKaraOkLyric({
+Future<List<LyricEntry<dynamic>>?> parseKaraOkLyric({
   String? lyricData,
   String? lyricDataTs,
   required String type,
@@ -734,7 +735,7 @@ Future<List<LyricEntry>?> parseKaraOkLyric({
   final cfg = _getWordRegexConfig(type);
   if (cfg == null) return null;
 
-  final List<LyricEntry> segments = [];
+  final List<LyricEntry<dynamic>> segments = [];
   for (final m in _karaOkLineRegex.allMatches(lyricData)) {
     final start = _msToSec(m.group(1)!);
     final content = m.group(3)!;

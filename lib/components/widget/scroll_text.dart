@@ -80,7 +80,7 @@ class ScrollTextState extends State<ScrollText> {
     _isScrolling = true;
 
     while (mounted && _isScrolling && _scrollController.hasClients) {
-      await Future.delayed(widget.delayBefore);
+      await Future<void>.delayed(widget.delayBefore);
       if (!mounted || !_isScrolling || !_scrollController.hasClients) break;
 
       final duration = Duration(
@@ -94,7 +94,7 @@ class ScrollTextState extends State<ScrollText> {
       );
       if (!mounted || !_isScrolling || !_scrollController.hasClients) break;
 
-      await Future.delayed(widget.pauseBetween);
+      await Future<void>.delayed(widget.pauseBetween);
       if (!mounted || !_isScrolling || !_scrollController.hasClients) break;
 
       await _scrollController.animateTo(

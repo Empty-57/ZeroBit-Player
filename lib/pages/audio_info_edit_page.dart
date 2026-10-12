@@ -22,7 +22,6 @@ import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
 
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
-
 const double _bigCoverSize = 260;
 
 sealed class _CoverSource {}
@@ -34,9 +33,9 @@ class _InitialCover extends _CoverSource {
 }
 
 class _FileCover extends _CoverSource {
-  final PlatformFile file;
+  final Uint8List bytes;
 
-  _FileCover(this.file);
+  _FileCover(this.bytes);
 }
 
 class _GeneratedCover extends _CoverSource {
@@ -77,11 +76,10 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
   // 统一封面状态管理
   _CoverSource? _currentCoverSource;
   bool _isCoverLoading = true;
-
   bool _isInit = false;
 
   @override
-  void didChangeDependencies() async {
+  void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_isInit) {
       final args =
@@ -90,7 +88,7 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
 
       metadata =
           args['metadata'] ??
-          MusicCache(
+          const MusicCache(
             title: '',
             artist: '',
             album: '',
@@ -112,14 +110,30 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
       _genreCtrl = TextEditingController(text: metadata.genre);
 
       unawaited(_loadInitialCover());
-      final file = File(metadata.path);
-      audioSize =
-          '${((await file.length()) / 1024 / 1024).toStringAsFixed(2)} MB';
-
-      lastEditTime = (await file.lastModified()).toString().substring(0, 19);
-      createTime = (await file.stat()).changed.toString().substring(0, 19);
+      unawaited(_loadAudioFileInfo());
 
       _isInit = true;
+    }
+  }
+
+  Future<void> _loadAudioFileInfo() async {
+    try {
+      final file = File(metadata.path);
+      if (await file.exists()) {
+        final length = await file.length();
+        final stat = await file.stat();
+        final lastModified = await file.lastModified();
+
+        if (mounted) {
+          setState(() {
+            audioSize = '${(length / 1024 / 1024).toStringAsFixed(2)} MB';
+            lastEditTime = lastModified.toString().substring(0, 19);
+            createTime = stat.changed.toString().substring(0, 19);
+          });
+        }
+      }
+    } catch (e, st) {
+      LoggerUni.w('读取音频文件信息失败', e, st);
     }
   }
 
@@ -159,12 +173,13 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
 
   Future<void> _pickLocalCover() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        withData: true,
-      );
-      if (result != null && result.files.isNotEmpty && mounted) {
-        setState(() => _currentCoverSource = _FileCover(result.files.first));
+      final result = await FilePicker.pickFile(type: FileType.image);
+      if (result == null) return;
+      final Uint8List imageBytes = await result.readAsBytes();
+      if (imageBytes.isNotEmpty && mounted) {
+        setState(() => _currentCoverSource = _FileCover(imageBytes));
+      } else {
+        _showError('未能成功读取图片文件');
       }
     } catch (e, stackTrace) {
       LoggerUni.w('选择本地封面失败', e, stackTrace);
@@ -211,15 +226,14 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
     try {
       // 保存封面
       if (_currentCoverSource != null) {
-        Uint8List? coverBytes;
-        if (_currentCoverSource is _FileCover) {
-          coverBytes = (_currentCoverSource as _FileCover).file.bytes;
-        } else if (_currentCoverSource is _GeneratedCover) {
-          coverBytes = (_currentCoverSource as _GeneratedCover).bytes;
-        }
+        final Uint8List? coverBytes = switch (_currentCoverSource) {
+          _FileCover(:final bytes) => bytes,
+          _GeneratedCover(:final bytes) => bytes,
+          _ => null,
+        };
 
         if (coverBytes != null) {
-          await editCover(path: metadata.path, src: coverBytes);
+          unawaited(editCover(path: metadata.path, src: coverBytes));
           CoverLRUCache.put(metadata.path, coverBytes);
         }
       }
@@ -239,9 +253,11 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
       );
 
       // 同步到播放列表
-      _audioController.audioListSyncMetadata(
-        path: metadata.path,
-        newCache: newCache,
+      unawaited(
+        _audioController.audioListSyncMetadata(
+          path: metadata.path,
+          newCache: newCache,
+        ),
       );
 
       // 安全关闭
@@ -258,7 +274,7 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
     showSnackBar(
       title: 'Err',
       msg: message,
-      duration: Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 1000),
     );
   }
 
@@ -274,7 +290,7 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
       color: Colors.transparent,
       child: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsetsGeometry.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               Row(
@@ -284,7 +300,7 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
-                      crossAxisAlignment: .start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildTextField(controller: _titleCtrl, label: '标题'),
                         _buildTextField(controller: _artistCtrl, label: '艺术家'),
@@ -323,7 +339,7 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
   Uint8List _getImageProvider(_CoverSource source) => switch (source) {
     _InitialCover(:final bytes) => bytes,
     _GeneratedCover(:final bytes) => bytes,
-    _FileCover(:final file) => file.bytes ?? kTransparentImage,
+    _FileCover(:final bytes) => bytes,
     _NoCover() => kTransparentImage,
   };
 
@@ -354,18 +370,16 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
   Widget _buildInfoSection(TextStyle textStyle, TextStyle titleStyle) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 16,
       children: [
         Expanded(
           child: _buildInfoBox(textStyle, titleStyle, [
             Row(
-              spacing: 4,
               children: [
-                Icon(PhosphorIconsFill.musicNoteSimple, size: 20),
+                const Icon(PhosphorIconsFill.musicNoteSimple, size: 20),
+                const SizedBox(width: 4),
                 Text('音频参数', style: titleStyle),
               ],
             ),
-            const SizedBox.shrink(),
             _buildInfoText(
               "时长",
               formatTime(totalSeconds: metadata.duration),
@@ -385,17 +399,16 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
             _buildInfoText("通道数", "${metadata.channels}", textStyle),
           ]),
         ),
-
+        const SizedBox(width: 16),
         Expanded(
           child: _buildInfoBox(textStyle, titleStyle, [
             Row(
-              spacing: 4,
               children: [
-                Icon(PhosphorIconsLight.hash, size: 20),
+                const Icon(PhosphorIconsLight.hash, size: 20),
+                const SizedBox(width: 4),
                 Text('音频标签', style: titleStyle),
               ],
             ),
-            const SizedBox.shrink(),
             _buildInfoText("音轨号", "${metadata.trackNumber}", textStyle),
             _buildInfoText(
               "峰值",
@@ -409,17 +422,16 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
             ),
           ]),
         ),
-
+        const SizedBox(width: 16),
         Expanded(
           child: _buildInfoBox(textStyle, titleStyle, [
             Row(
-              spacing: 4,
               children: [
-                Icon(PhosphorIconsFill.folderSimple, size: 20),
+                const Icon(PhosphorIconsFill.folderSimple, size: 20),
+                const SizedBox(width: 4),
                 Text('文件信息', style: titleStyle),
               ],
             ),
-            const SizedBox.shrink(),
             _buildInfoText(
               "格式",
               p.extension(metadata.path).replaceFirst('.', '').toUpperCase(),
@@ -441,7 +453,7 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
     List<Widget> childs,
   ) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(
           context,
@@ -449,9 +461,13 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
         borderRadius: BorderRadius.circular(4),
       ),
       child: Column(
-        spacing: 8,
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: childs,
+        children: [
+          for (int i = 0; i < childs.length; i++) ...[
+            if (i > 0) const SizedBox(height: 8),
+            childs[i],
+          ],
+        ],
       ),
     );
   }
@@ -463,9 +479,8 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
     int maxLines = 1,
   }) {
     return Column(
-      crossAxisAlignment: .start,
-      mainAxisAlignment: .center,
-      spacing: 4,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           title,
@@ -474,6 +489,7 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
           overflow: TextOverflow.ellipsis,
           maxLines: maxLines,
         ),
+        const SizedBox(height: 4),
         Text(
           text,
           style: style,
@@ -483,7 +499,7 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
         ),
         Divider(
           color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-          height: 2,
+          height: 8,
           thickness: 0.5,
         ),
       ],
@@ -516,12 +532,13 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
           : Row(
               key: const ValueKey('buttons'),
               mainAxisAlignment: MainAxisAlignment.end,
-              spacing: 8,
               children: [
                 _actionButton(label: "获取网络封面", onPressed: _fetchNetworkCover),
+                const SizedBox(width: 8),
                 _actionButton(label: "使用本地封面", onPressed: _pickLocalCover),
                 const Spacer(),
                 _actionButton(label: "取消", onPressed: () => context.pop()),
+                const SizedBox(width: 8),
                 _actionButton(
                   label: "确定",
                   onPressed: _saveChanges,

@@ -103,7 +103,7 @@ mixin DetailsPageControllerBase {
     audioController.audioPlay(metadata: metadataToPlay);
   }
 
-  void itemReSort({required String operateArea}) async {
+  Future<void> itemReSort({required String operateArea}) async {
     final int type = _settingController.sortMap[operateArea] ?? SortType.title;
 
     if (type == SortType.editTime || type == SortType.createTime) {

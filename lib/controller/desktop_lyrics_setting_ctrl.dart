@@ -57,7 +57,7 @@ class DesktopLyricsSettingController {
   static const int fontSizeMin = 16;
   static const int fontSizeMax = 48;
 
-  void init() async {
+  Future<void> init() async {
     prefs = await SharedPreferences.getInstance();
     batch(() {
       fontSize.value =

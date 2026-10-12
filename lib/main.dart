@@ -78,9 +78,9 @@ const String configDirectory = 'zerobit_config';
 /// Skia GPU 资源缓存上限
 const int _skiaResourceCacheMaxBytes = 64 << 20;
 
-StreamSubscription? _audioEventSub;
-StreamSubscription? _progressSub;
-StreamSubscription? _smtcSub;
+StreamSubscription<int>? _audioEventSub;
+StreamSubscription<double>? _progressSub;
+StreamSubscription<SMTCControlEvent>? _smtcSub;
 
 void _hiveSafeRegisterAdapter<T>(TypeAdapter<T> adapter) {
   if (!Hive.isAdapterRegistered(adapter.typeId)) {
@@ -97,7 +97,7 @@ Future<Box<T>> _openSafeBox<T>(String boxName) async {
   } catch (e, stackTrace) {
     LoggerUni.e('Hive Box <$boxName> 数据损坏或打开失败，开始尝试重置修复...', e, stackTrace);
 
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future<void>.delayed(const Duration(milliseconds: 150));
 
     final docDir = await getApplicationDocumentsDirectory();
     final directory = p.join(docDir.path, configDirectory);
@@ -222,8 +222,8 @@ void main() async {
   await _openSafeBox<DailyStatCache>(HiveBoxes.dailyStatCacheBox);
   await _openSafeBox<MonthlySongCache>(HiveBoxes.monthlySongCacheBox);
 
-  DesktopLyricsSettingController.instance.init();
-  SettingController.instance.init();
+  await DesktopLyricsSettingController.instance.init();
+  await SettingController.instance.init();
   AudioController.instance.init();
   DesktopLyricsSever.instance.init();
   await TrayManagerService.instance.init();
@@ -243,16 +243,16 @@ void main() async {
     h = (rawLastSize[1] as num).toDouble();
   }
 
-  WindowOptions windowOptions = WindowOptions(
-    minimumSize: Size(1000, 750),
+  final WindowOptions windowOptions = WindowOptions(
+    minimumSize: const Size(1000, 750),
     size: Size(w, h),
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
     title: 'ZeroBit Player',
   );
-  windowManager.waitUntilReadyToShow(windowOptions, () async {
-    windowManager.setHasShadow(true);
+  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    unawaited(windowManager.setHasShadow(true));
     final rawLastPos = settingController
         .lastWindowInfo[SettingController.lastWindowPositonKey];
     if (rawLastPos is List && rawLastPos.length >= 2) {
@@ -356,15 +356,15 @@ void _initLeakTracking() {
         // debugPrint(leaks.toYaml(phasesAreTests: true));
 
         //一些组件需要在 Widget 回收之后调用其 dispose 方法，通过此可以检测出未调用 dispose 方法的组件
-        for (var n in leaks.notDisposed) {
+        for (final n in leaks.notDisposed) {
           debugPrint(n.toYaml("内存溢出检查 notDisposed:", phasesAreTests: true));
         }
         //统计未进行内存回收的对象
-        for (var n in leaks.notGCed) {
+        for (final n in leaks.notGCed) {
           debugPrint(n.toYaml("内存溢出检查 notGCed:", phasesAreTests: true));
         }
         //统计对象进行了内存回收,但是回收时间不及时
-        for (var n in leaks.gcedLate) {
+        for (final n in leaks.gcedLate) {
           debugPrint(n.toYaml("内存溢出检查gcedLate:", phasesAreTests: true));
         }
       },
@@ -408,7 +408,7 @@ Future<void> initStream(AudioController audioController) async {
           audioController.audioAutoPlay();
         }
       },
-      onError: (e, stackTrace) {
+      onError: (Object e, StackTrace stackTrace) {
         LoggerUni.e('audioEventStream 数据流产生异步异常', e, stackTrace);
       },
     );
@@ -438,7 +438,7 @@ Future<void> initStream(AudioController audioController) async {
           audioController.currentSec.value = data;
         }
       },
-      onError: (e, stackTrace) {
+      onError: (Object e, StackTrace stackTrace) {
         LoggerUni.e('progressListen 进度数据流产生异常', e, stackTrace);
       },
     );
@@ -468,7 +468,7 @@ Future<void> initStream(AudioController audioController) async {
             break;
         }
       },
-      onError: (e, stackTrace) {
+      onError: (Object e, StackTrace stackTrace) {
         LoggerUni.w('SMTC 媒体传输事件流异常', e, stackTrace);
       },
     );
@@ -601,7 +601,7 @@ CustomTransitionPage<void> _buildNormalPage({
 final CurveTween _playPageCurve = CurveTween(curve: Curves.fastOutSlowIn);
 
 final Tween<Offset> _playPageSlideTween = Tween<Offset>(
-  begin: Offset(0.0, 0.2),
+  begin: const Offset(0.0, 0.2),
   end: Offset.zero,
 );
 
@@ -779,7 +779,7 @@ class NestedObserver extends NavigatorObserver {
 
   NestedObserver({required this.onRouteChanged});
 
-  String? _getName(Route? route) {
+  String? _getName(Route<dynamic>? route) {
     final args = route?.settings.arguments as Map<String, dynamic>? ?? {};
     String? name;
     name = route?.settings.name;
@@ -790,13 +790,13 @@ class NestedObserver extends NavigatorObserver {
   }
 
   @override
-  void didPop(Route route, Route? previousRoute) {
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPop(route, previousRoute);
     onRouteChanged(_getName(previousRoute));
   }
 
   @override
-  void didPush(Route route, Route? previousRoute) {
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPush(route, previousRoute);
     onRouteChanged(_getName(route));
   }
@@ -843,10 +843,10 @@ class _HomePageState extends State<HomePage> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsetsGeometry.all(8),
+                  const Padding(
+                    padding: EdgeInsetsGeometry.all(8),
                     child: SideBar(
-                      btnList: const <Widget>[
+                      btnList: <Widget>[
                         SideBarBtn(
                           label: '音乐',
                           icon: PhosphorIconsLight.musicNoteSimple,

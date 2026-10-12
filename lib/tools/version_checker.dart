@@ -95,22 +95,21 @@ class VersionChecker {
       ),
     );
 
-    final response = await dio.get(
+    final response = await dio.get<Map<String, dynamic>>(
       _latestRepoApiUrl,
       options: Options(responseType: ResponseType.json),
     );
-
-    if (response.data == null) {
+    final data = response.data;
+    if (data == null) {
       throw Exception("获取发布信息为空");
     }
 
-    final Map<String, dynamic> jsonData = response.data;
-    final latestTag = jsonData['tag_name']?.toString() ?? '';
+    final latestTag = data['tag_name']?.toString() ?? '';
     final localVersion = (await PackageInfo.fromPlatform()).version;
 
     final hasUpdate = isNewerVersion(latestTag, localVersion);
     final repoInfo = AppReleaseInfo.fromJson(
-      jsonData,
+      data,
       customDownloadUrl: _latestRepoUrl,
     );
 

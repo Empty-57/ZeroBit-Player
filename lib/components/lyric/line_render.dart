@@ -158,7 +158,7 @@ class KaraOkLyricWidget extends StatelessWidget {
         duration: const Duration(milliseconds: 600),
         curve: Curves.easeInOut,
         tween: ColorTween(begin: beginColor, end: targetColor),
-        builder: (_, color, __) {
+        builder: (_, color, _) {
           return BlurText(
             word,
             style: style.copyWith(color: color),

@@ -494,7 +494,7 @@ class _WaveSpectrogramWidgetState extends State<WaveSpectrogramWidget> {
 
     // 主波：线性映射中低频
     for (int j = 0; j < _wavePointCount; j++) {
-      int start = (j * binSize).floor();
+      final int start = (j * binSize).floor();
       int end = ((j + 1) * binSize).ceil();
       if (end > usable) end = usable;
       if (end <= start) end = start + 1 <= usable ? start + 1 : usable;
@@ -505,7 +505,7 @@ class _WaveSpectrogramWidgetState extends State<WaveSpectrogramWidget> {
         sum += fft[k];
         count++;
       }
-      double v = count == 0 ? 0.0 : sum / count;
+      final double v = count == 0 ? 0.0 : sum / count;
       //v *= 1.0 + 0.8 * (j / (_wavePointCount - 1)); // 不需要再补偿高频部分，BASS端已经补偿过
       _amps1[j] = v > 1.0 ? 1.0 : v;
     }
@@ -526,7 +526,7 @@ class _WaveSpectrogramWidgetState extends State<WaveSpectrogramWidget> {
         sum += fft[k];
         count++;
       }
-      double v = count == 0 ? 0.0 : sum / count;
+      final double v = count == 0 ? 0.0 : sum / count;
       //v *= 0.95 + 0.5 * ratio;
       _amps2[j] = v > 1.0 ? 1.0 : v;
     }
@@ -576,13 +576,13 @@ class _WaveSpectrogramWidgetState extends State<WaveSpectrogramWidget> {
           (y(j) + y(j + 1)) * 0.5,
         );
       }
-      final int last = _wavePointCount - 1;
+      const int last = _wavePointCount - 1;
       path.lineTo(x(last), y(last));
     }
 
     if (widget.isFill && fillShader != null) {
       buildWaveRidge();
-      final int last = _wavePointCount - 1;
+      const int last = _wavePointCount - 1;
       path.lineTo(x(last), baseY);
       path.lineTo(x(0), baseY);
       path.close();

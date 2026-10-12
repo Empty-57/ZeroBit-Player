@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
 
-class GeneralBtn<T> extends StatelessWidget {
+class GeneralBtn extends StatelessWidget {
   final VoidCallback? fn;
   final String? label;
   final double? labelSize;
@@ -71,7 +71,7 @@ class GeneralBtn<T> extends StatelessWidget {
                 Theme.of(
                   context,
                 ).colorScheme.secondaryContainer.withValues(alpha: 1),
-            padding: padding ?? EdgeInsets.symmetric(horizontal: 8),
+            padding: padding ?? const EdgeInsets.symmetric(horizontal: 8),
             shadowColor: Colors.transparent,
           ),
 

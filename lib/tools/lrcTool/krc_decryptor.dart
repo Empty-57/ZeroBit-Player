@@ -24,16 +24,16 @@ final List<int> _krcKey = [
 ];
 
 String? krcDecrypt(String content) {
-  List<int> bytes = base64Decode(content);
+  final List<int> bytes = base64Decode(content);
 
   if (bytes.length <= 4) {
     LoggerUni.i("krcDecrypt: bytes.length <= 4 失败");
     return null;
   }
-  List<int> contentBytes = bytes.sublist(4);
+  final List<int> contentBytes = bytes.sublist(4);
 
   try {
-    Uint8List krcCompress = Uint8List(contentBytes.length);
+    final Uint8List krcCompress = Uint8List(contentBytes.length);
     for (int k = 0; k < contentBytes.length; k++) {
       krcCompress[k] = contentBytes[k] ^ _krcKey[k % 16];
     }

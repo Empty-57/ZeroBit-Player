@@ -73,21 +73,22 @@ Map<String, String?> _qrcParseLyricByRegex(String rawXml) {
   };
 }
 
-Future<dynamic> _saveNetCover({
+Future<Uint8List?> _saveNetCover({
   required String songPath,
   required String picUrl,
   required bool saveCover,
 }) async {
   try {
-    final pic = await _dio.get(
+    final pic = await _dio.get<List<int>>(
       picUrl,
       options: Options(responseType: ResponseType.bytes),
     );
 
-    if (pic.data != null) {
-      final bytes = pic.data is Uint8List
-          ? (pic.data as Uint8List)
-          : Uint8List.fromList(pic.data as List<int>);
+    final data = pic.data;
+    if (data != null) {
+      final Uint8List bytes = data is Uint8List
+          ? data
+          : Uint8List.fromList(data);
 
       if (saveCover) {
         await editCover(path: songPath, src: bytes);
@@ -105,7 +106,7 @@ Future<dynamic> _qmSearchByText({
   required int offset,
   required int limit,
 }) async {
-  final response = await _qmDio.post(
+  final response = await _qmDio.post<List<int>>(
     _qmSearchUrl,
     data: jsonEncode({
       "comm": {"ct": "19", "cv": "1873", "uin": "0"},
@@ -123,14 +124,15 @@ Future<dynamic> _qmSearchByText({
     }),
     options: Options(responseType: ResponseType.bytes), // 接口返回的数据不规范，防止报错
   );
-  if (response.data != null) {
-    final rawString = utf8.decode(response.data as List<int>);
+  final data = response.data;
+  if (data != null) {
+    final rawString = utf8.decode(data);
     return jsonDecode(rawString);
   }
   return null;
 }
 
-Future<dynamic> _qmSaveCoverByText({
+Future<Uint8List?> _qmSaveCoverByText({
   required String text,
   required String songPath,
   bool saveCover = true,
@@ -169,15 +171,15 @@ Future<dynamic> _qmSaveCoverByText({
 
 Future<Get4NetLrcModel?> _qmGetLrc({required int id}) async {
   try {
-    final response = await _qmDio.get(
+    final response = await _qmDio.get<String>(
       _qmLrcUrl,
       queryParameters: {"version": '15', "lrctype": '4', "musicid": id},
       options: Options(responseType: ResponseType.plain),
     );
 
-    final String? body = response.data?.toString();
+    final String? body = response.data;
     if (body == null || body.isEmpty) {
-      return Get4NetLrcModel(
+      return const Get4NetLrcModel(
         lrc: null,
         verbatimLrc: null,
         translate: null,
@@ -187,8 +189,8 @@ Future<Get4NetLrcModel?> _qmGetLrc({required int id}) async {
 
     // Original、ts、roma
     final data = _qrcParseLyricByRegex(body);
-    String? encryptedOriginal = data['lyric'];
-    String? encryptedTranslate = data['trans'];
+    final String? encryptedOriginal = data['lyric'];
+    final String? encryptedTranslate = data['trans'];
     // String? decryptedRoma = data['roma'];
 
     String? qrcDecrypted;
@@ -297,7 +299,7 @@ Future<dynamic> _neSearchByText({
   required int offset,
   required int limit,
 }) async {
-  final response = await _dio.get(
+  final response = await _dio.get<String>(
     _neSearchUrl,
     queryParameters: {
       "s": text,
@@ -308,13 +310,14 @@ Future<dynamic> _neSearchByText({
     },
     options: Options(responseType: ResponseType.plain),
   );
-  if (response.data != null) {
-    return jsonDecode(response.data);
+  final data = response.data;
+  if (data != null) {
+    return jsonDecode(data);
   }
   return null;
 }
 
-Future<dynamic> _neSaveCoverByText({
+Future<Uint8List?> _neSaveCoverByText({
   required String text,
   required String songPath,
   bool saveCover = true,
@@ -353,14 +356,14 @@ Future<dynamic> _neSaveCoverByText({
 
 Future<Get4NetLrcModel?> _neGetLrc({required int id}) async {
   try {
-    final response = await _dio.get(
+    final response = await _dio.get<String>(
       _neLrcUrl,
       queryParameters: {"id": id, "lv": -1, "yv": -1, "tv": -1, "os": 'pc'},
       options: Options(responseType: ResponseType.plain),
     );
-    final body = response.data as String?;
+    final body = response.data;
     if (body == null || body.isEmpty) {
-      return Get4NetLrcModel(
+      return const Get4NetLrcModel(
         lrc: null,
         verbatimLrc: null,
         translate: null,
@@ -441,7 +444,7 @@ Future<dynamic> _kgSearchByText({
   required int offset,
   required int limit,
 }) async {
-  final response = await _dio.get(
+  final response = await _dio.get<String>(
     _kgSearchUrl,
     queryParameters: {
       "format": "json",
@@ -451,13 +454,14 @@ Future<dynamic> _kgSearchByText({
     },
     options: Options(responseType: ResponseType.plain),
   );
-  if (response.data != null) {
-    return jsonDecode(response.data);
+  final data = response.data;
+  if (data != null) {
+    return jsonDecode(data);
   }
   return null;
 }
 
-Future<dynamic> _kgSaveCoverByText({
+Future<Uint8List?> _kgSaveCoverByText({
   required String text,
   required String songPath,
   bool saveCover = true,
@@ -499,7 +503,7 @@ Future<dynamic> _kgSaveCoverByText({
 }
 
 Future<Get4NetLrcModel?> _kgGetLrc({required String id}) async {
-  final nullModel = Get4NetLrcModel(
+  const nullModel = Get4NetLrcModel(
     lrc: null,
     verbatimLrc: null,
     translate: null,
@@ -507,15 +511,15 @@ Future<Get4NetLrcModel?> _kgGetLrc({required String id}) async {
   );
 
   try {
-    final response = await _dio.get(
+    final response = await _dio.get<String>(
       _kgSearchLrcUrl,
       queryParameters: {"ver": '1', "man": 'yes', "client": "pc", "hash": id},
       options: Options(responseType: ResponseType.plain),
     );
+    final data = response.data;
+    if (data == null) return nullModel;
 
-    if (response.data == null) return nullModel;
-
-    final dynamic parsedData = jsonDecode(response.data);
+    final dynamic parsedData = jsonDecode(data);
     final candidate = parsedData?['candidates'];
     if (candidate is! List || candidate.isEmpty) return nullModel;
 
@@ -529,7 +533,7 @@ Future<Get4NetLrcModel?> _kgGetLrc({required String id}) async {
       return nullModel;
     }
 
-    final lyricResponse = await _dio.get(
+    final lyricResponse = await _dio.get<String>(
       _kgDownloadLrcUrl,
       queryParameters: {
         "ver": '1',
@@ -541,19 +545,19 @@ Future<Get4NetLrcModel?> _kgGetLrc({required String id}) async {
       },
       options: Options(responseType: ResponseType.plain),
     );
+    final lyricData = lyricResponse.data;
+    if (lyricData == null) return nullModel;
 
-    if (lyricResponse.data == null) return nullModel;
-
-    final dynamic lyricJson = jsonDecode(lyricResponse.data);
+    final dynamic lyricJson = jsonDecode(lyricData);
     final String? content = lyricJson?['content'];
     if (content == null || content.isEmpty) return nullModel;
 
-    final String? contentcDecrypted = krcDecrypt(content);
-    final String? translate = krcExtractAndDecodeLanguage(contentcDecrypted);
+    final String? contentDecrypted = krcDecrypt(content);
+    final String? translate = krcExtractAndDecodeLanguage(contentDecrypted);
 
     return Get4NetLrcModel(
       lrc: null,
-      verbatimLrc: contentcDecrypted,
+      verbatimLrc: contentDecrypted,
       translate: translate,
       type: LyricFormat.krc,
     );
@@ -604,7 +608,7 @@ Future<List<SearchLrcModel?>> _kgGetLrcBySearch({
   }
 }
 
-Future<dynamic> saveCoverByText({
+Future<Uint8List?> saveCoverByText({
   required String text,
   required String songPath,
   bool saveCover = true,

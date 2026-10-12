@@ -597,7 +597,7 @@ class _PlayPageState extends State<PlayPage> {
               };
               _menuController.close();
               SchedulerBinding.instance.addPostFrameCallback((_) {
-                router.replace(AppRoutes.details, extra: extra);
+                unawaited(router.replace(AppRoutes.details, extra: extra));
               });
             },
             text: album,
@@ -626,7 +626,7 @@ class _PlayPageState extends State<PlayPage> {
                 };
                 _menuController.close();
                 SchedulerBinding.instance.addPostFrameCallback((_) {
-                  router.replace(AppRoutes.details, extra: extra);
+                  unawaited(router.replace(AppRoutes.details, extra: extra));
                 });
               },
               text: artistFirst,
@@ -653,7 +653,7 @@ class _PlayPageState extends State<PlayPage> {
                   };
                   _menuController.close();
                   SchedulerBinding.instance.addPostFrameCallback((_) {
-                    router.replace(AppRoutes.details, extra: extra);
+                    unawaited(router.replace(AppRoutes.details, extra: extra));
                   });
                 },
                 child: Center(child: Text(v)),
@@ -799,7 +799,7 @@ class _PlayPageState extends State<PlayPage> {
     final maxCoverConstraint = (halfWidth - 32).clamp(150.0, 500.0);
     final double coverSize = (width * 0.3).clamp(200.0, maxCoverConstraint);
 
-    final spectrogramBarLength = AudioController.bassDataFFT512 * 0.5625; // 144
+    const spectrogramBarLength = AudioController.bassDataFFT512 * 0.5625; // 144
     final spectrogramBarWidth =
         (width * PlayPageConstant.spectrogramWidthFactor) /
         spectrogramBarLength;

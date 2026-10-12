@@ -862,9 +862,9 @@ Uint8List _inversePermutation(int s0, int s1) {
 
 /// 基本函数 f，对 32 位 state 和 6 字节子密钥进行运算，返回 32 位结果
 int _f(int state, List<int> key) {
-  int uState = state & 0xFFFFFFFF;
+  final int uState = state & 0xFFFFFFFF;
 
-  int t1 =
+  final int t1 =
       (_bitnumIntl(uState, 31, 0) |
       ((uState & 0xF0000000) >>> 1) |
       _bitnumIntl(uState, 4, 5) |
@@ -878,7 +878,7 @@ int _f(int state, List<int> key) {
       ((uState & 0x000F0000) >>> 7) |
       _bitnumIntl(uState, 16, 23));
 
-  int t2 =
+  final int t2 =
       (_bitnumIntl(uState, 15, 0) |
       ((uState & 0x0000F000) << 15) |
       _bitnumIntl(uState, 20, 5) |
@@ -966,13 +966,13 @@ int _f(int state, List<int> key) {
 
 /// 对单个 8 字节块执行 16 轮加解密，返回 8 字节结果
 Uint8List _crypt(Uint8List inputData, List<List<int>> key) {
-  List<int> perm = _initialPermutation(inputData);
+  final List<int> perm = _initialPermutation(inputData);
   int s0 = perm[0];
   int s1 = perm[1];
 
   // 前 15 轮
   for (int idx = 0; idx < 15; idx++) {
-    int previousS1 = s1;
+    final int previousS1 = s1;
     s1 = _f(s1, key[idx]) ^ s0;
     s0 = previousS1;
   }
@@ -1131,7 +1131,7 @@ List<List<int>> _keySchedule(Uint8List key, int mode) {
     d = (((d << keyRndShift[i]) | (d >>> (28 - keyRndShift[i]))) & 0xFFFFFFF0);
 
     // 计算生成子密钥的索引：加密正序，解密反序
-    int togen = (mode == _devrypt) ? (15 - i) : i;
+    final int togen = (mode == _devrypt) ? (15 - i) : i;
 
     // 清空当前轮的子密钥
     for (int j = 0; j < 6; j++) {

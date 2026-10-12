@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:tray_manager/tray_manager.dart';
@@ -38,13 +39,13 @@ class TrayManagerService with TrayListener {
   }
 
   @override
-  void onTrayIconRightMouseDown() async {
+  Future<void> onTrayIconRightMouseDown() async {
     await _updateTrayMenu();
     await trayManager.popUpContextMenu();
   }
 
   @override
-  void onTrayIconMouseDown() async {
+  Future<void> onTrayIconMouseDown() async {
     if (await windowManager.isVisible()) {
       await windowManager.focus();
     } else {
@@ -78,8 +79,8 @@ class TrayManagerService with TrayListener {
           label: _settingController.showDesktopLyrics.value
               ? '关闭桌面歌词'
               : '显示桌面歌词',
-          onClick: (_) async {
-            _settingController.setShowDesktopLyrics();
+          onClick: (_) {
+            unawaited(_settingController.setShowDesktopLyrics());
           },
         ),
         MenuItem.separator(),

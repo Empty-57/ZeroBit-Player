@@ -90,10 +90,10 @@ class MusicCacheController with DetailsPageControllerBase {
     albumItemsDict.clear();
     artistHasLetter.clear();
     albumHasLetter.clear();
-    for (var v in items) {
+    for (final v in items) {
       // 处理艺术家
       final artists = v.artist.split('/');
-      for (var artistName in artists) {
+      for (final artistName in artists) {
         final name = artistName.trim().isEmpty ? 'UNKNOWN' : artistName.trim();
         final letter = getLetter(str: name);
         final key = letter + name;

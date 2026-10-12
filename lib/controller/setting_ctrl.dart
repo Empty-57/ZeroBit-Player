@@ -183,7 +183,7 @@ class SettingController {
   static const lastAudioMetadataKey = 1;
   final lastAudioInfo = <int, Object>{
     lastAudioPlayPathListKey: [],
-    lastAudioMetadataKey: MusicCache(
+    lastAudioMetadataKey: const MusicCache(
       title: '',
       artist: '',
       album: '',
@@ -257,7 +257,7 @@ class SettingController {
 
   late final void Function() putCacheDebounce = putCache.debounce();
 
-  void init() async {
+  Future<void> init() async {
     await _initHive();
     await _initPrefs();
     _initBassSet();
@@ -431,7 +431,7 @@ class SettingController {
   void _loadKeyConfig(
     String prefKey,
     int defaultHid,
-    Function(int hid, List<int> modifiers) onLoaded,
+    void Function(int hid, List<int> modifiers) onLoaded,
   ) {
     try {
       final rawStr = prefs?.getString(prefKey);
@@ -475,7 +475,7 @@ class SettingController {
   }
 
   Future<void> initHotKey() async {
-    final scope = HotKeyScope.inapp; //目前只在应用范围内生效
+    const scope = HotKeyScope.inapp; //目前只在应用范围内生效
     // final scope=hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp;
     batch(() {
       hotKeyToggle.value = HotKey(
@@ -546,7 +546,7 @@ class SettingController {
 
   // 数据保存与业务方法
   Future<void> putCache({bool isSaveFolders = false}) async {
-    _settingCacheBox.put(
+    await _settingCacheBox.put(
       key: _key,
       data: SettingCache(
         themeMode: themeMode.value,
@@ -571,7 +571,7 @@ class SettingController {
   }
 
   Future<void> putScalableCache() async {
-    _scalableSettingCacheBox.put(
+    await _scalableSettingCacheBox.put(
       key: _scalableKey,
       data: ScalableSettingCache(
         config: {
@@ -627,7 +627,7 @@ class SettingController {
     overrideValue: value,
   );
 
-  void setUseReplayGain({required bool value}) async {
+  Future<void> setUseReplayGain({required bool value}) async {
     final metadata = _audioController.currentMetadata.value;
     await setReplayGain(
       gainDb: value ? metadata.trackGain : 0.0,
@@ -756,7 +756,7 @@ class SettingController {
     (hid) => hotKeyFullScreenHid = hid,
   );
 
-  void setShowDesktopLyrics([bool? value]) async {
+  Future<void> setShowDesktopLyrics([bool? value]) async {
     if (value != null) {
       showDesktopLyrics.value = value;
     } else {
@@ -766,13 +766,13 @@ class SettingController {
     await putScalableCache();
 
     if (showDesktopLyrics.value) {
-      _desktopLyricsSever.connect();
+      unawaited(_desktopLyricsSever.connect());
     } else {
-      _desktopLyricsSever.close();
+      unawaited(_desktopLyricsSever.close());
     }
   }
 
-  void setUseTaskBarCtrl({required bool value}) async {
+  Future<void> setUseTaskBarCtrl({required bool value}) async {
     _setBoolPref(
       SharedPreferencesKey.useTaskBarCtrl,
       useTaskBarCtrl,
@@ -902,7 +902,7 @@ class SettingController {
     unawaited(setSilenceThreshold(thresholdDb: value));
   }
 
-  void setExclusiveMode({required bool use}) async {
+  Future<void> setExclusiveMode({required bool use}) async {
     final prev = useExclusiveMode.value;
     useExclusiveMode.value = use;
     try {

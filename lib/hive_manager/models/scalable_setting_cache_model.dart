@@ -1,5 +1,5 @@
 class ScalableSettingCache {
-  final Map config;
+  final Map<dynamic, dynamic> config;
 
   const ScalableSettingCache({required this.config});
 }

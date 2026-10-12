@@ -382,7 +382,7 @@ class _FoldersPreviewPageState extends State<FoldersPreviewPage> {
 
     return Container(
       alignment: Alignment.centerLeft,
-      padding: EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
+      padding: const EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -486,7 +486,7 @@ class _FoldersPreviewPageState extends State<FoldersPreviewPage> {
             );
           },
           style: TextButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: _borderRadius),
+            shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,

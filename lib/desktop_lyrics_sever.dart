@@ -28,7 +28,7 @@ class DesktopLyricsSever {
 
   HttpServer? _server;
   IOWebSocketChannel? _channel;
-  StreamSubscription? _listen;
+  StreamSubscription<dynamic>? _listen;
 
   EffectCleanup? _lineWorker;
   EffectCleanup? _stateWorker;
@@ -141,13 +141,13 @@ class DesktopLyricsSever {
     _lyricController.currentMs20Notifier.addListener(_ms20WorkerFn);
   }
 
-  void connect() async {
+  Future<void> connect() async {
     await close();
 
     _startStateWorker();
     _startLineWorker();
     _startMs20Worker();
-    _wakeUpDesktopLyrics();
+    unawaited(_wakeUpDesktopLyrics());
 
     try {
       // 启动本地 HttpServer
@@ -158,7 +158,7 @@ class DesktopLyricsSever {
             _channel = IOWebSocketChannel(socket);
             _listen = _channel!.stream.listen(
               _onMessageReceived,
-              onError: (e, stackTrace) {
+              onError: (Object e, StackTrace stackTrace) {
                 LoggerUni.e('桌面歌词 WebSocket 通信异常', e, stackTrace);
               },
             );
@@ -186,7 +186,7 @@ class DesktopLyricsSever {
     _messageHandle(message);
   }
 
-  void _wakeUpDesktopLyrics() async {
+  Future<void> _wakeUpDesktopLyrics() async {
     try {
       final dir = p.dirname(Platform.resolvedExecutable);
       final fullPath = p.join(
@@ -263,13 +263,13 @@ class DesktopLyricsSever {
       if (type == 'clientCmd') {
         switch (cmdType) {
           case ClientCmdType.toggle:
-            _audioController.audioToggle();
+            unawaited(_audioController.audioToggle());
             return;
           case ClientCmdType.next:
-            _audioController.audioToNext();
+            unawaited(_audioController.audioToNext());
             return;
           case ClientCmdType.previous:
-            _audioController.audioToPrevious();
+            unawaited(_audioController.audioToPrevious());
             return;
           case ClientCmdType.close:
             _settingController.showDesktopLyrics.value = false;

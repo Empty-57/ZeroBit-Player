@@ -70,12 +70,9 @@ class DetailsPageController with DetailsPageControllerBase {
     bool loadCover = true,
   }) async {
     final map = _musicCacheController.itemsMap;
-    items.value = [
-      for (final path in pathList)
-        if (map[path] case final item?) item,
-    ];
+    items.value = [for (final path in pathList) ?map[path]];
 
-    itemReSort(operateArea: operateArea);
+    unawaited(itemReSort(operateArea: operateArea));
     if (loadCover) {
       unawaited(_loadCover());
     }

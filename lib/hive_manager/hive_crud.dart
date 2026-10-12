@@ -21,7 +21,7 @@ class StorageCRUD<T> {
     return cacheBox.values.toList();
   }
 
-  List getKeyAll() {
+  List<dynamic> getKeyAll() {
     return cacheBox.keys.toList();
   }
 

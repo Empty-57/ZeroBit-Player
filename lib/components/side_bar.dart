@@ -234,7 +234,7 @@ class SideBar extends StatelessWidget {
                               },
                               style: TextButton.styleFrom(
                                 alignment: Alignment.centerLeft,
-                                shape: RoundedRectangleBorder(
+                                shape: const RoundedRectangleBorder(
                                   borderRadius: _borderRadius,
                                 ),
                                 padding: const EdgeInsets.only(

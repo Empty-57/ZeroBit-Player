@@ -1,12 +1,3 @@
-# This file configures the analyzer, which statically analyzes Dart code to
-# check for errors, warnings, and lints.
-#
-# The issues identified by the analyzer are surfaced in the UI of Dart-enabled
-# IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
-# invoked from the command line by running `flutter analyze`.
-
-# The following line activates a set of recommended lints for Flutter apps,
-# packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
@@ -14,21 +5,61 @@ analyzer:
     - signals_lint
   exclude:
     - build/**
+    - lib/src/**
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+
+
+  language:
+    strict-casts: false       # 禁止隐式向下类型转换（杜绝把 dynamic 乱赋给有类型的变量）
+    strict-inference: true   # 禁止隐式推导为 dynamic（类型必须明确）
+    strict-raw-types: true   # 禁止裸泛型（例如：必须写 List<String>，不能只写 List）
+
+  # 将致命隐患直接升级为 Error
+  errors:
+    missing_required_param: error
+    missing_return: error
+    todo: ignore             # 允许写 TODO 注释不报错
+    invalid_annotation_target: ignore
 
 linter:
-  # The lint rules applied to this project can be customized in the
-  # section below to disable rules from the `package:flutter_lints/flutter.yaml`
-  # included above or to enable additional rules. A list of all available lints
-  # and their documentation is published at https://dart.dev/lints.
-  #
-  # Instead of disabling a lint rule for the entire project in the
-  # section below, it can also be suppressed for a single line of code
-  # or a specific dart file by using the `// ignore: name_of_lint` and
-  # `// ignore_for_file: name_of_lint` syntax on the line or in the file
-  # producing the lint.
   rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+#    # signals_lint 的规则
+#    signals_avoid_create_in_build_method: true
+#    signals_avoid_deprecated_watch_extension: true
+#    signals_avoid_deprecated_signals_mixin: true
+#    signals_prefer_named_builder: true
+#    signals_prefer_unified_options: true
 
-# Additional information about this file can be found at
-# https://dart.dev/guides/language/analysis-options
+    prefer_const_constructors: true                 # 强制组件尽可能加 const
+    prefer_const_constructors_in_immutables: true
+    prefer_const_declarations: true
+    prefer_const_literals_to_create_immutables: true
+    unnecessary_const: true                         # 冗余的 const 提醒清理
+    sized_box_for_whitespace: true                  # 纯占位强制用 SizedBox 替代 Container
+    use_colored_box: true                           # 纯色背景用 ColoredBox 替代 Container
+    use_decorated_box: true                         # 纯装饰用 DecoratedBox 替代 Container
+
+    avoid_dynamic_calls: false                       # 禁止在 dynamic 上直接调属性或方法
+    cancel_subscriptions: true                      # 必须取消 StreamSubscription
+    close_sinks: true                               # 必须关闭 Sink/StreamController
+    use_build_context_synchronously: true           # 严格检查 await 之后的 BuildContext 使用
+    unawaited_futures: true                         # 异步任务必须加 await 或 unawaited
+    avoid_void_async: true                          # 严禁写 void async，必须返回 Future<void>
+    always_declare_return_types: true               # 所有函数、方法必须明确写返回类型
+    avoid_print: true                               # 严禁使用 print
+
+    prefer_final_locals: true                       # 局部变量尽可能 final
+    prefer_final_in_for_each: true
+    require_trailing_commas: true                   # 强制末尾加逗号
+    avoid_empty_else: true                          # 禁止空的 else
+    avoid_relative_lib_imports: true                # 禁止 lib 内部用相对路径跨模块引用
+    directives_ordering: true                       # 强制 import 排序整齐（系统包在前，业务在后）
+    unnecessary_string_interpolations: true         # 清理无意义的字符串插值：如 "${name}" 改为 name
+    unnecessary_null_aware_assignments: true        # 清理冗余的 ??=
+    unnecessary_nullable_for_final_variable_declarations: true
+    unnecessary_underscores: true                   # 禁止使用不必要的下划线
+    strict_top_level_inference: true                # 全局和静态变量必须显式写明类型
+    no_wildcard_variable_uses: true                 #禁止使用下划线通配符变量
+    collection_methods_unrelated_type: true         #禁止集合方传入不同类型
+    unnecessary_to_list_in_spreads: true

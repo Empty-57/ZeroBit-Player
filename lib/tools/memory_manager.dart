@@ -66,7 +66,7 @@ class MemoryManager {
         printUsage('$label Trim Canceled');
         return;
       }
-      trimMemory(label);
+      unawaited(trimMemory(label));
     });
   }
 
@@ -90,7 +90,7 @@ class MemoryManager {
   }
 
   /// 立即执行一次内存裁剪
-  static void trimMemory([String label = 'Status']) async {
+  static Future<void> trimMemory([String label = 'Status']) async {
     // 通知框架进行清理
     WidgetsBinding.instance.handleMemoryPressure();
 

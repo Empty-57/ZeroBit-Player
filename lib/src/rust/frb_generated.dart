@@ -1563,7 +1563,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var inner = sse_decode_String(deserializer);
+    final inner = sse_decode_String(deserializer);
     return AnyhowException(inner);
   }
 
@@ -1594,26 +1594,26 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   String sse_decode_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var inner = sse_decode_list_prim_u_8_strict(deserializer);
+    final inner = sse_decode_list_prim_u_8_strict(deserializer);
     return utf8.decoder.convert(inner);
   }
 
   @protected
   AudioMetadata sse_decode_audio_metadata(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_title = sse_decode_String(deserializer);
-    var var_artist = sse_decode_String(deserializer);
-    var var_album = sse_decode_String(deserializer);
-    var var_trackNumber = sse_decode_u_32(deserializer);
-    var var_genre = sse_decode_String(deserializer);
-    var var_duration = sse_decode_f_32(deserializer);
-    var var_bitrate = sse_decode_opt_box_autoadd_u_32(deserializer);
-    var var_sampleRate = sse_decode_opt_box_autoadd_u_32(deserializer);
-    var var_bitDepth = sse_decode_u_8(deserializer);
-    var var_channels = sse_decode_u_8(deserializer);
-    var var_trackGain = sse_decode_f_32(deserializer);
-    var var_trackPeak = sse_decode_f_32(deserializer);
-    var var_path = sse_decode_String(deserializer);
+    final var_title = sse_decode_String(deserializer);
+    final var_artist = sse_decode_String(deserializer);
+    final var_album = sse_decode_String(deserializer);
+    final var_trackNumber = sse_decode_u_32(deserializer);
+    final var_genre = sse_decode_String(deserializer);
+    final var_duration = sse_decode_f_32(deserializer);
+    final var_bitrate = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_sampleRate = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_bitDepth = sse_decode_u_8(deserializer);
+    final var_channels = sse_decode_u_8(deserializer);
+    final var_trackGain = sse_decode_f_32(deserializer);
+    final var_trackPeak = sse_decode_f_32(deserializer);
+    final var_path = sse_decode_String(deserializer);
     return AudioMetadata(
       title: var_title,
       artist: var_artist,
@@ -1634,9 +1634,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   BASS_DX8_PARAMEQ sse_decode_bass_dx_8_parameq(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_fCenter = sse_decode_f_32(deserializer);
-    var var_fBandwidth = sse_decode_f_32(deserializer);
-    var var_fGain = sse_decode_f_32(deserializer);
+    final var_fCenter = sse_decode_f_32(deserializer);
+    final var_fBandwidth = sse_decode_f_32(deserializer);
+    final var_fGain = sse_decode_f_32(deserializer);
     return BASS_DX8_PARAMEQ(
       fCenter: var_fCenter,
       fBandwidth: var_fBandwidth,
@@ -1647,14 +1647,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   BASS_WASAPI_INFO sse_decode_bass_wasapi_info(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_initflags = sse_decode_u_32(deserializer);
-    var var_freq = sse_decode_u_32(deserializer);
-    var var_chans = sse_decode_u_32(deserializer);
-    var var_format = sse_decode_u_32(deserializer);
-    var var_buflen = sse_decode_u_32(deserializer);
-    var var_volmax = sse_decode_f_32(deserializer);
-    var var_volmin = sse_decode_f_32(deserializer);
-    var var_volstep = sse_decode_f_32(deserializer);
+    final var_initflags = sse_decode_u_32(deserializer);
+    final var_freq = sse_decode_u_32(deserializer);
+    final var_chans = sse_decode_u_32(deserializer);
+    final var_format = sse_decode_u_32(deserializer);
+    final var_buflen = sse_decode_u_32(deserializer);
+    final var_volmax = sse_decode_f_32(deserializer);
+    final var_volmin = sse_decode_f_32(deserializer);
+    final var_volstep = sse_decode_f_32(deserializer);
     return BASS_WASAPI_INFO(
       initflags: var_initflags,
       freq: var_freq,
@@ -1690,17 +1690,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   CoverQuality sse_decode_cover_quality(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var inner = sse_decode_i_32(deserializer);
+    final inner = sse_decode_i_32(deserializer);
     return CoverQuality.values[inner];
   }
 
   @protected
   EditableMetadata sse_decode_editable_metadata(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_title = sse_decode_opt_String(deserializer);
-    var var_artist = sse_decode_opt_String(deserializer);
-    var var_album = sse_decode_opt_String(deserializer);
-    var var_genre = sse_decode_opt_String(deserializer);
+    final var_title = sse_decode_opt_String(deserializer);
+    final var_artist = sse_decode_opt_String(deserializer);
+    final var_album = sse_decode_opt_String(deserializer);
+    final var_genre = sse_decode_opt_String(deserializer);
     return EditableMetadata(
       title: var_title,
       artist: var_artist,
@@ -1731,8 +1731,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<String> sse_decode_list_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
-    var len_ = sse_decode_i_32(deserializer);
-    var ans_ = <String>[];
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <String>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_String(deserializer));
     }
@@ -1742,21 +1742,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   Float32List sse_decode_list_prim_f_32_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var len_ = sse_decode_i_32(deserializer);
+    final len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getFloat32List(len_);
   }
 
   @protected
   List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var len_ = sse_decode_i_32(deserializer);
+    final len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getUint8List(len_);
   }
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var len_ = sse_decode_i_32(deserializer);
+    final len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getUint8List(len_);
   }
 
@@ -1809,14 +1809,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   SMTCControlEvent sse_decode_smtc_control_event(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var inner = sse_decode_i_32(deserializer);
+    final inner = sse_decode_i_32(deserializer);
     return SMTCControlEvent.values[inner];
   }
 
   @protected
   SMTCState sse_decode_smtc_state(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var inner = sse_decode_i_32(deserializer);
+    final inner = sse_decode_i_32(deserializer);
     return SMTCState.values[inner];
   }
 
