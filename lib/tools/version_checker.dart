@@ -10,7 +10,7 @@ import 'package:zerobit_player/logger.dart';
 
 import '../components/widget/general_btn.dart';
 import '../components/widget/get_snack_bar.dart';
-import 'func/general_style.dart';
+import 'func/style_manager.dart';
 
 const String _latestRepoApiUrl =
     "https://api.github.com/repos/Empty-57/ZeroBit-Player/releases/latest";
@@ -169,9 +169,8 @@ class VersionChecker {
       builder: (BuildContext ctx) {
         return AlertDialog(
           title: Text(repoInfo.title),
-          titleTextStyle: generalTextStyle(
-            ctx: ctx,
-            size: 'xl',
+          titleTextStyle: ctx.createTextStyle(
+            size: AppFontSize.xl,
             weight: FontWeight.w600,
           ),
           shape: const RoundedRectangleBorder(
@@ -189,7 +188,7 @@ class VersionChecker {
                 children: [
                   Text(
                     '更新于：${repoInfo.updatedTime}\n更新信息：',
-                    style: generalTextStyle(ctx: ctx, size: 'md'),
+                    style: ctx.createTextStyle(size: AppFontSize.md),
                   ),
                   Expanded(child: Markdown(data: repoInfo.body)),
                   Row(

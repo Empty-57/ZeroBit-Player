@@ -18,6 +18,7 @@ import 'field/shared_preferences_key.dart';
 
 class DesktopLyricsSever {
   DesktopLyricsSever._();
+
   static final instance = DesktopLyricsSever._();
 
   late final LyricController _lyricController = LyricController.instance;

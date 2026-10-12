@@ -9,6 +9,7 @@ import 'package:zerobit_player/logger.dart';
 class _JumpSignal {
   final int triggerId;
   final double deltaY;
+
   const _JumpSignal(this.triggerId, this.deltaY);
 }
 
@@ -210,8 +211,10 @@ class SpringListView extends StatelessWidget {
                 children: [
                   //如果同时指定了 top 和 bottom，则 height = Stack高度 - top - bottom
                   Positioned(
-                    top: -extraSpace, // 往上拉伸 extraSpace 并往上偏移 extraSpace 距离
-                    bottom: -extraSpace, // 往下拉伸 extraSpace
+                    top: -extraSpace,
+                    // 往上拉伸 extraSpace 并往上偏移 extraSpace 距离
+                    bottom: -extraSpace,
+                    // 往下拉伸 extraSpace
                     left: 0,
                     right: 0,
                     child: ValueListenableBuilder<int>(

@@ -12,7 +12,7 @@ import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 
 import '../play_queue_menu_anchor.dart';
 
@@ -157,16 +157,17 @@ class ControlBar extends StatelessWidget {
       color: mixColor,
     );
 
-    final titleStyle = generalTextStyle(ctx: context, size: 'md');
-    final highLightTitleStyle = generalTextStyle(
-      ctx: context,
-      size: 'md',
+    final titleStyle = context.createTextStyle(size: AppFontSize.md);
+    final highLightTitleStyle = context.createTextStyle(
+      size: AppFontSize.md,
       color: Theme.of(context).colorScheme.primary,
     );
-    final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-    final highLightSubStyle = generalTextStyle(
-      ctx: context,
-      size: 'sm',
+    final subStyle = context.createTextStyle(
+      size: AppFontSize.sm,
+      opacity: 0.8,
+    );
+    final highLightSubStyle = context.createTextStyle(
+      size: AppFontSize.sm,
       color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
     );
     final width = MediaQuery.sizeOf(context).width;
@@ -207,9 +208,8 @@ class ControlBar extends StatelessWidget {
                       height: 28,
                       radius: 4,
                     ),
-                    valueIndicatorTextStyle: generalTextStyle(
-                      ctx: context,
-                      size: 'sm',
+                    valueIndicatorTextStyle: context.createTextStyle(
+                      size: AppFontSize.sm,
                       color: Theme.of(context).colorScheme.onPrimary,
                     ),
                     mouseCursor: WidgetStateProperty.all(

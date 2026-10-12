@@ -2,6 +2,7 @@ import 'package:hive_ce_flutter/hive_flutter.dart';
 
 class StorageCRUD<T> {
   final Box<T> cacheBox;
+
   const StorageCRUD({required this.cacheBox});
 
   Future<void> put({required T data, required String key}) async {

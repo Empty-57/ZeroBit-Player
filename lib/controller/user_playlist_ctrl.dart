@@ -9,11 +9,14 @@ import 'package:zerobit_player/hive_manager/models/user_playlist_model.dart';
 
 class UserPlayListController {
   UserPlayListController._();
+
   static final UserPlayListController instance = UserPlayListController._();
 
   final items = listSignal(<UserPlayListCache>[]);
   final _userPlayListCacheBox = HiveBox.userPlayListCacheBox;
+
   AudioController get _audioController => AudioController.instance;
+
   MusicCacheController get _musicCacheController =>
       MusicCacheController.instance;
 

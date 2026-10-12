@@ -4,7 +4,7 @@ import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 
 const double _bottom = 96;
 const double _radius = 6;
@@ -39,7 +39,7 @@ class _FloatingBtn extends StatelessWidget {
             borderRadius: BorderRadius.circular(_radius),
           ),
         ),
-        child: Icon(icon, size: getIconSize(size: 'lg')),
+        child: Icon(icon, size: context.getIconSize(AppIconSize.lg)),
       ),
     );
   }

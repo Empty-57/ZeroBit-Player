@@ -13,6 +13,7 @@ import 'audio_ctrl.dart';
 
 class LyricController {
   LyricController._();
+
   static final LyricController instance = LyricController._();
 
   final AudioController _audioController = AudioController.instance;

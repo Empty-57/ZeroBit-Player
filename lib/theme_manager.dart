@@ -5,6 +5,7 @@ import 'controller/setting_ctrl.dart';
 
 class ThemeService {
   ThemeService._();
+
   static final instance = ThemeService._();
   final SettingController _settingController = SettingController.instance;
 
@@ -61,6 +62,7 @@ class ThemeService {
   );
 
   ThemeData get lightTheme => _lightThemeComputed.value;
+
   ThemeData get darkTheme => _darkThemeComputed.value;
 
   void setThemeMode() {

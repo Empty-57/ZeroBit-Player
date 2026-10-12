@@ -11,7 +11,7 @@ import 'package:zerobit_player/controller/statistics_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 
 const double _resViewThresholds = 1100;
 const double _itemHeight = 64.0;
@@ -31,13 +31,15 @@ class _DataCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final titleStyle = generalTextStyle(
-      ctx: context,
-      size: 'xl',
+    final titleStyle = context.createTextStyle(
+      size: AppFontSize.xl,
       weight: .w800,
       color: colorScheme.onPrimaryContainer,
     );
-    final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
+    final subStyle = context.createTextStyle(
+      size: AppFontSize.sm,
+      opacity: 0.8,
+    );
 
     return Row(
       spacing: 12,
@@ -221,15 +223,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 children: [
                   Text(
                     '统计与数据',
-                    style: generalTextStyle(
-                      ctx: context,
-                      size: 'title',
+                    style: context.createTextStyle(
+                      size: AppFontSize.title,
                       weight: FontWeight.w600,
                     ),
                   ),
                   Text(
                     '曲库概览与播放数据',
-                    style: generalTextStyle(ctx: context, size: 'md'),
+                    style: context.createTextStyle(size: AppFontSize.md),
                   ),
                   SignalBuilder(
                     builder: (_) {
@@ -349,13 +350,12 @@ class _ListenRankState extends State<_ListenRank> {
     final colorScheme = Theme.of(context).colorScheme;
     final AudioController audioController = AudioController.instance;
 
-    final statisticsTextStyle = generalTextStyle(ctx: context, size: 'md');
-    final statisticsSubTextStyle = generalTextStyle(
-      ctx: context,
-      size: 'sm',
+    final statisticsTextStyle = context.createTextStyle(size: AppFontSize.md);
+    final statisticsSubTextStyle = context.createTextStyle(
+      size: AppFontSize.sm,
       opacity: 0.8,
     );
-    final subTitleStyle = generalTextStyle(ctx: context, size: 'subtitle');
+    final subTitleStyle = context.createTextStyle(size: AppFontSize.subtitle);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -656,7 +656,7 @@ class _ListeningDurationChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final subTitleStyle = generalTextStyle(ctx: context, size: 'subtitle');
+    final subTitleStyle = context.createTextStyle(size: AppFontSize.subtitle);
     final controller = StatisticsController.instance;
 
     return SignalBuilder(
@@ -733,9 +733,8 @@ class _ListeningDurationChart extends StatelessWidget {
                   ),
                   Text(
                     chartData.periodTitle,
-                    style: generalTextStyle(
-                      ctx: context,
-                      size: 'md',
+                    style: context.createTextStyle(
+                      size: AppFontSize.md,
                       weight: FontWeight.w600,
                     ),
                   ),
@@ -778,9 +777,8 @@ class _ListeningDurationChart extends StatelessWidget {
                     ),
                     child: Text(
                       '总计：${formatTimeDHMS(chartData.totalDuration.toInt())}',
-                      style: generalTextStyle(
-                        ctx: context,
-                        size: 'sm',
+                      style: context.createTextStyle(
+                        size: AppFontSize.sm,
                         color: colorScheme.primary,
                         weight: FontWeight.w600,
                       ),
@@ -799,9 +797,8 @@ class _ListeningDurationChart extends StatelessWidget {
                     if (hIdx >= 0 && hIdx < chartData.bars.length) {
                       return Text(
                         '${chartData.bars[hIdx].fullLabel}：${formatTimeDHMS(chartData.bars[hIdx].duration.toInt())}',
-                        style: generalTextStyle(
-                          ctx: context,
-                          size: 'sm',
+                        style: context.createTextStyle(
+                          size: AppFontSize.sm,
                           color: colorScheme.tertiary,
                           weight: FontWeight.w600,
                         ),
@@ -809,9 +806,8 @@ class _ListeningDurationChart extends StatelessWidget {
                     }
                     return Text(
                       '鼠标悬停柱状图查看具体时段数据',
-                      style: generalTextStyle(
-                        ctx: context,
-                        size: 'sm',
+                      style: context.createTextStyle(
+                        size: AppFontSize.sm,
                         opacity: 0.5,
                       ),
                     );
@@ -833,9 +829,8 @@ class _ListeningDurationChart extends StatelessWidget {
                           for (int i = 4; i >= 0; i--)
                             Text(
                               _formatYAxisTime(maxDuration * (i / 4)),
-                              style: generalTextStyle(
-                                ctx: context,
-                                size: 'xs',
+                              style: context.createTextStyle(
+                                size: AppFontSize.xs,
                                 opacity: 0.6,
                               ),
                             ),
@@ -910,9 +905,8 @@ class _ListeningDurationChart extends StatelessWidget {
                         child: Text(
                           chartData.bars[i].label,
                           textAlign: TextAlign.center,
-                          style: generalTextStyle(
-                            ctx: context,
-                            size: 'xs',
+                          style: context.createTextStyle(
+                            size: AppFontSize.xs,
                             opacity: 0.8,
                           ),
                         ),

@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/tools/paint_cache.dart';
+
 import '../src/rust/api/trim_memory.dart' as rust_api;
 import 'cover_lru_cache.dart';
 

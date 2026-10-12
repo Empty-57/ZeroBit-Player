@@ -73,6 +73,7 @@ mixin DetailsPageControllerBase {
   final itemsMap = mapSignal(<String, MusicCache>{});
   final Signal<Uint8List> headCover = signal(kTransparentImage);
   final SettingController _settingController = SettingController.instance;
+
   AudioController get audioController => AudioController.instance;
 
   void play(String audioSource, {MusicCache? metadata}) {

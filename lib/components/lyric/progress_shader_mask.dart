@@ -39,6 +39,7 @@ class ProgressShaderMask extends SingleChildRenderObjectWidget {
     required this.gradientColors,
     required Widget super.child,
   });
+
   final double progress;
   final double scale;
   final List<Color> gradientColors;

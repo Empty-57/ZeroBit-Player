@@ -6,7 +6,7 @@ import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/widget/general_btn.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 
 import '../field/operate_area.dart';
 
@@ -32,9 +32,8 @@ class PlayListPreviewPage extends StatelessWidget {
           final primaryColor = Theme.of(context).colorScheme.primary;
           return AlertDialog(
             title: Text(title),
-            titleTextStyle: generalTextStyle(
-              ctx: context,
-              size: 20,
+            titleTextStyle: context.createTextStyle(
+              size: AppFontSize.xxl,
               weight: FontWeight.w600,
             ),
             shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
@@ -144,16 +143,15 @@ class PlayListPreviewPage extends StatelessWidget {
           children: [
             Text(
               '歌单',
-              style: generalTextStyle(
-                ctx: context,
-                size: 'title',
+              style: context.createTextStyle(
+                size: AppFontSize.title,
                 weight: FontWeight.w600,
               ),
             ),
             SignalBuilder(
               builder: (context) => Text(
                 '共${c.items.length}个歌单',
-                style: generalTextStyle(ctx: context, size: 'md'),
+                style: context.createTextStyle(size: AppFontSize.md),
               ),
             ),
           ],
@@ -177,8 +175,11 @@ class PlayListPreviewPage extends StatelessWidget {
   }
 
   Widget _buildListView(BuildContext context) {
-    final textStyle1 = generalTextStyle(ctx: context, size: 'md');
-    final textStyle2 = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
+    final textStyle1 = context.createTextStyle(size: AppFontSize.md);
+    final textStyle2 = context.createTextStyle(
+      size: AppFontSize.sm,
+      opacity: 0.8,
+    );
     final c = UserPlayListController.instance;
     return ListView.builder(
       scrollCacheExtent: const ScrollCacheExtent.pixels(_itemHeight),

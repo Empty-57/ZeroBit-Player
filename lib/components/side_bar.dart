@@ -7,7 +7,7 @@ import 'package:zerobit_player/components/play_queue_menu_anchor.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 import 'package:zerobit_player/tools/paint_cache.dart';
 
 class SidebarNavState {
@@ -94,7 +94,7 @@ class SideBarBtn extends StatelessWidget {
                         child: Icon(
                           icon,
                           color: Theme.of(context).colorScheme.onSurface,
-                          size: getIconSize(size: 'md'),
+                          size: context.getIconSize(AppIconSize.md),
                         ),
                       ),
                       Expanded(
@@ -108,7 +108,9 @@ class SideBarBtn extends StatelessWidget {
                               : 0.0,
                           child: Text(
                             label,
-                            style: generalTextStyle(ctx: context, size: 'md'),
+                            style: context.createTextStyle(
+                              size: AppFontSize.md,
+                            ),
                             softWrap: false,
                             overflow: TextOverflow.clip,
                           ),
@@ -157,16 +159,17 @@ class SideBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final titleStyle = generalTextStyle(ctx: context, size: 'md');
-    final highLightTitleStyle = generalTextStyle(
-      ctx: context,
-      size: 'md',
+    final titleStyle = context.createTextStyle(size: AppFontSize.md);
+    final highLightTitleStyle = context.createTextStyle(
+      size: AppFontSize.md,
       color: Theme.of(context).colorScheme.primary,
     );
-    final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-    final highLightSubStyle = generalTextStyle(
-      ctx: context,
-      size: 'sm',
+    final subStyle = context.createTextStyle(
+      size: AppFontSize.sm,
+      opacity: 0.8,
+    );
+    final highLightSubStyle = context.createTextStyle(
+      size: AppFontSize.sm,
       color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
     );
 
@@ -257,7 +260,7 @@ class SideBar extends StatelessWidget {
                                       color: Theme.of(
                                         context,
                                       ).colorScheme.onSurface,
-                                      size: getIconSize(size: 'md'),
+                                      size: context.getIconSize(AppIconSize.md),
                                     ),
                                   ),
                                   Expanded(
@@ -273,9 +276,8 @@ class SideBar extends StatelessWidget {
                                           : 0.0,
                                       child: Text(
                                         "播放队列",
-                                        style: generalTextStyle(
-                                          ctx: context,
-                                          size: 'md',
+                                        style: context.createTextStyle(
+                                          size: AppFontSize.md,
                                         ),
                                         softWrap: false,
                                         overflow: TextOverflow.clip,
@@ -329,7 +331,7 @@ class SideBar extends StatelessWidget {
                                   color: Theme.of(
                                     context,
                                   ).colorScheme.onSurface,
-                                  size: getIconSize(size: 'md'),
+                                  size: context.getIconSize(AppFontSize.md),
                                 ),
                               ),
                               Expanded(
@@ -342,9 +344,8 @@ class SideBar extends StatelessWidget {
                                       : 0.0,
                                   child: Text(
                                     isExtend ? "收起侧栏" : "",
-                                    style: generalTextStyle(
-                                      ctx: context,
-                                      size: 'md',
+                                    style: context.createTextStyle(
+                                      size: AppFontSize.md,
                                     ),
                                     softWrap: false,
                                     overflow: TextOverflow.clip,

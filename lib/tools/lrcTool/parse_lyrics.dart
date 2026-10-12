@@ -120,6 +120,7 @@ LrcType detectLrcType(String lrcContent) {
 /// 检测是否含有日文
 class JapaneseDetector {
   JapaneseDetector._();
+
   // 匹配平假名和片假名
   static final RegExp _kanaRegex = RegExp(
     r'[\u3040-\u309F\u30A0-\u30FF\uFF66-\uFF9F]',
@@ -365,6 +366,7 @@ List<WordEntry> _enhancedAndWordByWordLrcAnalysis(
 class _WordRegexConfig {
   final RegExp regex;
   final int startIdx, durIdx, textIdx;
+
   const _WordRegexConfig(this.regex, this.startIdx, this.durIdx, this.textIdx);
 }
 

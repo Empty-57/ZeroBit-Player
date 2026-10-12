@@ -10,7 +10,7 @@ import 'package:zerobit_player/components/widget/audio_ctrl_btn.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/logger.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 import 'package:zerobit_player/tools/lrcTool/parse_lyrics.dart';
 import 'package:zerobit_player/tools/lrcTool/save_lyric.dart';
@@ -225,6 +225,7 @@ class _SearchResultItem extends StatelessWidget {
 
 class NetLrcDialog extends StatelessWidget {
   final Color? color;
+
   const NetLrcDialog({super.key, required this.color});
 
   @override
@@ -240,9 +241,8 @@ class NetLrcDialog extends StatelessWidget {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text("选择歌词"),
-            titleTextStyle: generalTextStyle(
-              ctx: context,
-              size: 'xl',
+            titleTextStyle: context.createTextStyle(
+              size: AppFontSize.xl,
               weight: FontWeight.w600,
             ),
             shape: const RoundedRectangleBorder(
@@ -260,6 +260,7 @@ class NetLrcDialog extends StatelessWidget {
 
 class _NetLrcDialogContent extends StatefulWidget {
   final Color? color;
+
   const _NetLrcDialogContent({required this.color});
 
   @override
@@ -293,7 +294,7 @@ class _NetLrcDialogContentState extends State<_NetLrcDialogContent> {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = generalTextStyle(ctx: context, size: 'md');
+    final textStyle = context.createTextStyle(size: AppFontSize.md);
     final bgColor = Theme.of(
       context,
     ).colorScheme.secondaryContainer.withValues(alpha: 0.4);

@@ -1,5 +1,6 @@
 abstract class TimedEntry {
   double get start;
+
   double get nextTime;
 }
 
@@ -46,6 +47,7 @@ class WordEntry implements TimedEntry {
 
   @override
   double nextTime;
+
   WordEntry({
     required this.start,
     required this.duration,
@@ -67,6 +69,7 @@ class WordEntry implements TimedEntry {
 class ParsedLyricModel {
   final List<LyricEntry<dynamic>>? parsedLrc;
   final String type;
+
   const ParsedLyricModel({required this.parsedLrc, required this.type});
 }
 
@@ -75,6 +78,7 @@ class Get4NetLrcModel {
   final String? verbatimLrc;
   final String? translate;
   final String type;
+
   const Get4NetLrcModel({
     required this.lrc,
     required this.verbatimLrc,

@@ -7,7 +7,7 @@ import 'package:zerobit_player/components/widget/covers.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 
 // 内容项宽高常量
 const double _itemHeight = 230.0;
@@ -105,9 +105,9 @@ class _SortedListViewState extends State<SortedListView> {
     final colorScheme = Theme.of(context).colorScheme;
 
     // 初始化并缓存所有 TextStyle 和 ButtonStyle
-    _letterTitleStyle = generalTextStyle(ctx: context, size: 'xl');
-    _titleStyle = generalTextStyle(ctx: context, size: 'md');
-    _subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
+    _letterTitleStyle = context.createTextStyle(size: AppFontSize.xl);
+    _titleStyle = context.createTextStyle(size: AppFontSize.md);
+    _subStyle = context.createTextStyle(size: AppFontSize.sm, opacity: 0.8);
 
     _foregroundColorHover = WidgetStateProperty.resolveWith<Color>((states) {
       return states.contains(WidgetState.hovered)
@@ -269,15 +269,14 @@ class _SortedListViewState extends State<SortedListView> {
       children: [
         Text(
           widget.title,
-          style: generalTextStyle(
-            ctx: context,
-            size: 'title',
+          style: context.createTextStyle(
+            size: AppFontSize.title,
             weight: FontWeight.w600,
           ),
         ),
         Text(
           widget.subTitle,
-          style: generalTextStyle(ctx: context, size: 'md'),
+          style: context.createTextStyle(size: AppFontSize.md),
         ),
       ],
     );
@@ -289,7 +288,7 @@ class _SortedListViewState extends State<SortedListView> {
       return Center(
         child: Text(
           '无内容',
-          style: generalTextStyle(ctx: context, size: '2xl'),
+          style: context.createTextStyle(size: AppFontSize.xxl),
         ),
       );
     }

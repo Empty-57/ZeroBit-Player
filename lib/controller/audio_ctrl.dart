@@ -35,6 +35,7 @@ enum AudioState { stop, playing, pause, ended }
 
 class AudioController {
   AudioController._();
+
   static final AudioController instance = AudioController._();
 
   int _metadataGeneration = 0; // 防异步竞态版本号
@@ -73,6 +74,7 @@ class AudioController {
   final currentState = signal(AudioState.stop);
 
   SettingController get _settingController => SettingController.instance;
+
   MusicCacheController get _musicCacheController =>
       MusicCacheController.instance;
 
@@ -122,6 +124,7 @@ class AudioController {
   String currentAudioSource = AudioSource.allMusic;
 
   LyricController get _lyricController => LyricController.instance;
+
   DesktopLyricsSettingController get _desktopLyricsSettingController =>
       DesktopLyricsSettingController.instance;
 

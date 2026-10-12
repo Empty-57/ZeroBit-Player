@@ -8,12 +8,14 @@ import 'package:zerobit_player/tools/memory_manager.dart';
 
 class WindowController with WindowListener {
   WindowController._();
+
   static final WindowController instance = WindowController._();
 
   final isMaximized = signal(false);
   final isFullScreen = signal(false);
 
   final DesktopLyricsSever _desktopLyricsSever = DesktopLyricsSever.instance;
+
   SettingController get _settingController => SettingController.instance;
 
   void init() {

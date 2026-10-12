@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 
 class GeneralBtn<T> extends StatelessWidget {
   final VoidCallback? fn;
@@ -89,16 +89,15 @@ class GeneralBtn<T> extends StatelessWidget {
                       color:
                           contentColor ??
                           Theme.of(context).colorScheme.onSecondaryContainer,
-                      size: getIconSize(size: iconSize ?? 'md'),
+                      size: context.getIconSize(iconSize ?? AppIconSize.md),
                     ),
 
                   if (label != null)
                     Flexible(
                       child: Text(
                         label!,
-                        style: generalTextStyle(
-                          ctx: context,
-                          size: labelSize ?? 'md',
+                        style: context.createTextStyle(
+                          size: labelSize ?? AppFontSize.md,
                           color: contentColor,
                         ),
                         softWrap: false,

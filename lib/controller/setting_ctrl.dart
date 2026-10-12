@@ -27,9 +27,13 @@ import 'audio_ctrl.dart';
 
 class SettingController {
   SettingController._();
+
   static final instance = SettingController._();
+
   WindowController get _myWindowListener => WindowController.instance;
+
   DesktopLyricsSever get _desktopLyricsSever => DesktopLyricsSever.instance;
+
   AudioController get _audioController => AudioController.instance;
 
   // UI & 偏好设置状态
@@ -597,20 +601,26 @@ class SettingController {
 
   void setShowTranslate() =>
       _setBoolPref(SharedPreferencesKey.showTranslate, showTranslate);
+
   void setShowRoma() => _setBoolPref(SharedPreferencesKey.showRoma, showRoma);
+
   void setShowKana() => _setBoolPref(SharedPreferencesKey.showKana, showKana);
+
   void setHotKeyScope({required bool value}) => _setBoolPref(
     SharedPreferencesKey.hotKeyScope,
     hotKeyScope,
     overrideValue: value,
   );
+
   void setUseMesh({required bool value}) =>
       _setBoolPref(SharedPreferencesKey.useMesh, useMesh, overrideValue: value);
+
   void setSpringScroll({bool? value}) => _setBoolPref(
     SharedPreferencesKey.useSpringScroll,
     useSpringScroll,
     overrideValue: value,
   );
+
   void setClose2Tray({required bool value}) => _setBoolPref(
     SharedPreferencesKey.close2Tray,
     close2Tray,
@@ -724,18 +734,21 @@ class SettingController {
     key,
     (hid) => hotKeyToggleHid = hid,
   );
+
   void setNextHid({required HotKey key}) => _saveHotKeyPref(
     SharedPreferencesKey.nextHidString,
     modifierNextHidList,
     key,
     (hid) => hotKeyNextHid = hid,
   );
+
   void setPreviousHid({required HotKey key}) => _saveHotKeyPref(
     SharedPreferencesKey.previousHidString,
     modifierPreviousHidList,
     key,
     (hid) => hotKeyPreviousHid = hid,
   );
+
   void setFullScreenHid({required HotKey key}) => _saveHotKeyPref(
     SharedPreferencesKey.fullScreenHidString,
     modifierFullScreenHidList,

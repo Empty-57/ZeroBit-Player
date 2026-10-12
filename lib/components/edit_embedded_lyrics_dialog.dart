@@ -7,7 +7,7 @@ import 'package:zerobit_player/components/widget/general_btn.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
 import 'widget/get_snack_bar.dart';
@@ -128,8 +128,11 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
   @override
   Widget build(BuildContext context) {
     final border = const OutlineInputBorder();
-    final hintStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-    final textStyle = generalTextStyle(ctx: context, size: 'md');
+    final hintStyle = context.createTextStyle(
+      size: AppFontSize.sm,
+      opacity: 0.8,
+    );
+    final textStyle = context.createTextStyle(size: AppFontSize.md);
     final types = [
       LyricFormat.lrc,
       LyricFormat.qrc,
@@ -149,9 +152,8 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
     if (_hasError) {
       return AlertDialog(
         title: const Text("加载失败"),
-        titleTextStyle: generalTextStyle(
-          ctx: context,
-          size: 'xl',
+        titleTextStyle: context.createTextStyle(
+          size: AppFontSize.xl,
           weight: FontWeight.w600,
         ),
         shape: const RoundedRectangleBorder(
@@ -176,9 +178,8 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
 
     return AlertDialog(
       title: const Text("编辑内嵌歌词"),
-      titleTextStyle: generalTextStyle(
-        ctx: context,
-        size: 'xl',
+      titleTextStyle: context.createTextStyle(
+        size: AppFontSize.xl,
         weight: FontWeight.w600,
       ),
       shape: const RoundedRectangleBorder(

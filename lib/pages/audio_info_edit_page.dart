@@ -19,7 +19,7 @@ import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import 'package:zerobit_player/tools/cover_lru_cache.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 
 const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
 
@@ -29,16 +29,19 @@ sealed class _CoverSource {}
 
 class _InitialCover extends _CoverSource {
   final Uint8List bytes;
+
   _InitialCover(this.bytes);
 }
 
 class _FileCover extends _CoverSource {
   final PlatformFile file;
+
   _FileCover(this.file);
 }
 
 class _GeneratedCover extends _CoverSource {
   final Uint8List bytes;
+
   _GeneratedCover(this.bytes);
 }
 
@@ -261,10 +264,9 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = generalTextStyle(ctx: context, size: 'md');
-    final titleStyle = generalTextStyle(
-      ctx: context,
-      size: 'xl',
+    final textStyle = context.createTextStyle(size: AppFontSize.md);
+    final titleStyle = context.createTextStyle(
+      size: AppFontSize.xl,
       weight: FontWeight.bold,
     );
 
@@ -504,9 +506,8 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
                 const SizedBox(width: 12),
                 Text(
                   "执行中……",
-                  style: generalTextStyle(
-                    ctx: context,
-                    size: 'md',
+                  style: context.createTextStyle(
+                    size: AppFontSize.md,
                     color: Theme.of(context).colorScheme.primary,
                   ),
                 ),

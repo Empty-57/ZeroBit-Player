@@ -8,7 +8,7 @@ import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 
 import '../tools/func/func_extension.dart';
 import '../tools/func/fuzzy_search.dart';
-import '../tools/func/general_style.dart';
+import '../tools/func/style_manager.dart';
 
 /// 可复用的播放队列
 class PlayQueueMenuAnchor extends StatefulWidget {
@@ -128,18 +128,16 @@ class _PlayQueueMenuAnchorState extends State<PlayQueueMenuAnchor> {
                 children: [
                   Text(
                     "播放队列",
-                    style: generalTextStyle(
-                      ctx: context,
-                      size: 'xl',
+                    style: context.createTextStyle(
+                      size: AppFontSize.xl,
                       weight: FontWeight.w600,
                     ),
                   ),
                   SignalBuilder(
                     builder: (context) => Text(
                       "${_filteredList.value.length} 首",
-                      style: generalTextStyle(
-                        ctx: context,
-                        size: 'sm',
+                      style: context.createTextStyle(
+                        size: AppFontSize.sm,
                         color: theme.colorScheme.onSurface.withValues(
                           alpha: 0.5,
                         ),
@@ -153,13 +151,12 @@ class _PlayQueueMenuAnchorState extends State<PlayQueueMenuAnchor> {
                 child: DefaultTextEditingShortcuts(
                   child: TextField(
                     controller: _searchController,
-                    style: generalTextStyle(ctx: context, size: 'sm'),
+                    style: context.createTextStyle(size: AppFontSize.sm),
                     cursorHeight: 16,
                     decoration: InputDecoration(
                       hintText: '搜索歌名、歌手或专辑...',
-                      hintStyle: generalTextStyle(
-                        ctx: context,
-                        size: 'sm',
+                      hintStyle: context.createTextStyle(
+                        size: AppFontSize.sm,
                         color: theme.colorScheme.onSurface.withValues(
                           alpha: 0.4,
                         ),
@@ -195,9 +192,8 @@ class _PlayQueueMenuAnchorState extends State<PlayQueueMenuAnchor> {
                       return Center(
                         child: Text(
                           "无匹配歌曲",
-                          style: generalTextStyle(
-                            ctx: context,
-                            size: 'md',
+                          style: context.createTextStyle(
+                            size: AppFontSize.md,
                             color: theme.colorScheme.onSurface,
                           ),
                         ),

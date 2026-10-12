@@ -9,7 +9,7 @@ import 'package:zerobit_player/controller/statistics_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 
 const double _cardRadius = 10.0;
 const BorderRadius _cardBorderRadius = BorderRadius.all(
@@ -148,9 +148,8 @@ class _TopArtistCard extends StatelessWidget {
         ),
         child: Text(
           initial,
-          style: generalTextStyle(
-            ctx: context,
-            size: 'subtitle',
+          style: context.createTextStyle(
+            size: AppFontSize.subtitle,
             weight: FontWeight.w700,
             color: colorScheme.onPrimaryContainer,
           ),
@@ -215,9 +214,8 @@ class _HighlightShell extends StatelessWidget {
                   Icon(badgeIcon, size: 13, color: colorScheme.primary),
                   Text(
                     badge,
-                    style: generalTextStyle(
-                      ctx: context,
-                      size: 'xs',
+                    style: context.createTextStyle(
+                      size: AppFontSize.xs,
                       color: colorScheme.primary,
                       weight: FontWeight.w600,
                     ),
@@ -236,9 +234,8 @@ class _HighlightShell extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: generalTextStyle(
-                            ctx: context,
-                            size: 'lg',
+                          style: context.createTextStyle(
+                            size: AppFontSize.lg,
                             weight: FontWeight.w700,
                           ),
                           maxLines: 1,
@@ -247,9 +244,8 @@ class _HighlightShell extends StatelessWidget {
                         ),
                         Text(
                           subtitle,
-                          style: generalTextStyle(
-                            ctx: context,
-                            size: 'sm',
+                          style: context.createTextStyle(
+                            size: AppFontSize.sm,
                             opacity: 0.7,
                           ),
                           maxLines: 1,
@@ -287,16 +283,15 @@ class _CountBadge extends StatelessWidget {
         // 数值用比例字形，不加等宽：等宽会让这种大号数字看起来松散
         Text(
           '$count',
-          style: generalTextStyle(
-            ctx: context,
-            size: '2xl',
+          style: context.createTextStyle(
+            size: AppFontSize.xxl,
             weight: FontWeight.w700,
             color: colorScheme.primary,
           ),
         ),
         Text(
           '次 · $detail',
-          style: generalTextStyle(ctx: context, size: 'xs', opacity: 0.6),
+          style: context.createTextStyle(size: AppFontSize.xs, opacity: 0.6),
           maxLines: 1,
           softWrap: false,
         ),
@@ -352,18 +347,16 @@ class _HeatmapCard extends StatelessWidget {
             children: [
               Text(
                 '近期活跃度',
-                style: generalTextStyle(
-                  ctx: context,
-                  size: 'subtitle',
+                style: context.createTextStyle(
+                  size: AppFontSize.subtitle,
                   weight: FontWeight.w600,
                 ),
               ),
               const SizedBox(width: 12),
               Text(
                 '共 ${data.totalCount} 次',
-                style: generalTextStyle(
-                  ctx: context,
-                  size: 'sm',
+                style: context.createTextStyle(
+                  size: AppFontSize.sm,
                   opacity: 0.65,
                 ),
               ),
@@ -487,9 +480,8 @@ class _MetricTile extends StatelessWidget {
               Icon(icon, size: 14, color: colorScheme.onSurfaceVariant),
               Text(
                 label,
-                style: generalTextStyle(
-                  ctx: context,
-                  size: 'sm',
+                style: context.createTextStyle(
+                  size: AppFontSize.sm,
                   opacity: 0.75,
                 ),
               ),
@@ -497,9 +489,8 @@ class _MetricTile extends StatelessWidget {
           ),
           Text(
             value,
-            style: generalTextStyle(
-              ctx: context,
-              size: 'xl',
+            style: context.createTextStyle(
+              size: AppFontSize.xl,
               weight: FontWeight.w700,
             ),
             maxLines: 1,
@@ -508,7 +499,7 @@ class _MetricTile extends StatelessWidget {
           ),
           Text(
             hint,
-            style: generalTextStyle(ctx: context, size: 'xs', opacity: 0.55),
+            style: context.createTextStyle(size: AppFontSize.xs, opacity: 0.55),
             maxLines: 1,
             softWrap: false,
             overflow: TextOverflow.ellipsis,
@@ -532,7 +523,7 @@ class _EmptyHint extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         text,
-        style: generalTextStyle(ctx: context, size: 'md', opacity: 0.5),
+        style: context.createTextStyle(size: AppFontSize.md, opacity: 0.5),
       ),
     );
   }

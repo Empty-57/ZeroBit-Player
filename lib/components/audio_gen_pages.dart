@@ -17,7 +17,7 @@ import 'package:zerobit_player/field/set_constants.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 
 import 'edit_embedded_lyrics_dialog.dart';
 import 'widget/floating_button.dart';
@@ -180,7 +180,7 @@ List<Widget> _genMenuItems({
         menuStyle: const MenuStyle(alignment: Alignment.topRight),
         leadingIcon: Icon(
           PhosphorIconsLight.userFocus,
-          size: getIconSize(size: 'md'),
+          size: context.getIconSize(AppIconSize.md),
         ),
         menuChildren: artistList.map((v) {
           return MenuItemButton(
@@ -212,7 +212,10 @@ List<Widget> _genMenuItems({
         ),
       ),
       menuStyle: const MenuStyle(alignment: Alignment.topRight),
-      leadingIcon: Icon(PhosphorIconsLight.plus, size: getIconSize(size: 'md')),
+      leadingIcon: Icon(
+        PhosphorIconsLight.plus,
+        size: context.getIconSize(AppIconSize.md),
+      ),
       menuChildren: playListCtrl.allUserKey.map((v) {
         return MenuItemButton(
           onPressed: () {
@@ -293,16 +296,14 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _titleStyle = generalTextStyle(ctx: context, size: 'md');
-    _highLightTitleStyle = generalTextStyle(
-      ctx: context,
-      size: 'md',
+    _titleStyle = context.createTextStyle(size: AppFontSize.md);
+    _highLightTitleStyle = context.createTextStyle(
+      size: AppFontSize.md,
       color: Theme.of(context).colorScheme.primary,
     );
-    _subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
-    _highLightSubStyle = generalTextStyle(
-      ctx: context,
-      size: 'sm',
+    _subStyle = context.createTextStyle(size: AppFontSize.sm, opacity: 0.8);
+    _highLightSubStyle = context.createTextStyle(
+      size: AppFontSize.sm,
       color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
     );
   }
@@ -392,9 +393,8 @@ class _AudioGenPagesState extends State<AudioGenPages> {
             children: [
               Text(
                 widget.title,
-                style: generalTextStyle(
-                  ctx: context,
-                  size: 'title',
+                style: context.createTextStyle(
+                  size: AppFontSize.title,
                   weight: FontWeight.w600,
                 ),
                 softWrap: false,
@@ -404,7 +404,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
               SignalBuilder(
                 builder: (context) => Text(
                   '共${widget.controller.items.length}首音乐',
-                  style: generalTextStyle(ctx: context, size: 'md'),
+                  style: context.createTextStyle(size: AppFontSize.md),
                 ),
               ),
               _buildActionButtons(),
@@ -634,7 +634,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
           Icon(
             PhosphorIconsLight.funnelSimple,
             color: Theme.of(context).colorScheme.onSecondaryContainer,
-            size: getIconSize(size: 'md'),
+            size: context.getIconSize(AppIconSize.md),
           ),
 
           Expanded(
@@ -644,13 +644,13 @@ class _AudioGenPagesState extends State<AudioGenPages> {
                           .operateArea]
                       as int] ??
                   "未指定",
-              style: generalTextStyle(ctx: context, size: 'md'),
+              style: context.createTextStyle(size: AppFontSize.md),
             ),
           ),
           Icon(
             PhosphorIconsFill.caretDown,
             color: Theme.of(context).colorScheme.onSecondaryContainer,
-            size: getIconSize(size: 'sm'),
+            size: context.getIconSize(AppIconSize.sm),
           ),
         ],
       ),

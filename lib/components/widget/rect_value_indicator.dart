@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class RectangularValueIndicatorShape extends SliderComponentShape {
   final double width, height, radius;
+
   const RectangularValueIndicatorShape({
     this.width = 40,
     this.height = 24,

@@ -7,7 +7,7 @@ import 'package:zerobit_player/components/widget/rect_value_indicator.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 
 import 'widget/audio_ctrl_btn.dart';
 import 'widget/scroll_text.dart';
@@ -149,9 +149,8 @@ class PlayBar extends StatelessWidget {
               height: 28,
               radius: 4,
             ),
-            valueIndicatorTextStyle: generalTextStyle(
-              ctx: context,
-              size: 'sm',
+            valueIndicatorTextStyle: context.createTextStyle(
+              size: AppFontSize.sm,
               color: Theme.of(context).colorScheme.onPrimary,
             ),
             mouseCursor: WidgetStateProperty.all(
@@ -173,9 +172,8 @@ class PlayBar extends StatelessWidget {
     BuildContext context,
     AudioCtrlWidget audioCtrlWidget,
   ) {
-    final timeTextStyle = generalTextStyle(
-      ctx: context,
-      size: 'sm',
+    final timeTextStyle = context.createTextStyle(
+      size: AppFontSize.sm,
       color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
     );
 
@@ -249,9 +247,8 @@ class PlayBar extends StatelessWidget {
 
   // 构建封面和歌曲信息
   Widget _buildCoverAndInfo(BuildContext context, TextStyle timeTextStyle) {
-    final titleStyle = generalTextStyle(
-      ctx: context,
-      size: 'md',
+    final titleStyle = context.createTextStyle(
+      size: AppFontSize.md,
       color: Theme.of(context).colorScheme.primary,
     );
 

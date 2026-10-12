@@ -13,7 +13,7 @@ import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 import 'package:zerobit_player/tools/func/sync_cache.dart';
 
 const double _itemHeight = 64.0;
@@ -368,12 +368,14 @@ class _FoldersPreviewPageState extends State<FoldersPreviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle1 = generalTextStyle(ctx: context, size: 'md');
-    final textStyle2 = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
+    final textStyle1 = context.createTextStyle(size: AppFontSize.md);
+    final textStyle2 = context.createTextStyle(
+      size: AppFontSize.sm,
+      opacity: 0.8,
+    );
     final colorScheme = Theme.of(context).colorScheme;
-    final highLightStyle = generalTextStyle(
-      ctx: context,
-      size: 'md',
+    final highLightStyle = context.createTextStyle(
+      size: AppFontSize.md,
       color: colorScheme.primary,
     );
     final lineColor = colorScheme.onSurface.withValues(alpha: 0.25);
@@ -396,16 +398,15 @@ class _FoldersPreviewPageState extends State<FoldersPreviewPage> {
                 children: [
                   Text(
                     '文件夹',
-                    style: generalTextStyle(
-                      ctx: context,
-                      size: 'title',
+                    style: context.createTextStyle(
+                      size: AppFontSize.title,
                       weight: FontWeight.w600,
                     ),
                   ),
                   SignalBuilder(
                     builder: (context) => Text(
                       '共${_settingController.folders.length}个文件夹',
-                      style: generalTextStyle(ctx: context, size: 'md'),
+                      style: context.createTextStyle(size: AppFontSize.md),
                     ),
                   ),
                 ],

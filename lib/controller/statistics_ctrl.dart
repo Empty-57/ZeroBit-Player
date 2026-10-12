@@ -7,13 +7,13 @@ import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
-import 'package:zerobit_player/tools/statistics_models.dart';
 import 'package:zerobit_player/hive_manager/hive_box.dart';
 import 'package:zerobit_player/hive_manager/models/daily_stat_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/monthly_song_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/statistics_cache_model.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
+import 'package:zerobit_player/tools/statistics_models.dart';
 
 import '../logger.dart';
 
@@ -51,10 +51,13 @@ String _formatMonthDay(DateTime d) =>
 extension StatisticsControllerChartExtension on StatisticsController {
   // 0: 每周视图, 1: 每日视图
   static final chartViewMode = signal<int>(0);
+
   // 0 为本周，最多到 3
   static final selectedWeekOffset = signal<int>(0);
+
   // 0 为今天，最多到 27
   static final selectedDayOffset = signal<int>(0);
+
   // 当前鼠标悬浮柱子索引（-1为无悬浮）
   static final hoveredBarIndex = signal<int>(-1);
 
@@ -150,6 +153,7 @@ extension StatisticsControllerChartExtension on StatisticsController {
 
 class StatisticsController {
   StatisticsController._();
+
   static final instance = StatisticsController._();
 
   final MusicCacheController _musicCacheController =
@@ -506,7 +510,8 @@ class StatisticsController {
             date: date,
             playedCount: count,
             playedTime: stat?.playedTime ?? 0.0,
-            level: 0, // 需要全局最大值才能定档
+            level: 0,
+            // 需要全局最大值才能定档
             isFuture: date.isAfter(today),
           ),
         );
@@ -803,7 +808,7 @@ class StatisticsController {
           if (countComp != 0) return countComp;
           return b.value.time.compareTo(a.value.time);
         });
-      
+
       artistTop30.value = [
         for (final entry in sortedArtists.take(30))
           RankedArtistItem(

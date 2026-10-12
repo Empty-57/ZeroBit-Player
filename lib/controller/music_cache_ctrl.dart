@@ -17,6 +17,7 @@ import '../tools/func/fuzzy_search.dart';
 
 class MusicCacheController with DetailsPageControllerBase {
   MusicCacheController._();
+
   static final MusicCacheController instance = MusicCacheController._();
 
   SplayTreeMap<String, List<String>> artistItemsDict =

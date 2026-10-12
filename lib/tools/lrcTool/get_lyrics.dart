@@ -102,6 +102,7 @@ class LyricModel {
   final String? lyrics;
   final String? lyricsTs;
   final String type;
+
   const LyricModel({
     required this.lyrics,
     required this.lyricsTs,

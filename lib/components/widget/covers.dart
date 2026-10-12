@@ -164,6 +164,7 @@ class _LoadLocalOrNetCoverState extends State<LoadLocalOrNetCover> {
   ImageProvider? _imageProvider;
   late final int _cacheResolution;
   Timer? _debounceTimer;
+
   @override
   void initState() {
     super.initState();

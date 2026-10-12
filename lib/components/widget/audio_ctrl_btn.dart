@@ -9,7 +9,7 @@ import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 
 const double _radius = 6;
 
@@ -40,6 +40,7 @@ class GenIconBtn extends StatelessWidget {
     required this.fn,
     this.verticalOffset,
   });
+
   @override
   Widget build(BuildContext context) {
     return Tooltip(
@@ -67,6 +68,7 @@ class GenIconBtn extends StatelessWidget {
 
 class _SeekSlideWidget extends StatefulWidget {
   final AudioController audioController;
+
   const _SeekSlideWidget({required this.audioController});
 
   @override
@@ -168,6 +170,7 @@ class AudioCtrlWidget {
 class _VolumeSetBtn extends StatelessWidget {
   final double size;
   final Color? color;
+
   const _VolumeSetBtn({required this.size, this.color});
 
   @override
@@ -185,9 +188,8 @@ class _VolumeSetBtn extends StatelessWidget {
             children: [
               Text(
                 (settingController.volume.value * 100).round().toString(),
-                style: generalTextStyle(
-                  ctx: context,
-                  size: 'md',
+                style: context.createTextStyle(
+                  size: AppFontSize.md,
                   color: Theme.of(
                     context,
                   ).colorScheme.primary.withValues(alpha: 0.6),
@@ -256,6 +258,7 @@ class _VolumeSetBtn extends StatelessWidget {
 class _SkipBackBtn extends StatelessWidget {
   final double size;
   final Color? color;
+
   const _SkipBackBtn({required this.size, this.color});
 
   @override
@@ -274,6 +277,7 @@ class _SkipBackBtn extends StatelessWidget {
 class _PlayToggleBtn extends StatelessWidget {
   final double size;
   final Color? color;
+
   const _PlayToggleBtn({required this.size, this.color});
 
   @override
@@ -298,6 +302,7 @@ class _PlayToggleBtn extends StatelessWidget {
 class _SkipForwardBtn extends StatelessWidget {
   final double size;
   final Color? color;
+
   const _SkipForwardBtn({required this.size, this.color});
 
   @override
@@ -316,6 +321,7 @@ class _SkipForwardBtn extends StatelessWidget {
 class _PlayModeBtn extends StatelessWidget {
   final double size;
   final Color? color;
+
   const _PlayModeBtn({required this.size, this.color});
 
   @override
@@ -340,14 +346,14 @@ class _PlayModeBtn extends StatelessWidget {
 class _EqualizerBtn extends StatelessWidget {
   final double size;
   final Color? color;
+
   const _EqualizerBtn({required this.size, this.color});
 
   @override
   Widget build(BuildContext context) {
     final SettingController settingController = SettingController.instance;
-    final fontStyle = generalTextStyle(
-      ctx: context,
-      size: 'sm',
+    final fontStyle = context.createTextStyle(
+      size: AppFontSize.sm,
       color: Theme.of(context).colorScheme.onSecondaryContainer,
     );
 
@@ -433,9 +439,8 @@ class _EqualizerBtn extends StatelessWidget {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text("均衡器"),
-          titleTextStyle: generalTextStyle(
-            ctx: context,
-            size: 'xl',
+          titleTextStyle: context.createTextStyle(
+            size: AppFontSize.xl,
             weight: FontWeight.w600,
           ),
           shape: const RoundedRectangleBorder(

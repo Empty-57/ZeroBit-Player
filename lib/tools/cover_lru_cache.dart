@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 abstract class CoverLRUCache {
   const CoverLRUCache._();
+
   static final Map<String, Uint8List> _cache = {};
   static const int _maxSize = 100;
 

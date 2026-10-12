@@ -15,6 +15,7 @@ class LrcLyricWidget extends StatelessWidget {
   final TextAlign textAlign;
   final double highLightAlpha;
   final int blurSigma;
+
   const LrcLyricWidget({
     super.key,
     required this.text,
@@ -24,6 +25,7 @@ class LrcLyricWidget extends StatelessWidget {
     this.highLightAlpha = LyricConstants.highLightAlpha,
     this.blurSigma = 0,
   });
+
   @override
   Widget build(BuildContext context) {
     return AnimatedDefaultTextStyle(

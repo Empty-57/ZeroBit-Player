@@ -7,6 +7,7 @@ import '../logger.dart';
 
 class FFTFeed {
   FFTFeed._();
+
   static final FFTFeed instance = FFTFeed._();
 
   final _audioController = AudioController.instance;

@@ -21,6 +21,7 @@ class JapanesePhoneticModel {
     required this.yomi,
     required this.isPhraseStart,
   });
+
   static final RegExp _kanjiRegex = RegExp(r'\p{Script=Han}', unicode: true);
 
   /// 是否有注音

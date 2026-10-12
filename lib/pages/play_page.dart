@@ -30,7 +30,7 @@ import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/theme_manager.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 import 'package:zerobit_player/tools/paint_cache.dart';
 
 import '../components/tilt3d.dart';
@@ -73,6 +73,7 @@ class _ScrollTextWidget extends StatelessWidget {
   final String text;
   final TextStyle style;
   final StrutStyle strutStyle;
+
   const _ScrollTextWidget({
     required this.text,
     required this.style,
@@ -296,11 +297,16 @@ class _PlayPageState extends State<PlayPage> {
   late final MenuController _playQueueMenuController;
 
   ThemeService get _themeService => ThemeService.instance;
+
   AudioController get _audioController => AudioController.instance;
+
   LyricController get _lyricController => LyricController.instance;
+
   SettingController get _settingController => SettingController.instance;
+
   MusicCacheController get _musicCacheController =>
       MusicCacheController.instance;
+
   UserPlayListController get _userPlayListController =>
       UserPlayListController.instance;
 
@@ -343,27 +349,23 @@ class _PlayPageState extends State<PlayPage> {
     _activeTrackCover = _mixColor;
     _inactiveTrackCover = _mixColor.withValues(alpha: 0.2);
 
-    _timeCurrentStyle = generalTextStyle(
-      ctx: context,
-      size: '2xl',
+    _timeCurrentStyle = context.createTextStyle(
+      size: AppFontSize.xxl,
       color: _mixColor,
       weight: FontWeight.w300,
     );
-    _timeTotalStyle = generalTextStyle(
-      ctx: context,
-      size: 'md',
+    _timeTotalStyle = context.createTextStyle(
+      size: AppFontSize.md,
       weight: FontWeight.w300,
       color: _mixSubColor,
     );
-    _titleStyle = generalTextStyle(
-      ctx: context,
-      size: '2xl',
+    _titleStyle = context.createTextStyle(
+      size: AppFontSize.xxl,
       color: _mixColor,
       weight: FontWeight.w600,
     );
-    _subTitleStyle = generalTextStyle(
-      ctx: context,
-      size: 'md',
+    _subTitleStyle = context.createTextStyle(
+      size: AppFontSize.md,
       color: _mixSubColor,
       weight: FontWeight.w300,
     );
@@ -500,8 +502,8 @@ class _PlayPageState extends State<PlayPage> {
           Expanded(
             child: Text(
               text,
-              style: generalTextStyle(
-                size: 'md',
+              style: context.createTextStyle(
+                size: AppFontSize.md,
                 color: _themeService.darkTheme.colorScheme.onSecondaryContainer,
               ),
             ),
@@ -545,8 +547,8 @@ class _PlayPageState extends State<PlayPage> {
       menuChildren: menuChildren,
       child: Text(
         text,
-        style: generalTextStyle(
-          size: 'md',
+        style: context.createTextStyle(
+          size: AppFontSize.md,
           color: _themeService.darkTheme.colorScheme.onSecondaryContainer,
         ),
       ),
@@ -559,7 +561,7 @@ class _PlayPageState extends State<PlayPage> {
       height: 0.5,
       thickness: 0.5,
     );
-    final iconSize = getIconSize(size: 'md');
+    final iconSize = context.getIconSize(AppIconSize.md);
 
     return [
       SignalBuilder(

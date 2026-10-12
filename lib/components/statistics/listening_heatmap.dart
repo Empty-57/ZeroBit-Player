@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:zerobit_player/tools/statistics_models.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
+import 'package:zerobit_player/tools/statistics_models.dart';
 
 /// 格子边长
 const double _cellSize = 15.0;
@@ -61,7 +61,10 @@ class ListeningHeatmap extends StatelessWidget {
 
     final colorScheme = Theme.of(context).colorScheme;
     final palette = HeatmapPalette.of(colorScheme);
-    final labelStyle = generalTextStyle(ctx: context, size: 'xs', opacity: 0.6);
+    final labelStyle = context.createTextStyle(
+      size: AppFontSize.xs,
+      opacity: 0.6,
+    );
 
     return RepaintBoundary(
       child: SingleChildScrollView(
@@ -164,7 +167,10 @@ class HeatmapLegend extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final palette = HeatmapPalette.of(colorScheme);
-    final labelStyle = generalTextStyle(ctx: context, size: 'xs', opacity: 0.6);
+    final labelStyle = context.createTextStyle(
+      size: AppFontSize.xs,
+      opacity: 0.6,
+    );
 
     return Row(
       mainAxisSize: MainAxisSize.min,

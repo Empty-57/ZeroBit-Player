@@ -18,7 +18,7 @@ import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/get_fonts.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 
 import '../field/shared_preferences_key.dart';
 import '../tools/version_checker.dart';
@@ -56,9 +56,8 @@ class _FolderManagerDialog extends StatelessWidget {
           builder: (BuildContext context) {
             return AlertDialog(
               title: const Text("文件夹管理"),
-              titleTextStyle: generalTextStyle(
-                ctx: context,
-                size: 'xl',
+              titleTextStyle: context.createTextStyle(
+                size: AppFontSize.xl,
                 weight: FontWeight.w600,
               ),
 
@@ -97,9 +96,8 @@ class _FolderManagerDialog extends StatelessWidget {
                                       flex: 1,
                                       child: Text(
                                         _settingController.folders[index],
-                                        style: generalTextStyle(
-                                          ctx: context,
-                                          size: 'md',
+                                        style: context.createTextStyle(
+                                          size: AppFontSize.md,
                                         ),
                                         softWrap: false,
                                         overflow: TextOverflow.fade,
@@ -119,7 +117,9 @@ class _FolderManagerDialog extends StatelessWidget {
                                         ),
                                         child: Icon(
                                           PhosphorIconsLight.trash,
-                                          size: getIconSize(size: 'lg'),
+                                          size: context.getIconSize(
+                                            AppIconSize.lg,
+                                          ),
                                           color: Colors.red,
                                         ),
                                       ),
@@ -139,7 +139,9 @@ class _FolderManagerDialog extends StatelessWidget {
                               : true,
                           child: Text(
                             '已扫描到：${musicCacheController.currentScanAudio.value}',
-                            style: generalTextStyle(ctx: context, size: 'md'),
+                            style: context.createTextStyle(
+                              size: AppFontSize.md,
+                            ),
                             softWrap: true,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -384,9 +386,8 @@ class _ColorPickerDialogState extends State<_ColorPickerDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('取色器'),
-      titleTextStyle: generalTextStyle(
-        ctx: context,
-        size: 'xl',
+      titleTextStyle: context.createTextStyle(
+        size: AppFontSize.xl,
         weight: FontWeight.w600,
       ),
       shape: const RoundedRectangleBorder(
@@ -515,9 +516,8 @@ Widget _getFontFamilyDialog(
 
           return AlertDialog(
             title: const Text("选择字体"),
-            titleTextStyle: generalTextStyle(
-              ctx: dialogContext,
-              size: 'xl',
+            titleTextStyle: dialogContext.createTextStyle(
+              size: AppFontSize.xl,
               weight: FontWeight.w600,
             ),
             shape: const RoundedRectangleBorder(
@@ -536,19 +536,22 @@ Widget _getFontFamilyDialog(
                   children: [
                     Text(
                       "当前字体: $label",
-                      style: generalTextStyle(ctx: dialogContext, size: 'md'),
+                      style: dialogContext.createTextStyle(
+                        size: AppFontSize.md,
+                      ),
                     ),
 
                     SizedBox(
                       height: 36,
                       child: TextField(
-                        style: generalTextStyle(ctx: dialogContext, size: 'sm'),
+                        style: dialogContext.createTextStyle(
+                          size: AppFontSize.sm,
+                        ),
                         cursorHeight: 16,
                         decoration: InputDecoration(
                           hintText: '搜索字体名称...',
-                          hintStyle: generalTextStyle(
-                            ctx: dialogContext,
-                            size: 'sm',
+                          hintStyle: dialogContext.createTextStyle(
+                            size: AppFontSize.sm,
                             color: theme.colorScheme.onSurface.withValues(
                               alpha: 0.5,
                             ),
@@ -565,16 +568,15 @@ Widget _getFontFamilyDialog(
 
                     Expanded(
                       child: SignalBuilder(
-                        builder: (context) {
+                        builder: (_) {
                           final list = filteredFonts.value;
 
                           if (list.isEmpty) {
                             return Center(
                               child: Text(
                                 "未找到匹配字体",
-                                style: generalTextStyle(
-                                  ctx: context,
-                                  size: 'md',
+                                style: dialogContext.createTextStyle(
+                                  size: AppFontSize.md,
                                   color: theme.colorScheme.onSurface,
                                 ),
                               ),
@@ -610,9 +612,8 @@ Widget _getFontFamilyDialog(
                                   alignment: Alignment.centerLeft,
                                   child: Text(
                                     fontName,
-                                    style: generalTextStyle(
-                                      ctx: context,
-                                      size: 'md',
+                                    style: dialogContext.createTextStyle(
+                                      size: AppFontSize.md,
                                       fontFamily: fontName,
                                       weight: isCurrent
                                           ? FontWeight.bold
@@ -844,13 +845,13 @@ class _CheckVersionState extends State<_CheckVersion>
                 ? PhosphorIconsLight.spinnerGap
                 : PhosphorIconsLight.arrowClockwise,
             color: color,
-            size: getIconSize(size: 'md'),
+            size: context.getIconSize(AppIconSize.md),
           ),
         ),
         Flexible(
           child: Text(
             _loading ? '检查中...' : '检查更新',
-            style: generalTextStyle(ctx: context, size: 'md', color: color),
+            style: context.createTextStyle(size: AppFontSize.md, color: color),
             softWrap: false,
             maxLines: 1,
             overflow: TextOverflow.fade,
@@ -1105,7 +1106,7 @@ Widget _createHotKeyItem(
       SignalBuilder(
         builder: (context) => Text(
           hotKeyLabel.value,
-          style: generalTextStyle(ctx: context, size: 'md'),
+          style: context.createTextStyle(size: AppFontSize.md),
         ),
       ),
       GeneralBtn(
@@ -1121,17 +1122,15 @@ Widget _createHotKeyItem(
             builder: (BuildContext context) {
               return AlertDialog(
                 title: const Text("设置快捷键"),
-                titleTextStyle: generalTextStyle(
-                  ctx: context,
-                  size: 'xl',
+                titleTextStyle: context.createTextStyle(
+                  size: AppFontSize.xl,
                   weight: FontWeight.w600,
                 ),
                 content: SignalBuilder(
                   builder: (context) => Text(hotKeyLabel.value),
                 ),
-                contentTextStyle: generalTextStyle(
-                  ctx: context,
-                  size: 'md',
+                contentTextStyle: context.createTextStyle(
+                  size: AppFontSize.md,
                   weight: FontWeight.w100,
                 ),
 
@@ -1263,6 +1262,7 @@ class _SetHotKeyFullScreenDialog extends StatelessWidget {
 
 class _DesktopLyricsStrokeColor extends StatelessWidget {
   const _DesktopLyricsStrokeColor();
+
   @override
   Widget build(BuildContext context) {
     return _getColorPicker(
@@ -1291,7 +1291,7 @@ class _BackgroundImagePathPicker extends StatelessWidget {
             width: 200,
             child: Text(
               p.basename(_settingController.backgroundImagePath.value),
-              style: generalTextStyle(ctx: context, size: 'md'),
+              style: context.createTextStyle(size: AppFontSize.md),
               maxLines: 1,
               softWrap: false,
               overflow: TextOverflow.ellipsis,
@@ -1546,9 +1546,8 @@ class _SettingPageState extends State<SettingPage> {
         children: [
           Text(
             '设置',
-            style: generalTextStyle(
-              ctx: context,
-              size: 'title',
+            style: context.createTextStyle(
+              size: AppFontSize.title,
               weight: FontWeight.w600,
             ),
           ),
@@ -1645,10 +1644,7 @@ class _SettingItem extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          text,
-          style: generalTextStyle(ctx: context, size: 'lg'),
-        ),
+        Text(text, style: context.createTextStyle(size: AppFontSize.lg)),
         child,
       ],
     );
@@ -1865,17 +1861,13 @@ class _LyricsTab extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '预览',
-              style: generalTextStyle(ctx: context, size: 'lg'),
-            ),
+            Text('预览', style: context.createTextStyle(size: AppFontSize.lg)),
             FractionallySizedBox(
               widthFactor: 1,
               child: SignalBuilder(
                 builder: (context) {
                   final isDark = _settingController.themeMode.value == 'dark';
-                  final lyricStyle = generalTextStyle(
-                    ctx: context,
+                  final lyricStyle = context.createTextStyle(
                     size: _settingController.lrcFontSize.value,
                     color: Theme.of(context).colorScheme.onSecondaryContainer
                         .withValues(alpha: isDark ? 0.2 : 0.3),
@@ -2075,9 +2067,8 @@ class _AboutTab extends StatelessWidget {
               child: FutureBuilder<PackageInfo>(
                 future: packageInfoFuture,
                 builder: (context, snapshot) {
-                  final style = generalTextStyle(
-                    ctx: context,
-                    size: 'lg',
+                  final style = context.createTextStyle(
+                    size: AppFontSize.lg,
                     color: Theme.of(context).colorScheme.primary,
                   );
                   if (snapshot.connectionState == ConnectionState.done) {

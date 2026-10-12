@@ -7,6 +7,7 @@ import '../field/shared_preferences_key.dart';
 
 class DesktopLyricsSettingController {
   DesktopLyricsSettingController._();
+
   static final instance = DesktopLyricsSettingController._();
   final DesktopLyricsSever _desktopLyricsSever = DesktopLyricsSever.instance;
   final fontFamily = signal("Microsoft YaHei Light");

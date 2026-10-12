@@ -9,10 +9,13 @@ import 'package:zerobit_player/logger.dart';
 
 class TrayManagerService with TrayListener {
   TrayManagerService._();
+
   static final TrayManagerService instance = TrayManagerService._();
 
   AudioController get _audioController => AudioController.instance;
+
   SettingController get _settingController => SettingController.instance;
+
   WindowController get _windowListener => WindowController.instance;
 
   Future<void> init() async {

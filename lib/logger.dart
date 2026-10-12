@@ -36,6 +36,7 @@ class RestrictionFileOutput extends AdvancedFileOutput {
 /// 全局 Logger 单例工具类
 class LoggerUni {
   static late final Logger _logger;
+
   LoggerUni._();
 
   static Future<void> init() async {

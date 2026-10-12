@@ -13,7 +13,7 @@ import 'package:zerobit_player/controller/lyric_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/theme_manager.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 import 'package:zerobit_player/tools/lrcTool/lyric_model.dart';
 
 import '../../field/set_constants.dart';
@@ -27,9 +27,12 @@ class _LyricsStyle {
 
   // 提取基础参数
   double get _baseSize => _settingsController.lrcFontSize.value.toDouble();
+
   FontWeight get _weight =>
       FontWeight.values[_settingsController.lrcFontWeight.value];
+
   Color get _primaryColor => _themeService.darkTheme.colorScheme.primary;
+
   Color get _onContainerColor =>
       _themeService.darkTheme.colorScheme.onSecondaryContainer;
 
@@ -43,7 +46,7 @@ class _LyricsStyle {
   );
 
   // 核心样式生成
-  TextStyle get lyricStyle => generalTextStyle(
+  TextStyle get lyricStyle => AppTextStyle.create(
     size: _baseSize,
     color: _onContainerColor.withValues(
       alpha: LyricConstants.notPlayedDarkAlpha,
@@ -68,7 +71,7 @@ class _LyricsStyle {
 
   Color? get mixColor => Color.lerp(
     _primaryColor,
-    Colors.white,
+    _themeService.darkTheme.colorScheme.onSurface,
     LyricConstants.notPlayedLightAlpha,
   );
 }

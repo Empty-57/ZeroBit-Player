@@ -10,7 +10,7 @@ import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/controller/window_ctrl.dart';
 import 'package:zerobit_player/theme_manager.dart';
-import 'package:zerobit_player/tools/func/general_style.dart';
+import 'package:zerobit_player/tools/func/style_manager.dart';
 import 'package:zerobit_player/tools/paint_cache.dart';
 
 import 'widget/get_snack_bar.dart';
@@ -75,17 +75,19 @@ class _SearchDialogContentState extends State<_SearchDialogContent> {
   Widget build(BuildContext context) {
     final UserPlayListController userPlayListController =
         UserPlayListController.instance;
-    final titleStyle = generalTextStyle(ctx: context, size: 'md');
-    final subStyle = generalTextStyle(ctx: context, size: 'sm', opacity: 0.8);
+    final titleStyle = context.createTextStyle(size: AppFontSize.md);
+    final subStyle = context.createTextStyle(
+      size: AppFontSize.sm,
+      opacity: 0.8,
+    );
 
     final height = MediaQuery.sizeOf(context).height;
     final width = MediaQuery.sizeOf(context).width;
 
     return AlertDialog(
       title: const Text("搜索"),
-      titleTextStyle: generalTextStyle(
-        ctx: context,
-        size: 'xl',
+      titleTextStyle: context.createTextStyle(
+        size: AppFontSize.xl,
         weight: FontWeight.w600,
       ),
       shape: RoundedRectangleBorder(borderRadius: _borderRadius),
@@ -252,7 +254,7 @@ class _ControllerButton extends StatelessWidget {
           ? ThemeService.instance.darkTheme.colorScheme.onSurface
           : Theme.of(context).colorScheme.onSurface,
       tooltip: tooltip,
-      iconSize: getIconSize(size: 'lg'),
+      iconSize: context.getIconSize(AppIconSize.lg),
       hoverColor: hoverColor,
       style: ButtonStyle(
         shape: WidgetStateProperty.all<RoundedRectangleBorder>(
@@ -340,7 +342,7 @@ class WindowControllerBar extends StatelessWidget {
                 ),
                 Text(
                   'ZeroBit Player',
-                  style: generalTextStyle(ctx: context, size: 'sm'),
+                  style: context.createTextStyle(size: AppFontSize.sm),
                 ),
               ],
             ),
