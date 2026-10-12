@@ -1868,7 +1868,7 @@ class _LyricsTab extends StatelessWidget {
                 builder: (context) {
                   final isDark = _settingController.themeMode.value == 'dark';
                   final lyricStyle = context.createTextStyle(
-                    size: _settingController.lrcFontSize.value,
+                    size: _settingController.lrcFontSize.value.toDouble(),
                     color: Theme.of(context).colorScheme.onSecondaryContainer
                         .withValues(alpha: isDark ? 0.2 : 0.3),
                     weight: FontWeight

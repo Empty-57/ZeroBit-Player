@@ -4,9 +4,9 @@ import 'package:zerobit_player/tools/func/style_manager.dart';
 class GeneralBtn<T> extends StatelessWidget {
   final VoidCallback? fn;
   final String? label;
-  final T? labelSize;
+  final double? labelSize;
   final IconData? icon;
-  final T? iconSize;
+  final double? iconSize;
   final double? radius;
   final Color? contentColor;
   final Color? backgroundColor;

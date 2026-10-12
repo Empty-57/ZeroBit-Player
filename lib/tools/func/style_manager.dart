@@ -3,29 +3,21 @@ import 'package:zerobit_player/controller/setting_ctrl.dart';
 
 final SettingController _settingController = SettingController.instance;
 
-enum AppFontSize {
-  xs(11.0),
-  sm(13.0),
-  md(15.0),
-  lg(17.0),
-  xl(19.0),
-  xxl(21.0),
-  subtitle(24.27),
-  title(30.742);
-
-  final double value;
-
-  const AppFontSize(this.value);
+abstract final class AppFontSize {
+  static const double xs = 11.0;
+  static const double sm = 13.0;
+  static const double md = 15.0;
+  static const double lg = 17.0;
+  static const double xl = 19.0;
+  static const double xxl = 21.0;
+  static const double subtitle = 24.0;
+  static const double title = 31.0;
 }
 
-enum AppIconSize {
-  sm(18.0),
-  md(20.0),
-  lg(22.0);
-
-  final double value;
-
-  const AppIconSize(this.value);
+abstract final class AppIconSize {
+  static const double sm = 18.0;
+  static const double md = 20.0;
+  static const double lg = 22.0;
 }
 
 class AppTextStyle {
@@ -35,19 +27,13 @@ class AppTextStyle {
   static TextStyle create({
     BuildContext? context,
     Color? color,
-    dynamic size = AppFontSize.md,
+    double size = AppFontSize.md,
     FontWeight weight = FontWeight.w400,
     TextDecoration decoration = TextDecoration.none,
     double opacity = 1.0,
     String? fontFamily,
     double? letterSpacing,
   }) {
-    final double resolvedSize = switch (size) {
-      AppFontSize preset => preset.value,
-      num number => number.toDouble(),
-      _ => AppFontSize.md.value,
-    };
-
     Color effectiveColor;
     if (color != null) {
       effectiveColor = color;
@@ -63,7 +49,7 @@ class AppTextStyle {
 
     return TextStyle(
       color: effectiveColor,
-      fontSize: resolvedSize,
+      fontSize: size,
       fontWeight: weight,
       decoration: decoration,
       fontFamily: fontFamily ?? _settingController.fontFamily.value,
@@ -72,12 +58,8 @@ class AppTextStyle {
   }
 
   /// 通用图标大小解析
-  static double iconSize([dynamic size = AppIconSize.md]) {
-    return switch (size) {
-      AppIconSize preset => preset.value,
-      num number => number.toDouble(),
-      _ => AppIconSize.md.value,
-    };
+  static double iconSize([double size = AppIconSize.md]) {
+    return size;
   }
 
   /// 根据行高获取图标大小
@@ -96,7 +78,7 @@ class AppTextStyle {
 extension TextStyleContextX on BuildContext {
   TextStyle createTextStyle({
     Color? color,
-    dynamic size = AppFontSize.md,
+    double size = AppFontSize.md,
     FontWeight weight = FontWeight.w400,
     TextDecoration decoration = .none,
     double opacity = 1.0,
