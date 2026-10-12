@@ -600,12 +600,16 @@ class _StatisticsArtistTile extends StatelessWidget {
                         textAlign: TextAlign.left,
                       ),
                     ),
-                    Container(
-                      width: maxWidth * 0.9 * ratio,
-                      height: 2,
-                      decoration: BoxDecoration(
-                        borderRadius: _borderRadius,
-                        color: tertiaryColor,
+                    Expanded(
+                      child: FractionallySizedBox(
+                        widthFactor: ratio,
+                        child: Container(
+                          height: 2,
+                          decoration: BoxDecoration(
+                            borderRadius: _borderRadius,
+                            color: tertiaryColor,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -614,7 +618,7 @@ class _StatisticsArtistTile extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: maxWidth * 0.1,
+            width: maxWidth * 0.06,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               crossAxisAlignment: CrossAxisAlignment.end,
