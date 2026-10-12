@@ -24,9 +24,13 @@ import 'package:zerobit_player/components/window_ctrl_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/statistics_ctrl.dart';
 import 'package:zerobit_player/field/operate_area.dart';
+import 'package:zerobit_player/hive_manager/adapters/daily_stat_cache_adapter.dart';
+import 'package:zerobit_player/hive_manager/adapters/monthly_song_cache_adapter.dart';
 import 'package:zerobit_player/hive_manager/adapters/scalable_setting_adapters.dart';
 import 'package:zerobit_player/hive_manager/adapters/statistics_cache_adapter.dart';
 import 'package:zerobit_player/hive_manager/adapters/user_playlist_adapter.dart';
+import 'package:zerobit_player/hive_manager/models/daily_stat_cache_model.dart';
+import 'package:zerobit_player/hive_manager/models/monthly_song_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/scalable_setting_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/setting_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/statistics_cache_model.dart';
@@ -206,6 +210,8 @@ void main() async {
   _hiveSafeRegisterAdapter<UserPlayListCache>(UserPlayListAdapter());
   _hiveSafeRegisterAdapter<ScalableSettingCache>(ScalableSettingAdapter());
   _hiveSafeRegisterAdapter<StatisticsCache>(StatisticsCacheAdapter());
+  _hiveSafeRegisterAdapter<DailyStatCache>(DailyStatCacheAdapter());
+  _hiveSafeRegisterAdapter<MonthlySongCache>(MonthlySongCacheAdapter());
 
   final musicBox = await _openSafeBox<MusicCache>(HiveBoxes.musicCacheBox);
 
@@ -213,6 +219,8 @@ void main() async {
   await _openSafeBox<UserPlayListCache>(HiveBoxes.userPlayListCacheBox);
   await _openSafeBox<ScalableSettingCache>(HiveBoxes.scalableSettingCacheBox);
   await _openSafeBox<StatisticsCache>(HiveBoxes.statisticsCacheBox);
+  await _openSafeBox<DailyStatCache>(HiveBoxes.dailyStatCacheBox);
+  await _openSafeBox<MonthlySongCache>(HiveBoxes.monthlySongCacheBox);
 
   DesktopLyricsSettingController.instance.init();
   SettingController.instance.init();

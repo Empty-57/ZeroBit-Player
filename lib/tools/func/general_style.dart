@@ -19,6 +19,7 @@ TextStyle generalTextStyle<T>({
   double fontSize = 15.0;
 
   const Map<String, double> sizeMap = {
+    'xs': 11.0,
     'sm': 13.0,
     'md': 15.0,
     'lg': 17.0,

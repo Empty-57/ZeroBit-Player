@@ -1,4 +1,6 @@
 import 'package:hive_ce/hive.dart';
+import 'package:zerobit_player/hive_manager/models/daily_stat_cache_model.dart';
+import 'package:zerobit_player/hive_manager/models/monthly_song_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/scalable_setting_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/setting_cache_model.dart';
 import 'package:zerobit_player/hive_manager/models/statistics_cache_model.dart';
@@ -23,5 +25,11 @@ abstract class HiveBox {
   );
   static final statisticsCacheBox = StorageCRUD(
     cacheBox: Hive.box<StatisticsCache>(HiveBoxes.statisticsCacheBox),
+  );
+  static final dailyStatCacheBox = StorageCRUD(
+    cacheBox: Hive.box<DailyStatCache>(HiveBoxes.dailyStatCacheBox),
+  );
+  static final monthlySongCacheBox = StorageCRUD(
+    cacheBox: Hive.box<MonthlySongCache>(HiveBoxes.monthlySongCacheBox),
   );
 }
