@@ -364,15 +364,22 @@ class _SortedListViewState extends State<SortedListView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 封面区域 始终占据正方形空间，保证布局稳定
-            AspectRatio(
-              aspectRatio: 1,
-              child: item.coverMusic != null
-                  ? LoadLocalOrNetCover(
-                      music: item.coverMusic!,
-                      coverResolutionFlag: CoverResolutionFlag.middle,
-                      size: _itemWidth,
-                    )
-                  : const SizedBox.shrink(),
+            Hero(
+              tag: item.title + OperateArea.albumDetails,
+              createRectTween: (begin, end) {
+                return MaterialRectArcTween(begin: begin, end: end);
+              },
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: item.coverMusic != null
+                    ? LoadLocalOrNetCover(
+                        music: item.coverMusic!,
+                        coverResolutionFlag: CoverResolutionFlag.middle,
+                        size: _itemWidth,
+                        evictOnDispose: false,
+                      )
+                    : const SizedBox.shrink(),
+              ),
             ),
             const SizedBox(height: 3),
             Padding(
@@ -409,14 +416,21 @@ class _SortedListViewState extends State<SortedListView> {
           spacing: 1,
           children: [
             // 封面区域 固定正方形
-            SizedBox.square(
-              dimension: _itemHeight_2,
-              child: item.coverMusic != null
-                  ? LoadLocalOrNetCover(
-                      music: item.coverMusic!,
-                      size: _itemHeight_2,
-                    )
-                  : const SizedBox.shrink(),
+            Hero(
+              tag: item.title + OperateArea.artistDetails,
+              createRectTween: (begin, end) {
+                return MaterialRectArcTween(begin: begin, end: end);
+              },
+              child: SizedBox.square(
+                dimension: _itemHeight_2,
+                child: item.coverMusic != null
+                    ? LoadLocalOrNetCover(
+                        music: item.coverMusic!,
+                        size: _itemHeight_2,
+                        evictOnDispose: false,
+                      )
+                    : const SizedBox.shrink(),
+              ),
             ),
             const SizedBox(width: 2),
             // 文字区域 占满剩余宽度，防止文字溢出

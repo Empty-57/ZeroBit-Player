@@ -138,6 +138,7 @@ class _CoverSideState extends State<_CoverSide> {
           SignalBuilder(
             builder: (context) {
               final useTilt = SettingController.instance.useTilt3DCover.value;
+              final isPlaying = audioController.currentState.value == .playing;
 
               final innerContent = Hero(
                 tag: 'playingCover',
@@ -168,28 +169,38 @@ class _CoverSideState extends State<_CoverSide> {
                 ),
               );
 
+              Widget coverWidget;
+
               if (useTilt) {
-                return Tilt3D(
+                coverWidget = Tilt3D(
                   width: widget.coverSize,
                   height: widget.coverSize,
                   borderRadius: PlayPageConstant.borderRadius,
                   glareColor: widget.titleStyle.color ?? Colors.white,
                   child: innerContent,
                 );
+              } else {
+                coverWidget = DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: PlayPageConstant.borderRadius,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        offset: const Offset(0, 2),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                  child: innerContent,
+                );
               }
 
-              return DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: PlayPageConstant.borderRadius,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      offset: const Offset(0, 2),
-                      blurRadius: 8,
-                    ),
-                  ],
-                ),
-                child: innerContent,
+              return AnimatedScale(
+                duration: const Duration(milliseconds: 500),
+                filterQuality: .low,
+                curve: Curves.easeInOutBack,
+                scale: isPlaying ? 1.0 : 0.9,
+                child: coverWidget,
               );
             },
           ),

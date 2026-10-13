@@ -416,16 +416,23 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   }
 
   Widget _buildHeaderCover() {
-    return ClipRRect(
-      borderRadius: _coverBorderRadius,
-      child: SignalBuilder(
-        builder: (context) {
-          return LoadU8Cover(
-            data: widget.controller.headCover.value,
-            coverResolutionFlag: CoverResolutionFlag.middle,
-            size: _headCoverSize,
-          );
-        },
+    return Hero(
+      tag: widget.title + widget.operateArea,
+      createRectTween: (begin, end) {
+        return MaterialRectArcTween(begin: begin, end: end);
+      },
+      child: ClipRRect(
+        borderRadius: _coverBorderRadius,
+        child: SignalBuilder(
+          builder: (context) {
+            return LoadU8Cover(
+              data: widget.controller.headCover.value,
+              coverResolutionFlag: CoverResolutionFlag.middle,
+              size: _headCoverSize,
+              evictOnDispose: false,
+            );
+          },
+        ),
       ),
     );
   }

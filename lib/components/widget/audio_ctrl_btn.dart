@@ -3,7 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/widget/diamond_silder_thumb.dart';
+import 'package:zerobit_player/components/widget/diamond_slider_thumb.dart';
 import 'package:zerobit_player/components/widget/general_btn.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
@@ -287,12 +287,27 @@ class _PlayToggleBtn extends StatelessWidget {
       builder: (context) {
         final isPlaying =
             audioController.currentState.value == AudioState.playing;
-        return GenIconBtn(
-          tooltip: isPlaying ? "暂停" : "播放",
-          icon: isPlaying ? PhosphorIconsFill.pause : PhosphorIconsFill.play,
-          size: size,
-          color: color,
-          fn: audioController.audioToggleThrottled,
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 100),
+          transitionBuilder: (child, animate) {
+            final isPauseIcon = child.key == const ValueKey('pause_btn');
+            final endTurns = isPauseIcon ? -0.25 : 0.25;
+            return FadeTransition(
+              opacity: animate,
+              child: RotationTransition(
+                turns: Tween<double>(begin: endTurns, end: 0).animate(animate),
+                child: child,
+              ),
+            );
+          },
+          child: GenIconBtn(
+            key: ValueKey(isPlaying ? "pause_btn" : "play_btn"),
+            tooltip: isPlaying ? "暂停" : "播放",
+            icon: isPlaying ? PhosphorIconsFill.pause : PhosphorIconsFill.play,
+            size: size,
+            color: color,
+            fn: audioController.audioToggleThrottled,
+          ),
         );
       },
     );

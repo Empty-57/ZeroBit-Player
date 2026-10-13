@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/widget/covers.dart';
-import 'package:zerobit_player/components/widget/diamond_silder_thumb.dart';
+import 'package:zerobit_player/components/widget/diamond_slider_thumb.dart';
 import 'package:zerobit_player/components/widget/rect_value_indicator.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';

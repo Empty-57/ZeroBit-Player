@@ -55,8 +55,12 @@ extension StatisticsControllerChartExtension on StatisticsController {
   // 0 为本周，最多到 3
   static final selectedWeekOffset = signal<int>(0);
 
+  static const int maxWeekOffset = 3;
+
   // 0 为今天，最多到 27
   static final selectedDayOffset = signal<int>(0);
+
+  static const int maxDayOffset = 27;
 
   // 当前鼠标悬浮柱子索引（-1为无悬浮）
   static final hoveredBarIndex = signal<int>(-1);

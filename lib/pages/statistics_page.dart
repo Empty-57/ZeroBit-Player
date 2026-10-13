@@ -619,7 +619,7 @@ class _StatisticsArtistTile extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: maxWidth * 0.06,
+            width: maxWidth * 0.08,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -719,7 +719,7 @@ class _ListeningDurationChart extends StatelessWidget {
                         if (StatisticsControllerChartExtension
                                 .selectedWeekOffset
                                 .value <
-                            3) {
+                            StatisticsControllerChartExtension.maxWeekOffset) {
                           StatisticsControllerChartExtension
                               .selectedWeekOffset
                               .value++;
@@ -728,7 +728,7 @@ class _ListeningDurationChart extends StatelessWidget {
                         if (StatisticsControllerChartExtension
                                 .selectedDayOffset
                                 .value <
-                            27) {
+                            StatisticsControllerChartExtension.maxDayOffset) {
                           StatisticsControllerChartExtension
                               .selectedDayOffset
                               .value++;

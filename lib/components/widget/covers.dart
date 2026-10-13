@@ -139,6 +139,7 @@ class LoadLocalOrNetCover extends StatefulWidget {
   final double? width;
   final double? height;
   final bool useFrameBuilderCallback;
+  final bool evictOnDispose;
 
   const LoadLocalOrNetCover({
     super.key,
@@ -149,6 +150,7 @@ class LoadLocalOrNetCover extends StatefulWidget {
     double? width,
     double? height,
     this.useFrameBuilderCallback = true,
+    this.evictOnDispose = true,
   }) : assert(
          size == null || (width == null && height == null),
          '[参数冲突]：size 与 (width/height) 互斥，不可同时设置',
@@ -190,7 +192,9 @@ class _LoadLocalOrNetCoverState extends State<LoadLocalOrNetCover> {
   @override
   void dispose() {
     _debounceTimer?.cancel();
-    unawaited(_imageProvider?.evict());
+    if (widget.evictOnDispose) {
+      unawaited(_imageProvider?.evict());
+    }
     super.dispose();
   }
 
