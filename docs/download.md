@@ -5,10 +5,10 @@
 
 ::: info 下载地址
 
-| 渠道 | 说明            |
-|------|---------------|
-| **[GitHub Releases](https://github.com/Empty-57/ZeroBit-Player/releases)** | 推荐；版本与安装包最全   |
-| **[Gitee](https://gitee.com/empty-57/ZeroBit-Player/releases)** | 访问慢时用；版本更新较滞后 |
+| 渠道                                                                       | 说明                       |
+|----------------------------------------------------------------------------|----------------------------|
+| **[GitHub Releases](https://github.com/Empty-57/ZeroBit-Player/releases)** | 推荐；版本与安装包最全     |
+| **[Gitee](https://gitee.com/empty-57/ZeroBit-Player/releases)**            | 访问慢时用；版本更新较滞后 |
 
 进入最新版本后，选择：
 

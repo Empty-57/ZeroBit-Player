@@ -2,20 +2,20 @@
 
 ## 主要项目依赖
 
-| 项目                      | 项目链接 |
-|-------------------------|----------|
-| BASS 及音频格式插件            | [官方网站](https://www.un4seen.com/) |
-| lofty                   | [项目主页](https://github.com/Serial-ATA/lofty-rs) |
-| flutter_rust_bridge     | [项目主页](https://github.com/fzyzcjy/flutter_rust_bridge) |
-| window_manager          | [项目主页](https://pub.dev/packages/window_manager) |
-| hotkey_manager          | [项目主页](https://pub.dev/packages/hotkey_manager) |
-| dio                     | [项目主页](https://pub.dev/packages/dio) |
-| file_picker             | [项目主页](https://pub.dev/packages/file_picker) |
-| phosphoricons_flutter   | [项目主页](https://github.com/lucaszafret/phosphoricons_flutter) |
+| 项目                    | 项目链接                                                             |
+|-------------------------|----------------------------------------------------------------------|
+| BASS 及音频格式插件     | [官方网站](https://www.un4seen.com/)                                 |
+| lofty                   | [项目主页](https://github.com/Serial-ATA/lofty-rs)                   |
+| flutter_rust_bridge     | [项目主页](https://github.com/fzyzcjy/flutter_rust_bridge)           |
+| window_manager          | [项目主页](https://pub.dev/packages/window_manager)                  |
+| hotkey_manager          | [项目主页](https://pub.dev/packages/hotkey_manager)                  |
+| dio                     | [项目主页](https://pub.dev/packages/dio)                             |
+| file_picker             | [项目主页](https://pub.dev/packages/file_picker)                     |
+| phosphoricons_flutter   | [项目主页](https://github.com/lucaszafret/phosphoricons_flutter)     |
 | hive_ce                 | [项目主页](https://github.com/IO-Design-Team/hive_ce/tree/main/hive) |
-| flutter_single_instance | [项目主页](https://pub.dev/packages/flutter_single_instance) |
-| pinyin                  | [项目主页](https://pub.dev/packages/pinyin) |
-| fl_charset              | [项目主页](https://pub.dev/packages/fl_charset) |
+| flutter_single_instance | [项目主页](https://pub.dev/packages/flutter_single_instance)         |
+| pinyin                  | [项目主页](https://pub.dev/packages/pinyin)                          |
+| fl_charset              | [项目主页](https://pub.dev/packages/fl_charset)                      |
 
 ## 参考项目
 

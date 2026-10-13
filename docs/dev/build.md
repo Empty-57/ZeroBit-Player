@@ -2,13 +2,13 @@
 
 ## 环境
 
-| 工具 | 要求                                         |
-|------|--------------------------------------------|
-| Flutter | ≥ 3.44.2                                   |
-| Dart | 随 Flutter 安装，版本需 ≥ 3.12.2                  |
-| Rust | stable ≥1.92.0                                  |
-| Visual Studio | 安装“使用 C++ 的桌面开发”，包含 Windows SDK 与 CMake 工具 |
-| flutter_rust_bridge_codegen | 仅在修改 Rust 暴露 API 时需要，版本使用 2.11.1           |
+| 工具                        | 要求                                                      |
+|-----------------------------|-----------------------------------------------------------|
+| Flutter                     | ≥ 3.44.2                                                  |
+| Dart                        | 随 Flutter 安装，版本需 ≥ 3.12.2                          |
+| Rust                        | stable ≥1.92.0                                            |
+| Visual Studio               | 安装“使用 C++ 的桌面开发”，包含 Windows SDK 与 CMake 工具 |
+| flutter_rust_bridge_codegen | 仅在修改 Rust 暴露 API 时需要，版本使用 2.11.1            |
 
 先确认基础环境：
 
@@ -51,12 +51,12 @@ flutter run -d windows
 
 ## 日常开发
 
-| 改动 | 接下来做什么 |
-|------|--------------|
-| Dart / Flutter | 保存后热重载；涉及初始化时重新启动 |
-| Rust 函数内部实现 | 停止应用后重新运行，Cargokit 会重新编译 Rust |
-| `rust/src/api/` 的函数签名或类型 | 重新生成 FRB 绑定，再运行应用 |
-| `pubspec.yaml` | 执行 `flutter pub get` |
+| 改动                             | 接下来做什么                                 |
+|----------------------------------|----------------------------------------------|
+| Dart / Flutter                   | 保存后热重载；涉及初始化时重新启动           |
+| Rust 函数内部实现                | 停止应用后重新运行，Cargokit 会重新编译 Rust |
+| `rust/src/api/` 的函数签名或类型 | 重新生成 FRB 绑定，再运行应用                |
+| `pubspec.yaml`                   | 执行 `flutter pub get`                       |
 
 Debug 构建：
 
