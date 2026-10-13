@@ -1,4 +1,4 @@
-# 贡献指南
+# 贡献或赞助
 
 欢迎为 Zero Player 贡献代码、文档或反馈。
 
@@ -38,3 +38,9 @@
 ## 行为准则
 
 保持开放和尊重。讨论聚焦于代码和产品，不欢迎人身攻击。
+
+## 赞助
+
+如果你喜欢这个项目，可以通过以下方式赞助
+- [爱发电](https://ifdian.net/a/emp57)
+- [赞赏码](https://github.com/Empty-57/ZeroBit-Player/tree/master/screenshot/zansang.jpg)

@@ -125,7 +125,7 @@ export default defineConfig({
       {
         text: '社区',
         items: [
-          { text: '贡献指南', link: '/guide/contribute' },
+          { text: '贡献或赞助', link: '/guide/contribute' },
           { text: '致谢', link: '/guide/credits' },
           { text: '更新日志', link: '/guide/changelog' }
         ]
