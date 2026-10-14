@@ -1,21 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:zerobit_player/components/statistics/statistics_constant.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
 import 'package:zerobit_player/tools/statistics_models.dart';
-
-/// 格子边长
-const double _cellSize = 15.0;
-
-/// 格子之间留的表面间隙
-const double _cellGap = 3.0;
-
-/// 行列标签宽/高
-const double _weekLabelWidth = 30.0;
-const double _columnLabelHeight = 18.0;
-
-const BorderRadius _cellRadius = BorderRadius.all(Radius.circular(3));
-
-const List<String> _weekdayLabels = ['一', '二', '三', '四', '五', '六', '日'];
 
 /// 收听热力图的单色相色阶。
 class HeatmapPalette {
@@ -63,49 +50,56 @@ class ListeningHeatmap extends StatelessWidget {
     final palette = HeatmapPalette.of(colorScheme);
     final labelStyle = context.createTextStyle(
       size: AppFontSize.xs,
-      opacity: 0.6,
+      opacity: AppAlpha.textTertiary,
     );
 
     return RepaintBoundary(
       child: SingleChildScrollView(
-        scrollDirection: .horizontal,
+        scrollDirection: Axis.horizontal,
         child: Padding(
-          padding: const EdgeInsetsGeometry.only(right: 8),
+          padding: const EdgeInsets.only(right: AppSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 列标签：每月
               Row(
                 children: [
-                  const SizedBox(width: _weekLabelWidth),
+                  const SizedBox(width: StatisticsHeatmapSpec.weekLabelWidth),
                   for (int i = 0; i < data.weeks.length; i++)
-                    () {
-                      final m = data.weeks[i].first.date.month;
-                      return SizedBox(
-                        width: _cellSize + _cellGap * 2,
-                        height: _columnLabelHeight,
-                        child: Text(
-                          i == 0 || m != data.weeks[i - 1].first.date.month
-                              ? '$m月'
-                              : '',
-                          style: labelStyle,
-                          maxLines: 1,
-                          softWrap: false,
-                          overflow: TextOverflow.visible,
-                        ),
-                      );
-                    }(),
+                    SizedBox(
+                      width: StatisticsHeatmapSpec.cellExtent,
+                      height: StatisticsHeatmapSpec.columnLabelHeight,
+                      child: Text(
+                        // 跨月的那一列才标月份
+                        i == 0 ||
+                                data.weeks[i].first.date.month !=
+                                    data.weeks[i - 1].first.date.month
+                            ? '${data.weeks[i].first.date.month}月'
+                            : '',
+                        style: labelStyle,
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.visible,
+                      ),
+                    ),
                 ],
               ),
               // 7 行 × N 列栅格，按行排布便于左侧对齐星期标签
-              for (int row = 0; row < 7; row++)
+              for (
+                int row = 0;
+                row < StatisticsHeatmapSpec.weekdayLabels.length;
+                row++
+              )
                 Row(
                   children: [
                     SizedBox(
-                      width: _weekLabelWidth,
-                      height: _cellSize + _cellGap * 2,
+                      width: StatisticsHeatmapSpec.weekLabelWidth,
+                      height: StatisticsHeatmapSpec.cellExtent,
                       child: Center(
-                        child: Text(_weekdayLabels[row], style: labelStyle),
+                        child: Text(
+                          StatisticsHeatmapSpec.weekdayLabels[row],
+                          style: labelStyle,
+                        ),
                       ),
                     ),
                     for (final week in data.weeks)
@@ -131,8 +125,8 @@ class _HeatmapCellTile extends StatelessWidget {
     // 未来的格子只占位，不画色块，避免读成「那天没听」
     if (cell.isFuture) {
       return const SizedBox(
-        width: _cellSize + _cellGap * 2,
-        height: _cellSize + _cellGap * 2,
+        width: StatisticsHeatmapSpec.cellExtent,
+        height: StatisticsHeatmapSpec.cellExtent,
       );
     }
 
@@ -142,16 +136,16 @@ class _HeatmapCellTile extends StatelessWidget {
 
     return Tooltip(
       message: detail,
-      waitDuration: const Duration(milliseconds: 120),
-      // 外层 padding 既充当格子间隙，也把命中区域撑到 21px
+      waitDuration: AppDuration.tooltipWait,
+      // 外层 padding 既充当格子间隙，也把命中区域撑到 cellExtent
       child: Padding(
-        padding: const EdgeInsets.all(_cellGap),
+        padding: const EdgeInsets.all(StatisticsHeatmapSpec.cellGap),
         child: Container(
-          width: _cellSize,
-          height: _cellSize,
+          width: StatisticsHeatmapSpec.cellSize,
+          height: StatisticsHeatmapSpec.cellSize,
           decoration: BoxDecoration(
             color: palette.colorOf(cell.level),
-            borderRadius: _cellRadius,
+            borderRadius: StatisticsHeatmapSpec.cellRadius,
           ),
         ),
       ),
@@ -169,27 +163,33 @@ class HeatmapLegend extends StatelessWidget {
     final palette = HeatmapPalette.of(colorScheme);
     final labelStyle = context.createTextStyle(
       size: AppFontSize.xs,
-      opacity: 0.6,
+      opacity: AppAlpha.textTertiary,
     );
 
     return Row(
       mainAxisSize: MainAxisSize.min,
+      spacing: AppSpacing.sm,
       children: [
         Text('少', style: labelStyle),
-        const SizedBox(width: 6),
-        for (int level = 0; level <= 4; level++)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 1.5),
-            child: Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: palette.colorOf(level),
-                borderRadius: const BorderRadius.all(Radius.circular(2)),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: StatisticsHeatmapSpec.legendGap,
+          children: [
+            for (
+              int level = 0;
+              level <= StatisticsHeatmapSpec.maxLevel;
+              level++
+            )
+              Container(
+                width: StatisticsHeatmapSpec.legendBoxSize,
+                height: StatisticsHeatmapSpec.legendBoxSize,
+                decoration: BoxDecoration(
+                  color: palette.colorOf(level),
+                  borderRadius: AppRadius.xsAll,
+                ),
               ),
-            ),
-          ),
-        const SizedBox(width: 6),
+          ],
+        ),
         Text('多', style: labelStyle),
       ],
     );

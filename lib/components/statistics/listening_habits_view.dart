@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/statistics/listening_heatmap.dart';
+import 'package:zerobit_player/components/statistics/stat_surface.dart';
+import 'package:zerobit_player/components/statistics/statistics_constant.dart';
+import 'package:zerobit_player/components/widget/app_card.dart';
 import 'package:zerobit_player/components/widget/covers.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/statistics_ctrl.dart';
@@ -10,11 +13,6 @@ import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
-
-const double _cardRadius = 10.0;
-const BorderRadius _cardBorderRadius = BorderRadius.all(
-  Radius.circular(_cardRadius),
-);
 
 /// 收听习惯页
 class ListeningHabitsView extends StatelessWidget {
@@ -25,10 +23,10 @@ class ListeningHabitsView extends StatelessWidget {
     final controller = StatisticsController.instance;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(bottom: 48),
+      padding: const EdgeInsets.only(bottom: StatisticsLayout.listBottomInset),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 16,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: AppSpacing.xl,
         children: [
           SignalBuilder(
             builder: (_) => _MonthlyHighlightRow(
@@ -41,7 +39,6 @@ class ListeningHabitsView extends StatelessWidget {
           SignalBuilder(
             builder: (_) => _HabitMetricsRow(habits: controller.habits.value),
           ),
-          const SizedBox(height: 64),
         ],
       ),
     );
@@ -60,20 +57,22 @@ class _MonthlyHighlightRow extends StatelessWidget {
     final artist = highlight.topArtist;
 
     if (song == null && artist == null) {
-      return const _EmptyHint(text: '本月还没有收听记录');
+      return const AppCard(
+        child: StatEmptyState(
+          text: '本月还没有收听记录',
+          icon: PhosphorIconsLight.calendarBlank,
+          dense: true,
+        ),
+      );
     }
 
-    // 外层是可滚动区，垂直方向无界，stretch 无从确定高度；
-    // 用 IntrinsicHeight 让并列的卡片按最高者对齐（只有两张，开销可忽略）
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 12,
-        children: [
-          if (song != null) Expanded(child: _TopSongCard(song: song)),
-          if (artist != null) Expanded(child: _TopArtistCard(artist: artist)),
-        ],
-      ),
+    return Row(
+      crossAxisAlignment: .center,
+      spacing: AppSpacing.lg,
+      children: [
+        if (song != null) Expanded(child: _TopSongCard(song: song)),
+        if (artist != null) Expanded(child: _TopArtistCard(artist: artist)),
+      ],
     );
   }
 }
@@ -85,7 +84,6 @@ class _TopSongCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final metadata = song.metadata;
 
     return _HighlightShell(
@@ -95,13 +93,13 @@ class _TopSongCard extends StatelessWidget {
           ? null
           : () => AudioController.instance.audioPlay(metadata: metadata),
       leading: metadata == null
-          ? _FallbackSquare(
-              icon: PhosphorIconsLight.musicNote,
-              colorScheme: colorScheme,
-            )
+          ? const _FallbackSquare(icon: PhosphorIconsLight.musicNote)
           : ClipRRect(
-              borderRadius: const BorderRadius.all(Radius.circular(8)),
-              child: LoadLocalOrNetCover(music: metadata, size: 56),
+              borderRadius: AppRadius.smAll,
+              child: LoadLocalOrNetCover(
+                music: metadata,
+                size: AppSize.coverMd,
+              ),
             ),
       title: song.title,
       subtitle: song.artist,
@@ -122,7 +120,6 @@ class _TopArtistCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final name = artist.artist;
-    // 按字素簇取首字，避免把 emoji 或组合字符切坏
     final initial = name.isEmpty ? '?' : name.characters.first.toUpperCase();
 
     return _HighlightShell(
@@ -139,12 +136,14 @@ class _TopArtistCard extends StatelessWidget {
               },
             ),
       leading: Container(
-        width: 56,
-        height: 56,
+        width: AppSize.coverMd,
+        height: AppSize.coverMd,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: colorScheme.primaryContainer.withValues(alpha: 0.7),
-          borderRadius: const BorderRadius.all(Radius.circular(8)),
+          color: colorScheme.primaryContainer.withValues(
+            alpha: AppAlpha.surfaceStrong,
+          ),
+          borderRadius: AppRadius.smAll,
         ),
         child: Text(
           initial,
@@ -187,80 +186,51 @@ class _HighlightShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Material(
-      color: colorScheme.surfaceContainer.withValues(alpha: 0.6),
-      borderRadius: _cardBorderRadius,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: _cardBorderRadius,
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: _cardBorderRadius,
-            border: Border.all(
-              color: colorScheme.primary.withValues(alpha: 0.35),
-              width: 1,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 10,
+    return AppCard(
+      emphasized: true,
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: AppSpacing.lg,
+        children: [
+          StatPill(text: badge, icon: badgeIcon),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: AppSpacing.lg,
             children: [
-              Row(
-                spacing: 6,
-                children: [
-                  Icon(badgeIcon, size: 13, color: colorScheme.primary),
-                  Text(
-                    badge,
-                    style: context.createTextStyle(
-                      size: AppFontSize.xs,
-                      color: colorScheme.primary,
-                      weight: FontWeight.w600,
+              leading,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: AppSpacing.xs,
+                  children: [
+                    Text(
+                      title,
+                      style: context.createTextStyle(
+                        size: AppFontSize.lg,
+                        weight: FontWeight.w700,
+                      ),
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
-              ),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                spacing: 12,
-                children: [
-                  leading,
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: 4,
-                      children: [
-                        Text(
-                          title,
-                          style: context.createTextStyle(
-                            size: AppFontSize.lg,
-                            weight: FontWeight.w700,
-                          ),
-                          maxLines: 1,
-                          softWrap: false,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          subtitle,
-                          style: context.createTextStyle(
-                            size: AppFontSize.sm,
-                            opacity: 0.7,
-                          ),
-                          maxLines: 1,
-                          softWrap: false,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                    Text(
+                      subtitle,
+                      style: context.createTextStyle(
+                        size: AppFontSize.sm,
+                        opacity: AppAlpha.textSecondary,
+                      ),
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  trailing,
-                ],
+                  ],
+                ),
               ),
+              trailing,
             ],
           ),
-        ),
+        ],
       ),
     );
   }
@@ -278,9 +248,8 @@ class _CountBadge extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
-      spacing: 2,
+      spacing: AppSpacing.xxs,
       children: [
-        // 数值用比例字形，不加等宽：等宽会让这种大号数字看起来松散
         Text(
           '$count',
           style: context.createTextStyle(
@@ -291,7 +260,10 @@ class _CountBadge extends StatelessWidget {
         ),
         Text(
           '次 · $detail',
-          style: context.createTextStyle(size: AppFontSize.xs, opacity: 0.6),
+          style: context.createTextStyle(
+            size: AppFontSize.xs,
+            opacity: AppAlpha.textTertiary,
+          ),
           maxLines: 1,
           softWrap: false,
         ),
@@ -302,21 +274,28 @@ class _CountBadge extends StatelessWidget {
 
 class _FallbackSquare extends StatelessWidget {
   final IconData icon;
-  final ColorScheme colorScheme;
 
-  const _FallbackSquare({required this.icon, required this.colorScheme});
+  const _FallbackSquare({required this.icon});
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
-      width: 56,
-      height: 56,
+      width: AppSize.coverMd,
+      height: AppSize.coverMd,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
-        borderRadius: const BorderRadius.all(Radius.circular(8)),
+        color: colorScheme.surfaceContainerHighest.withValues(
+          alpha: AppAlpha.surface,
+        ),
+        borderRadius: AppRadius.smAll,
       ),
-      child: Icon(icon, size: 24, color: colorScheme.onSurfaceVariant),
+      child: Icon(
+        icon,
+        size: AppIconSize.lg,
+        color: colorScheme.onSurfaceVariant,
+      ),
     );
   }
 }
@@ -329,43 +308,22 @@ class _HeatmapCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer.withValues(alpha: 0.6),
-        borderRadius: _cardBorderRadius,
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 12,
+        spacing: AppSpacing.lg,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                '近期活跃度',
-                style: context.createTextStyle(
-                  size: AppFontSize.subtitle,
-                  weight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                '共 ${data.totalCount} 次',
-                style: context.createTextStyle(
-                  size: AppFontSize.sm,
-                  opacity: 0.65,
-                ),
-              ),
-              const Spacer(),
-              const HeatmapLegend(),
-            ],
+          StatSectionHeader(
+            title: '近期活跃度',
+            caption: '共 ${data.totalCount} 次',
+            trailing: const HeatmapLegend(),
           ),
           if (data.totalCount == 0)
-            const _EmptyHint(text: '最近还没有收听记录')
+            const StatEmptyState(
+              text: '最近还没有收听记录',
+              icon: PhosphorIconsLight.calendarBlank,
+              dense: true,
+            )
           else
             ListeningHeatmap(data: data),
         ],
@@ -426,10 +384,10 @@ class _HabitMetricsRow extends StatelessWidget {
         ];
 
     return SizedBox(
-      height: 108,
+      height: StatisticsLayout.metricTileHeight,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 12,
+        spacing: AppSpacing.lg,
         children: [
           for (final m in metrics)
             Expanded(
@@ -464,25 +422,24 @@ class _MetricTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer.withValues(alpha: 0.6),
-        borderRadius: _cardBorderRadius,
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 8,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
-            spacing: 6,
+            spacing: AppSpacing.sm,
             children: [
-              Icon(icon, size: 14, color: colorScheme.onSurfaceVariant),
+              Icon(
+                icon,
+                size: AppIconSize.xs,
+                color: colorScheme.onSurfaceVariant,
+              ),
               Text(
                 label,
                 style: context.createTextStyle(
                   size: AppFontSize.sm,
-                  opacity: 0.75,
+                  opacity: AppAlpha.textSecondary,
                 ),
               ),
             ],
@@ -492,6 +449,7 @@ class _MetricTile extends StatelessWidget {
             style: context.createTextStyle(
               size: AppFontSize.xl,
               weight: FontWeight.w700,
+              tabularFigures: true,
             ),
             maxLines: 1,
             softWrap: false,
@@ -499,31 +457,15 @@ class _MetricTile extends StatelessWidget {
           ),
           Text(
             hint,
-            style: context.createTextStyle(size: AppFontSize.xs, opacity: 0.55),
+            style: context.createTextStyle(
+              size: AppFontSize.xs,
+              opacity: AppAlpha.textTertiary,
+            ),
             maxLines: 1,
             softWrap: false,
             overflow: TextOverflow.ellipsis,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _EmptyHint extends StatelessWidget {
-  final String text;
-
-  const _EmptyHint({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 28),
-      alignment: Alignment.center,
-      child: Text(
-        text,
-        style: context.createTextStyle(size: AppFontSize.md, opacity: 0.5),
       ),
     );
   }

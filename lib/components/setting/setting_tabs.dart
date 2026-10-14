@@ -697,7 +697,6 @@ class HotkeysSetTab extends StatelessWidget {
   }
 }
 
-
 Future<void> _launchUrl(String url) async {
   try {
     await launchUrl(Uri.parse(url));

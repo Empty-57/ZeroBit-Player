@@ -118,9 +118,7 @@ class MusicCacheController with DetailsPageControllerBase {
 
   Future<void> remove({required MusicCache metadata}) async {
     items.removeWhere((v) => v.path == metadata.path);
-    await _musicCacheBox.del(
-      key: metadata.path.hashHex,
-    );
+    await _musicCacheBox.del(key: metadata.path.hashHex);
     itemsMap.remove(metadata.path);
     _groupItems(); // 数据删除后重新分组
   }
@@ -183,10 +181,7 @@ class MusicCacheController with DetailsPageControllerBase {
       path: oldCache.path,
     );
 
-    _musicCacheBox.put(
-      data: newCache,
-      key: path.hashHex,
-    );
+    _musicCacheBox.put(data: newCache, key: path.hashHex);
     items[index] = newCache;
     itemsMap[path] = newCache;
 

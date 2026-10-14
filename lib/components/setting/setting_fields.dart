@@ -813,7 +813,6 @@ class _HotkeyRecorderDialog extends StatelessWidget {
   }
 }
 
-
 /// 背景图片字段
 class SettingBackgroundField extends SignalWidget {
   const SettingBackgroundField({super.key});

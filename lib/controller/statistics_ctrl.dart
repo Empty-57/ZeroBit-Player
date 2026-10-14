@@ -15,6 +15,7 @@ import 'package:zerobit_player/hive_manager/models/statistics_cache_model.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/statistics_models.dart';
 
+import '../components/statistics/statistics_constant.dart';
 import '../logger.dart';
 
 export 'package:zerobit_player/tools/statistics_models.dart';
@@ -48,26 +49,45 @@ class ChartData {
 String _formatMonthDay(DateTime d) =>
     '${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')}';
 
-extension StatisticsControllerChartExtension on StatisticsController {
-  // 0: 每周视图, 1: 每日视图
-  static final chartViewMode = signal<int>(0);
+/// 收听时段图表的视图状态。
+abstract final class StatisticsChartState {
+  /// 当前维度，取值见 [ChartViewMode]
+  static final viewMode = signal<int>(ChartViewMode.weekly);
 
-  // 0 为本周，最多到 3
-  static final selectedWeekOffset = signal<int>(0);
-
+  /// 0 为本周，最多回看 [maxWeekOffset] 周
+  static final weekOffset = signal<int>(0);
   static const int maxWeekOffset = 3;
 
-  // 0 为今天，最多到 27
-  static final selectedDayOffset = signal<int>(0);
-
+  /// 0 为今天，最多回看 [maxDayOffset] 天
+  static final dayOffset = signal<int>(0);
   static const int maxDayOffset = 27;
 
-  // 当前鼠标悬浮柱子索引（-1为无悬浮）
-  static final hoveredBarIndex = signal<int>(-1);
+  static bool get isWeekly => viewMode.value == ChartViewMode.weekly;
 
+  /// 当前维度对应的偏移量 signal
+  static Signal<int> get offsetOf => isWeekly ? weekOffset : dayOffset;
+
+  /// 当前维度允许回看的最大偏移
+  static int get maxOffset => isWeekly ? maxWeekOffset : maxDayOffset;
+
+  static void switchViewMode(int mode) {
+    if (viewMode.value == mode) return;
+    viewMode.value = mode;
+  }
+
+  /// 翻页。[delta] 为正往更早的时段翻，为负往更近的时段翻
+  static void shiftPeriod(int delta) {
+    final offset = offsetOf;
+    final next = offset.value + delta;
+    if (next < 0 || next > maxOffset) return;
+    offset.value = next;
+  }
+}
+
+extension StatisticsControllerChartExtension on StatisticsController {
   /// 获取当前选择的每周视图数据
   ChartData getWeeklyChartData() {
-    final offset = selectedWeekOffset.value;
+    final offset = StatisticsChartState.weekOffset.value;
     final targetMonday = StatKeys.mondayOf(
       DateTime.now(),
     ).subtract(Duration(days: offset * 7));
@@ -111,7 +131,7 @@ extension StatisticsControllerChartExtension on StatisticsController {
 
   /// 获取当前选择的每日视图数据
   ChartData getDailyChartData() {
-    final offset = selectedDayOffset.value;
+    final offset = StatisticsChartState.dayOffset.value;
     final targetDay = StatKeys.atMidnight(
       DateTime.now(),
     ).subtract(Duration(days: offset));

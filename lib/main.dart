@@ -295,7 +295,9 @@ void main() async {
       try {
         final keysToDelete = musicBox.values
             .map((v) => v.path)
-            .where((k) => !supportedExtension.contains(p.extension(k).toLowerCase()))
+            .where(
+              (k) => !supportedExtension.contains(p.extension(k).toLowerCase()),
+            )
             .map((v) => v.hashHex)
             .toList();
         await musicBox.deleteAll(keysToDelete); //清除不是音频格式的路径，防止路径被污染
