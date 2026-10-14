@@ -15,6 +15,7 @@
   <img src="https://img.shields.io/github/downloads/Empty-57/ZeroBit-Player/total" alt="Downloads">
   <img src="https://img.shields.io/badge/License-GPL--3.0-green" alt="License">
 <a href="https://wakatime.com/badge/user/7dfa2142-9f15-461d-ba44-2a9e14966a3b/project/e540bf5c-e190-4823-b0bd-02e367cbfa2b"><img src="https://wakatime.com/badge/user/7dfa2142-9f15-461d-ba44-2a9e14966a3b/project/e540bf5c-e190-4823-b0bd-02e367cbfa2b.svg" alt="wakatime"></a>
+  <a href="https://linux.do"><img src="https://img.shields.io/badge/LINUX_DO-社区-2244aa" alt="LINUX DO"></a>
 </div>
 
 <p align="center">Logo来源：阿里巴巴矢量图库</p>
