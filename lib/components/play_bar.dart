@@ -93,8 +93,6 @@ class PlayBar extends StatelessWidget {
     );
     final width = MediaQuery.sizeOf(context).width;
 
-    final c = AudioController.instance;
-
     return SignalBuilder(
       builder: (context) {
         final screenWidth = width;
