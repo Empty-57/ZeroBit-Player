@@ -193,11 +193,16 @@ class DesktopLyricsSever {
         dir,
         r'desktop_lyrics\zerobit_player_desktop_lyrics.exe',
       );
-      if (!File(fullPath).existsSync()) {
+      if (!(await File(fullPath).exists())) {
         LoggerUni.w('未找到桌面歌词可执行程序: $fullPath');
         return;
       }
-      await Process.start(fullPath, []);
+      final process = await Process.start(
+        fullPath,
+        [],
+        mode: .detached,
+      ); // 脱离stdin，stdout
+      LoggerUni.d('桌面歌词进程已启动，PID: ${process.pid}');
     } catch (e, stackTrace) {
       LoggerUni.e('拉起桌面歌词进程失败', e, stackTrace);
     }

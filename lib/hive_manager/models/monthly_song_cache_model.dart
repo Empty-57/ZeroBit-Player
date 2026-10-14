@@ -1,6 +1,8 @@
+import 'package:zerobit_player/tools/func/func_extension.dart';
+
 /// 按「月 + 歌曲」聚合的收听统计。
 ///
-/// key 为 `$monthKey|$path`，所以按月查询只需过滤 key 前缀，
+/// key 为 `$monthKey|$path.hashHex`，所以按月查询只需过滤 key 前缀，
 /// 不必把全部历史载入内存。用于统计本月最常听的歌与艺术家。
 class MonthlySongCache {
   /// 月份键，格式 `yyyy-MM`（本地时区）
@@ -32,7 +34,7 @@ class MonthlySongCache {
 
   /// 拼出存储用的复合 key
   static String buildKey({required String monthKey, required String path}) =>
-      '$monthKey|$path';
+      '$monthKey|${path.hashHex}';
 
   String get storageKey => buildKey(monthKey: monthKey, path: path);
 

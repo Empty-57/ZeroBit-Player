@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 
 extension ThrottleExtension on void Function() {
   void Function() throttle({int ms = 500}) {
@@ -50,4 +53,9 @@ extension DebounceExtensionArgs<T> on void Function(T) {
       });
     };
   }
+}
+
+extension HashString on String {
+  /// 获取此字符串的 Hash 值
+  String get hashHex => md5.convert(utf8.encode(this)).toString();
 }

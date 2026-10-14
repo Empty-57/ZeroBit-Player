@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'dart:io';
 
-import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
@@ -11,10 +9,11 @@ import 'package:zerobit_player/hive_manager/hive_box.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
+import 'package:zerobit_player/tools/func/func_extension.dart';
 
 import '../../controller/user_playlist_ctrl.dart';
 
-const Set<String> supportedExts = {
+const Set<String> supportedExtension = {
   '.aac',
   '.ape',
   '.aiff',
@@ -55,7 +54,7 @@ Future<Set<String>> scanAudioPaths(
       followLinks: false,
     )) {
       if (entity is File &&
-          supportedExts.contains(p.extension(entity.path).toLowerCase())) {
+          supportedExtension.contains(p.extension(entity.path).toLowerCase())) {
         paths.add(entity.path);
       }
     }
@@ -74,9 +73,8 @@ Future<Map<String, MusicCache>> _fetchMetadataBatch(
     try {
       final meta = await getMetadata(path: path);
       ctrl.currentScanAudio.value = meta.title;
-      final hashPath = md5.convert(utf8.encode(path)).toString();
       return MapEntry(
-        hashPath,
+        path.hashHex,
         MusicCache(
           artist: meta.artist,
           album: meta.album,
@@ -116,13 +114,13 @@ Future<void> syncCache() async {
       .getAll()
       .map((v) => v.path)
       .whereType<String>()
-      .where((k) => supportedExts.contains(p.extension(k).toLowerCase()))
+      .where((k) => supportedExtension.contains(p.extension(k).toLowerCase()))
       .toSet(); //清除不是音频格式的路径，防止路径被污染
 
   final newPaths = scannedPaths.difference(existingKeys);
   final removedPaths = existingKeys
       .difference(scannedPaths)
-      .map((v) => md5.convert(utf8.encode(v)).toString())
+      .map((v) => v.hashHex)
       .toList();
 
   if (removedPaths.isNotEmpty) {

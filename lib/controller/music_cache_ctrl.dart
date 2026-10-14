@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:convert';
 
-import 'package:crypto/crypto.dart';
 import 'package:pinyin/pinyin.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/field/app_routes.dart';
@@ -121,7 +119,7 @@ class MusicCacheController with DetailsPageControllerBase {
   Future<void> remove({required MusicCache metadata}) async {
     items.removeWhere((v) => v.path == metadata.path);
     await _musicCacheBox.del(
-      key: md5.convert(utf8.encode(metadata.path)).toString(),
+      key: metadata.path.hashHex,
     );
     itemsMap.remove(metadata.path);
     _groupItems(); // 数据删除后重新分组
@@ -187,7 +185,7 @@ class MusicCacheController with DetailsPageControllerBase {
 
     _musicCacheBox.put(
       data: newCache,
-      key: md5.convert(utf8.encode(path)).toString(),
+      key: path.hashHex,
     );
     items[index] = newCache;
     itemsMap[path] = newCache;

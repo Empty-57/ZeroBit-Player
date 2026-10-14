@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -297,8 +295,8 @@ void main() async {
       try {
         final keysToDelete = musicBox.values
             .map((v) => v.path)
-            .where((k) => !supportedExts.contains(p.extension(k).toLowerCase()))
-            .map((v) => md5.convert(utf8.encode(v)).toString())
+            .where((k) => !supportedExtension.contains(p.extension(k).toLowerCase()))
+            .map((v) => v.hashHex)
             .toList();
         await musicBox.deleteAll(keysToDelete); //清除不是音频格式的路径，防止路径被污染
         await syncCache();
