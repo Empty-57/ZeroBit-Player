@@ -95,7 +95,6 @@ class AudioController {
   static const bassDataFFT512 = 256;
 
   final _unplayedIndex = <int>[];
-  final navigationIsExtend = signal(true);
 
   static final _defaultPalette = <Color>[
     const Color(0xFF035B2D),
@@ -403,7 +402,6 @@ class AudioController {
     currentSmallCover.dispose();
     currentSpeed.dispose();
     currentLyrics.dispose();
-    navigationIsExtend.dispose();
     coverPalette.dispose();
   }
 

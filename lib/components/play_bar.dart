@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals/signals_flutter.dart';
+import 'package:zerobit_player/components/side_bar.dart';
+import 'package:zerobit_player/components/side_bar_constant.dart';
 import 'package:zerobit_player/components/widget/covers.dart';
 import 'package:zerobit_player/components/widget/diamond_slider_thumb.dart';
 import 'package:zerobit_player/components/widget/rect_value_indicator.dart';
@@ -17,9 +19,6 @@ const double _barHeight = 64;
 const double _barWidthHalf = 350;
 
 const double _bottom = 4;
-const double _navigationWidth = 260;
-const double _navigationWidthSmall = 84;
-const double _resViewThresholds = 1100;
 
 const double _radius = 6;
 
@@ -101,11 +100,11 @@ class PlayBar extends StatelessWidget {
         final screenWidth = width;
         final rightOffset =
             (screenWidth -
-                    (screenWidth > _resViewThresholds
-                        ? c.navigationIsExtend.value
-                              ? _navigationWidth
-                              : _navigationWidthSmall
-                        : _navigationWidthSmall)) /
+                    (screenWidth > AppBreakpoint.wide
+                        ? SidebarNavState.navigationIsExtend.value
+                              ? SideBarSpec.expandedWidth
+                              : SideBarSpec.collapsedWidth
+                        : SideBarSpec.collapsedWidth)) /
                 2 -
             _barWidthHalf;
         return AnimatedPositioned(
