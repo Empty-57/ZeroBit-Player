@@ -60,7 +60,7 @@ class _SettingPageState extends State<SettingPage> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: SettingLayout.pagePadding,
+      padding: AppSpacing.pagePadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: AppSpacing.xl,

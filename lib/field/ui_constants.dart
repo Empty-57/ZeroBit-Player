@@ -44,6 +44,14 @@ abstract final class AppSpacing {
 
   /// 32 — 页面顶部留白
   static const double huge = 32.0;
+
+  /// 页面内边距
+  static const EdgeInsets pagePadding = EdgeInsets.fromLTRB(
+    AppSpacing.xl,
+    AppSpacing.huge,
+    AppSpacing.xl,
+    AppSpacing.xl,
+  );
 }
 
 abstract final class AppRadius {

@@ -29,14 +29,6 @@ abstract final class StatisticsLayout {
   /// 榜单行右侧数值列宽度
   static const double rankTrailingWidth = 150.0;
 
-  /// 页面内容内边距
-  static const EdgeInsets pagePadding = EdgeInsets.fromLTRB(
-    AppSpacing.xl,
-    AppSpacing.huge,
-    AppSpacing.xl,
-    AppSpacing.xl,
-  );
-
   /// 习惯指标卡高度
   static const double metricTileHeight = 112.0;
 

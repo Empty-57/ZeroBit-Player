@@ -47,7 +47,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: StatisticsLayout.pagePadding,
+      padding: AppSpacing.pagePadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: AppSpacing.xl,

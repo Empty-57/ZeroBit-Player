@@ -3,8 +3,8 @@ import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/statistics/stat_surface.dart';
 import 'package:zerobit_player/components/statistics/statistics_constant.dart';
+import 'package:zerobit_player/components/widget/app_empty_state.dart';
 import 'package:zerobit_player/components/widget/app_tappable.dart';
 import 'package:zerobit_player/components/widget/covers.dart';
 import 'package:zerobit_player/components/widget/segmented_tabs.dart';
@@ -101,7 +101,7 @@ class _MusicRankList extends SignalWidget {
     final list = controller.playedTop50;
 
     if (list.isEmpty) {
-      return const StatEmptyState(
+      return const AppEmptyState(
         text: '还没有播放记录，听几首歌再回来看看',
         icon: PhosphorIconsLight.musicNotes,
       );
@@ -161,7 +161,7 @@ class _ArtistRankList extends SignalWidget {
     final list = controller.artistTop30;
 
     if (list.isEmpty) {
-      return const StatEmptyState(
+      return const AppEmptyState(
         text: '还没有足够的数据生成艺术家榜',
         icon: PhosphorIconsLight.user,
       );

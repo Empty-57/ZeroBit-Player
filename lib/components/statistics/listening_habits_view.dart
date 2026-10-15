@@ -6,6 +6,7 @@ import 'package:zerobit_player/components/statistics/listening_heatmap.dart';
 import 'package:zerobit_player/components/statistics/stat_surface.dart';
 import 'package:zerobit_player/components/statistics/statistics_constant.dart';
 import 'package:zerobit_player/components/widget/app_card.dart';
+import 'package:zerobit_player/components/widget/app_empty_state.dart';
 import 'package:zerobit_player/components/widget/covers.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/statistics_ctrl.dart';
@@ -58,7 +59,7 @@ class _MonthlyHighlightRow extends StatelessWidget {
 
     if (song == null && artist == null) {
       return const AppCard(
-        child: StatEmptyState(
+        child: AppEmptyState(
           text: '本月还没有收听记录',
           icon: PhosphorIconsLight.calendarBlank,
           dense: true,
@@ -319,7 +320,7 @@ class _HeatmapCard extends StatelessWidget {
             trailing: const HeatmapLegend(),
           ),
           if (data.totalCount == 0)
-            const StatEmptyState(
+            const AppEmptyState(
               text: '最近还没有收听记录',
               icon: PhosphorIconsLight.calendarBlank,
               dense: true,

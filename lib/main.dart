@@ -54,6 +54,7 @@ import 'package:zerobit_player/tray.dart';
 import 'package:zerobit_player/windows_taskbar_thumbnail.dart';
 
 import 'components/side_bar.dart';
+import 'components/side_bar_constant.dart';
 import 'components/widget/get_snack_bar.dart';
 import 'controller/desktop_lyrics_setting_ctrl.dart';
 import 'controller/lyric_ctrl.dart';
@@ -844,7 +845,7 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   const Padding(
-                    padding: EdgeInsetsGeometry.all(8),
+                    padding: EdgeInsets.all(SideBarSpec.outerPadding),
                     child: SideBar(
                       btnList: <Widget>[
                         SideBarBtn(

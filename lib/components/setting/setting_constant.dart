@@ -5,14 +5,6 @@ import 'package:zerobit_player/field/ui_constants.dart';
 
 /// 设置页布局常量
 abstract final class SettingLayout {
-  /// 页面内容内边距
-  static const EdgeInsets pagePadding = EdgeInsets.fromLTRB(
-    AppSpacing.xl,
-    AppSpacing.huge,
-    AppSpacing.xl,
-    AppSpacing.xl,
-  );
-
   /// 顶部 Tab 单段宽度
   static const double tabSegmentWidth = 104.0;
 
@@ -66,12 +58,6 @@ abstract final class SettingControlSpec {
   /// 颜色色板
   static const double swatchSize = 22.0;
 
-  /// 分段控件
-  static const double segmentHeight = 32.0;
-  static const EdgeInsets segmentPadding = EdgeInsets.symmetric(
-    horizontal: AppSpacing.lg,
-  );
-
   /// 背景图片路径显示宽度
   static const double pathTextWidth = 190.0;
 
@@ -81,19 +67,9 @@ abstract final class SettingControlSpec {
 
 /// 设置页对话框尺寸常量
 abstract final class SettingDialogSpec {
-  /// 常规对话框尺寸比例
-  static const double widthFactor = 0.5;
-  static const double heightFactor = 0.5;
-
   /// 快捷键录制对话框尺寸比例
   static const double hotkeyWidthFactor = 0.3;
   static const double hotkeyHeightFactor = 0.25;
-
-  /// 对话框内列表行高
-  static const double listRowHeight = 38.0;
-
-  /// 搜索框高度
-  static const double searchFieldHeight = 38.0;
 
   /// 取色器画布
   static const double colorPickerWidth = 400.0;

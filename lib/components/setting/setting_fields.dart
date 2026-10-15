@@ -11,6 +11,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/setting/setting_constant.dart';
 import 'package:zerobit_player/components/setting/setting_controls.dart';
+import 'package:zerobit_player/components/widget/app_dialog.dart';
 import 'package:zerobit_player/components/widget/app_tappable.dart';
 import 'package:zerobit_player/components/widget/get_snack_bar.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
@@ -29,54 +30,6 @@ Future<void> loadFontsList() async {
   if (fontsList.isNotEmpty) return;
   final list = await getFontsList();
   fontsList.value = list;
-}
-
-/// 统一的对话框外壳
-class SettingDialogShell extends StatelessWidget {
-  final String title;
-  final Widget content;
-
-  /// 底部操作区
-  final Widget? footer;
-
-  final double widthFactor;
-  final double heightFactor;
-
-  const SettingDialogShell({
-    super.key,
-    required this.title,
-    required this.content,
-    this.footer,
-    this.widthFactor = SettingDialogSpec.widthFactor,
-    this.heightFactor = SettingDialogSpec.heightFactor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
-
-    return AlertDialog(
-      title: Text(title),
-      titleTextStyle: context.createTextStyle(
-        size: AppFontSize.xl,
-        weight: FontWeight.w600,
-      ),
-      shape: const RoundedRectangleBorder(borderRadius: AppRadius.xsAll),
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      content: SizedBox(
-        width: size.width * widthFactor,
-        height: size.height * heightFactor,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: AppSpacing.lg,
-          children: [
-            Expanded(child: content),
-            ?footer,
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 /// 对话框底部操作按钮
@@ -162,7 +115,7 @@ class _FolderManagerDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final musicCacheController = MusicCacheController.instance;
 
-    return SettingDialogShell(
+    return AppDialog(
       title: '文件夹管理',
       content: SignalBuilder(
         builder: (context) {
@@ -181,10 +134,10 @@ class _FolderManagerDialog extends StatelessWidget {
 
           return ListView.builder(
             scrollCacheExtent: const ScrollCacheExtent.pixels(
-              SettingDialogSpec.listRowHeight * 4,
+              AppDialogSpec.listRowHeight * 4,
             ),
             itemCount: folders.length,
-            itemExtent: SettingDialogSpec.listRowHeight,
+            itemExtent: AppDialogSpec.listRowHeight,
             itemBuilder: (context, index) => _FolderRow(
               path: folders[index],
               onRemove: () => _settingController.folders.removeAt(index),
@@ -520,14 +473,14 @@ class _FontPickerDialogState extends State<_FontPickerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return SettingDialogShell(
+    return AppDialog(
       title: '选择字体',
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: AppSpacing.lg,
         children: [
           SizedBox(
-            height: SettingDialogSpec.searchFieldHeight,
+            height: AppDialogSpec.searchFieldHeight,
             child: TextField(
               controller: _searchController,
               style: context.createTextStyle(size: AppFontSize.sm),
@@ -578,10 +531,10 @@ class _FontPickerDialogState extends State<_FontPickerDialog> {
 
                 return ListView.builder(
                   scrollCacheExtent: const ScrollCacheExtent.pixels(
-                    SettingDialogSpec.listRowHeight * 4,
+                    AppDialogSpec.listRowHeight * 4,
                   ),
                   itemCount: list.length,
-                  itemExtent: SettingDialogSpec.listRowHeight,
+                  itemExtent: AppDialogSpec.listRowHeight,
                   addAutomaticKeepAlives: false,
                   addSemanticIndexes: false,
                   itemBuilder: (context, index) => _FontRow(
@@ -781,7 +734,7 @@ class _HotkeyRecorderDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SettingDialogShell(
+    return AppDialog(
       title: '录制快捷键',
       widthFactor: SettingDialogSpec.hotkeyWidthFactor,
       heightFactor: SettingDialogSpec.hotkeyHeightFactor,
