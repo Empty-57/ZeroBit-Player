@@ -1,275 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:zerobit_player/controller/audio_ctrl.dart';
-import 'package:zerobit_player/controller/music_cache_ctrl.dart';
+import 'package:zerobit_player/components/library_search_dialog.dart';
+import 'package:zerobit_player/components/widget/app_tappable.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
-import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/controller/window_ctrl.dart';
 import 'package:zerobit_player/theme_manager.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
 import 'package:zerobit_player/tools/paint_cache.dart';
 
-import 'widget/get_snack_bar.dart';
-
-const double _controllerBarHeight = 48;
-const double _itemHeight = 64;
-const _borderRadius = BorderRadius.all(Radius.circular(4));
+const double _barHeight = 48.0;
 const double _logoSize = 24.0;
-const int _coverSmallRenderSize = 150;
+const double _buttonSize = AppSize.iconButton;
+const double _blurSigma = 16.0;
 
-class _SearchDialog extends StatelessWidget {
-  final AudioController ctrl;
-  final MusicCacheController cacheCtrl;
-
-  const _SearchDialog({required this.ctrl, required this.cacheCtrl});
-
-  @override
-  Widget build(BuildContext context) {
-    return _ControllerButton(
-      icon: PhosphorIconsLight.magnifyingGlass,
-      fn: () {
-        showDialog<void>(
-          barrierDismissible: true,
-          context: context,
-          builder: (BuildContext context) {
-            return _SearchDialogContent(ctrl: ctrl, cacheCtrl: cacheCtrl);
-          },
-        );
-      },
-      tooltip: "搜索",
-    );
-  }
-}
-
-class _SearchDialogContent extends StatefulWidget {
-  final AudioController ctrl;
-  final MusicCacheController cacheCtrl;
-
-  const _SearchDialogContent({required this.ctrl, required this.cacheCtrl});
-
-  @override
-  State<_SearchDialogContent> createState() => _SearchDialogContentState();
-}
-
-class _SearchDialogContentState extends State<_SearchDialogContent> {
-  late final TextEditingController _searchCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _searchCtrl = TextEditingController();
-    widget.cacheCtrl.resetSearch();
-  }
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final UserPlayListController userPlayListController =
-        UserPlayListController.instance;
-    final titleStyle = context.createTextStyle(size: AppFontSize.md);
-    final subStyle = context.createTextStyle(
-      size: AppFontSize.sm,
-      opacity: 0.8,
-    );
-
-    final height = MediaQuery.sizeOf(context).height;
-    final width = MediaQuery.sizeOf(context).width;
-
-    return AlertDialog(
-      title: const Text("搜索"),
-      titleTextStyle: context.createTextStyle(
-        size: AppFontSize.xl,
-        weight: FontWeight.w600,
-      ),
-      shape: const RoundedRectangleBorder(borderRadius: _borderRadius),
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      actionsAlignment: MainAxisAlignment.end,
-      actions: <Widget>[
-        SizedBox(
-          width: width / 2,
-          height: height / 2,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 8,
-            children: [
-              TextField(
-                autofocus: true,
-                controller: _searchCtrl,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: '搜索',
-                ),
-                onChanged: widget.cacheCtrl.onInputChangedDebounce,
-              ),
-              Expanded(
-                flex: 1,
-                child: SignalBuilder(
-                  builder: (context) => ListView.builder(
-                    scrollCacheExtent: const ScrollCacheExtent.pixels(
-                      _itemHeight * 1,
-                    ),
-                    itemCount: widget.cacheCtrl.searchResult.value.length,
-                    itemExtent: _itemHeight,
-                    padding: const EdgeInsets.only(bottom: _itemHeight * 2),
-                    itemBuilder: (context, index) {
-                      final items = widget.cacheCtrl.searchResult.value[index];
-                      final menuController = MenuController();
-                      return TextButton(
-                        onPressed: () {
-                          widget.ctrl.searchInsert(metadata: items);
-                        },
-                        style: TextButton.styleFrom(
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: _borderRadius,
-                          ),
-                        ),
-                        child: SizedBox.expand(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      items.title,
-                                      style: titleStyle,
-                                      softWrap: true,
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                    ),
-                                    Text(
-                                      "${items.artist} - ${items.album}",
-                                      style: subStyle,
-                                      softWrap: true,
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              _ControllerButton(
-                                icon: PhosphorIconsLight.arrowBendDownRight,
-                                tooltip: '添加到下一首',
-                                fn: () {
-                                  widget.ctrl.insertNext(metadata: items);
-                                },
-                              ),
-                              MenuAnchor(
-                                menuChildren: userPlayListController.allUserKey
-                                    .map((v) {
-                                      return MenuItemButton(
-                                        onPressed: () {
-                                          userPlayListController.addToAudioList(
-                                            metadata: items,
-                                            userKey: v,
-                                          );
-                                        },
-                                        child: Center(
-                                          child: Text(v.split('_')[0]),
-                                        ),
-                                      );
-                                    })
-                                    .toList(),
-                                controller: menuController,
-                                consumeOutsideTap: true,
-                                style: MenuStyle(
-                                  maximumSize: WidgetStatePropertyAll(
-                                    Size.fromHeight(height / 2),
-                                  ),
-                                ),
-                                child: _ControllerButton(
-                                  icon: PhosphorIconsLight.plus,
-                                  tooltip: '添加到歌单',
-                                  fn: () {
-                                    if (userPlayListController
-                                        .allUserKey
-                                        .isEmpty) {
-                                      showSnackBar(
-                                        title: "WARNING",
-                                        msg: "还未创建任何歌单",
-                                        duration: const Duration(
-                                          milliseconds: 1500,
-                                        ),
-                                      );
-                                      return;
-                                    }
-
-                                    if (menuController.isOpen) {
-                                      menuController.close();
-                                    } else {
-                                      menuController.open();
-                                    }
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ControllerButton extends StatelessWidget {
-  final IconData icon;
-  final Color? hoverColor;
-  final VoidCallback fn;
-  final String? tooltip;
-  final bool onlyDarkMode;
-
-  const _ControllerButton({
-    required this.icon,
-    this.hoverColor,
-    required this.fn,
-    this.tooltip,
-    this.onlyDarkMode = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      icon: Icon(icon),
-      color: onlyDarkMode
-          ? ThemeService.instance.darkTheme.colorScheme.onSurface
-          : Theme.of(context).colorScheme.onSurface,
-      tooltip: tooltip,
-      iconSize: context.getIconSize(AppIconSize.lg),
-      hoverColor: hoverColor,
-      style: ButtonStyle(
-        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        ),
-      ),
-      onPressed: () {
-        fn();
-      },
-    );
-  }
-}
+/// 标题栏表面不透明度
+const double _surfaceAlpha = 0.4;
 
 class WindowControllerBar extends StatelessWidget {
-  final bool isNestedRoute;
   final bool showLogo;
   final bool useCaretDown;
   final bool useSearch;
@@ -279,7 +29,6 @@ class WindowControllerBar extends StatelessWidget {
 
   const WindowControllerBar({
     super.key,
-    this.isNestedRoute = true,
     this.showLogo = true,
     this.useCaretDown = false,
     this.useSearch = true,
@@ -290,171 +39,259 @@ class WindowControllerBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final windowController = WindowController.instance;
-    final AudioController audioController = AudioController.instance;
-    final MusicCacheController musicCacheController =
-        MusicCacheController.instance;
-    final SettingController settingController = SettingController.instance;
+    final colorScheme = Theme.of(context).colorScheme;
+    final settingController = SettingController.instance;
 
     final content = Container(
-      height: _controllerBarHeight,
-      padding: const EdgeInsets.only(left: 16, top: 0, right: 4, bottom: 0),
-      color: Theme.of(
-        context,
-      ).colorScheme.surfaceContainer.withValues(alpha: useBlur ? 0.4 : 0.0),
+      height: _barHeight,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      color: colorScheme.surfaceContainer.withValues(
+        alpha: useBlur ? _surfaceAlpha : 0.0,
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.center,
-        spacing: 0,
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: _ControllerButton(
-              onlyDarkMode: onlyDarkMode,
-              icon: useCaretDown
-                  ? PhosphorIconsLight.caretDown
-                  : PhosphorIconsLight.caretLeft,
-              fn: () {
-                if (context.canPop()) {
-                  context.pop();
-                }
-              },
-              tooltip: "返回",
-            ),
+        spacing: AppSpacing.md,
+        children: [
+          _BarButton(
+            icon: useCaretDown
+                ? PhosphorIconsLight.caretDown
+                : PhosphorIconsLight.caretLeft,
+            tooltip: '返回',
+            onlyDarkMode: onlyDarkMode,
+            onTap: () {
+              if (context.canPop()) context.pop();
+            },
           ),
-          if (showLogo)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              spacing: 4,
-              children: [
-                ClipRRect(
-                  borderRadius: _borderRadius,
-                  child: Image.asset(
-                    r'assets/app_icon.ico',
-                    width: _logoSize,
-                    height: _logoSize,
-                    fit: BoxFit.cover,
-                    cacheWidth: _coverSmallRenderSize,
-                    cacheHeight: _coverSmallRenderSize,
-                    gaplessPlayback: true, // 防止图片突然闪烁
-                  ),
-                ),
-                Text(
-                  'ZeroBit Player',
-                  style: context.createTextStyle(size: AppFontSize.sm),
-                ),
-              ],
-            ),
-
           Expanded(
-            flex: 1,
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onPanStart: (details) => windowManager.startDragging(),
-              onDoubleTap: () => windowController.toggleMaximize(),
-              child: Container(),
+            child: _DragArea(
+              child: showLogo
+                  ? _AppIdentity(onlyDarkMode: onlyDarkMode)
+                  : const SizedBox.expand(),
             ),
           ),
-
           if (useSearch)
-            _SearchDialog(
-              ctrl: audioController,
-              cacheCtrl: musicCacheController,
+            _BarButton(
+              icon: PhosphorIconsLight.magnifyingGlass,
+              tooltip: '搜索',
+              onlyDarkMode: onlyDarkMode,
+              onTap: () => showLibrarySearchDialog(context),
             ),
-
           if (useThemeSwitch)
-            Padding(
-              padding: const EdgeInsets.only(right: 8, left: 8),
-              child: SignalBuilder(
-                builder: (context) => _ControllerButton(
-                  onlyDarkMode: onlyDarkMode,
-                  icon: settingController.themeMode.value == 'dark'
+            SignalBuilder(
+              builder: (_) {
+                final isDark = settingController.themeMode.value == 'dark';
+                return _BarButton(
+                  icon: isDark
                       ? PhosphorIconsLight.moon
                       : PhosphorIconsLight.sun,
-                  fn: ThemeService.instance.setThemeMode,
-                  tooltip: settingController.themeMode.value == 'dark'
-                      ? "暗色主题"
-                      : "亮色主题",
-                ),
-              ),
-            ),
-
-          SignalBuilder(
-            builder: (context) => Visibility(
-              visible: !windowController.isFullScreen.value,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: _ControllerButton(
+                  tooltip: isDark ? '暗色主题' : '亮色主题',
                   onlyDarkMode: onlyDarkMode,
-                  icon: PhosphorIconsLight.minus,
-                  fn: () async {
-                    await windowManager.minimize();
-                  },
-                  tooltip: "最小化",
-                ),
-              ),
+                  onTap: ThemeService.instance.setThemeMode,
+                );
+              },
             ),
-          ),
-
-          SignalBuilder(
-            builder: (context) => Visibility(
-              visible: !windowController.isFullScreen.value,
-              child: _ControllerButton(
-                onlyDarkMode: onlyDarkMode,
-                icon: windowController.isMaximized.value
-                    ? PhosphorIconsLight.cornersIn
-                    : PhosphorIconsLight.cornersOut,
-                fn: windowController.toggleMaximize,
-                tooltip: windowController.isMaximized.value ? "还原" : "最大化",
-              ),
-            ),
-          ),
-
-          SignalBuilder(
-            builder: (context) => Padding(
-              padding: EdgeInsets.only(
-                right: 8,
-                left: windowController.isFullScreen.value ? 0 : 8,
-              ),
-              child: _ControllerButton(
-                onlyDarkMode: onlyDarkMode,
-                icon: windowController.isFullScreen.value
-                    ? PhosphorIconsLight.arrowsInSimple
-                    : PhosphorIconsLight.arrowsOutSimple,
-                fn: windowController.toggleFullScreen,
-                tooltip: windowController.isFullScreen.value ? "还原" : "全屏",
-              ),
-            ),
-          ),
-
-          _ControllerButton(
-            onlyDarkMode: onlyDarkMode,
-            icon: PhosphorIconsLight.x,
-            hoverColor: Colors.red,
-            fn: () async {
-              if (settingController.close2Tray.value) {
-                await windowManager.hide();
-                return;
-              }
-              await windowController.closeAndClean();
-            },
-            tooltip: "退出",
-          ),
+          _WindowButtons(onlyDarkMode: onlyDarkMode),
         ],
       ),
     );
 
-    return useBlur
-        ? ClipRect(
-            child: SignalBuilder(
-              builder: (context) => BackdropFilter(
-                enabled: settingController.backgroundImagePath.value.isNotEmpty,
-                filter: ImageFilterCache.imageFilter(sigma: 16),
-                child: content,
+    if (!useBlur) return content;
+
+    return ClipRect(
+      child: SignalBuilder(
+        builder: (_) => BackdropFilter(
+          enabled:
+              settingController.backgroundImagePath.value.isNotEmpty ||
+              settingController.useTransparencyBackground.value,
+          filter: ImageFilterCache.imageFilter(sigma: _blurSigma),
+          child: content,
+        ),
+      ),
+    );
+  }
+}
+
+/// 可拖拽窗口的空白区
+class _DragArea extends StatelessWidget {
+  final Widget child;
+
+  const _DragArea({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onPanStart: (_) => windowManager.startDragging(),
+      onDoubleTap: WindowController.instance.toggleMaximize,
+      child: child,
+    );
+  }
+}
+
+class _AppIdentity extends StatelessWidget {
+  final bool onlyDarkMode;
+
+  const _AppIdentity({required this.onlyDarkMode});
+
+  @override
+  Widget build(BuildContext context) {
+    final cacheSize = (_logoSize * MediaQuery.devicePixelRatioOf(context))
+        .round();
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      spacing: AppSpacing.md,
+      children: [
+        ClipRRect(
+          borderRadius: AppRadius.xsAll,
+          child: Image.asset(
+            r'assets/app_icon.ico',
+            width: _logoSize,
+            height: _logoSize,
+            fit: BoxFit.cover,
+            cacheWidth: cacheSize,
+            cacheHeight: cacheSize,
+            gaplessPlayback: true,
+          ),
+        ),
+        Text(
+          'ZeroBit Player',
+          style: context.createTextStyle(
+            size: AppFontSize.sm,
+            color: _foregroundOf(context, onlyDarkMode),
+            opacity: AppAlpha.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WindowButtons extends StatelessWidget {
+  final bool onlyDarkMode;
+
+  const _WindowButtons({required this.onlyDarkMode});
+
+  @override
+  Widget build(BuildContext context) {
+    final windowController = WindowController.instance;
+    final settingController = SettingController.instance;
+
+    return SignalBuilder(
+      builder: (_) {
+        final isFullScreen = windowController.isFullScreen.value;
+        final isMaximized = windowController.isMaximized.value;
+
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!isFullScreen) ...[
+              _BarButton(
+                icon: PhosphorIconsLight.minus,
+                tooltip: '最小化',
+                onlyDarkMode: onlyDarkMode,
+                onTap: windowManager.minimize,
               ),
+              _BarButton(
+                icon: isMaximized
+                    ? PhosphorIconsLight.cornersIn
+                    : PhosphorIconsLight.cornersOut,
+                tooltip: isMaximized ? '还原' : '最大化',
+                onlyDarkMode: onlyDarkMode,
+                onTap: windowController.toggleMaximize,
+              ),
+            ],
+            _BarButton(
+              icon: isFullScreen
+                  ? PhosphorIconsLight.arrowsInSimple
+                  : PhosphorIconsLight.arrowsOutSimple,
+              tooltip: isFullScreen ? '退出全屏' : '全屏',
+              onlyDarkMode: onlyDarkMode,
+              onTap: windowController.toggleFullScreen,
             ),
-          )
-        : content;
+            _BarButton(
+              icon: PhosphorIconsLight.x,
+              tooltip: settingController.close2Tray.value ? '隐藏到托盘' : '退出',
+              onlyDarkMode: onlyDarkMode,
+              danger: true,
+              onTap: () async {
+                if (settingController.close2Tray.value) {
+                  await windowManager.hide();
+                  return;
+                }
+                await windowController.closeAndClean();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// 标题栏前景色
+Color _foregroundOf(BuildContext context, bool onlyDarkMode) => onlyDarkMode
+    ? ThemeService.instance.darkTheme.colorScheme.onSurface
+    : Theme.of(context).colorScheme.onSurface;
+
+/// 标题栏按钮
+class _BarButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final bool onlyDarkMode;
+
+  final bool danger;
+
+  const _BarButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    required this.onlyDarkMode,
+    this.danger = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final baseColor = _foregroundOf(context, onlyDarkMode);
+
+    return Tooltip(
+      message: tooltip,
+      waitDuration: AppDuration.tooltipWait,
+      child: HoverBuilder(
+        onTap: onTap,
+        builder: (context, hovered) {
+          final Color? background;
+          final Color foreground;
+          if (hovered && danger) {
+            background = colorScheme.error;
+            foreground = colorScheme.onError;
+          } else if (hovered) {
+            // 用前景色自身做淡叠加，深浅两种标题栏下都能看出反馈
+            background = baseColor.withValues(alpha: AppAlpha.hover);
+            foreground = baseColor;
+          } else {
+            background = null;
+            foreground = baseColor;
+          }
+
+          return AnimatedContainer(
+            duration: AppDuration.instant,
+            curve: AppCurve.standard,
+            width: _buttonSize,
+            height: _buttonSize,
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: AppRadius.xsAll,
+            ),
+            child: Center(
+              child: Icon(icon, size: AppIconSize.md, color: foreground),
+            ),
+          );
+        },
+      ),
+    );
   }
 }
