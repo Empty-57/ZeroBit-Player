@@ -63,7 +63,15 @@ class UserPlayListController {
     }
   }
 
-  String _getDisplayName(String userKey) => userKey.split('_')[0];
+  /// 从歌单键取出展示名。
+  static String displayNameOf(String userKey) {
+    final idSep = userKey.lastIndexOf('_');
+    if (idSep <= 0) return userKey;
+    final areaSep = userKey.lastIndexOf('_', idSep - 1);
+    return areaSep <= 0
+        ? userKey.substring(0, idSep)
+        : userKey.substring(0, areaSep);
+  }
 
   bool _isValidName(String name) {
     if (name.isEmpty) {
@@ -75,7 +83,7 @@ class UserPlayListController {
       return false;
     }
 
-    if (items.any((e) => _getDisplayName(e.userKey) == name)) {
+    if (items.any((e) => displayNameOf(e.userKey) == name)) {
       showSnackBar(title: "WARNING", msg: "重复的歌单名称！");
       return false;
     }
@@ -144,7 +152,7 @@ class UserPlayListController {
     if (targetList.pathList.contains(metadata.path)) {
       showSnackBar(
         title: "WARNING",
-        msg: "歌单 ${_getDisplayName(userKey)} 存在重复歌曲 ${metadata.title} ！",
+        msg: "歌单 ${displayNameOf(userKey)} 存在重复歌曲 ${metadata.title} ！",
         duration: const Duration(milliseconds: 1500),
       );
       return;
@@ -166,7 +174,7 @@ class UserPlayListController {
 
     showSnackBar(
       title: "OK",
-      msg: "已将 ${metadata.title} 添加到歌单 ${_getDisplayName(userKey)}",
+      msg: "已将 ${metadata.title} 添加到歌单 ${displayNameOf(userKey)}",
       duration: const Duration(milliseconds: 1500),
     );
   }
@@ -226,7 +234,7 @@ class UserPlayListController {
 
     showSnackBar(
       title: "OK",
-      msg: "已将去重后的 $addedCount 首歌添加到歌单 ${_getDisplayName(userKey)}",
+      msg: "已将去重后的 $addedCount 首歌添加到歌单 ${displayNameOf(userKey)}",
       duration: const Duration(milliseconds: 1500),
     );
   }
@@ -255,7 +263,7 @@ class UserPlayListController {
 
       showSnackBar(
         title: "OK",
-        msg: "已将 ${metadata.title} 从歌单 ${_getDisplayName(userKey)}删除！",
+        msg: "已将 ${metadata.title} 从歌单 ${displayNameOf(userKey)}删除！",
         duration: const Duration(milliseconds: 1500),
       );
     }
@@ -299,7 +307,7 @@ class UserPlayListController {
 
     showSnackBar(
       title: "OK",
-      msg: "已将去重后的 ${removeList.length} 首歌从歌单 ${_getDisplayName(userKey)}删除！",
+      msg: "已将去重后的 ${removeList.length} 首歌从歌单 ${displayNameOf(userKey)}删除！",
       duration: const Duration(milliseconds: 1500),
     );
   }
