@@ -242,7 +242,7 @@ class _CoverAndInfo extends StatelessWidget {
               child: SignalBuilder(
                 builder: (_) => LoadU8Cover(
                   data: controller.currentSmallCover.value,
-                  size: PlayBarSpec.coverSize,
+                  size: AppSize.coverSm,
                   evictOnDispose: false,
                 ),
               ),
