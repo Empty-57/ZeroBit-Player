@@ -1,254 +1,21 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:go_router/go_router.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/widget/covers.dart';
-import 'package:zerobit_player/components/widget/general_btn.dart';
-import 'package:zerobit_player/controller/audio_ctrl.dart';
-import 'package:zerobit_player/controller/music_cache_ctrl.dart';
-import 'package:zerobit_player/controller/setting_ctrl.dart';
-import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
+import 'package:zerobit_player/components/audio_page/audio_page_args.dart';
+import 'package:zerobit_player/components/audio_page/audio_page_constant.dart';
+import 'package:zerobit_player/components/audio_page/audio_page_header.dart';
+import 'package:zerobit_player/components/audio_page/music_context_menu.dart';
+import 'package:zerobit_player/components/widget/app_empty_state.dart';
+import 'package:zerobit_player/components/widget/floating_button.dart';
+import 'package:zerobit_player/components/widget/music_tile.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
-import 'package:zerobit_player/field/set_constants.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 import 'package:zerobit_player/tools/func/func_extension.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
 
-import 'edit_embedded_lyrics_dialog.dart';
-import 'widget/floating_button.dart';
-import 'widget/get_snack_bar.dart';
-import 'widget/music_tile.dart';
-
-const double _itemHeight = 64.0;
-const double _headCoverSize = 240;
-const _coverBorderRadius = BorderRadius.all(Radius.circular(6));
-const double btnHeight = 42;
-const double btnWidth = 42;
-const double resViewThresholds = 1100;
-const double _menuBtnWidth = 180;
-const double _menuBtnHeight = 48;
-const double _menuBtnRadius = 0;
-const _borderRadius = BorderRadius.all(Radius.circular(4));
-
-class _MusicMenuController {
-  final _menuController = MenuController();
-  Offset? menuPosition;
-  MusicCache? currentMetadata;
-  int currentIndex = -1;
-
-  bool get isOpen => _menuController.isOpen;
-
-  void openMenu({
-    required Offset overlayOffset,
-    required MusicCache metadata,
-    required int index,
-  }) {
-    menuPosition = overlayOffset;
-    currentMetadata = metadata;
-    currentIndex = index;
-    _menuController.open(position: Offset.zero);
-  }
-
-  void closeMenu() {
-    if (_menuController.isOpen) {
-      _menuController.close();
-    }
-  }
-}
-
-List<Widget> _genMenuItems({
-  required BuildContext context,
-  required MenuController menuController,
-  required MusicCache metadata,
-  required String userKey,
-  required int index,
-  required String operateArea,
-  required AudioController ctrl,
-  required UserPlayListController playListCtrl,
-  required MusicCacheController cacheCtrl,
-  bool renderMaybeDel = false,
-}) {
-  final Widget divider = Divider(
-    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-    height: 0.5,
-    thickness: 0.5,
-  );
-
-  Widget buildMenuBtn({
-    required VoidCallback fn,
-    required IconData icon,
-    required String label,
-    String? tooltip,
-  }) {
-    return GeneralBtn(
-      fn: () {
-        menuController.close();
-        fn();
-      },
-      btnHeight: _menuBtnHeight,
-      btnWidth: _menuBtnWidth,
-      radius: _menuBtnRadius,
-      icon: icon,
-      label: label,
-      tooltip: tooltip,
-      mainAxisAlignment: MainAxisAlignment.start,
-      backgroundColor: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-    );
-  }
-
-  // 数据预处理
-  final artistList = metadata.artist.split('/');
-  final album = metadata.album;
-  final albumWithLetter = cacheCtrl.getLetter(str: album) + album;
-
-  final artistFirst = artistList.first;
-  final artistFirstWithLetter =
-      cacheCtrl.getLetter(str: artistFirst) + artistFirst;
-
-  return <Widget>[
-    buildMenuBtn(
-      fn: () => ctrl.insertNext(metadata: metadata),
-      icon: PhosphorIconsLight.arrowBendDownRight,
-      label: "添加到下一首",
-    ),
-
-    GeneralBtn(
-      fn: () {
-        menuController.close();
-        context.push(AppRoutes.audioInfoEdit, extra: {'metadata': metadata});
-      },
-      btnHeight: _menuBtnHeight,
-      btnWidth: _menuBtnWidth,
-      radius: _menuBtnRadius,
-      icon: PhosphorIconsLight.pencilSimpleLine,
-      label: "编辑元数据",
-      mainAxisAlignment: MainAxisAlignment.start,
-      backgroundColor: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-    ),
-
-    EditEmbeddedLyricsDialog(
-      menuController: menuController,
-      metadata: metadata,
-    ),
-
-    divider,
-
-    buildMenuBtn(
-      fn: () => context.push(
-        AppRoutes.details,
-        extra: {
-          'pathList': cacheCtrl.albumItemsDict[albumWithLetter],
-          'title': album,
-          'operateArea': OperateArea.albumDetails,
-        },
-      ),
-      icon: PhosphorIconsLight.vinylRecord,
-      label: album,
-      tooltip: '跳转到 "$album"',
-    ),
-
-    if (artistList.length == 1)
-      buildMenuBtn(
-        fn: () => context.push(
-          AppRoutes.details,
-          extra: {
-            'pathList': cacheCtrl.artistItemsDict[artistFirstWithLetter],
-            'title': artistFirst,
-            'operateArea': OperateArea.artistDetails,
-          },
-        ),
-        icon: PhosphorIconsLight.userFocus,
-        label: artistFirst,
-        tooltip: '跳转到 "$artistFirst"',
-      ),
-
-    if (artistList.length > 1)
-      SubmenuButton(
-        animated: true,
-        style: ButtonStyle(
-          padding: WidgetStateProperty.all(
-            const EdgeInsets.symmetric(horizontal: 16),
-          ),
-        ),
-        menuStyle: const MenuStyle(alignment: Alignment.topRight),
-        leadingIcon: Icon(
-          PhosphorIconsLight.userFocus,
-          size: context.getIconSize(AppIconSize.md),
-        ),
-        menuChildren: artistList.map((v) {
-          return MenuItemButton(
-            onPressed: () {
-              menuController.close();
-              context.push(
-                AppRoutes.details,
-                extra: {
-                  'pathList': cacheCtrl
-                      .artistItemsDict[cacheCtrl.getLetter(str: v) + v],
-                  'title': v,
-                  'operateArea': OperateArea.artistDetails,
-                },
-              );
-            },
-            child: Center(child: Text(v)),
-          );
-        }).toList(),
-        child: const Text('查看艺术家'),
-      ),
-
-    divider,
-
-    SubmenuButton(
-      animated: true,
-      style: ButtonStyle(
-        padding: WidgetStateProperty.all(
-          const EdgeInsets.symmetric(horizontal: 16),
-        ),
-      ),
-      menuStyle: const MenuStyle(alignment: Alignment.topRight),
-      leadingIcon: Icon(
-        PhosphorIconsLight.plus,
-        size: context.getIconSize(AppIconSize.md),
-      ),
-      menuChildren: playListCtrl.allUserKey.map((v) {
-        return MenuItemButton(
-          onPressed: () {
-            menuController.close();
-            playListCtrl.addToAudioList(metadata: metadata, userKey: v);
-          },
-          child: Center(child: Text(v.split('_')[0])),
-        );
-      }).toList(),
-      child: const Text('添加到歌单'),
-    ),
-
-    buildMenuBtn(
-      fn: () => Process.run('explorer.exe', ['/select,', metadata.path]),
-      icon: PhosphorIconsLight.folderOpen,
-      label: "打开本地资源",
-    ),
-
-    if (renderMaybeDel) ...[
-      divider,
-      buildMenuBtn(
-        fn: () {
-          if (userKey.isNotEmpty) {
-            playListCtrl.audioRemove(userKey: userKey, metadata: metadata);
-          }
-        },
-        icon: PhosphorIconsLight.trash,
-        label: "删除",
-      ),
-    ],
-  ];
-}
-
+/// 音乐列表页
 class AudioGenPages extends StatefulWidget {
   final String title;
   final String operateArea;
@@ -275,16 +42,11 @@ class AudioGenPages extends StatefulWidget {
 class _AudioGenPagesState extends State<AudioGenPages> {
   late final Signal<bool> _isMulSelect;
   late final ListSignal<MusicCache> _selectedList;
-  late final MenuController _playListMenuController;
   late final ScrollController _scrollControllerList;
   late final ScrollController _scrollControllerGrid;
-  late final SettingController _settingController = SettingController.instance;
-  late final AudioController _audioController = AudioController.instance;
-  late final MusicCacheController _musicCacheController =
-      MusicCacheController.instance;
-  late final _MusicMenuController _musicMenuCtrl = _MusicMenuController();
-  late final UserPlayListController _userPlayListController =
-      UserPlayListController.instance;
+  late final AudioPageArgs _args;
+
+  final _menuController = MusicContextMenuController();
 
   late TextStyle _titleStyle;
   late TextStyle _highLightTitleStyle;
@@ -293,37 +55,17 @@ class _AudioGenPagesState extends State<AudioGenPages> {
 
   late final void Function() _playAllThrottle;
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _titleStyle = context.createTextStyle(size: AppFontSize.md);
-    _highLightTitleStyle = context.createTextStyle(
-      size: AppFontSize.md,
-      color: Theme.of(context).colorScheme.primary,
-    );
-    _subStyle = context.createTextStyle(size: AppFontSize.sm, opacity: 0.8);
-    _highLightSubStyle = context.createTextStyle(
-      size: AppFontSize.sm,
-      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-    );
-  }
+  String get _scrollRoute =>
+      widget.operateArea == OperateArea.allMusic ? AppRoutes.home : '';
 
   @override
   void initState() {
     super.initState();
     _isMulSelect = signal(false);
     _selectedList = listSignal(<MusicCache>[]);
-    _playListMenuController = MenuController();
 
     final initialOffset =
-        widget.rwScrollOffset?.call(
-          route: widget.operateArea == OperateArea.allMusic
-              ? AppRoutes.home
-              : '',
-          rw: true,
-        ) ??
-        0.0;
-
+        widget.rwScrollOffset?.call(route: _scrollRoute, rw: true) ?? 0.0;
     _scrollControllerList = ScrollController(
       initialScrollOffset: initialOffset,
     );
@@ -334,6 +76,36 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     _playAllThrottle = (() => widget.controller.play(
       widget.audioSource,
     )).throttle();
+
+    _args = AudioPageArgs(
+      title: widget.title,
+      operateArea: widget.operateArea,
+      audioSource: widget.audioSource,
+      userKey: widget.userKey,
+      controller: widget.controller,
+      isMulSelect: _isMulSelect,
+      selectedList: _selectedList,
+      onPlayAll: _playAllThrottle,
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final primary = Theme.of(context).colorScheme.primary;
+    _titleStyle = context.createTextStyle(size: AppFontSize.md);
+    _highLightTitleStyle = context.createTextStyle(
+      size: AppFontSize.md,
+      color: primary,
+    );
+    _subStyle = context.createTextStyle(
+      size: AppFontSize.sm,
+      opacity: AppAlpha.textSecondary,
+    );
+    _highLightSubStyle = context.createTextStyle(
+      size: AppFontSize.sm,
+      color: primary.withValues(alpha: AppAlpha.textSecondary),
+    );
   }
 
   @override
@@ -343,32 +115,60 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     // 释放 signal，避免监听器残留
     _isMulSelect.dispose();
     _selectedList.dispose();
-
     super.dispose();
+  }
+
+  bool _onScrollEnd(ScrollEndNotification notification) {
+    widget.rwScrollOffset?.call(
+      route: _scrollRoute,
+      rw: false,
+      offset: notification.metrics.pixels,
+    );
+    // false = 继续冒泡
+    return false;
+  }
+
+  void _openContextMenu(Offset globalPosition, MusicCache metadata) {
+    if (_menuController.isOpen) {
+      _menuController.close();
+      return;
+    }
+
+    final overlayBox =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+    _menuController.open(
+      cursorPosition: overlayBox.globalToLocal(globalPosition),
+      metadata: metadata,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.only(left: 16, top: 32, right: 16, bottom: 16),
+    return Padding(
+      padding: AppSpacing.pagePadding,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 16,
+        spacing: AppSpacing.xl,
         children: [
-          RepaintBoundary(child: _buildHeader()),
+          RepaintBoundary(child: AudioPageHeader(args: _args)),
           Expanded(
-            child: Stack(
-              children: [
-                _buildMusicList(),
-                FloatingButton(
-                  scrollControllerList: _scrollControllerList,
-                  scrollControllerGrid: _scrollControllerGrid,
-                  operateArea: widget.operateArea,
-                  controller: widget.controller,
-                ),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final columns = AudioPageSpec.gridColumnsFor(
+                  constraints.maxWidth,
+                );
+                return Stack(
+                  children: [
+                    _buildListArea(columns),
+                    FloatingButton(
+                      scrollControllerList: _scrollControllerList,
+                      scrollControllerGrid: _scrollControllerGrid,
+                      controller: widget.controller,
+                      gridColumns: columns,
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ],
@@ -376,506 +176,107 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     );
   }
 
-  Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      spacing: 16,
-      children: <Widget>[
-        if (widget.operateArea != OperateArea.allMusic &&
-            widget.operateArea != OperateArea.foldersDetails)
-          _buildHeaderCover(),
-        Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 8,
-            children: [
-              Text(
-                widget.title,
-                style: context.createTextStyle(
-                  size: AppFontSize.title,
-                  weight: FontWeight.w600,
-                ),
-                softWrap: false,
-                overflow: TextOverflow.fade,
-                maxLines: 1,
-              ),
-              SignalBuilder(
-                builder: (context) => Text(
-                  '共${widget.controller.items.length}首音乐',
-                  style: context.createTextStyle(size: AppFontSize.md),
-                ),
-              ),
-              _buildActionButtons(),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHeaderCover() {
-    return Hero(
-      tag: widget.title + widget.operateArea,
-      createRectTween: (begin, end) {
-        return MaterialRectArcTween(begin: begin, end: end);
-      },
-      child: ClipRRect(
-        borderRadius: _coverBorderRadius,
-        child: SignalBuilder(
-          builder: (context) {
-            return LoadU8Cover(
-              data: widget.controller.headCover.value,
-              coverResolutionFlag: CoverResolutionFlag.middle,
-              size: _headCoverSize,
-              evictOnDispose: false,
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return Row(
-      spacing: 8,
-      children: [
-        GeneralBtn(
-          fn: _playAllThrottle,
-          icon: PhosphorIconsLight.play,
-          btnHeight: btnHeight,
-          btnWidth: 96,
-          mainAxisAlignment: MainAxisAlignment.center,
-          label: "播放",
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          contentColor: Theme.of(context).colorScheme.onPrimary,
-          overlayColor: Theme.of(context).colorScheme.surfaceContainer,
-        ),
-        SignalBuilder(
-          builder: (context) => _isMulSelect.value
-              ? _buildMultiSelectActions()
-              : _buildNormalActions(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNormalActions() {
-    return Row(
-      key: const ValueKey('normal_actions'),
-      spacing: 8,
-      children: [
-        _buildSortButton(),
-        SignalBuilder(
-          builder: (context) => GeneralBtn(
-            fn: () {
-              _settingController.isReverse.value =
-                  !_settingController.isReverse.value;
-              widget.controller.itemReverse();
-              _settingController.putCache();
-              _audioController.syncCurrentIndex();
-            },
-            icon: _settingController.isReverse.value
-                ? PhosphorIconsLight.arrowDown
-                : PhosphorIconsLight.arrowUp,
-            btnHeight: btnHeight,
-            btnWidth: btnWidth,
-            tooltip: _settingController.isReverse.value ? '降序' : '升序',
-          ),
-        ),
-        SignalBuilder(
-          builder: (context) => GeneralBtn(
-            fn: () {
-              _settingController.viewModeMap[widget.operateArea] =
-                  !_settingController.viewModeMap[widget.operateArea]!;
-              _settingController.putCache();
-            },
-            icon: _settingController.viewModeMap[widget.operateArea]!
-                ? PhosphorIconsLight.listDashes
-                : PhosphorIconsLight.gridFour,
-            btnHeight: btnHeight,
-            btnWidth: btnWidth,
-            tooltip: _settingController.viewModeMap[widget.operateArea]!
-                ? "列表视图"
-                : "表格视图",
-          ),
-        ),
-        _buildMultiSelectToggleButton(),
-      ],
-    );
-  }
-
-  Widget _buildMultiSelectActions() {
-    return Row(
-      key: const ValueKey('multi_select_actions'),
-      spacing: 8,
-      children: [
-        if (widget.operateArea == OperateArea.playListDetails)
-          GeneralBtn(
-            fn: () {
-              if (widget.userKey.isNotEmpty) {
-                batch(() {
-                  _userPlayListController.audioRemoveAll(
-                    userKey: widget.userKey,
-                    removeList: [..._selectedList],
-                  );
-                  _selectedList.clear();
-                });
-              }
-            },
-            icon: PhosphorIconsLight.trash,
-            btnHeight: btnHeight,
-            btnWidth: btnWidth,
-            contentColor: Colors.red,
-            tooltip: "删除所选项",
-          ),
-        _buildAddToPlaylistMenuButton(),
-        SignalBuilder(
-          builder: (context) => GeneralBtn(
-            fn: () {
-              if (_selectedList.isNotEmpty) {
-                _selectedList.clear();
-              } else {
-                _selectedList.value = [...widget.controller.items];
-              }
-            },
-            icon: _selectedList.isNotEmpty
-                ? PhosphorIconsLight.selectionSlash
-                : PhosphorIconsLight.selectionAll,
-            btnHeight: btnHeight,
-            btnWidth: btnWidth,
-            tooltip: _selectedList.isNotEmpty ? '清空选择' : '全选',
-          ),
-        ),
-        _buildMultiSelectToggleButton(),
-      ],
-    );
-  }
-
-  Widget _buildMultiSelectToggleButton() {
-    return GeneralBtn(
-      fn: () {
-        batch(() {
-          _selectedList.clear();
-          _isMulSelect.value = !_isMulSelect.value;
-        });
-      },
-      icon: _isMulSelect.value
-          ? PhosphorIconsLight.xSquare
-          : PhosphorIconsLight.selection,
-      btnHeight: btnHeight,
-      btnWidth: btnWidth,
-      tooltip: _isMulSelect.value ? '退出多选' : '多选模式',
-    );
-  }
-
-  Widget _buildSortButton() {
-    final itemMap = <int, List<dynamic>>{
-      SortType.title: [
-        SettingController.sortType[SortType.title],
-        PhosphorIconsRegular.textT,
-      ],
-      if (widget.operateArea != OperateArea.artistDetails)
-        SortType.artist: [
-          SettingController.sortType[SortType.artist],
-          PhosphorIconsRegular.userFocus,
-        ],
-      if (widget.operateArea != OperateArea.albumDetails)
-        SortType.album: [
-          SettingController.sortType[SortType.album],
-          PhosphorIconsRegular.vinylRecord,
-        ],
-      if (widget.operateArea == OperateArea.albumDetails)
-        SortType.trackNumber: [
-          SettingController.sortType[SortType.trackNumber],
-          PhosphorIconsRegular.hash,
-        ],
-      SortType.duration: [
-        SettingController.sortType[SortType.duration],
-        PhosphorIconsRegular.clockCountdown,
-      ],
-      SortType.editTime: [
-        SettingController.sortType[SortType.editTime],
-        PhosphorIconsRegular.fileMagnifyingGlass,
-      ],
-      SortType.createTime: [
-        SettingController.sortType[SortType.createTime],
-        PhosphorIconsRegular.filePlus,
-      ],
-    };
-    final menuController = MenuController();
-    return MenuAnchor(
-      menuChildren: itemMap.entries.map((entry) {
-        return GeneralBtn(
-          fn: () {
-            _settingController.sortMap[widget.operateArea] = entry.key;
-            widget.controller.itemReSort(operateArea: widget.operateArea);
-            _settingController.putCache();
-            _audioController.syncCurrentIndex();
-            menuController.close();
-          },
-          btnHeight: btnHeight,
-          btnWidth: 128,
-          radius: 4,
-          icon: entry.value[1] as IconData?,
-          label: entry.value[0].toString(),
-          mainAxisAlignment: MainAxisAlignment.start,
-          backgroundColor: Colors.transparent,
-        );
-      }).toList(),
-      controller: menuController,
-      consumeOutsideTap: true,
-      child: GeneralBtn(
-        fn: () {
-          if (menuController.isOpen) {
-            menuController.close();
-          } else {
-            menuController.open();
-          }
-        },
-        btnHeight: btnHeight,
-        btnWidth: 148,
-        mainAxisAlignment: .start,
-        children: [
-          Icon(
-            PhosphorIconsLight.funnelSimple,
-            color: Theme.of(context).colorScheme.onSecondaryContainer,
-            size: context.getIconSize(AppIconSize.md),
-          ),
-
-          Expanded(
-            flex: 1,
-            child: Text(
-              SettingController.sortType[_settingController.sortMap[widget
-                          .operateArea]
-                      as int] ??
-                  "未指定",
-              style: context.createTextStyle(size: AppFontSize.md),
-            ),
-          ),
-          Icon(
-            PhosphorIconsFill.caretDown,
-            color: Theme.of(context).colorScheme.onSecondaryContainer,
-            size: context.getIconSize(AppIconSize.sm),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAddToPlaylistMenuButton() {
-    return MenuAnchor(
-      controller: _playListMenuController,
-      menuChildren: _userPlayListController.allUserKey.map((v) {
-        return GeneralBtn(
-          fn: () {
-            _playListMenuController.close();
-            _userPlayListController.addAllToAudioList(
-              selectedList: [..._selectedList],
-              userKey: v,
-            );
-          },
-          btnWidth: 160,
-          btnHeight: btnHeight,
-          label: v.split('_')[0],
-          mainAxisAlignment: MainAxisAlignment.center,
-          backgroundColor: Colors.transparent,
-        );
-      }).toList(),
-      child: GeneralBtn(
-        fn: () {
-          if (_userPlayListController.allUserKey.isEmpty) {
-            showSnackBar(title: "WARNING", msg: "未创建歌单！");
-            return;
-          }
-          if (_selectedList.isEmpty) {
-            showSnackBar(title: "WARNING", msg: "未选择任何音乐！");
-            return;
-          }
-          _playListMenuController.open();
-        },
-        icon: PhosphorIconsLight.plus,
-        mainAxisAlignment: MainAxisAlignment.center,
-        btnHeight: btnHeight,
-        btnWidth: 160,
-        label: "添加到歌单",
-      ),
-    );
-  }
-
-  Widget _buildMusicList() {
-    final size = MediaQuery.sizeOf(context);
-    final height = size.height;
-    final width = size.width;
+  Widget _buildListArea(int columns) {
     return RawMenuAnchor(
-      controller: _musicMenuCtrl._menuController,
+      controller: _menuController.menuController,
       consumeOutsideTaps: false,
-      overlayBuilder: (context, info) {
-        final currentMetadata = _musicMenuCtrl.currentMetadata;
-        final position = _musicMenuCtrl.menuPosition;
-        if (currentMetadata == null || position == null) {
-          return const SizedBox.shrink();
-        }
-
-        double left = position.dx + 16;
-        double top = position.dy;
-        final itemCount = widget.operateArea == OperateArea.playListDetails
-            ? 8
-            : 7;
-
-        if (top + _menuBtnHeight * (itemCount + 1.5) > height) {
-          top = top - _menuBtnHeight * itemCount;
-        }
-        if (left + _menuBtnWidth * 2 > width) {
-          left = left - _menuBtnWidth - 16;
-        }
-
-        return Positioned(
-          top: top,
-          left: left,
-          child: TapRegion(
-            behavior: HitTestBehavior.opaque,
-            groupId: _musicMenuCtrl._menuController,
-            onTapOutside: (_) => _musicMenuCtrl.closeMenu(),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainer,
-                borderRadius: _borderRadius,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    offset: const Offset(0, 2),
-                    blurRadius: 4,
-                  ),
-                ],
-              ),
-              width: _menuBtnWidth,
-              child: Column(
-                children: _genMenuItems(
-                  context: context,
-                  menuController: _musicMenuCtrl._menuController,
-                  metadata: currentMetadata,
-                  userKey: widget.userKey,
-                  index: _musicMenuCtrl.currentIndex,
-                  renderMaybeDel:
-                      widget.operateArea == OperateArea.playListDetails,
-                  operateArea: widget.operateArea,
-                  ctrl: _audioController,
-                  playListCtrl: _userPlayListController,
-                  cacheCtrl: _musicCacheController,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+      overlayBuilder: (context, info) => MusicContextMenuOverlay(
+        controller: _menuController,
+        userKey: widget.userKey,
+        showRemove: widget.operateArea == OperateArea.playListDetails,
+      ),
       child: NotificationListener<ScrollEndNotification>(
-        onNotification: (notification) {
-          widget.rwScrollOffset?.call(
-            route: widget.operateArea == OperateArea.allMusic
-                ? AppRoutes.home
-                : '',
-            rw: false,
-            offset: notification.metrics.pixels,
-          );
-          // false = 继续冒泡
-          return false;
-        },
+        onNotification: _onScrollEnd,
         child: SignalBuilder(
           builder: (context) {
-            final viewMode = _settingController.viewModeMap[widget.operateArea];
-            const extent = ScrollCacheExtent.pixels(_itemHeight * 4);
-            const padding = EdgeInsets.only(bottom: _itemHeight * 2);
-            return viewMode!
-                ? ListView.builder(
-                    scrollCacheExtent: extent,
-                    controller: _scrollControllerList,
-                    itemCount: widget.controller.items.length,
-                    itemExtent: _itemHeight,
-                    padding: padding,
-                    addRepaintBoundaries: true,
-                    addAutomaticKeepAlives: false,
-                    addSemanticIndexes: false,
-                    itemBuilder: (context, index) => _buildMusicTile(
-                      context,
-                      index,
-                      _titleStyle,
-                      _highLightTitleStyle,
-                      _subStyle,
-                      _highLightSubStyle,
-                      viewMode,
+            final isListView = _args.isListView;
+            final itemCount = widget.controller.items.length;
+
+            if (itemCount == 0) {
+              return const Center(child: AppEmptyState(text: '这里还没有音乐'));
+            }
+
+            return AnimatedSwitcher(
+              duration: AppDuration.fast,
+              child: isListView
+                  ? _buildList(key: const ValueKey(true), itemCount: itemCount)
+                  : _buildGrid(
+                      key: const ValueKey(false),
+                      itemCount: itemCount,
+                      columns: columns,
                     ),
-                  )
-                : GridView.builder(
-                    scrollCacheExtent: extent,
-                    controller: _scrollControllerGrid,
-                    itemCount: widget.controller.items.length,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: width < resViewThresholds ? 3 : 4,
-                      mainAxisSpacing: 4.0,
-                      crossAxisSpacing: 8.0,
-                      childAspectRatio: 1.0,
-                      mainAxisExtent: _itemHeight,
-                    ),
-                    padding: padding,
-                    addRepaintBoundaries: true,
-                    addAutomaticKeepAlives: false,
-                    addSemanticIndexes: false,
-                    itemBuilder: (context, index) => _buildMusicTile(
-                      context,
-                      index,
-                      _titleStyle,
-                      _highLightTitleStyle,
-                      _subStyle,
-                      _highLightSubStyle,
-                      viewMode,
-                    ),
-                  );
+            );
           },
         ),
       ),
     );
   }
 
-  Widget _buildMusicTile(
-    BuildContext context,
-    int index,
-    TextStyle titleStyle,
-    TextStyle highLightTitleStyle,
-    TextStyle subStyle,
-    TextStyle highLightSubStyle,
-    bool viewMode,
-  ) {
+  static const _cacheExtent = ScrollCacheExtent.pixels(
+    AudioPageSpec.itemHeight * 4,
+  );
+  static const _listPadding = EdgeInsets.only(
+    bottom: AudioPageSpec.listBottomInset,
+  );
+
+  Widget _buildList({required Key key, required int itemCount}) {
+    return ListView.builder(
+      key: key,
+      scrollCacheExtent: _cacheExtent,
+      controller: _scrollControllerList,
+      itemCount: itemCount,
+      itemExtent: AudioPageSpec.itemHeight,
+      padding: _listPadding,
+      addRepaintBoundaries: true,
+      addAutomaticKeepAlives: false,
+      addSemanticIndexes: false,
+      itemBuilder: (context, index) => _buildMusicTile(index, isListView: true),
+    );
+  }
+
+  Widget _buildGrid({
+    required Key key,
+    required int itemCount,
+    required int columns,
+  }) {
+    return GridView.builder(
+      key: key,
+      scrollCacheExtent: _cacheExtent,
+      controller: _scrollControllerGrid,
+      itemCount: itemCount,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        mainAxisSpacing: AudioPageSpec.gridMainSpacing,
+        crossAxisSpacing: AudioPageSpec.gridCrossSpacing,
+        mainAxisExtent: AudioPageSpec.itemHeight,
+      ),
+      padding: _listPadding,
+      addRepaintBoundaries: true,
+      addAutomaticKeepAlives: false,
+      addSemanticIndexes: false,
+      itemBuilder: (context, index) =>
+          _buildMusicTile(index, isListView: false),
+    );
+  }
+
+  Widget _buildMusicTile(int index, {required bool isListView}) {
     final metadata = widget.controller.items[index];
+
     return GestureDetector(
       key: ValueKey(metadata.path),
-      onSecondaryTapDown: (e) {
-        if (_musicMenuCtrl.isOpen) {
-          _musicMenuCtrl.closeMenu();
-          return;
-        }
-
-        final RenderBox overlayBox =
-            Overlay.of(context).context.findRenderObject() as RenderBox;
-        final Offset overlayOffset = overlayBox.globalToLocal(e.globalPosition);
-        _musicMenuCtrl.openMenu(
-          overlayOffset: overlayOffset,
-          metadata: metadata,
-          index: index,
-        );
-      },
+      onSecondaryTapDown: (event) =>
+          _openContextMenu(event.globalPosition, metadata),
       child: MusicTile(
         metadata: metadata,
-        titleStyle: titleStyle,
-        highLightTitleStyle: highLightTitleStyle,
-        subStyle: subStyle,
-        highLightSubStyle: highLightSubStyle,
+        titleStyle: _titleStyle,
+        highLightTitleStyle: _highLightTitleStyle,
+        subStyle: _subStyle,
+        highLightSubStyle: _highLightSubStyle,
         audioSource: widget.audioSource,
         operateArea: widget.operateArea,
         isMulSelect: _isMulSelect,
         selectedList: _selectedList,
-        viewMode: viewMode,
+        viewMode: isListView,
         baseController: widget.controller,
       ),
     );

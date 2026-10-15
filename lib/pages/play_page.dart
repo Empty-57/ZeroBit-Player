@@ -761,7 +761,7 @@ class _PlayPageState extends State<PlayPage> {
                 userKey: v,
               );
             },
-            child: Center(child: Text(v.split('_')[0])),
+            child: Center(child: Text(UserPlayListController.displayNameOf(v))),
           );
         }).toList(),
       ),
@@ -831,7 +831,6 @@ class _PlayPageState extends State<PlayPage> {
         child: Column(
           children: [
             const WindowControllerBar(
-              isNestedRoute: false,
               showLogo: false,
               useCaretDown: true,
               useSearch: false,

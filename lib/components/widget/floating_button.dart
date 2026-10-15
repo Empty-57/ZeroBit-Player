@@ -1,62 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
+import 'package:zerobit_player/components/audio_page/audio_page_constant.dart';
+import 'package:zerobit_player/components/widget/app_tappable.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
-import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
-
-const double _bottom = 96;
-const double _radius = 6;
-const double _ctrlBtnMinSize = 40.0;
-const double _itemHeight = 64.0;
-const double _resViewThresholds = 1100;
-
-class _FloatingBtn extends StatelessWidget {
-  final String tooltip;
-  final IconData icon;
-  final VoidCallback? onPressed;
-
-  const _FloatingBtn({
-    required this.tooltip,
-    required this.icon,
-    this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: TextButton(
-        onPressed: onPressed,
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.zero,
-          minimumSize: const Size(_ctrlBtnMinSize, _ctrlBtnMinSize),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          visualDensity: VisualDensity.compact,
-          // backgroundColor: Colors.transparent, // TextButton 默认为透明
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(_radius),
-          ),
-        ),
-        child: Icon(icon, size: context.getIconSize(AppIconSize.lg)),
-      ),
-    );
-  }
-}
 
 class FloatingButton extends StatefulWidget {
   final ScrollController scrollControllerList;
   final ScrollController scrollControllerGrid;
-  final String operateArea;
   final DetailsPageControllerBase controller;
+  final int gridColumns;
 
   const FloatingButton({
     super.key,
     required this.scrollControllerList,
     required this.scrollControllerGrid,
-    required this.operateArea,
     required this.controller,
+    required this.gridColumns,
   });
 
   @override
@@ -88,133 +50,151 @@ class _FloatingButtonState extends State<FloatingButton> {
     super.dispose();
   }
 
-  bool _isOffsetVisible(ScrollController controller, double targetOffset) {
-    if (!controller.hasClients || !controller.position.hasContentDimensions) {
-      return false;
-    }
-    final current = controller.offset; // 当前滚动位置
-    final viewport = controller.position.viewportDimension; // 可视区域高度
-
-    return targetOffset >= current && targetOffset <= current + viewport;
-  }
-
-  int _getCurrentPlayingIndex() {
+  int _currentPlayingIndex() {
     final currentPath = _audioController.currentPath.value;
     if (currentPath.isEmpty) return -1;
     return widget.controller.items.indexWhere((m) => m.path == currentPath);
   }
 
-  void _scrollTo(ScrollController ctrl, double to, [bool useAnimate = true]) {
-    if (!ctrl.hasClients) return;
+  void _scrollTo(ScrollController controller, double to, bool useAnimate) {
+    if (!controller.hasClients) return;
     if (useAnimate) {
-      ctrl.animateTo(
+      controller.animateTo(
         to,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
+        duration: AudioPageSpec.scrollAnimation,
+        curve: AppCurve.standard,
       );
     } else {
-      ctrl.jumpTo(to);
+      controller.jumpTo(to);
     }
+  }
+
+  void _alignToCenter({
+    required ScrollController controller,
+    required double itemOffset,
+    required double itemExtent,
+    required bool useAnimate,
+    required bool scrollOnVisible,
+  }) {
+    if (!controller.hasClients) return;
+    final position = controller.position;
+    if (!position.hasContentDimensions) return;
+
+    if (!scrollOnVisible) {
+      final viewStart = position.pixels;
+      final viewEnd = viewStart + position.viewportDimension;
+      if (itemOffset >= viewStart && itemOffset + itemExtent <= viewEnd) return;
+    }
+
+    final target =
+        (itemOffset + itemExtent / 2 - position.viewportDimension / 2).clamp(
+          0.0,
+          position.maxScrollExtent,
+        );
+    _scrollTo(controller, target, useAnimate);
   }
 
   void _jumpToCurrent({bool useAnimate = true, bool scrollOnVisible = true}) {
     if (!mounted) return;
 
-    final index = _getCurrentPlayingIndex();
+    final index = _currentPlayingIndex();
     if (index < 0) return;
 
-    final mediaQuery = MediaQuery.maybeOf(context);
-    if (mediaQuery == null) return;
+    _alignToCenter(
+      controller: widget.scrollControllerList,
+      itemOffset: index * AudioPageSpec.itemHeight,
+      itemExtent: AudioPageSpec.itemHeight,
+      useAnimate: useAnimate,
+      scrollOnVisible: scrollOnVisible,
+    );
 
-    final screenSize = mediaQuery.size;
+    _alignToCenter(
+      controller: widget.scrollControllerGrid,
+      itemOffset: (index ~/ widget.gridColumns) * AudioPageSpec.gridRowExtent,
+      itemExtent: AudioPageSpec.gridRowExtent,
+      useAnimate: useAnimate,
+      scrollOnVisible: scrollOnVisible,
+    );
+  }
 
-    // 头部区域的大致高度，用于计算屏幕中间位置
-    // 这个值应该与 AudioGenPages 中的头部高度保持一致
-    final double headerOffset =
-        (widget.operateArea == OperateArea.allMusic ||
-            widget.operateArea == OperateArea.foldersDetails)
-        ? 280
-        : 384;
-    final double middleOffset = (screenSize.height - headerOffset) / 2;
-
-    final scrollControllerList = widget.scrollControllerList;
-    final scrollControllerGrid = widget.scrollControllerGrid;
-
-    // --- ListView 定位逻辑 ---
-    if (scrollControllerList.hasClients &&
-        scrollControllerList.position.hasContentDimensions) {
-      final double targetOffsetList = (index * _itemHeight - middleOffset)
-          .clamp(0.0, scrollControllerList.position.maxScrollExtent);
-
-      if (scrollOnVisible) {
-        _scrollTo(scrollControllerList, targetOffsetList, useAnimate);
-      } else {
-        if (!_isOffsetVisible(
-          scrollControllerList,
-          targetOffsetList + middleOffset,
-        )) {
-          _scrollTo(scrollControllerList, targetOffsetList, useAnimate);
-        }
-      }
-    }
-
-    // --- 计算 GridView 的定位逻辑 ---
-    if (scrollControllerGrid.hasClients &&
-        scrollControllerGrid.position.hasContentDimensions) {
-      // 计算列数
-      final int crossAxisCount = screenSize.width < _resViewThresholds ? 3 : 4;
-
-      // 计算目标项所在的行号 (从0开始)
-      final int targetRow = index ~/ crossAxisCount;
-
-      // 计算 GridView 中每行的高度（包括间距）
-      const double rowHeight = _itemHeight + 8;
-
-      // 计算最终的滚动偏移量
-      final double targetOffsetGrid = (targetRow * rowHeight - middleOffset)
-          .clamp(0.0, scrollControllerGrid.position.maxScrollExtent);
-
-      if (scrollOnVisible) {
-        _scrollTo(scrollControllerGrid, targetOffsetGrid, useAnimate);
-      } else {
-        if (!_isOffsetVisible(
-          scrollControllerGrid,
-          targetOffsetGrid + middleOffset,
-        )) {
-          _scrollTo(scrollControllerGrid, targetOffsetGrid, useAnimate);
-        }
-      }
-    }
+  void _backToTop() {
+    _scrollTo(widget.scrollControllerList, 0.0, true);
+    _scrollTo(widget.scrollControllerGrid, 0.0, true);
   }
 
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      bottom: _bottom,
-      right: 64,
+      bottom: AudioPageSpec.floatingBottom,
+      right: AudioPageSpec.floatingRight,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
-        spacing: 4,
+        spacing: AudioPageSpec.floatingSpacing,
         children: [
           _FloatingBtn(
             tooltip: '回到顶部',
             icon: PhosphorIconsFill.arrowLineUp,
-            onPressed: () {
-              if (widget.scrollControllerList.hasClients) {
-                _scrollTo(widget.scrollControllerList, 0.0);
-              }
-              if (widget.scrollControllerGrid.hasClients) {
-                _scrollTo(widget.scrollControllerGrid, 0.0);
-              }
-            },
+            onPressed: _backToTop,
           ),
           _FloatingBtn(
-            tooltip: '定位',
-            icon: PhosphorIconsLight.diamond,
-            onPressed: () => _jumpToCurrent(),
+            tooltip: '定位到当前播放',
+            icon: PhosphorIconsRegular.diamond,
+            emphasize: true,
+            onPressed: _jumpToCurrent,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FloatingBtn extends StatelessWidget {
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  /// 用主色前景
+  final bool emphasize;
+
+  const _FloatingBtn({
+    required this.tooltip,
+    required this.icon,
+    this.onPressed,
+    this.emphasize = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final background = colorScheme.surfaceContainerHighest.withValues(
+      alpha: AppAlpha.surfaceStrong,
+    );
+
+    return AppTappable(
+      onTap: onPressed,
+      tooltip: tooltip,
+      borderRadius: AppRadius.smAll,
+      background: background,
+      hoverBackground: Color.alphaBlend(
+        colorScheme.primary.withValues(alpha: AppAlpha.fill),
+        background,
+      ),
+      border: Border.all(
+        color: colorScheme.outlineVariant.withValues(alpha: AppAlpha.border),
+        width: AppSize.hairline,
+      ),
+      child: SizedBox.square(
+        dimension: AudioPageSpec.floatingButtonSize,
+        child: Center(
+          child: Icon(
+            icon,
+            size: AppIconSize.md,
+            color: emphasize
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant,
+          ),
+        ),
       ),
     );
   }

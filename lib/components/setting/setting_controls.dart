@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/setting/setting_constant.dart';
+import 'package:zerobit_player/components/widget/app_segmented.dart';
 import 'package:zerobit_player/components/widget/app_tappable.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
 
@@ -44,102 +45,10 @@ class SettingSegmented extends SignalWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final current = value.value;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(
-          alpha: AppAlpha.surfaceSubtle,
-        ),
-        borderRadius: AppRadius.smAll,
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: AppAlpha.border),
-          width: AppSize.hairline,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xxs),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          spacing: AppSpacing.xxs,
-          children: [
-            for (final entry in options.entries)
-              _SegmentChip(
-                label: entry.value,
-                isSelected: entry.key == current,
-                onTap: () => onChanged(entry.key),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SegmentChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _SegmentChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final idleColor = colorScheme.onSurfaceVariant.withValues(
-      alpha: AppAlpha.textSecondary,
-    );
-
-    return HoverBuilder(
-      onTap: isSelected ? null : onTap,
-      builder: (context, hovered) => TweenAnimationBuilder<double>(
-        tween: Tween<double>(begin: 0, end: isSelected ? 1 : 0),
-        duration: AppDuration.normal,
-        curve: AppCurve.standard,
-        builder: (context, t, child) => DecoratedBox(
-          decoration: BoxDecoration(
-            color: isSelected
-                ? colorScheme.primary.withValues(alpha: AppAlpha.fillStrong * t)
-                : (hovered
-                      ? colorScheme.primary.withValues(alpha: AppAlpha.hover)
-                      : null),
-            borderRadius: AppRadius.xsAll,
-            border: Border.all(
-              color: colorScheme.primary.withValues(
-                alpha: AppAlpha.borderStrong * t,
-              ),
-              width: AppSize.hairline,
-            ),
-          ),
-          child: SizedBox(
-            height: SettingControlSpec.segmentHeight,
-            child: Padding(
-              padding: SettingControlSpec.segmentPadding,
-              child: Center(
-                child: Text(
-                  label,
-                  style: context.createTextStyle(
-                    size: AppFontSize.sm,
-                    color: Color.lerp(idleColor, colorScheme.primary, t),
-                    weight: FontWeight.lerp(
-                      FontWeight.w400,
-                      FontWeight.w600,
-                      t,
-                    )!,
-                  ),
-                  maxLines: 1,
-                  softWrap: false,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+    return AppSegmented<int>(
+      options: options,
+      value: value.value,
+      onChanged: onChanged,
     );
   }
 }
