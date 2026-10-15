@@ -46,4 +46,11 @@ abstract final class SideBarSpec {
   static const double surfaceAlpha = 0.4;
 
   static const BorderRadius radiusAll = AppRadius.mdAll;
+
+  /// 侧栏在主布局里的外边距
+  static const double outerPadding = AppSpacing.md;
+
+  /// 侧栏在主布局里的占位宽度，含外边距。
+  static double footprintWidth({required bool expanded}) =>
+      (expanded ? expandedWidth : collapsedWidth) + outerPadding * 2;
 }
