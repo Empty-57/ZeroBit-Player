@@ -132,14 +132,14 @@ abstract final class AppDuration {
   /// 320ms — 大幅位移、数值增长
   static const Duration slow = Duration(milliseconds: 320);
 
-  /// 1000ms — snackBarInfo
-  static const Duration snackBarInfo = Duration(milliseconds: 1000);
+  /// 1500ms — snackBarInfo
+  static const Duration snackBarInfo = Duration(milliseconds: 1500);
 
-  /// 1500ms — snackBarWarning
-  static const Duration snackBarWarning = Duration(milliseconds: 1500);
+  /// 2500ms — snackBarWarning
+  static const Duration snackBarWarning = Duration(milliseconds: 2500);
 
-  /// 3000ms — snackBarError
-  static const Duration snackBarError = Duration(milliseconds: 3000);
+  /// 3500ms — snackBarError
+  static const Duration snackBarError = Duration(milliseconds: 3500);
 
   /// Tooltip 悬停等待
   static const Duration tooltipWait = Duration(milliseconds: 150);
