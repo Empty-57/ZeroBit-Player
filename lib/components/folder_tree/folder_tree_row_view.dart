@@ -160,9 +160,7 @@ class _FolderRow extends StatelessWidget {
           ),
           Text(
             '${node.songCount}',
-            style: styles.sub.copyWith(
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
+            style: styles.sub,
           ),
         ],
       ),
@@ -234,9 +232,7 @@ class _MusicRow extends StatelessWidget {
             ),
             Text(
               formatTime(totalSeconds: meta.duration),
-              style: styles.sub.copyWith(
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
+              style: styles.sub,
             ),
           ],
         ],

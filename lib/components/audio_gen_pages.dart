@@ -101,10 +101,12 @@ class _AudioGenPagesState extends State<AudioGenPages> {
     _subStyle = context.createTextStyle(
       size: AppFontSize.sm,
       opacity: AppAlpha.textSecondary,
+      tabularFigures: true,
     );
     _highLightSubStyle = context.createTextStyle(
       size: AppFontSize.sm,
       color: primary.withValues(alpha: AppAlpha.textSecondary),
+      tabularFigures: true,
     );
   }
 

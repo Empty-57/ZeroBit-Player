@@ -175,6 +175,7 @@ class _FoldersPreviewPageState extends State<FoldersPreviewPage> {
       sub: context.createTextStyle(
         size: AppFontSize.sm,
         opacity: AppAlpha.textTertiary,
+        tabularFigures: true,
       ),
       highlight: context.createTextStyle(
         size: AppFontSize.md,
