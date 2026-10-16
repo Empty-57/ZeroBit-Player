@@ -128,19 +128,6 @@ abstract final class AppAlpha {
   static const double controlBorder = 0.5;
 }
 
-/// 控件的语义色。按钮、分段、步进器等共用，深浅才能统一
-extension AppControlColors on ColorScheme {
-  /// 次要控件的常态底色
-  Color get controlFill => onSurface.withValues(alpha: AppAlpha.controlFill);
-
-  /// 次要控件的描边
-  Color get controlBorder =>
-      outlineVariant.withValues(alpha: AppAlpha.controlBorder);
-
-  /// 透明 / 次要控件悬停时叠加的强调色
-  Color get controlHover => primary.withValues(alpha: AppAlpha.fill);
-}
-
 abstract final class AppDuration {
   /// 90ms — 颜色、透明度等即时反馈
   static const Duration instant = Duration(milliseconds: 90);

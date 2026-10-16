@@ -158,10 +158,7 @@ class _FolderRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          Text(
-            '${node.songCount}',
-            style: styles.sub,
-          ),
+          Text('${node.songCount}', style: styles.sub),
         ],
       ),
     );
@@ -230,10 +227,7 @@ class _MusicRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            Text(
-              formatTime(totalSeconds: meta.duration),
-              style: styles.sub,
-            ),
+            Text(formatTime(totalSeconds: meta.duration), style: styles.sub),
           ],
         ],
       ),
