@@ -94,7 +94,7 @@ class _AppTappableState extends State<AppTappable> {
   }
 }
 
-/// 使 [builder] 能便捷地响应 hover 事件的包装器
+/// 使 [builder] 能便捷地响应 hover 和 tap 事件的包装器
 class HoverBuilder extends StatefulWidget {
   final Widget Function(BuildContext context, bool hovered) builder;
 

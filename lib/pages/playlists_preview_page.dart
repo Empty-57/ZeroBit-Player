@@ -14,10 +14,9 @@ import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/models/user_playlist_model.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
 
-const double _itemHeight = 64.0;
+import '../components/widget/app_dialog.dart';
 
-/// 歌单没有封面，用一个固定尺寸的图标块占位，和列表页的缩略图对齐
-const double _iconBoxSize = AppSize.coverSm;
+const double _itemHeight = 64.0;
 
 const double _rowActionSize = 40.0;
 const double _headerButtonWidth = 128.0;
@@ -209,8 +208,8 @@ class _PlayListTile extends StatelessWidget {
           spacing: AppSpacing.lg,
           children: [
             Container(
-              width: _iconBoxSize,
-              height: _iconBoxSize,
+              width: AppSize.coverSm,
+              height: AppSize.coverSm,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: colorScheme.primaryContainer.withValues(
@@ -337,8 +336,10 @@ class _PlaylistNameDialogState extends State<_PlaylistNameDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return _DialogShell(
+    return AppDialog.confirm(
       title: widget.title,
+      buttonWidth: _dialogButtonWidth,
+      buttonHeight: _dialogButtonHeight,
       content: SizedBox(
         width: _dialogContentWidth,
         child: TextField(
@@ -366,8 +367,10 @@ class _PlaylistNameDialogState extends State<_PlaylistNameDialog> {
 Future<bool> showDeleteConfirmDialog(BuildContext context, String name) async {
   final confirmed = await showDialog<bool>(
     context: context,
-    builder: (_) => _DialogShell(
+    builder: (_) => AppDialog.confirm(
       title: '删除歌单',
+      buttonWidth: _dialogButtonWidth,
+      buttonHeight: _dialogButtonHeight,
       content: SizedBox(
         width: _dialogContentWidth,
         child: Text(
@@ -381,75 +384,4 @@ Future<bool> showDeleteConfirmDialog(BuildContext context, String name) async {
     ),
   );
   return confirmed ?? false;
-}
-
-/// 两个小对话框共用的外壳
-class _DialogShell extends StatelessWidget {
-  final String title;
-  final Widget content;
-  final String confirmLabel;
-  final VoidCallback onConfirm;
-
-  final bool isDangerous;
-
-  const _DialogShell({
-    required this.title,
-    required this.content,
-    required this.confirmLabel,
-    required this.onConfirm,
-    this.isDangerous = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final accent = isDangerous ? colorScheme.error : colorScheme.primary;
-
-    return AlertDialog(
-      title: Text(title),
-      titleTextStyle: context.createTextStyle(
-        size: AppFontSize.xl,
-        weight: FontWeight.w600,
-      ),
-      shape: const RoundedRectangleBorder(borderRadius: AppRadius.xsAll),
-      backgroundColor: colorScheme.surface,
-      content: Column(
-        crossAxisAlignment: .stretch,
-        mainAxisSize: .min,
-        spacing: AppSpacing.lg,
-        children: [
-          content,
-          Row(
-            mainAxisAlignment: .end,
-            spacing: AppSpacing.md,
-            children: [
-              GeneralBtn(
-                fn: () => Navigator.pop(context),
-                label: '取消',
-                btnWidth: _dialogButtonWidth,
-                btnHeight: _dialogButtonHeight,
-                mainAxisAlignment: MainAxisAlignment.center,
-                backgroundColor: Colors.transparent,
-                contentColor: colorScheme.onSurfaceVariant,
-                borderWidth: AppSize.hairline,
-                borderColor: colorScheme.outlineVariant.withValues(
-                  alpha: AppAlpha.border,
-                ),
-              ),
-              GeneralBtn(
-                fn: onConfirm,
-                label: confirmLabel,
-                btnWidth: _dialogButtonWidth,
-                btnHeight: _dialogButtonHeight,
-                mainAxisAlignment: MainAxisAlignment.center,
-                backgroundColor: accent,
-                contentColor: colorScheme.onPrimary,
-                overlayColor: colorScheme.surface,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 }

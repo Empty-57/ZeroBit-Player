@@ -6,6 +6,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/API/apis.dart';
 import 'package:zerobit_player/components/play_page/play_page_constant.dart';
+import 'package:zerobit_player/components/widget/app_dialog.dart';
 import 'package:zerobit_player/components/widget/audio_ctrl_btn.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
@@ -239,17 +240,8 @@ class NetLrcDialog extends StatelessWidget {
         showDialog<void>(
           barrierDismissible: true,
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text("选择歌词"),
-            titleTextStyle: context.createTextStyle(
-              size: AppFontSize.xl,
-              weight: FontWeight.w600,
-            ),
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(4)),
-            ),
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            actionsAlignment: MainAxisAlignment.end,
+          builder: (context) => AppDialog(
+            title: "选择歌词",
             content: _NetLrcDialogContent(color: color),
           ),
         );

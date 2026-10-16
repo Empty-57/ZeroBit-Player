@@ -22,9 +22,6 @@ import 'package:zerobit_player/tools/func/sync_cache.dart';
 /// 平铺视图行高
 const double _flatRowHeight = 64.0;
 
-/// 平铺视图的文件夹图标块
-const double _folderIconBox = AppSize.coverSm;
-
 /// 列表底部留白
 const double _bottomInset = _flatRowHeight * 2;
 
@@ -377,8 +374,8 @@ class _FlatFolderTile extends StatelessWidget {
           spacing: AppSpacing.lg,
           children: [
             Container(
-              width: _folderIconBox,
-              height: _folderIconBox,
+              width: AppSize.coverSm,
+              height: AppSize.coverSm,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: colorScheme.primaryContainer.withValues(

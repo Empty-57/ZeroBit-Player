@@ -358,14 +358,8 @@ class _ColorPickerDialogState extends State<_ColorPickerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('取色器'),
-      titleTextStyle: context.createTextStyle(
-        size: AppFontSize.xl,
-        weight: FontWeight.w600,
-      ),
-      shape: const RoundedRectangleBorder(borderRadius: AppRadius.xsAll),
-      backgroundColor: Theme.of(context).colorScheme.surface,
+    return AppDialog.confirm(
+      title: '取色器',
       content: Column(
         mainAxisSize: MainAxisSize.min,
         spacing: AppSpacing.xl,
@@ -396,12 +390,9 @@ class _ColorPickerDialogState extends State<_ColorPickerDialog> {
             onColorChanged: (color) =>
                 setState(() => _color = color.toARGB32()),
           ),
-          _DialogFooter(
-            onCancel: () => Navigator.pop(context),
-            onConfirm: () => Navigator.pop(context, _color),
-          ),
         ],
       ),
+      onConfirm: () => Navigator.pop(context, _color),
     );
   }
 }

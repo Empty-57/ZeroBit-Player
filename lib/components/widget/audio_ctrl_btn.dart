@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
+import 'package:zerobit_player/components/widget/app_dialog.dart';
 import 'package:zerobit_player/components/widget/diamond_slider_thumb.dart';
 import 'package:zerobit_player/components/widget/general_btn.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
@@ -452,82 +453,67 @@ class _EqualizerBtn extends StatelessWidget {
       barrierDismissible: true,
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("均衡器"),
-          titleTextStyle: context.createTextStyle(
-            size: AppFontSize.xl,
-            weight: FontWeight.w600,
-          ),
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(4)),
-          ),
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          actionsAlignment: MainAxisAlignment.end,
-          actions: <Widget>[
-            SizedBox(
-              width: width * 2 / 3,
-              height: height / 2,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 16,
-                children: [
-                  SignalBuilder(
-                    builder: (context) {
-                      // 显式读取 .value 建立依赖，避免预设为空时不产生任何读取
-                      final equalizerGains =
-                          settingController.equalizerGains.value;
-                      return Wrap(
-                        spacing: 2,
-                        runSpacing: 2,
-                        children: SettingController.equalizerGainPresets.entries
-                            .map((entry) {
-                              final isEqual = listEquals(
-                                equalizerGains,
-                                entry.value,
-                              );
-                              return GeneralBtn(
-                                fn: () async {
-                                  settingController.equalizerGains.value =
-                                      entry.value;
-                                  await settingController.putScalableCache();
-                                  for (final v in entry.value.indexed) {
-                                    await setEqParams(
-                                      freCenterIndex: v.$1,
-                                      gain: v.$2,
-                                    );
-                                  }
-                                },
-                                label: SettingController
-                                    .equalizerGainPresetsText[entry.key],
-                                backgroundColor: isEqual
-                                    ? backgroundColor
-                                    : Theme.of(context)
-                                          .colorScheme
-                                          .secondaryContainer
-                                          .withValues(alpha: 0.2),
-                                contentColor: isEqual
-                                    ? Theme.of(context).colorScheme.onPrimary
-                                    : backgroundColor,
-                                btnWidth: 96,
-                                btnHeight: 36,
-                              );
-                            })
-                            .toList(),
-                      );
-                    },
-                  ),
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: equalizerSliders,
-                    ),
-                  ),
-                ],
+        return AppDialog(
+          title: "均衡器",
+          widthFactor: 2 / 3,
+          content: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 16,
+            children: [
+              SignalBuilder(
+                builder: (context) {
+                  // 显式读取 .value 建立依赖，避免预设为空时不产生任何读取
+                  final equalizerGains = settingController.equalizerGains.value;
+                  return Wrap(
+                    spacing: 2,
+                    runSpacing: 2,
+                    children: SettingController.equalizerGainPresets.entries
+                        .map((entry) {
+                          final isEqual = listEquals(
+                            equalizerGains,
+                            entry.value,
+                          );
+                          return GeneralBtn(
+                            fn: () async {
+                              settingController.equalizerGains.value =
+                                  entry.value;
+                              await settingController.putScalableCache();
+                              for (final v in entry.value.indexed) {
+                                await setEqParams(
+                                  freCenterIndex: v.$1,
+                                  gain: v.$2,
+                                );
+                              }
+                            },
+                            label: SettingController
+                                .equalizerGainPresetsText[entry.key],
+                            backgroundColor: isEqual
+                                ? backgroundColor
+                                : Theme.of(context)
+                                      .colorScheme
+                                      .secondaryContainer
+                                      .withValues(alpha: 0.2),
+                            contentColor: isEqual
+                                ? Theme.of(context).colorScheme.onPrimary
+                                : backgroundColor,
+                            btnWidth: 96,
+                            btnHeight: 36,
+                          );
+                        })
+                        .toList(),
+                  );
+                },
               ),
-            ),
-          ],
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: equalizerSliders,
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
