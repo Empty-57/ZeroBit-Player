@@ -72,7 +72,7 @@ class SideBarBtn extends SignalWidget {
   }
 }
 
-/// 侧栏项：图标 + 可淡出的标签。
+/// 侧栏项
 class SideBarItem extends StatelessWidget {
   final IconData icon;
   final String label;
