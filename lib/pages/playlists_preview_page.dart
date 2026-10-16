@@ -27,8 +27,6 @@ const double _bottomInset = _itemHeight * 2;
 
 /// 小对话框的内容宽度
 const double _dialogContentWidth = 400.0;
-const double _dialogButtonWidth = 80.0;
-const double _dialogButtonHeight = 36.0;
 
 class PlayListPreviewPage extends StatelessWidget {
   const PlayListPreviewPage({super.key});
@@ -338,8 +336,6 @@ class _PlaylistNameDialogState extends State<_PlaylistNameDialog> {
   Widget build(BuildContext context) {
     return AppDialog.confirm(
       title: widget.title,
-      buttonWidth: _dialogButtonWidth,
-      buttonHeight: _dialogButtonHeight,
       content: SizedBox(
         width: _dialogContentWidth,
         child: TextField(
@@ -369,8 +365,6 @@ Future<bool> showDeleteConfirmDialog(BuildContext context, String name) async {
     context: context,
     builder: (_) => AppDialog.confirm(
       title: '删除歌单',
-      buttonWidth: _dialogButtonWidth,
-      buttonHeight: _dialogButtonHeight,
       content: SizedBox(
         width: _dialogContentWidth,
         child: Text(

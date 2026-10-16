@@ -117,6 +117,28 @@ abstract final class AppAlpha {
 
   /// 鼠标悬停的叠加色
   static const double hover = 0.07;
+
+  /// 实心按钮悬停时，前景色叠在填充上的强度。
+  static const double hoverOnFill = 0.16;
+
+  /// 次要控件（按钮、分段、步进器）的底色强度
+  static const double controlFill = 0.06;
+
+  /// 次要控件的描边
+  static const double controlBorder = 0.5;
+}
+
+/// 控件的语义色。按钮、分段、步进器等共用，深浅才能统一
+extension AppControlColors on ColorScheme {
+  /// 次要控件的常态底色
+  Color get controlFill => onSurface.withValues(alpha: AppAlpha.controlFill);
+
+  /// 次要控件的描边
+  Color get controlBorder =>
+      outlineVariant.withValues(alpha: AppAlpha.controlBorder);
+
+  /// 透明 / 次要控件悬停时叠加的强调色
+  Color get controlHover => primary.withValues(alpha: AppAlpha.fill);
 }
 
 abstract final class AppDuration {

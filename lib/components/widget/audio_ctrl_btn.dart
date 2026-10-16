@@ -446,9 +446,6 @@ class _EqualizerBtn extends StatelessWidget {
       );
     }).toList();
 
-    final height = MediaQuery.sizeOf(context).height;
-    final width = MediaQuery.sizeOf(context).width;
-
     showDialog<void>(
       barrierDismissible: true,
       context: context,

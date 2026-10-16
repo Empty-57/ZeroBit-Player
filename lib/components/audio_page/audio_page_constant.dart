@@ -1,6 +1,5 @@
 library;
 
-import 'package:flutter/widgets.dart';
 import 'package:zerobit_player/components/play_bar_constant.dart';
 import 'package:zerobit_player/field/ui_constants.dart';
 

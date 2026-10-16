@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:zerobit_player/components/widget/app_button.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
-
-import 'general_btn.dart';
 
 /// 对话框通用尺寸
 abstract final class AppDialogSpec {
@@ -14,6 +13,9 @@ abstract final class AppDialogSpec {
 
   /// 对话框内搜索框高度
   static const double searchFieldHeight = 38.0;
+
+  /// 底部按钮最小宽度
+  static const double actionMinWidth = 84.0;
 }
 
 /// 应用级对话框外壳。
@@ -21,16 +23,16 @@ class AppDialog extends StatelessWidget {
   final String title;
   final Widget content;
 
-  /// 自定义底部操作区
+  /// 自定义底部操作区。标准的「取消 / 确定」用 [AppDialogActions]
   final Widget? footer;
 
-  /// 宽度比例，null 时自适应
+  /// 宽度比例，null 时按内容自适应，要求内容有固有宽高
   final double? widthFactor;
 
-  /// 高度比例，null 时自适应
+  /// 高度比例，null 时按内容自适应
   final double? heightFactor;
 
-  /// 内容区与底部/边缘的间距控制
+  /// 内容区内边距
   final EdgeInsetsGeometry contentPadding;
 
   const AppDialog({
@@ -43,6 +45,7 @@ class AppDialog extends StatelessWidget {
     this.contentPadding = const EdgeInsets.only(top: AppSpacing.sm),
   });
 
+  /// 带标准「取消 / 确定」的小对话框，尺寸默认按内容自适应
   factory AppDialog.confirm({
     Key? key,
     required String title,
@@ -54,50 +57,19 @@ class AppDialog extends StatelessWidget {
     bool isDangerous = false,
     double? widthFactor,
     double? heightFactor,
-    double buttonWidth = 84.0,
-    double buttonHeight = 36.0,
   }) {
     return AppDialog(
       key: key,
       title: title,
       content: content,
-      heightFactor: heightFactor,
       widthFactor: widthFactor,
-      footer: Builder(
-        builder: (context) {
-          final colorScheme = Theme.of(context).colorScheme;
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            spacing: AppSpacing.md,
-            children: [
-              GeneralBtn(
-                fn: onCancel ?? () => Navigator.pop(context),
-                label: cancelLabel,
-                btnWidth: buttonWidth,
-                btnHeight: buttonHeight,
-                mainAxisAlignment: MainAxisAlignment.center,
-                backgroundColor: Colors.transparent,
-                contentColor: colorScheme.onSurfaceVariant,
-                borderWidth: AppSize.hairline,
-                borderColor: colorScheme.outlineVariant.withValues(
-                  alpha: AppAlpha.border,
-                ),
-              ),
-              GeneralBtn(
-                fn: onConfirm,
-                label: confirmLabel,
-                btnWidth: buttonWidth,
-                btnHeight: buttonHeight,
-                mainAxisAlignment: MainAxisAlignment.center,
-                backgroundColor: isDangerous
-                    ? colorScheme.error
-                    : colorScheme.primary,
-                contentColor: colorScheme.onPrimary,
-                overlayColor: colorScheme.surface,
-              ),
-            ],
-          );
-        },
+      heightFactor: heightFactor,
+      footer: AppDialogActions(
+        onConfirm: onConfirm,
+        onCancel: onCancel,
+        confirmLabel: confirmLabel,
+        cancelLabel: cancelLabel,
+        isDangerous: isDangerous,
       ),
     );
   }
@@ -107,26 +79,8 @@ class AppDialog extends StatelessWidget {
     final size = MediaQuery.sizeOf(context);
     final colorScheme = Theme.of(context).colorScheme;
 
-    final isFixedWidth = widthFactor != null;
-    final effectiveWidth = isFixedWidth ? size.width * widthFactor! : null;
-
     final isFixedHeight = heightFactor != null;
-    final effectiveHeight = isFixedHeight ? size.height * heightFactor! : null;
-
-    final Widget body = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: isFixedHeight ? MainAxisSize.max : MainAxisSize.min,
-      spacing: AppSpacing.lg,
-      children: [
-        if (isFixedHeight)
-          Expanded(
-            child: Padding(padding: contentPadding, child: content),
-          )
-        else
-          Padding(padding: contentPadding, child: content),
-        ?footer,
-      ],
-    );
+    final paddedContent = Padding(padding: contentPadding, child: content);
 
     return AlertDialog(
       title: Text(title),
@@ -138,10 +92,86 @@ class AppDialog extends StatelessWidget {
       shape: const RoundedRectangleBorder(borderRadius: AppRadius.xsAll),
       backgroundColor: colorScheme.surface,
       content: SizedBox(
-        width: effectiveWidth,
-        height: effectiveHeight,
-        child: body,
+        width: widthFactor == null ? null : size.width * widthFactor!,
+        height: isFixedHeight ? size.height * heightFactor! : null,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: isFixedHeight ? MainAxisSize.max : MainAxisSize.min,
+          spacing: AppSpacing.lg,
+          children: [
+            // 定高时内容吃满剩余空间，自适应时按内容收缩
+            if (isFixedHeight)
+              Expanded(child: paddedContent)
+            else
+              paddedContent,
+            ?footer,
+          ],
+        ),
       ),
+    );
+  }
+}
+
+/// 对话框底部的标准操作区：左侧可选的附加操作，右侧「取消 / 确定」
+class AppDialogActions extends StatelessWidget {
+  /// 为 null 时确定键禁用
+  final VoidCallback? onConfirm;
+
+  /// 为 null 时直接关闭对话框
+  final VoidCallback? onCancel;
+
+  final String confirmLabel;
+  final String cancelLabel;
+  final IconData? confirmIcon;
+
+  /// 是否是破坏性动作
+  final bool isDangerous;
+
+  /// 是否执行中
+  final bool loading;
+
+  /// 是否只留取消键
+  final bool showConfirm;
+
+  /// 左侧附加组件
+  final Widget? leading;
+
+  const AppDialogActions({
+    super.key,
+    this.onConfirm,
+    this.onCancel,
+    this.confirmLabel = '确定',
+    this.cancelLabel = '取消',
+    this.confirmIcon,
+    this.isDangerous = false,
+    this.loading = false,
+    this.showConfirm = true,
+    this.leading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      spacing: AppSpacing.md,
+      children: [
+        ?leading,
+        const Spacer(),
+        AppButton(
+          onPressed: loading ? null : onCancel ?? () => Navigator.pop(context),
+          label: cancelLabel,
+          minWidth: AppDialogSpec.actionMinWidth,
+        ),
+        if (showConfirm)
+          AppButton(
+            onPressed: onConfirm,
+            label: confirmLabel,
+            icon: confirmIcon,
+            style: AppButtonStyle.filled,
+            danger: isDangerous,
+            loading: loading,
+            minWidth: AppDialogSpec.actionMinWidth,
+          ),
+      ],
     );
   }
 }
