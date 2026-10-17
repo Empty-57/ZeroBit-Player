@@ -3,7 +3,7 @@ library;
 import 'package:zerobit_player/components/play_bar_constant.dart';
 import 'package:zerobit_player/field/ui_constants.dart';
 
-abstract final class AudioPageSpec {
+abstract final class AudioListViewSpec {
   /// 列表行高
   static const double itemHeight = 64.0;
 
@@ -20,7 +20,7 @@ abstract final class AudioPageSpec {
   /// 分组容器的内边距
   static const double actionGroupPadding = AppSpacing.xxs;
   static const double groupedActionHeight =
-      actionHeight - actionGroupPadding * 2;
+      actionHeight - actionGroupPadding * 2 + AppSize.hairline * 2;
 
   /// 播放按钮、排序按钮宽度
   static const double playButtonWidth = 96.0;

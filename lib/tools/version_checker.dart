@@ -4,12 +4,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zerobit_player/components/widget/app_dialog.dart';
 import 'package:zerobit_player/logger.dart';
 
-import '../components/widget/general_btn.dart';
 import '../components/widget/get_snack_bar.dart';
 import 'func/style_manager.dart';
 
@@ -164,7 +162,7 @@ class VersionChecker {
       barrierDismissible: true,
       context: context,
       builder: (BuildContext ctx) {
-        return AppDialog(
+        return AppDialog.confirm(
           title: repoInfo.title,
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,47 +175,22 @@ class VersionChecker {
               Expanded(child: Markdown(data: repoInfo.body)),
             ],
           ),
-          footer: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            spacing: 8,
-            children: [
-              GeneralBtn(
-                fn: () => Navigator.pop(ctx, 'cancel'),
-                backgroundColor: Colors.transparent,
-                contentColor: Theme.of(ctx).colorScheme.primary,
-                btnWidth: 72,
-                btnHeight: 36,
-                label: "取消",
-              ),
-              GeneralBtn(
-                fn: () async {
-                  Navigator.pop(ctx, 'action');
-                  final Uri url = Uri.parse(repoInfo.downloadUrl);
-                  try {
-                    await launchUrl(url);
-                  } catch (e, stackTrace) {
-                    LoggerUni.w(
-                      "跳转失败 URL: ${repoInfo.downloadUrl}",
-                      e,
-                      stackTrace,
-                    );
-                    showSnackBar(
-                      title: "ERROR",
-                      msg: "跳转失败，请前往浏览器下载！",
-                      duration: const Duration(milliseconds: 3000),
-                    );
-                  }
-                },
-                backgroundColor: Theme.of(ctx).colorScheme.primary,
-                contentColor: Theme.of(ctx).colorScheme.onPrimary,
-                overlayColor: Theme.of(ctx).colorScheme.surfaceContainer,
-                btnWidth: 128,
-                btnHeight: 36,
-                icon: PhosphorIconsLight.arrowUpRight,
-                label: "获取更新",
-              ),
-            ],
-          ),
+          confirmLabel: '前往下载',
+          onCancel: () => Navigator.pop(ctx, 'cancel'),
+          onConfirm: () async {
+            Navigator.pop(ctx, 'action');
+            final Uri url = Uri.parse(repoInfo.downloadUrl);
+            try {
+              await launchUrl(url);
+            } catch (e, stackTrace) {
+              LoggerUni.w("跳转失败 URL: ${repoInfo.downloadUrl}", e, stackTrace);
+              showSnackBar(
+                title: "ERROR",
+                msg: "跳转失败，请前往浏览器下载！",
+                duration: const Duration(milliseconds: 3000),
+              );
+            }
+          },
         );
       },
     );

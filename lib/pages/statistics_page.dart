@@ -7,8 +7,8 @@ import 'package:zerobit_player/components/statistics/listen_rank_view.dart';
 import 'package:zerobit_player/components/statistics/listening_duration_chart.dart';
 import 'package:zerobit_player/components/statistics/listening_habits_view.dart';
 import 'package:zerobit_player/components/statistics/statistics_constant.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
-import 'package:zerobit_player/components/widget/segmented_tabs.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
+import 'package:zerobit_player/components/widget/slide_segmented_tabs.dart';
 import 'package:zerobit_player/controller/statistics_ctrl.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
 
@@ -114,7 +114,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                   opacity: AppAlpha.textSecondary,
                 ),
               ),
-              SegmentedTabs(
+              SlideSegmentedTabs(
                 items: _tabs,
                 selectedIndex: _tabIndex,
                 onChanged: _onTabChanged,
@@ -165,33 +165,18 @@ class _RefreshButtonState extends State<_RefreshButton>
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final background = colorScheme.secondaryContainer.withValues(
-      alpha: AppAlpha.surface,
-    );
-
-    return AppTappable(
-      onTap: () => unawaited(_refresh()),
+    return AppButton.secondary(
+      onPressed: () => unawaited(_refresh()),
       tooltip: '刷新统计数据',
-      background: background,
-      hoverBackground: Color.alphaBlend(
-        colorScheme.primary.withValues(alpha: AppAlpha.hover),
-        background,
-      ),
-      border: Border.all(
-        color: colorScheme.primary.withValues(alpha: AppAlpha.border),
-        width: AppSize.hairline,
-      ),
-      child: SizedBox.square(
-        dimension: AppSize.iconButton,
-        child: Center(
-          child: RotationTransition(
-            turns: _spin.drive(CurveTween(curve: AppCurve.inOut)),
-            child: Icon(
-              PhosphorIconsLight.arrowClockwise,
-              size: AppIconSize.sm,
-              color: colorScheme.primary,
-            ),
-          ),
+      padding: const EdgeInsets.all(0),
+      width: AppSize.iconButton,
+      height: AppSize.iconButton,
+      child: RotationTransition(
+        turns: _spin.drive(CurveTween(curve: AppCurve.inOut)),
+        child: Icon(
+          PhosphorIconsLight.arrowClockwise,
+          size: AppIconSize.sm,
+          color: colorScheme.primary,
         ),
       ),
     );

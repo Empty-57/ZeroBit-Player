@@ -8,7 +8,7 @@ abstract class LyricConstants {
   static const double notPlayedLightAlpha = 0.25;
   static const double notPlayedDarkAlpha = 0.15;
   static const BorderRadius borderRadius = BorderRadius.all(Radius.circular(4));
-  static const double ctrlBtnMinSize = 40.0;
+  static const double ctrlBtnMinSize = 32.0;
   static const double floatingY = -2.0;
   static const double rippleThreshold = 1.5;
   static const double ripplesScaleMin = 1.1;

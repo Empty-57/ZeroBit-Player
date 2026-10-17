@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:zerobit_player/components/widget/app_Interaction_widget.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
 import 'package:zerobit_player/components/widget/app_empty_state.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
 import 'package:zerobit_player/components/widget/covers.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
@@ -386,24 +387,11 @@ class _TileShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final background = colorScheme.surfaceContainer.withValues(
-      alpha: AppAlpha.surfaceStrong,
-    );
-
-    return AppTappable(
-      onTap: onTap,
+    return AppButton.secondary(
+      onPressed: onTap,
       tooltip: tooltip,
       borderRadius: AppRadius.smAll,
-      background: background,
-      hoverBackground: Color.alphaBlend(
-        colorScheme.primary.withValues(alpha: AppAlpha.hover),
-        background,
-      ),
-      border: Border.all(
-        color: colorScheme.outlineVariant.withValues(alpha: AppAlpha.border),
-        width: AppSize.hairline,
-      ),
+      padding: const EdgeInsets.all(0),
       child: child,
     );
   }
@@ -572,7 +560,7 @@ class _LetterButton extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return HoverBuilder(
-      onTap: onTap,
+      onPressed: onTap,
       builder: (context, hovered) => DecoratedBox(
         decoration: BoxDecoration(
           color: hovered

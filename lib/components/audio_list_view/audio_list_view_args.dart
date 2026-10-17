@@ -5,7 +5,7 @@ import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 
 /// 列表页各组件共用的一组参数。
-class AudioPageArgs {
+class AudioListViewArgs {
   final String title;
 
   /// 当前页类型
@@ -28,7 +28,7 @@ class AudioPageArgs {
   /// 播放全部
   final void Function() onPlayAll;
 
-  const AudioPageArgs({
+  const AudioListViewArgs({
     required this.title,
     required this.operateArea,
     required this.audioSource,

@@ -4,7 +4,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/play_queue_menu_anchor.dart';
 import 'package:zerobit_player/components/side_bar_constant.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
@@ -65,9 +65,7 @@ class SideBarBtn extends SignalWidget {
       label: label,
       expanded: sideBarIsExpanded(context),
       selected: selected,
-      onTap: selected
-          ? null
-          : () => SidebarNavState.navigateTo(context, localIndex),
+      onTap: () => SidebarNavState.navigateTo(context, localIndex),
     );
   }
 }
@@ -98,12 +96,9 @@ class SideBarItem extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final contentColor = selected ? colorScheme.primary : colorScheme.onSurface;
 
-    return AppTappable(
-      onTap: onTap,
-      background: selected
-          ? colorScheme.primary.withValues(alpha: AppAlpha.fill)
-          : null,
-      hoverBackground: colorScheme.primary.withValues(alpha: AppAlpha.hover),
+    return AppButton.ghost(
+      onPressed: onTap,
+      selected: selected,
       padding: const EdgeInsets.only(
         left: SideBarSpec.itemPaddingLeft, // 不需要设置右内边距了
       ),

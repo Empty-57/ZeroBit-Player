@@ -14,7 +14,6 @@ import 'package:zerobit_player/components/play_page/play_page_constant.dart';
 import 'package:zerobit_player/components/play_page/spectrogram_widget.dart';
 import 'package:zerobit_player/components/widget/audio_ctrl_btn.dart';
 import 'package:zerobit_player/components/widget/covers.dart';
-import 'package:zerobit_player/components/widget/general_btn.dart';
 import 'package:zerobit_player/components/widget/scroll_text.dart';
 import 'package:zerobit_player/components/window_ctrl_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
@@ -34,6 +33,7 @@ import 'package:zerobit_player/tools/func/style_manager.dart';
 import 'package:zerobit_player/tools/paint_cache.dart';
 
 import '../components/tilt3d.dart';
+import '../components/widget/app_button/app_button.dart';
 
 const LinearGradient _lyricsFadeGradient = LinearGradient(
   begin: Alignment.topCenter,
@@ -460,20 +460,10 @@ class _PlayPageState extends State<PlayPage> {
 
   Widget _createMenuIconBtn({
     String? toolTip,
-    IconData? icon,
+    required IconData icon,
     required VoidCallback fn,
   }) {
-    return GeneralBtn(
-      fn: fn,
-      btnHeight: 28,
-      btnWidth: 28,
-      tooltip: toolTip,
-      icon: icon,
-      contentColor: _themeService.darkTheme.colorScheme.onSecondaryContainer,
-      mainAxisAlignment: MainAxisAlignment.center,
-      backgroundColor: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-    );
+    return AppButton.icon(onPressed: fn, tooltip: toolTip, icon: icon);
   }
 
   Widget _createMenuBtn({
@@ -482,18 +472,18 @@ class _PlayPageState extends State<PlayPage> {
     required VoidCallback fn,
     String? toolTip,
   }) {
-    return GeneralBtn(
-      fn: fn,
-      btnHeight: PlayPageConstant.menuBtnHeight,
-      btnWidth: PlayPageConstant.menuBtnWidth,
-      radius: PlayPageConstant.menuBtnRadius,
+    return AppButton.ghost(
+      onPressed: fn,
+      height: PlayPageConstant.menuBtnHeight,
+      width: PlayPageConstant.menuBtnWidth,
+      borderRadius: AppRadius.zeroAll,
+      size: .menuItem,
       icon: icon,
       label: text,
       tooltip: toolTip,
-      contentColor: _themeService.darkTheme.colorScheme.onSecondaryContainer,
-      mainAxisAlignment: MainAxisAlignment.start,
-      backgroundColor: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      spacing: AppSpacing.md,
+      alignment: MainAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
     );
   }
 
@@ -504,11 +494,12 @@ class _PlayPageState extends State<PlayPage> {
     required VoidCallback decFn,
   }) {
     return Container(
-      height: 36,
+      height: PlayPageConstant.menuBtnHeight,
       color: darkColorScheme.surfaceContainer.withValues(alpha: 0.3),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        spacing: AppSpacing.sm,
+        mainAxisSize: .min,
         children: [
           Expanded(
             child: Text(
@@ -516,16 +507,15 @@ class _PlayPageState extends State<PlayPage> {
               style: context.createTextStyle(
                 size: AppFontSize.md,
                 color: _themeService.darkTheme.colorScheme.onSecondaryContainer,
+                tabularFigures: true,
               ),
             ),
           ),
-          const SizedBox(width: 12),
           _createMenuIconBtn(
             toolTip: '增大',
             icon: PhosphorIconsLight.plus,
             fn: addFn,
           ),
-          const SizedBox(width: 4),
           _createMenuIconBtn(
             toolTip: '减小',
             icon: PhosphorIconsLight.minus,
@@ -545,8 +535,13 @@ class _PlayPageState extends State<PlayPage> {
     return SubmenuButton(
       animated: true,
       submenuIcon: const WidgetStatePropertyAll(SizedBox.shrink()),
-      style: const ButtonStyle(
-        padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16)),
+      style: ButtonStyle(
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        ),
+        overlayColor: WidgetStatePropertyAll(
+          darkColorScheme.primary.withValues(alpha: AppAlpha.hover),
+        ),
       ),
       leadingIcon: leadingIcon,
       menuStyle: MenuStyle(
@@ -782,7 +777,7 @@ class _PlayPageState extends State<PlayPage> {
         return GenIconBtn(
           tooltip: tip,
           icon: isSelected ? fillIcon : lightIcon,
-          size: 36,
+          size: PlayPageConstant.ctrlBtnMinSize,
           iconSize: 20,
           color: mixColor,
           fn: () => _coverViewMode.value = id,

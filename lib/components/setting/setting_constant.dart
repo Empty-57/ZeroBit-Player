@@ -41,8 +41,6 @@ abstract final class SettingControlSpec {
   /// 次要操作按钮
   static const double buttonHeight = 36.0;
   static const double buttonMinWidth = 72.0;
-
-  /// 按钮宽度上限
   static const double buttonMaxWidth = 180.0;
 
   /// 方形图标按钮

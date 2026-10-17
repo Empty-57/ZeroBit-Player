@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/audio_page/audio_action_bar.dart';
-import 'package:zerobit_player/components/audio_page/audio_page_args.dart';
-import 'package:zerobit_player/components/audio_page/audio_page_constant.dart';
+import 'package:zerobit_player/components/audio_list_view/audio_list_view_action_bar.dart';
+import 'package:zerobit_player/components/audio_list_view/audio_list_view_args.dart';
+import 'package:zerobit_player/components/audio_list_view/audio_list_view_constant.dart';
 import 'package:zerobit_player/components/widget/covers.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
 
 /// 列表页头部
 class AudioPageHeader extends StatelessWidget {
-  final AudioPageArgs args;
+  final AudioListViewArgs args;
 
   const AudioPageHeader({super.key, required this.args});
 
@@ -60,7 +60,7 @@ class AudioPageHeader extends StatelessWidget {
 }
 
 class _HeaderCover extends StatelessWidget {
-  final AudioPageArgs args;
+  final AudioListViewArgs args;
 
   const _HeaderCover({required this.args});
 
@@ -76,7 +76,7 @@ class _HeaderCover extends StatelessWidget {
           builder: (context) => LoadU8Cover(
             data: args.controller.headCover.value,
             coverResolutionFlag: CoverResolutionFlag.middle,
-            size: AudioPageSpec.headerCoverSize,
+            size: AudioListViewSpec.headerCoverSize,
             evictOnDispose: false,
           ),
         ),

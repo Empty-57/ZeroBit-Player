@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
+import 'package:zerobit_player/components/widget/app_Interaction_widget.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
 
 /// 分段 Tab 的单项
@@ -10,8 +10,8 @@ class SegmentedTabItem {
   const SegmentedTabItem({required this.icon, required this.label});
 }
 
-/// 分段式 Tab 栏
-class SegmentedTabs extends StatelessWidget {
+/// 带滑动动画的分段式 Tab 栏
+class SlideSegmentedTabs extends StatelessWidget {
   final List<SegmentedTabItem> items;
   final int selectedIndex;
   final ValueChanged<int> onChanged;
@@ -20,7 +20,7 @@ class SegmentedTabs extends StatelessWidget {
   final double segmentWidth;
   final double height;
 
-  const SegmentedTabs({
+  const SlideSegmentedTabs({
     super.key,
     required this.items,
     required this.selectedIndex,
@@ -118,7 +118,7 @@ class _Segment extends StatelessWidget {
     );
 
     return HoverBuilder(
-      onTap: isSelected ? null : onTap,
+      onPressed: isSelected ? null : onTap,
       builder: (context, hovered) => TweenAnimationBuilder<double>(
         tween: Tween<double>(begin: 0, end: isSelected ? 1 : 0),
         duration: AppDuration.normal,

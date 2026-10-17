@@ -10,10 +10,10 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/API/apis.dart';
+import 'package:zerobit_player/components/widget/app_Interaction_widget.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
 import 'package:zerobit_player/components/widget/app_card.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
 import 'package:zerobit_player/components/widget/covers.dart';
-import 'package:zerobit_player/components/widget/general_btn.dart';
 import 'package:zerobit_player/components/widget/get_snack_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
@@ -496,7 +496,7 @@ class _CoverPanel extends StatelessWidget {
     }
 
     return HoverBuilder(
-      onTap: onTap,
+      onPressed: onTap,
       builder: (context, hovered) => SizedBox.square(
         dimension: _coverSize,
         child: ClipRRect(
@@ -697,24 +697,12 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return GeneralBtn(
-      fn: onPressed,
+    final btn = isPrimary ? AppButton.filled : AppButton.secondary;
+    return btn(
+      onPressed: onPressed,
       label: label,
-      btnWidth: _actionButtonWidth,
-      btnHeight: _actionButtonHeight,
-      mainAxisAlignment: MainAxisAlignment.center,
-      backgroundColor: isPrimary
-          ? colorScheme.primary
-          : colorScheme.surfaceContainerHighest.withValues(
-              alpha: AppAlpha.surfaceSubtle,
-            ),
-      contentColor: isPrimary ? colorScheme.onPrimary : null,
-      borderWidth: isPrimary ? 0 : AppSize.hairline,
-      borderColor: colorScheme.outlineVariant.withValues(
-        alpha: AppAlpha.border,
-      ),
+      width: _actionButtonWidth,
+      height: _actionButtonHeight,
     );
   }
 }

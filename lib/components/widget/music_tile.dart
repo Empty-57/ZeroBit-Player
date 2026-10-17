@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
 import 'package:zerobit_player/components/widget/covers.dart';
 import 'package:zerobit_player/field/operate_area.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
@@ -52,8 +52,6 @@ class MusicTile extends SignalWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     final isPlaying =
         baseController.audioController.currentPath.value == metadata.path;
     final isSelected = selectedList.any((v) => v.path == metadata.path);
@@ -61,20 +59,9 @@ class MusicTile extends SignalWidget {
     final textStyle = isPlaying ? highLightTitleStyle : titleStyle;
     final subTextStyle = isPlaying ? highLightSubStyle : subStyle;
 
-    return AppTappable(
-      onTap: _onTileTapped,
-      background: isSelected
-          ? colorScheme.primary.withValues(alpha: AppAlpha.fill)
-          : null,
-      hoverBackground: colorScheme.primary.withValues(
-        alpha: isSelected ? AppAlpha.fillStrong : AppAlpha.hover,
-      ),
-      border: isSelected
-          ? Border.all(
-              color: colorScheme.primary.withValues(alpha: AppAlpha.border),
-              width: AppSize.hairline,
-            )
-          : null,
+    return AppButton.ghost(
+      onPressed: _onTileTapped,
+      selected: isSelected,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,

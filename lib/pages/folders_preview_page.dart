@@ -7,8 +7,8 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/folder_tree/folder_tree_model.dart';
 import 'package:zerobit_player/components/folder_tree/folder_tree_row_view.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
 import 'package:zerobit_player/components/widget/app_empty_state.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
@@ -365,10 +365,9 @@ class _FlatFolderTile extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
-      child: AppTappable(
-        onTap: onTap,
+      child: AppButton.ghost(
+        onPressed: onTap,
         tooltip: folder,
-        hoverBackground: colorScheme.primary.withValues(alpha: AppAlpha.hover),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -422,35 +421,13 @@ class _ViewToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final background = colorScheme.surfaceContainerHighest.withValues(
-      alpha: AppAlpha.surfaceSubtle,
-    );
-
-    return AppTappable(
-      onTap: onTap,
+    return AppButton.icon(
+      onPressed: onTap,
       tooltip: isTreeView ? '切换到平铺视图' : '切换到树形视图',
-      background: background,
-      hoverBackground: Color.alphaBlend(
-        colorScheme.primary.withValues(alpha: AppAlpha.hover),
-        background,
-      ),
-      border: Border.all(
-        color: colorScheme.outlineVariant.withValues(alpha: AppAlpha.border),
-        width: AppSize.hairline,
-      ),
-      child: SizedBox.square(
-        dimension: AppSize.button,
-        child: Center(
-          child: Icon(
-            isTreeView
-                ? PhosphorIconsLight.treeStructure
-                : PhosphorIconsLight.listBullets,
-            size: AppIconSize.md,
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ),
+      style: .secondary,
+      icon: isTreeView
+          ? PhosphorIconsLight.treeStructure
+          : PhosphorIconsLight.listBullets,
     );
   }
 }

@@ -3,22 +3,23 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
+import 'package:zerobit_player/components/widget/app_Interaction_widget.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
 import 'package:zerobit_player/components/widget/app_dialog.dart';
 import 'package:zerobit_player/components/widget/diamond_slider_thumb.dart';
-import 'package:zerobit_player/components/widget/general_btn.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
 
-const double _radius = 6;
-
 const _playModeIcons = [
   PhosphorIconsFill.repeatOnce,
   PhosphorIconsFill.repeat,
   PhosphorIconsFill.shuffleSimple,
 ];
+
+const double _iconSize = 22;
 
 class GenIconBtn extends StatelessWidget {
   final String tooltip;
@@ -37,7 +38,7 @@ class GenIconBtn extends StatelessWidget {
     required this.size,
     this.color,
     this.backgroundColor = Colors.transparent,
-    this.iconSize = 22,
+    this.iconSize = _iconSize,
     required this.fn,
     this.verticalOffset,
   });
@@ -45,23 +46,25 @@ class GenIconBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      excludeFromSemantics: true,
-      waitDuration: const Duration(milliseconds: 100),
-      verticalOffset: verticalOffset,
       message: tooltip,
-      child: TextButton(
+      verticalOffset: verticalOffset,
+      waitDuration: AppDuration.tooltipWait,
+      child: HoverBuilder(
         onPressed: fn,
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.zero,
-          minimumSize: Size(size, size),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          visualDensity: VisualDensity.compact,
-          backgroundColor: backgroundColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(_radius),
-          ),
-        ),
-        child: Icon(icon, size: iconSize, color: color),
+        builder: (context, hovered) {
+          final hoverColor = hovered
+              ? color?.withValues(alpha: AppAlpha.hover)
+              : Colors.transparent;
+          return Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: hoverColor,
+              borderRadius: AppRadius.smAll,
+            ),
+            child: Icon(icon, size: iconSize, color: color),
+          );
+        },
       ),
     );
   }
@@ -284,30 +287,57 @@ class _PlayToggleBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AudioController audioController = AudioController.instance;
+
     return SignalBuilder(
-      builder: (context) {
+      builder: (_) {
         final isPlaying =
             audioController.currentState.value == AudioState.playing;
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 100),
-          transitionBuilder: (child, animate) {
-            final isPauseIcon = child.key == const ValueKey('pause_btn');
-            final endTurns = isPauseIcon ? -0.25 : 0.25;
-            return FadeTransition(
-              opacity: animate,
-              child: RotationTransition(
-                turns: Tween<double>(begin: endTurns, end: 0).animate(animate),
-                child: child,
-              ),
-            );
-          },
-          child: GenIconBtn(
-            key: ValueKey(isPlaying ? "pause_btn" : "play_btn"),
-            tooltip: isPlaying ? "暂停" : "播放",
-            icon: isPlaying ? PhosphorIconsFill.pause : PhosphorIconsFill.play,
-            size: size,
-            color: color,
-            fn: audioController.audioToggleThrottled,
+
+        return Tooltip(
+          message: isPlaying ? "暂停" : "播放",
+          waitDuration: AppDuration.tooltipWait,
+          child: HoverBuilder(
+            onPressed: audioController.audioToggleThrottled,
+            builder: (context, hovered) {
+              final hoverColor = hovered
+                  ? color?.withValues(alpha: AppAlpha.hover)
+                  : Colors.transparent;
+
+              return Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  color: hoverColor,
+                  borderRadius: AppRadius.smAll,
+                ),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 100),
+                  transitionBuilder: (child, animate) {
+                    final isPauseIcon =
+                        child.key == const ValueKey('pause_btn');
+                    final endTurns = isPauseIcon ? 0.25 : -0.25;
+                    return FadeTransition(
+                      opacity: animate,
+                      child: RotationTransition(
+                        turns: Tween<double>(
+                          begin: endTurns,
+                          end: 0,
+                        ).animate(animate),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: Icon(
+                    key: ValueKey(isPlaying ? "pause_btn" : "play_btn"),
+                    isPlaying
+                        ? PhosphorIconsFill.pause
+                        : PhosphorIconsFill.play,
+                    size: _iconSize,
+                    color: color,
+                  ),
+                ),
+              );
+            },
           ),
         );
       },
@@ -387,8 +417,6 @@ class _EqualizerBtn extends StatelessWidget {
     SettingController settingController,
     TextStyle fontStyle,
   ) {
-    final backgroundColor = Theme.of(context).colorScheme.primary;
-
     final equalizerSliders = SettingController.equalizerFCenters.indexed.map((
       v,
     ) {
@@ -471,8 +499,8 @@ class _EqualizerBtn extends StatelessWidget {
                             equalizerGains,
                             entry.value,
                           );
-                          return GeneralBtn(
-                            fn: () async {
+                          return AppButton.secondary(
+                            onPressed: () async {
                               settingController.equalizerGains.value =
                                   entry.value;
                               await settingController.putScalableCache();
@@ -483,19 +511,10 @@ class _EqualizerBtn extends StatelessWidget {
                                 );
                               }
                             },
+                            selected: isEqual,
                             label: SettingController
                                 .equalizerGainPresetsText[entry.key],
-                            backgroundColor: isEqual
-                                ? backgroundColor
-                                : Theme.of(context)
-                                      .colorScheme
-                                      .secondaryContainer
-                                      .withValues(alpha: 0.2),
-                            contentColor: isEqual
-                                ? Theme.of(context).colorScheme.onPrimary
-                                : backgroundColor,
-                            btnWidth: 96,
-                            btnHeight: 36,
+                            width: 96,
                           );
                         })
                         .toList(),

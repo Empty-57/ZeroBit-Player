@@ -73,6 +73,7 @@ abstract final class AppRadius {
   /// 全圆角（药丸）
   static const double pill = 999.0;
 
+  static const BorderRadius zeroAll = BorderRadius.all(Radius.circular(0));
   static const BorderRadius xsAll = BorderRadius.all(Radius.circular(xs));
   static const BorderRadius smAll = BorderRadius.all(Radius.circular(sm));
   static const BorderRadius mdAll = BorderRadius.all(Radius.circular(md));
@@ -119,7 +120,7 @@ abstract final class AppAlpha {
   static const double hover = 0.07;
 
   /// 实心按钮悬停时，前景色叠在填充上的强度。
-  static const double hoverOnFill = 0.16;
+  static const double hoverOnFill = fillStrong;
 
   /// 次要控件（按钮、分段、步进器）的底色强度
   static const double controlFill = 0.06;

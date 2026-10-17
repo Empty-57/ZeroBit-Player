@@ -3,9 +3,9 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/statistics/stat_surface.dart';
 import 'package:zerobit_player/components/statistics/statistics_constant.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
 import 'package:zerobit_player/components/widget/app_card.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
-import 'package:zerobit_player/components/widget/segmented_tabs.dart';
+import 'package:zerobit_player/components/widget/slide_segmented_tabs.dart';
 import 'package:zerobit_player/controller/statistics_ctrl.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
@@ -141,7 +141,7 @@ class _ChartToolbar extends StatelessWidget {
                   overflow: TextOverflow.fade,
                 ),
               ),
-              SegmentedTabs(
+              SlideSegmentedTabs(
                 items: _modes,
                 selectedIndex: isWeekly
                     ? ChartViewMode.weekly
@@ -234,27 +234,14 @@ class _PagerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final enabled = onPressed != null;
 
-    return AppTappable(
-      onTap: onPressed,
+    return AppButton.icon(
+      onPressed: onPressed,
       tooltip: enabled ? tooltip : null,
-      hoverBackground: colorScheme.primary.withValues(alpha: AppAlpha.fill),
-      child: SizedBox.square(
-        dimension: StatisticsChartSpec.pagerButton,
-        child: Center(
-          child: Icon(
-            icon,
-            size: AppIconSize.sm,
-            color: enabled
-                ? colorScheme.primary
-                : colorScheme.onSurfaceVariant.withValues(
-                    alpha: AppAlpha.textFaint,
-                  ),
-          ),
-        ),
-      ),
+      icon: icon,
+      height: StatisticsChartSpec.pagerButton,
+      size: .small,
     );
   }
 }

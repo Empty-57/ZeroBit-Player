@@ -6,7 +6,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:zerobit_player/components/setting/setting_constant.dart';
 import 'package:zerobit_player/components/setting/setting_fields.dart';
 import 'package:zerobit_player/components/setting/setting_tabs.dart';
-import 'package:zerobit_player/components/widget/segmented_tabs.dart';
+import 'package:zerobit_player/components/widget/slide_segmented_tabs.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
 
 class SettingPage extends StatefulWidget {
@@ -74,7 +74,7 @@ class _SettingPageState extends State<SettingPage> {
           ),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: SegmentedTabs(
+            child: SlideSegmentedTabs(
               items: _tabs,
               selectedIndex: _currentTabIndex,
               onChanged: _onTabChanged,

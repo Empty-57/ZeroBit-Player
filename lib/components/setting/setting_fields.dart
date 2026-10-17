@@ -12,13 +12,15 @@ import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/setting/setting_constant.dart';
 import 'package:zerobit_player/components/setting/setting_controls.dart';
 import 'package:zerobit_player/components/widget/app_dialog.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
 import 'package:zerobit_player/components/widget/get_snack_bar.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/get_fonts.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
+
+import '../widget/app_button/app_button.dart';
+import '../widget/app_button/button_shell.dart';
 
 final SettingController _settingController = SettingController.instance;
 
@@ -30,42 +32,6 @@ Future<void> loadFontsList() async {
   if (fontsList.isNotEmpty) return;
   final list = await getFontsList();
   fontsList.value = list;
-}
-
-/// 对话框底部操作按钮
-class _DialogFooter extends StatelessWidget {
-  final VoidCallback onCancel;
-  final VoidCallback onConfirm;
-
-  /// 左侧附加操作
-  final Widget? leading;
-
-  const _DialogFooter({
-    required this.onCancel,
-    required this.onConfirm,
-    this.leading,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: .min,
-      spacing: AppSpacing.md,
-      children: [
-        if (leading != null) ...[Flexible(child: leading!), const Spacer()],
-        Flexible(
-          child: SettingActionButton(label: '取消', onPressed: onCancel),
-        ),
-        Flexible(
-          child: SettingActionButton(
-            label: '确定',
-            onPressed: onConfirm,
-            filled: true,
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 /// 歌曲文件夹管理
@@ -174,7 +140,7 @@ class _FolderManagerDialog extends StatelessWidget {
             );
           }
 
-          return _DialogFooter(
+          return AppDialogActions(
             leading: SettingActionButton(
               label: '添加',
               icon: PhosphorIconsLight.plus,
@@ -220,6 +186,7 @@ class _FolderRow extends StatelessWidget {
           ),
         ),
         SettingIconButton(
+          danger: true,
           icon: PhosphorIconsLight.trash,
           tooltip: '移除此文件夹',
           onPressed: onRemove,
@@ -263,64 +230,39 @@ class SettingColorField extends SignalWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final value = color.value;
-    final background = colorScheme.surfaceContainerHighest.withValues(
-      alpha: AppAlpha.surfaceSubtle,
-    );
-
-    return AppTappable(
-      onTap: () => unawaited(_pick(context)),
-      background: background,
-      hoverBackground: Color.alphaBlend(
-        colorScheme.primary.withValues(alpha: AppAlpha.hover),
-        background,
-      ),
-      border: Border.all(
-        color: colorScheme.outlineVariant.withValues(alpha: AppAlpha.border),
-        width: AppSize.hairline,
-      ),
+    return AppButton.secondary(
+      onPressed: () => unawaited(_pick(context)),
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.md,
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        spacing: AppSpacing.lg,
-        children: [
-          // 半透明色值要能看出透明度，所以垫一层浅底再叠色块
-          Container(
-            width: SettingControlSpec.swatchSize,
-            height: SettingControlSpec.swatchSize,
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest,
-              borderRadius: AppRadius.xsAll,
-              border: Border.all(
-                color: colorScheme.outlineVariant.withValues(
-                  alpha: AppAlpha.borderStrong,
-                ),
-                width: AppSize.hairline,
-              ),
+      label: _formatHex(value),
+      tabularFigures: true,
+      spacing: AppSpacing.md,
+      leading: Container(
+        width: SettingControlSpec.swatchSize,
+        height: SettingControlSpec.swatchSize,
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: AppRadius.xsAll,
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(
+              alpha: AppAlpha.borderStrong,
             ),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Color(value),
-                borderRadius: AppRadius.xsAll,
-              ),
-            ),
+            width: AppSize.hairline,
           ),
-          Text(
-            _formatHex(value),
-            style: context.createTextStyle(
-              size: AppFontSize.sm,
-              weight: FontWeight.w600,
-              tabularFigures: true,
-            ),
+        ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Color(value),
+            borderRadius: AppRadius.xsAll,
           ),
-          Icon(
-            PhosphorIconsLight.palette,
-            size: AppIconSize.xs,
-            color: colorScheme.primary,
-          ),
-        ],
+        ),
+      ),
+      trailing: Icon(
+        PhosphorIconsLight.palette,
+        size: AppIconSize.xs,
+        color: colorScheme.primary,
       ),
     );
   }
@@ -360,9 +302,11 @@ class _ColorPickerDialogState extends State<_ColorPickerDialog> {
   Widget build(BuildContext context) {
     return AppDialog.confirm(
       title: '取色器',
+      widthFactor: null,
+      heightFactor: null,
       content: Column(
         mainAxisSize: MainAxisSize.min,
-        spacing: AppSpacing.xl,
+        spacing: AppSpacing.md,
         children: [
           TextField(
             decoration: const InputDecoration(
@@ -557,37 +501,38 @@ class _FontRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
     return AppTappable(
-      onTap: onTap,
+      onPressed: onTap,
       background: isCurrent
           ? colorScheme.primary.withValues(alpha: AppAlpha.fill)
           : null,
       hoverBackground: colorScheme.primary.withValues(alpha: AppAlpha.hover),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              font,
-              style: context.createTextStyle(
-                size: AppFontSize.md,
-                fontFamily: font,
-                weight: isCurrent ? FontWeight.w600 : FontWeight.w400,
-                color: isCurrent ? colorScheme.primary : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                font,
+                style: context.createTextStyle(
+                  size: AppFontSize.md,
+                  fontFamily: font,
+                  weight: isCurrent ? FontWeight.w600 : FontWeight.w400,
+                  color: isCurrent ? colorScheme.primary : null,
+                ),
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.fade,
               ),
-              maxLines: 1,
-              softWrap: false,
-              overflow: TextOverflow.fade,
             ),
-          ),
-          if (isCurrent)
-            Icon(
-              PhosphorIconsLight.check,
-              size: AppIconSize.xs,
-              color: colorScheme.primary,
-            ),
-        ],
+            if (isCurrent)
+              Icon(
+                PhosphorIconsLight.check,
+                size: AppIconSize.xs,
+                color: colorScheme.primary,
+              ),
+          ],
+        ),
       ),
     );
   }

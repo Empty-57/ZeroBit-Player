@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
+
+import 'app_button/button_shell.dart';
 
 /// 应用级卡片外壳
 class AppCard extends StatelessWidget {
@@ -60,7 +61,7 @@ class AppCard extends StatelessWidget {
     }
 
     return AppTappable(
-      onTap: onTap,
+      onPressed: onTap,
       borderRadius: borderRadius,
       background: background,
       hoverBackground:
@@ -70,8 +71,9 @@ class AppCard extends StatelessWidget {
             background,
           ),
       border: border,
-      padding: padding == EdgeInsets.zero ? null : padding,
-      child: child,
+      child: padding == EdgeInsets.zero
+          ? child
+          : Padding(padding: padding, child: child),
     );
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:zerobit_player/components/widget/app_button.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button_style.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
+
+import 'app_button/app_button.dart';
 
 /// 对话框通用尺寸
 abstract final class AppDialogSpec {
@@ -9,13 +11,14 @@ abstract final class AppDialogSpec {
   static const double heightFactor = 0.5;
 
   /// 对话框内列表的行高
-  static const double listRowHeight = 38.0;
+  static const double listRowHeight = 44.0;
 
   /// 对话框内搜索框高度
   static const double searchFieldHeight = 38.0;
 
   /// 底部按钮最小宽度
-  static const double actionMinWidth = 84.0;
+  static const double actionMinWidth = 72.0;
+  static const double actionMaxWidth = 180.0;
 }
 
 /// 应用级对话框外壳。
@@ -55,8 +58,8 @@ class AppDialog extends StatelessWidget {
     String cancelLabel = '取消',
     VoidCallback? onCancel,
     bool isDangerous = false,
-    double? widthFactor,
-    double? heightFactor,
+    double? widthFactor = AppDialogSpec.widthFactor,
+    double? heightFactor = AppDialogSpec.heightFactor,
   }) {
     return AppDialog(
       key: key,
@@ -136,6 +139,8 @@ class AppDialogActions extends StatelessWidget {
   /// 左侧附加组件
   final Widget? leading;
 
+  final double? width;
+
   const AppDialogActions({
     super.key,
     this.onConfirm,
@@ -147,6 +152,7 @@ class AppDialogActions extends StatelessWidget {
     this.loading = false,
     this.showConfirm = true,
     this.leading,
+    this.width,
   });
 
   @override
@@ -155,21 +161,29 @@ class AppDialogActions extends StatelessWidget {
       spacing: AppSpacing.md,
       children: [
         ?leading,
-        const Spacer(),
-        AppButton(
-          onPressed: loading ? null : onCancel ?? () => Navigator.pop(context),
-          label: cancelLabel,
-          minWidth: AppDialogSpec.actionMinWidth,
+        const Spacer(flex: 2),
+        Flexible(
+          child: AppButton.secondary(
+            onPressed: loading
+                ? null
+                : onCancel ?? () => Navigator.pop(context),
+            label: cancelLabel,
+            minWidth: AppDialogSpec.actionMinWidth,
+            maxWidth: AppDialogSpec.actionMaxWidth,
+          ),
         ),
         if (showConfirm)
-          AppButton(
-            onPressed: onConfirm,
-            label: confirmLabel,
-            icon: confirmIcon,
-            style: AppButtonStyle.filled,
-            danger: isDangerous,
-            loading: loading,
-            minWidth: AppDialogSpec.actionMinWidth,
+          Flexible(
+            child: AppButton(
+              onPressed: onConfirm,
+              label: confirmLabel,
+              icon: confirmIcon,
+              style: AppButtonType.filled,
+              danger: isDangerous,
+              loading: loading,
+              minWidth: AppDialogSpec.actionMinWidth,
+              maxWidth: AppDialogSpec.actionMaxWidth,
+            ),
           ),
       ],
     );

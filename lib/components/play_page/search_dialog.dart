@@ -17,6 +17,7 @@ import 'package:zerobit_player/tools/lrcTool/parse_lyrics.dart';
 import 'package:zerobit_player/tools/lrcTool/save_lyric.dart';
 
 import '../../tools/func/func_extension.dart';
+import '../widget/app_button/app_button.dart';
 
 class _LrcSearchController {
   final AudioController _audioController = AudioController.instance;
@@ -122,7 +123,7 @@ class _SearchResultItem extends StatelessWidget {
       }
     }
 
-    return TextButton(
+    return AppButton.ghost(
       onPressed: () async {
         final type = v.lyric!.type;
         if (type == LyricFormat.lrc) {
@@ -157,67 +158,66 @@ class _SearchResultItem extends StatelessWidget {
           );
         }
       },
-      style: TextButton.styleFrom(
-        shape: const RoundedRectangleBorder(
-          borderRadius: PlayPageConstant.borderRadius,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      ),
       child: FractionallySizedBox(
         widthFactor: 1,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 8,
-          children: [
-            Column(
-              children: [
-                Text(
-                  verbatimLrc != null && verbatimLrc.isNotEmpty ? '逐字' : 'Lrc',
-                  style: textStyle,
-                ),
-                Text(
-                  ts != null && ts.isNotEmpty ? '有翻译' : '无翻译',
-                  style: textStyle,
-                ),
-              ],
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: Padding(
+          padding: const EdgeInsetsGeometry.symmetric(vertical: AppSpacing.md),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 8,
+            children: [
+              Column(
                 children: [
                   Text(
-                    title,
-                    softWrap: false,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    verbatimLrc != null && verbatimLrc.isNotEmpty
+                        ? '逐字'
+                        : 'Lrc',
                     style: textStyle,
                   ),
                   Text(
-                    artist,
-                    softWrap: false,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    ts != null && ts.isNotEmpty ? '有翻译' : '无翻译',
                     style: textStyle,
-                  ),
-                  Container(
-                    margin: const EdgeInsets.only(top: 16),
-                    constraints: const BoxConstraints(maxHeight: 200),
-                    child: FractionallySizedBox(
-                      widthFactor: 0.8,
-                      child: SingleChildScrollView(
-                        child: Text(
-                          "歌词: \n${ts ?? verbatimLrc ?? ''}",
-                          softWrap: true,
-                          overflow: TextOverflow.fade,
-                          style: textStyle,
-                        ),
-                      ),
-                    ),
                   ),
                 ],
               ),
-            ),
-          ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      softWrap: false,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textStyle,
+                    ),
+                    Text(
+                      artist,
+                      softWrap: false,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textStyle,
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(top: 16),
+                      constraints: const BoxConstraints(maxHeight: 200),
+                      child: FractionallySizedBox(
+                        widthFactor: 0.8,
+                        child: SingleChildScrollView(
+                          child: Text(
+                            "歌词: \n${ts ?? verbatimLrc ?? ''}",
+                            softWrap: true,
+                            overflow: TextOverflow.fade,
+                            style: textStyle,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -287,9 +287,6 @@ class _NetLrcDialogContentState extends State<_NetLrcDialogContent> {
   @override
   Widget build(BuildContext context) {
     final textStyle = context.createTextStyle(size: AppFontSize.md);
-    final bgColor = Theme.of(
-      context,
-    ).colorScheme.secondaryContainer.withValues(alpha: 0.4);
     final height = MediaQuery.sizeOf(context).height;
     final width = MediaQuery.sizeOf(context).width;
 
@@ -314,53 +311,43 @@ class _NetLrcDialogContentState extends State<_NetLrcDialogContent> {
                   onChanged: _controller.onInputChangedDebounce,
                 ),
               ),
-              GenIconBtn(
-                tooltip: '上一页',
-                icon: PhosphorIconsLight.caretLeft,
-                size: PlayPageConstant.ctrlBtnMinSize * 1.5,
-                color: widget.color,
-                backgroundColor: bgColor,
-                fn: () {
-                  if (_controller.currentNetLrcOffset.value > 0) {
-                    _controller.currentNetLrcOffset.value--;
-                  }
-                },
+
+              SignalBuilder(
+                builder: (_) => AppButton.icon(
+                  icon: PhosphorIconsLight.caretLeft,
+                  style: .secondary,
+                  height: PlayPageConstant.ctrlBtnMinSize*1.25,
+                  tooltip: _controller.currentNetLrcOffset.value == 0
+                      ? null
+                      : '上一页',
+                  onPressed: _controller.currentNetLrcOffset.value == 0
+                      ? null
+                      : () {
+                          if (_controller.currentNetLrcOffset.value > 0) {
+                            _controller.currentNetLrcOffset.value--;
+                          }
+                        },
+                ),
               ),
-              GenIconBtn(
-                tooltip: '下一页',
+
+              AppButton.icon(
                 icon: PhosphorIconsLight.caretRight,
-                size: PlayPageConstant.ctrlBtnMinSize * 1.5,
-                color: widget.color,
-                backgroundColor: bgColor,
-                fn: () => _controller.currentNetLrcOffset.value++,
+                style: .secondary,
+                height: PlayPageConstant.ctrlBtnMinSize*1.25,
+                tooltip: '下一页',
+                onPressed: () => _controller.currentNetLrcOffset.value++,
               ),
             ],
           ),
           Row(
-            spacing: 8,
+            spacing: AppSpacing.sm,
             children: [
               for (final key in SettingController.apiMap.keys) ...[
                 SignalBuilder(
-                  builder: (context) => TextButton(
-                    onPressed: () {
-                      _settingController.apiIndex.value = key;
-                    },
-                    style: TextButton.styleFrom(
-                      backgroundColor: _settingController.apiIndex.value == key
-                          ? Theme.of(context).colorScheme.primary
-                          : null,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    child: Text(
-                      SettingController.apiMap[key] ?? 'QQ音乐',
-                      style: _settingController.apiIndex.value == key
-                          ? textStyle.copyWith(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                            )
-                          : textStyle,
-                    ),
+                  builder: (context) => AppButton.secondary(
+                    label: SettingController.apiMap[key] ?? 'QQ音乐',
+                    selected: _settingController.apiIndex.value == key,
+                    onPressed: () => _settingController.apiIndex.value = key,
                   ),
                 ),
               ],

@@ -26,6 +26,7 @@ class ThemeService {
       useMaterial3: true,
       colorScheme: scheme,
       fontFamily: _settingController.fontFamily.value,
+      splashFactory: NoSplash.splashFactory,
       scrollbarTheme: ScrollbarThemeData(
         thumbColor: WidgetStatePropertyAll(
           scheme.secondary.withValues(alpha: 0.8),

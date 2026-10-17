@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/setting/setting_constant.dart';
-import 'package:zerobit_player/components/widget/app_segmented.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
+import 'package:zerobit_player/components/widget/app_Interaction_widget.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
+import 'package:zerobit_player/components/widget/app_text_segmented.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
 
 /// 开关
@@ -45,7 +46,7 @@ class SettingSegmented extends SignalWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppSegmented<int>(
+    return AppTextSegmented<int>(
       options: options,
       value: value.value,
       onChanged: onChanged,
@@ -269,34 +270,13 @@ class _StepButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final enabled = onPressed != null;
-
-    return AppTappable(
-      onTap: onPressed,
+    return AppButton.icon(
+      onPressed: onPressed,
+      style: .secondary,
       tooltip: enabled ? tooltip : null,
-      background: colorScheme.surfaceContainerHighest.withValues(
-        alpha: AppAlpha.surfaceSubtle,
-      ),
-      hoverBackground: colorScheme.primary.withValues(alpha: AppAlpha.fill),
-      border: Border.all(
-        color: colorScheme.outlineVariant.withValues(alpha: AppAlpha.border),
-        width: AppSize.hairline,
-      ),
-      child: SizedBox.square(
-        dimension: SettingControlSpec.stepButton,
-        child: Center(
-          child: Icon(
-            icon,
-            size: AppIconSize.xs,
-            color: enabled
-                ? colorScheme.primary
-                : colorScheme.onSurfaceVariant.withValues(
-                    alpha: AppAlpha.textFaint,
-                  ),
-          ),
-        ),
-      ),
+      icon: icon,
+      size: .small,
     );
   }
 }
@@ -306,7 +286,6 @@ class SettingActionButton extends StatelessWidget {
   final String label;
   final IconData? icon;
   final VoidCallback? onPressed;
-  final bool filled;
 
   /// 自定义前置组件
   final Widget? leading;
@@ -316,81 +295,21 @@ class SettingActionButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
-    this.filled = false,
     this.leading,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final enabled = onPressed != null;
-
-    final Color background;
-    final Color foreground;
-    if (!enabled) {
-      background = colorScheme.surfaceContainerHighest.withValues(
-        alpha: AppAlpha.surfaceSubtle,
-      );
-      foreground = colorScheme.onSurfaceVariant.withValues(
-        alpha: AppAlpha.textFaint,
-      );
-    } else if (filled) {
-      background = colorScheme.primary;
-      foreground = colorScheme.onPrimary;
-    } else {
-      background = colorScheme.primary.withValues(alpha: AppAlpha.fill);
-      foreground = colorScheme.primary;
-    }
-
-    return AppTappable(
-      onTap: onPressed,
-      background: background,
-      hoverBackground: filled
-          ? Color.alphaBlend(
-              colorScheme.surface.withValues(alpha: AppAlpha.fill),
-              background,
-            )
-          : colorScheme.primary.withValues(alpha: AppAlpha.fillStrong),
-      border: Border.all(
-        color: enabled && !filled
-            ? colorScheme.primary.withValues(alpha: AppAlpha.border)
-            : Colors.transparent,
-        width: AppSize.hairline,
-      ),
-      child: ConstrainedBox(
-        // 设置行把控件放在 Row 的非弹性位置上，主轴约束是无界的，必须给约束
-        constraints: const BoxConstraints(
-          minWidth: SettingControlSpec.buttonMinWidth,
-          maxWidth: SettingControlSpec.buttonMaxWidth,
-          minHeight: SettingControlSpec.buttonHeight,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            spacing: AppSpacing.md,
-            children: [
-              if (leading != null)
-                leading!
-              else if (icon != null)
-                Icon(icon, size: AppIconSize.sm, color: foreground),
-              Flexible(
-                child: Text(
-                  label,
-                  style: context.createTextStyle(
-                    size: AppFontSize.sm,
-                    color: foreground,
-                    weight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.fade,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return AppButton.secondary(
+      onPressed: onPressed,
+      leading: leading,
+      icon: icon,
+      size: .medium,
+      label: label,
+      selected: true,
+      spacing: AppSpacing.sm,
+      minWidth: SettingControlSpec.buttonMinWidth,
+      maxWidth: SettingControlSpec.buttonMaxWidth,
     );
   }
 }
@@ -400,33 +319,24 @@ class SettingIconButton extends StatelessWidget {
   final IconData icon;
   final String tooltip;
   final VoidCallback? onPressed;
+  final bool danger;
 
   const SettingIconButton({
     super.key,
     required this.icon,
     required this.tooltip,
     required this.onPressed,
+    this.danger = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-
-    return AppTappable(
-      onTap: onPressed,
+    return AppButton.icon(
+      danger: danger,
+      onPressed: onPressed,
       tooltip: tooltip,
-      background: primary.withValues(alpha: AppAlpha.fill),
-      hoverBackground: primary.withValues(alpha: AppAlpha.fillStrong),
-      border: Border.all(
-        color: primary.withValues(alpha: AppAlpha.border),
-        width: AppSize.hairline,
-      ),
-      child: SizedBox.square(
-        dimension: SettingControlSpec.iconButton,
-        child: Center(
-          child: Icon(icon, size: AppIconSize.sm, color: primary),
-        ),
-      ),
+      style: .secondary,
+      icon: icon,
     );
   }
 }

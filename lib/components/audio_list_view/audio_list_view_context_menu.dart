@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
-import 'package:zerobit_player/components/audio_page/audio_page_constant.dart';
+import 'package:zerobit_player/components/audio_list_view/audio_list_view_constant.dart';
 import 'package:zerobit_player/components/edit_embedded_lyrics_dialog.dart';
-import 'package:zerobit_player/components/widget/general_btn.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
@@ -65,7 +65,7 @@ class MusicContextMenuOverlay extends StatelessWidget {
         groupId: controller.menuController,
         onTapOutside: (_) => controller.close(),
         child: Container(
-          width: AudioPageSpec.menuWidth,
+          width: AudioListViewSpec.menuWidth,
           decoration: BoxDecoration(
             color: colorScheme.surfaceContainer,
             borderRadius: AppRadius.xsAll,
@@ -252,12 +252,12 @@ class _MenuPositionDelegate extends SingleChildLayoutDelegate {
 
   @override
   Offset getPositionForChild(Size size, Size childSize) {
-    const gap = AudioPageSpec.menuCursorGap;
+    const gap = AudioListViewSpec.menuCursorGap;
     double x = cursor.dx + gap;
     if (x + childSize.width > size.width) {
       x = cursor.dx - childSize.width - gap;
     }
-    final bottomLimit = size.height - AudioPageSpec.playBarInset;
+    final bottomLimit = size.height - AudioListViewSpec.playBarInset;
     double y = cursor.dy;
     if (y + childSize.height > bottomLimit) {
       y = bottomLimit - childSize.height;
@@ -298,23 +298,19 @@ class _MenuAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GeneralBtn(
-      fn: () {
+    return AppButton.ghost(
+      onPressed: () {
         menuController.close();
         onTap();
       },
       icon: icon,
       label: label,
+      danger: danger,
       tooltip: tooltip,
-      btnWidth: AudioPageSpec.menuWidth,
-      btnHeight: AudioPageSpec.menuItemHeight,
-      radius: 0,
-      backgroundColor: Colors.transparent,
-      contentColor: danger ? Theme.of(context).colorScheme.error : null,
-      mainAxisAlignment: MainAxisAlignment.start,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AudioPageSpec.menuItemPaddingH,
-      ),
+      width: AudioListViewSpec.menuWidth,
+      size: .menuItem,
+      alignment: MainAxisAlignment.start,
+      borderRadius: const BorderRadius.all(Radius.zero),
     );
   }
 }
@@ -358,13 +354,13 @@ class _MenuSubmenu extends StatelessWidget {
     final noSplash = ButtonStyle(
       splashFactory: NoSplash.splashFactory,
       padding: WidgetStateProperty.all(
-        const EdgeInsets.symmetric(horizontal: AudioPageSpec.menuItemPaddingH),
+        const EdgeInsets.symmetric(horizontal: AudioListViewSpec.menuItemPaddingH),
       ),
       alignment: Alignment.centerLeft,
     );
 
     return SizedBox(
-      height: AudioPageSpec.menuItemHeight,
+      height: AudioListViewSpec.menuItemHeight,
       child: SubmenuButton(
         animated: true,
         style: noSplash,
@@ -373,7 +369,7 @@ class _MenuSubmenu extends StatelessWidget {
         menuChildren: [
           for (final entry in entries)
             SizedBox(
-              height: AudioPageSpec.menuItemHeight,
+              height: AudioListViewSpec.menuItemHeight,
               child: MenuItemButton(
                 onPressed: entry.onTap,
                 style: noSplash,

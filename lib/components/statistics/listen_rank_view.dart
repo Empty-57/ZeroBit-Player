@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/statistics/statistics_constant.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
 import 'package:zerobit_player/components/widget/app_empty_state.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
 import 'package:zerobit_player/components/widget/covers.dart';
-import 'package:zerobit_player/components/widget/segmented_tabs.dart';
+import 'package:zerobit_player/components/widget/slide_segmented_tabs.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/statistics_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';
@@ -71,7 +71,7 @@ class _ListenRankViewState extends State<ListenRankView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: AppSpacing.lg,
       children: [
-        SegmentedTabs(
+        SlideSegmentedTabs(
           items: _tabs,
           selectedIndex: _tabIndex,
           onChanged: _onTabChanged,
@@ -257,13 +257,10 @@ class _RankTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
-      child: AppTappable(
-        onTap: onTap,
-        hoverBackground: colorScheme.primary.withValues(alpha: AppAlpha.hover),
+      child: AppButton.ghost(
+        onPressed: onTap,
         child: Stack(
           children: [
             Padding(

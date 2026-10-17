@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/audio_page/audio_page_args.dart';
-import 'package:zerobit_player/components/audio_page/audio_page_constant.dart';
-import 'package:zerobit_player/components/audio_page/audio_page_header.dart';
-import 'package:zerobit_player/components/audio_page/music_context_menu.dart';
+import 'package:zerobit_player/components/audio_list_view/audio_list_view_args.dart';
+import 'package:zerobit_player/components/audio_list_view/audio_list_view_constant.dart';
+import 'package:zerobit_player/components/audio_list_view/audio_list_view_context_menu.dart';
+import 'package:zerobit_player/components/audio_list_view/audio_page_header.dart';
 import 'package:zerobit_player/components/widget/app_empty_state.dart';
 import 'package:zerobit_player/components/widget/floating_button.dart';
 import 'package:zerobit_player/components/widget/music_tile.dart';
@@ -44,7 +44,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   late final ListSignal<MusicCache> _selectedList;
   late final ScrollController _scrollControllerList;
   late final ScrollController _scrollControllerGrid;
-  late final AudioPageArgs _args;
+  late final AudioListViewArgs _args;
 
   final _menuController = MusicContextMenuController();
 
@@ -77,7 +77,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       widget.audioSource,
     )).throttle();
 
-    _args = AudioPageArgs(
+    _args = AudioListViewArgs(
       title: widget.title,
       operateArea: widget.operateArea,
       audioSource: widget.audioSource,
@@ -156,7 +156,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final columns = AudioPageSpec.gridColumnsFor(
+                final columns = AudioListViewSpec.gridColumnsFor(
                   constraints.maxWidth,
                 );
                 return Stack(
@@ -215,10 +215,10 @@ class _AudioGenPagesState extends State<AudioGenPages> {
   }
 
   static const _cacheExtent = ScrollCacheExtent.pixels(
-    AudioPageSpec.itemHeight * 4,
+    AudioListViewSpec.itemHeight * 4,
   );
   static const _listPadding = EdgeInsets.only(
-    bottom: AudioPageSpec.listBottomInset,
+    bottom: AudioListViewSpec.listBottomInset,
   );
 
   Widget _buildList({required Key key, required int itemCount}) {
@@ -227,7 +227,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       scrollCacheExtent: _cacheExtent,
       controller: _scrollControllerList,
       itemCount: itemCount,
-      itemExtent: AudioPageSpec.itemHeight,
+      itemExtent: AudioListViewSpec.itemHeight,
       padding: _listPadding,
       addRepaintBoundaries: true,
       addAutomaticKeepAlives: false,
@@ -248,9 +248,9 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       itemCount: itemCount,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: columns,
-        mainAxisSpacing: AudioPageSpec.gridMainSpacing,
-        crossAxisSpacing: AudioPageSpec.gridCrossSpacing,
-        mainAxisExtent: AudioPageSpec.itemHeight,
+        mainAxisSpacing: AudioListViewSpec.gridMainSpacing,
+        crossAxisSpacing: AudioListViewSpec.gridCrossSpacing,
+        mainAxisExtent: AudioListViewSpec.itemHeight,
       ),
       padding: _listPadding,
       addRepaintBoundaries: true,

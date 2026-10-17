@@ -4,7 +4,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/components/library_search_dialog.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
+import 'package:zerobit_player/components/widget/app_Interaction_widget.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
 import 'package:zerobit_player/controller/window_ctrl.dart';
 import 'package:zerobit_player/theme_manager.dart';
@@ -138,14 +138,13 @@ class _AppIdentity extends StatelessWidget {
     final cacheSize = (_logoSize * MediaQuery.devicePixelRatioOf(context))
         .round();
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      spacing: AppSpacing.md,
-      children: [
-        ClipRRect(
-          borderRadius: AppRadius.xsAll,
-          child: Image.asset(
+    return SizedBox.expand(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        spacing: AppSpacing.md,
+        children: [
+          Image.asset(
             r'assets/app_icon.ico',
             width: _logoSize,
             height: _logoSize,
@@ -154,16 +153,16 @@ class _AppIdentity extends StatelessWidget {
             cacheHeight: cacheSize,
             gaplessPlayback: true,
           ),
-        ),
-        Text(
-          'ZeroBit Player',
-          style: context.createTextStyle(
-            size: AppFontSize.sm,
-            color: _foregroundOf(context, onlyDarkMode),
-            opacity: AppAlpha.textSecondary,
+          Text(
+            'ZeroBit Player',
+            style: context.createTextStyle(
+              size: AppFontSize.sm,
+              color: _foregroundOf(context, onlyDarkMode),
+              opacity: AppAlpha.textSecondary,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -261,7 +260,7 @@ class _BarButton extends StatelessWidget {
       message: tooltip,
       waitDuration: AppDuration.tooltipWait,
       child: HoverBuilder(
-        onTap: onTap,
+        onPressed: onTap,
         builder: (context, hovered) {
           final Color? background;
           final Color foreground;
@@ -269,7 +268,6 @@ class _BarButton extends StatelessWidget {
             background = colorScheme.error;
             foreground = colorScheme.onError;
           } else if (hovered) {
-            // 用前景色自身做淡叠加，深浅两种标题栏下都能看出反馈
             background = baseColor.withValues(alpha: AppAlpha.hover);
             foreground = baseColor;
           } else {

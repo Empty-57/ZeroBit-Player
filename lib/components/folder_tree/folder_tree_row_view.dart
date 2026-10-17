@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/folder_tree/folder_tree_model.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/tools/func/format_time.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
@@ -94,19 +94,14 @@ class _RowShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return AppTappable(
-      onTap: onTap,
+    return AppButton.ghost(
+      onPressed: onTap,
       tooltip: tooltip,
-      background: highlighted
-          ? colorScheme.primary.withValues(alpha: AppAlpha.fill)
-          : null,
-      hoverBackground: colorScheme.primary.withValues(
-        alpha: highlighted ? AppAlpha.fillStrong : AppAlpha.hover,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      child: SizedBox(height: FolderTreeSpec.rowHeight, child: child),
+      selected: highlighted,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      size: .large,
+      height: FolderTreeSpec.rowHeight,
+      child: child,
     );
   }
 }

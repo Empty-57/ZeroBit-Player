@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
+import 'package:zerobit_player/components/widget/app_Interaction_widget.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
 
 /// 单段高度
@@ -11,13 +11,13 @@ const EdgeInsets _segmentPadding = EdgeInsets.symmetric(
 );
 
 /// 文字分段控件
-class AppSegmented<T> extends StatelessWidget {
+class AppTextSegmented<T> extends StatelessWidget {
   /// 选项 : 显示文字
   final Map<T, String> options;
   final T value;
   final ValueChanged<T> onChanged;
 
-  const AppSegmented({
+  const AppTextSegmented({
     super.key,
     required this.options,
     required this.value,
@@ -77,7 +77,7 @@ class _SegmentChip extends StatelessWidget {
     );
 
     return HoverBuilder(
-      onTap: isSelected ? null : onTap,
+      onPressed: isSelected ? null : onTap,
       builder: (context, hovered) => TweenAnimationBuilder<double>(
         tween: Tween<double>(begin: 0, end: isSelected ? 1 : 0),
         duration: AppDuration.normal,

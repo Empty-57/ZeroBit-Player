@@ -23,7 +23,7 @@ abstract final class PlayBarSpec {
 
   static const BorderRadius radiusAll = AppRadius.smAll;
 
-  static const double ctrlButtonSize = 40.0;
+  static const double ctrlButtonSize = 34.0;
 
   /// 时间读数宽度
   static const double timeWidth = 92.0;

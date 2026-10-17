@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/audio_page/audio_page_constant.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
+import 'package:zerobit_player/components/audio_list_view/audio_list_view_constant.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/tools/details_ctrl_mixin.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
@@ -61,7 +61,7 @@ class _FloatingButtonState extends State<FloatingButton> {
     if (useAnimate) {
       controller.animateTo(
         to,
-        duration: AudioPageSpec.scrollAnimation,
+        duration: AudioListViewSpec.scrollAnimation,
         curve: AppCurve.standard,
       );
     } else {
@@ -102,16 +102,16 @@ class _FloatingButtonState extends State<FloatingButton> {
 
     _alignToCenter(
       controller: widget.scrollControllerList,
-      itemOffset: index * AudioPageSpec.itemHeight,
-      itemExtent: AudioPageSpec.itemHeight,
+      itemOffset: index * AudioListViewSpec.itemHeight,
+      itemExtent: AudioListViewSpec.itemHeight,
       useAnimate: useAnimate,
       scrollOnVisible: scrollOnVisible,
     );
 
     _alignToCenter(
       controller: widget.scrollControllerGrid,
-      itemOffset: (index ~/ widget.gridColumns) * AudioPageSpec.gridRowExtent,
-      itemExtent: AudioPageSpec.gridRowExtent,
+      itemOffset: (index ~/ widget.gridColumns) * AudioListViewSpec.gridRowExtent,
+      itemExtent: AudioListViewSpec.gridRowExtent,
       useAnimate: useAnimate,
       scrollOnVisible: scrollOnVisible,
     );
@@ -125,12 +125,12 @@ class _FloatingButtonState extends State<FloatingButton> {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      bottom: AudioPageSpec.floatingBottom,
-      right: AudioPageSpec.floatingRight,
+      bottom: AudioListViewSpec.floatingBottom,
+      right: AudioListViewSpec.floatingRight,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
-        spacing: AudioPageSpec.floatingSpacing,
+        spacing: AudioListViewSpec.floatingSpacing,
         children: [
           _FloatingBtn(
             tooltip: '回到顶部',
@@ -166,36 +166,12 @@ class _FloatingBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final background = colorScheme.surfaceContainerHighest.withValues(
-      alpha: AppAlpha.surfaceStrong,
-    );
-
-    return AppTappable(
-      onTap: onPressed,
+    return AppButton.icon(
+      onPressed: onPressed,
       tooltip: tooltip,
-      borderRadius: AppRadius.smAll,
-      background: background,
-      hoverBackground: Color.alphaBlend(
-        colorScheme.primary.withValues(alpha: AppAlpha.fill),
-        background,
-      ),
-      border: Border.all(
-        color: colorScheme.outlineVariant.withValues(alpha: AppAlpha.border),
-        width: AppSize.hairline,
-      ),
-      child: SizedBox.square(
-        dimension: AudioPageSpec.floatingButtonSize,
-        child: Center(
-          child: Icon(
-            icon,
-            size: AppIconSize.md,
-            color: emphasize
-                ? colorScheme.primary
-                : colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ),
+      icon: icon,
+      style: .secondary,
+      danger: emphasize,
     );
   }
 }

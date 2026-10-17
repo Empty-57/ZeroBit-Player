@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 abstract class PlayPageConstant {
-  static const double ctrlBtnMinSize = 40.0;
+  static const double ctrlBtnMinSize = 34.0;
   static const double thumbRadius = 10.0;
   static const borderRadius = BorderRadius.all(Radius.circular(4));
   static const double audioCtrlBarHeight = 96;

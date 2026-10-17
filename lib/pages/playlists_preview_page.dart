@@ -5,9 +5,8 @@ import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
 import 'package:zerobit_player/components/widget/app_empty_state.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
-import 'package:zerobit_player/components/widget/general_btn.dart';
 import 'package:zerobit_player/controller/user_playlist_ctrl.dart';
 import 'package:zerobit_player/field/app_routes.dart';
 import 'package:zerobit_player/field/operate_area.dart';
@@ -18,7 +17,6 @@ import '../components/widget/app_dialog.dart';
 
 const double _itemHeight = 64.0;
 
-const double _rowActionSize = 40.0;
 const double _headerButtonWidth = 128.0;
 const double _headerButtonHeight = 42.0;
 
@@ -58,7 +56,6 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final controller = UserPlayListController.instance;
 
     return Row(
@@ -88,17 +85,13 @@ class _Header extends StatelessWidget {
           ],
         ),
         const Spacer(),
-        GeneralBtn(
-          fn: () => unawaited(_create(context)),
+        AppButton.filled(
+          onPressed: () => unawaited(_create(context)),
           label: '新建歌单',
           icon: PhosphorIconsLight.plus,
-          iconSize: AppIconSize.sm,
-          btnWidth: _headerButtonWidth,
-          btnHeight: _headerButtonHeight,
-          mainAxisAlignment: MainAxisAlignment.center,
-          backgroundColor: colorScheme.primary,
-          contentColor: colorScheme.onPrimary,
-          overlayColor: colorScheme.surface,
+          size: .large,
+          width: _headerButtonWidth,
+          height: _headerButtonHeight,
         ),
       ],
     );
@@ -197,9 +190,8 @@ class _PlayListTile extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
-      child: AppTappable(
-        onTap: () => _open(context),
-        hoverBackground: colorScheme.primary.withValues(alpha: AppAlpha.hover),
+      child: AppButton.ghost(
+        onPressed: () => _open(context),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -238,50 +230,18 @@ class _PlayListTile extends StatelessWidget {
                 ],
               ),
             ),
-            _RowAction(
-              icon: PhosphorIconsLight.pencilSimpleLine,
+            AppButton.icon(
+              onPressed: () => unawaited(_rename(context)),
               tooltip: '重命名',
-              onTap: () => unawaited(_rename(context)),
+              icon: PhosphorIconsLight.pencilSimpleLine,
             ),
-            _RowAction(
-              icon: PhosphorIconsLight.trash,
+            AppButton.icon(
+              danger: true,
+              onPressed: () => unawaited(_delete(context)),
               tooltip: '删除歌单',
-              color: colorScheme.error,
-              onTap: () => unawaited(_delete(context)),
+              icon: PhosphorIconsLight.trash,
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RowAction extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-  final Color? color;
-
-  const _RowAction({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-    this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final foreground = color ?? colorScheme.onSurfaceVariant;
-
-    return AppTappable(
-      onTap: onTap,
-      tooltip: tooltip,
-      hoverBackground: foreground.withValues(alpha: AppAlpha.fill),
-      child: SizedBox.square(
-        dimension: _rowActionSize,
-        child: Center(
-          child: Icon(icon, size: AppIconSize.sm, color: foreground),
         ),
       ),
     );
@@ -336,6 +296,8 @@ class _PlaylistNameDialogState extends State<_PlaylistNameDialog> {
   Widget build(BuildContext context) {
     return AppDialog.confirm(
       title: widget.title,
+      heightFactor: null,
+      widthFactor: null,
       content: SizedBox(
         width: _dialogContentWidth,
         child: TextField(
@@ -365,6 +327,8 @@ Future<bool> showDeleteConfirmDialog(BuildContext context, String name) async {
     context: context,
     builder: (_) => AppDialog.confirm(
       title: '删除歌单',
+      widthFactor: null,
+      heightFactor: null,
       content: SizedBox(
         width: _dialogContentWidth,
         child: Text(

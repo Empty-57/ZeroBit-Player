@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/components/audio_page/audio_page_args.dart';
-import 'package:zerobit_player/components/audio_page/audio_page_constant.dart';
-import 'package:zerobit_player/components/widget/general_btn.dart';
+import 'package:zerobit_player/components/audio_list_view/audio_list_view_args.dart';
+import 'package:zerobit_player/components/audio_list_view/audio_list_view_constant.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
 import 'package:zerobit_player/components/widget/get_snack_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/setting_ctrl.dart';
@@ -18,28 +18,23 @@ final UserPlayListController _playList = UserPlayListController.instance;
 
 /// 头部操作栏
 class AudioActionBar extends StatelessWidget {
-  final AudioPageArgs args;
+  final AudioListViewArgs args;
 
   const AudioActionBar({super.key, required this.args});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Row(
-      spacing: AppSpacing.lg,
+      spacing: AppSpacing.md,
       children: [
-        GeneralBtn(
-          fn: args.onPlayAll,
+        AppButton.filled(
+          onPressed: args.onPlayAll,
           icon: PhosphorIconsFill.play,
-          iconSize: AppIconSize.sm,
+          size: .large,
           label: '播放',
-          btnHeight: AudioPageSpec.actionHeight,
-          btnWidth: AudioPageSpec.playButtonWidth,
-          mainAxisAlignment: MainAxisAlignment.center,
-          backgroundColor: colorScheme.primary,
-          contentColor: colorScheme.onPrimary,
-          overlayColor: colorScheme.surface,
+          spacing: AppSpacing.md,
+          width: AudioListViewSpec.playButtonWidth,
+          height: AudioListViewSpec.actionHeight,
         ),
         SignalBuilder(
           builder: (_) => AnimatedSwitcher(
@@ -66,7 +61,9 @@ class _ActionButton extends StatelessWidget {
   final Color? contentColor;
 
   /// 自定义内容
-  final List<Widget>? children;
+  final Widget? child;
+
+  final AppButtonSize size;
 
   /// 是否位于 [_ActionGroup]
   final bool inGroup;
@@ -76,40 +73,30 @@ class _ActionButton extends StatelessWidget {
     this.label,
     this.tooltip,
     required this.onTap,
-    this.width = AudioPageSpec.actionSquare,
+    this.width = AudioListViewSpec.actionSquare,
     this.contentColor,
-    this.children,
+    this.child,
     this.inGroup = false,
+    this.size = .large,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return GeneralBtn(
-      fn: onTap,
+    final btn = inGroup ? AppButton.ghost : AppButton.secondary;
+    return btn(
+      onPressed: onTap,
       icon: icon,
-      iconSize: AppIconSize.sm,
       label: label,
       tooltip: tooltip,
-      btnWidth: width,
-      btnHeight: inGroup
-          ? AudioPageSpec.groupedActionHeight
-          : AudioPageSpec.actionHeight,
-      mainAxisAlignment: label == null
+      width: width,
+      size: size,
+      height: inGroup
+          ? AudioListViewSpec.groupedActionHeight
+          : AudioListViewSpec.actionHeight,
+      alignment: label == null
           ? MainAxisAlignment.center
           : MainAxisAlignment.start,
-      backgroundColor: inGroup
-          ? Colors.transparent
-          : colorScheme.surfaceContainerHighest.withValues(
-              alpha: AppAlpha.surfaceSubtle,
-            ),
-      borderWidth: inGroup ? 0 : AppSize.hairline,
-      borderColor: colorScheme.outlineVariant.withValues(
-        alpha: AppAlpha.border,
-      ),
-      contentColor: contentColor ?? colorScheme.onSurfaceVariant,
-      children: children,
+      child: child,
     );
   }
 }
@@ -129,17 +116,17 @@ class _ActionGroup extends StatelessWidget {
         color: colorScheme.surfaceContainerHighest.withValues(
           alpha: AppAlpha.surfaceSubtle,
         ),
-        borderRadius: AppRadius.smAll,
+        borderRadius: AppRadius.xsAll,
         border: Border.all(
           color: colorScheme.outlineVariant.withValues(alpha: AppAlpha.border),
           width: AppSize.hairline,
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(AudioPageSpec.actionGroupPadding),
+        padding: const EdgeInsets.all(AudioListViewSpec.actionGroupPadding),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          spacing: AudioPageSpec.actionGroupPadding,
+          spacing: AudioListViewSpec.actionGroupPadding,
           children: children,
         ),
       ),
@@ -149,14 +136,14 @@ class _ActionGroup extends StatelessWidget {
 
 /// 普通态
 class _NormalActions extends StatelessWidget {
-  final AudioPageArgs args;
+  final AudioListViewArgs args;
 
   const _NormalActions({super.key, required this.args});
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      spacing: AppSpacing.lg,
+      spacing: AppSpacing.md,
       children: [
         _ActionGroup(
           children: [
@@ -204,7 +191,7 @@ class _NormalActions extends StatelessWidget {
 
 /// 多选态
 class _MultiSelectActions extends StatelessWidget {
-  final AudioPageArgs args;
+  final AudioListViewArgs args;
 
   const _MultiSelectActions({super.key, required this.args});
 
@@ -213,7 +200,7 @@ class _MultiSelectActions extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Row(
-      spacing: AppSpacing.lg,
+      spacing: AppSpacing.md,
       children: [
         if (args.operateArea == OperateArea.playListDetails)
           _ActionButton(
@@ -262,7 +249,7 @@ class _MultiSelectActions extends StatelessWidget {
 }
 
 class _MultiSelectToggle extends StatelessWidget {
-  final AudioPageArgs args;
+  final AudioListViewArgs args;
   final bool inGroup;
 
   const _MultiSelectToggle({required this.args, this.inGroup = false});
@@ -290,7 +277,7 @@ class _MultiSelectToggle extends StatelessWidget {
 
 /// 排序选择
 class _SortButton extends StatefulWidget {
-  final AudioPageArgs args;
+  final AudioListViewArgs args;
 
   const _SortButton({required this.args});
 
@@ -358,8 +345,6 @@ class _SortButtonState extends State<_SortButton> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return MenuAnchor(
       controller: _menuController,
       consumeOutsideTap: true,
@@ -368,18 +353,14 @@ class _SortButtonState extends State<_SortButton> {
           SignalBuilder(
             builder: (_) {
               final isCurrent = widget.args.sortType == option.type;
-              return GeneralBtn(
-                fn: () => _applySort(option.type),
+              return AppButton.ghost(
+                onPressed: () => _applySort(option.type),
+                selected: isCurrent,
                 icon: option.icon,
-                iconSize: AppIconSize.sm,
                 label: option.label,
-                btnHeight: AudioPageSpec.actionHeight,
-                btnWidth: AudioPageSpec.sortMenuWidth,
-                mainAxisAlignment: MainAxisAlignment.start,
-                backgroundColor: isCurrent
-                    ? colorScheme.primary.withValues(alpha: AppAlpha.fill)
-                    : Colors.transparent,
-                contentColor: isCurrent ? colorScheme.primary : null,
+                size: .large,
+                width: AudioListViewSpec.sortMenuWidth,
+                alignment: MainAxisAlignment.start,
               );
             },
           ),
@@ -388,38 +369,28 @@ class _SortButtonState extends State<_SortButton> {
         builder: (context) {
           final label =
               SettingController.sortType[widget.args.sortType] ?? '未指定';
-          final contentColor = colorScheme.onSurfaceVariant;
-
           return _ActionButton(
             inGroup: true,
-            width: AudioPageSpec.sortButtonWidth,
+            size: .medium,
+            width: AudioListViewSpec.sortButtonWidth,
             onTap: () => _menuController.isOpen
                 ? _menuController.close()
                 : _menuController.open(),
-            children: [
-              Icon(
-                PhosphorIconsLight.funnelSimple,
-                color: contentColor,
-                size: AppIconSize.sm,
-              ),
-              Expanded(
-                child: Text(
-                  label,
-                  style: context.createTextStyle(
-                    size: AppFontSize.sm,
-                    color: contentColor,
+            child: Row(
+              spacing: AppSpacing.xs,
+              children: [
+                const Icon(PhosphorIconsLight.funnelSimple),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.fade,
                   ),
-                  maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.fade,
                 ),
-              ),
-              Icon(
-                PhosphorIconsFill.caretDown,
-                color: contentColor.withValues(alpha: AppAlpha.textSecondary),
-                size: AppIconSize.xs,
-              ),
-            ],
+                const Icon(PhosphorIconsFill.caretDown),
+              ],
+            ),
           );
         },
       ),
@@ -429,7 +400,7 @@ class _SortButtonState extends State<_SortButton> {
 
 /// 批量添加到歌单
 class _AddToPlaylistButton extends StatefulWidget {
-  final AudioPageArgs args;
+  final AudioListViewArgs args;
 
   const _AddToPlaylistButton({required this.args});
 
@@ -449,7 +420,11 @@ class _AddToPlaylistButtonState extends State<_AddToPlaylistButton> {
       showSnackBar(title: 'WARNING', msg: '未选择任何音乐！');
       return;
     }
-    _menuController.open();
+    if (_menuController.isOpen) {
+      _menuController.close();
+    } else {
+      _menuController.open();
+    }
   }
 
   @override
@@ -458,8 +433,8 @@ class _AddToPlaylistButtonState extends State<_AddToPlaylistButton> {
       controller: _menuController,
       menuChildren: [
         for (final key in _playList.allUserKey)
-          GeneralBtn(
-            fn: () {
+          AppButton.ghost(
+            onPressed: () {
               _menuController.close();
               _playList.addAllToAudioList(
                 selectedList: [...widget.args.selectedList],
@@ -467,16 +442,15 @@ class _AddToPlaylistButtonState extends State<_AddToPlaylistButton> {
               );
             },
             label: UserPlayListController.displayNameOf(key),
-            btnHeight: AudioPageSpec.actionHeight,
-            btnWidth: AudioPageSpec.playlistMenuWidth,
-            mainAxisAlignment: MainAxisAlignment.start,
-            backgroundColor: Colors.transparent,
+            size: .large,
+            width: AudioListViewSpec.playlistMenuWidth,
+            alignment: MainAxisAlignment.start,
           ),
       ],
       child: _ActionButton(
         icon: PhosphorIconsLight.plus,
         label: '添加到歌单',
-        width: AudioPageSpec.playlistMenuWidth,
+        width: AudioListViewSpec.playlistMenuWidth,
         onTap: _open,
       ),
     );

@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/play_page/play_page_constant.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 
@@ -167,8 +168,11 @@ class _PlayQueueMenuAnchorState extends State<PlayQueueMenuAnchor> {
                           if (_searchQuery.value.isEmpty) {
                             return const SizedBox.shrink();
                           }
-                          return IconButton(
-                            icon: const Icon(Icons.clear, size: 16),
+
+                          return AppButton.icon(
+                            icon: Icons.clear,
+                            size: .small,
+                            borderRadius: AppRadius.pillAll,
                             onPressed: () {
                               _searchController.clear();
                               _searchQuery.value = '';
@@ -259,13 +263,9 @@ class _PlayQueueItem extends StatelessWidget {
     final isCurrent = audioController.currentPath.value == item.path;
     final currentTitleStyle = isCurrent ? highLightTitleStyle : titleStyle;
     final currentSubStyle = isCurrent ? highLightSubStyle : subStyle;
-    return TextButton(
+
+    return AppButton.ghost(
       onPressed: playThrottle,
-      style: TextButton.styleFrom(
-        shape: const RoundedRectangleBorder(
-          borderRadius: PlayPageConstant.borderRadius,
-        ),
-      ),
       child: SizedBox.expand(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

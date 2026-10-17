@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
 import 'package:zerobit_player/components/widget/app_dialog.dart';
 import 'package:zerobit_player/components/widget/app_empty_state.dart';
-import 'package:zerobit_player/components/widget/app_tappable.dart';
 import 'package:zerobit_player/components/widget/get_snack_bar.dart';
 import 'package:zerobit_player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/controller/music_cache_ctrl.dart';
@@ -135,14 +135,12 @@ class _SearchResultRowState extends State<_SearchResultRow> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final metadata = widget.metadata;
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
-      child: AppTappable(
-        onTap: () => AudioController.instance.searchInsert(metadata: metadata),
-        hoverBackground: colorScheme.primary.withValues(alpha: AppAlpha.hover),
+      child: AppButton.ghost(
+        onPressed: () =>
+            AudioController.instance.searchInsert(metadata: metadata),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -174,10 +172,10 @@ class _SearchResultRowState extends State<_SearchResultRow> {
                 ],
               ),
             ),
-            _RowAction(
+            AppButton.icon(
               icon: PhosphorIconsLight.arrowBendDownRight,
               tooltip: '添加到下一首',
-              onTap: () =>
+              onPressed: () =>
                   AudioController.instance.insertNext(metadata: metadata),
             ),
             MenuAnchor(
@@ -208,46 +206,13 @@ class _SearchResultRowState extends State<_SearchResultRow> {
                     ),
                   ),
               ],
-              child: _RowAction(
+              child: AppButton.icon(
                 icon: PhosphorIconsLight.plus,
                 tooltip: '添加到歌单',
-                onTap: _openPlaylistMenu,
+                onPressed: _openPlaylistMenu,
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RowAction extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  const _RowAction({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return AppTappable(
-      onTap: onTap,
-      tooltip: tooltip,
-      hoverBackground: colorScheme.primary.withValues(alpha: AppAlpha.fill),
-      child: SizedBox.square(
-        dimension: AppSize.iconButton,
-        child: Center(
-          child: Icon(
-            icon,
-            size: AppIconSize.sm,
-            color: colorScheme.onSurfaceVariant,
-          ),
         ),
       ),
     );

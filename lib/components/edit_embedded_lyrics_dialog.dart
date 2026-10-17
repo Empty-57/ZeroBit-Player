@@ -4,10 +4,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
+import 'package:zerobit_player/components/widget/app_button/app_button.dart';
 import 'package:zerobit_player/components/widget/app_dialog.dart';
 import 'package:zerobit_player/components/widget/app_empty_state.dart';
-import 'package:zerobit_player/components/widget/app_segmented.dart';
-import 'package:zerobit_player/components/widget/general_btn.dart';
+import 'package:zerobit_player/components/widget/app_text_segmented.dart';
 import 'package:zerobit_player/components/widget/get_snack_bar.dart';
 import 'package:zerobit_player/hive_manager/models/music_cache_model.dart';
 import 'package:zerobit_player/logger.dart';
@@ -19,8 +19,6 @@ const double _dialogSizeFactor = 2 / 3;
 const int _editorMinLines = 6;
 const double _buttonWidth = 96.0;
 const double _buttonHeight = 36.0;
-const double _savingSpinnerSize = 14.0;
-const double _savingSpinnerStroke = 2.0;
 
 /// 可选的结构化歌词格式
 const Map<String, String> _formatOptions = {
@@ -199,7 +197,7 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
             Row(
               spacing: AppSpacing.lg,
               children: [
-                AppSegmented<_EditMode>(
+                AppTextSegmented<_EditMode>(
                   options: const {
                     _EditMode.structured: '按格式编辑',
                     _EditMode.raw: '编辑源数据',
@@ -216,7 +214,7 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
                       opacity: AppAlpha.textSecondary,
                     ),
                   ),
-                  AppSegmented<String>(
+                  AppTextSegmented<String>(
                     options: _formatOptions,
                     value: _format.value,
                     onChanged: (format) => _format.value = format,
@@ -270,8 +268,6 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
   }
 
   Widget _buildFooter() {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return SignalBuilder(
       builder: (_) {
         final isSaving = _isSaving.value;
@@ -282,47 +278,19 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
           mainAxisAlignment: MainAxisAlignment.end,
           spacing: AppSpacing.md,
           children: [
-            GeneralBtn(
-              fn: isSaving ? null : () => Navigator.pop(context),
+            AppButton.secondary(
+              onPressed: isSaving ? null : () => Navigator.pop(context),
               label: hasError ? '关闭' : '取消',
-              btnWidth: _buttonWidth,
-              btnHeight: _buttonHeight,
-              mainAxisAlignment: MainAxisAlignment.center,
-              backgroundColor: Colors.transparent,
-              contentColor: colorScheme.onSurfaceVariant,
-              borderWidth: AppSize.hairline,
-              borderColor: colorScheme.outlineVariant.withValues(
-                alpha: AppAlpha.border,
-              ),
+              width: _buttonWidth,
+              height: _buttonHeight,
             ),
             if (!hasError)
-              GeneralBtn(
-                fn: canSave ? () => unawaited(_save()) : null,
-                btnWidth: _buttonWidth,
-                btnHeight: _buttonHeight,
-                mainAxisAlignment: MainAxisAlignment.center,
-                backgroundColor: colorScheme.primary,
-                contentColor: colorScheme.onPrimary,
-                overlayColor: colorScheme.surface,
-                children: isSaving
-                    ? [
-                        SizedBox.square(
-                          dimension: _savingSpinnerSize,
-                          child: CircularProgressIndicator(
-                            strokeWidth: _savingSpinnerStroke,
-                            color: colorScheme.onPrimary,
-                          ),
-                        ),
-                      ]
-                    : [
-                        Text(
-                          '保存',
-                          style: context.createTextStyle(
-                            size: AppFontSize.md,
-                            color: colorScheme.onPrimary,
-                          ),
-                        ),
-                      ],
+              AppButton.filled(
+                onPressed: canSave ? () => unawaited(_save()) : null,
+                width: _buttonWidth,
+                height: _buttonHeight,
+                loading: isSaving,
+                label: '保存',
               ),
           ],
         );
