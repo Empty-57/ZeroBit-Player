@@ -19,7 +19,7 @@ import 'package:zerobit_player/logger.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 import 'package:zerobit_player/tools/func/sync_cache.dart';
 
-import '../desktop_lyrics_sever.dart';
+import '../desktop_lyrics_server.dart';
 import '../src/rust/api/bass.dart' as bass;
 import '../tools/func/func_extension.dart';
 import '../windows_taskbar_thumbnail.dart';

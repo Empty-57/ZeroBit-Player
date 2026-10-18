@@ -10,7 +10,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/API/apis.dart';
-import 'package:zerobit_player/components/widget/app_Interaction_widget.dart';
+import 'package:zerobit_player/components/widget/app_interaction_widget.dart';
 import 'package:zerobit_player/components/widget/app_button/app_button.dart';
 import 'package:zerobit_player/components/widget/app_card.dart';
 import 'package:zerobit_player/components/widget/covers.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:zerobit_player/components/widget/app_Interaction_widget.dart';
+import 'package:zerobit_player/components/widget/app_interaction_widget.dart';
 import 'package:zerobit_player/tools/func/style_manager.dart';
 
 /// 单段高度

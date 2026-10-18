@@ -60,7 +60,7 @@ import 'controller/desktop_lyrics_setting_ctrl.dart';
 import 'controller/lyric_ctrl.dart';
 import 'controller/setting_ctrl.dart';
 import 'controller/window_ctrl.dart';
-import 'desktop_lyrics_sever.dart';
+import 'desktop_lyrics_server.dart';
 import 'field/app_routes.dart';
 import 'hive_manager/adapters/music_cache_adapter.dart';
 import 'hive_manager/adapters/setting_cache_adapter.dart';

@@ -4,7 +4,7 @@ import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/components/play_bar_constant.dart';
 import 'package:zerobit_player/components/side_bar.dart';
 import 'package:zerobit_player/components/side_bar_constant.dart';
-import 'package:zerobit_player/components/widget/app_Interaction_widget.dart';
+import 'package:zerobit_player/components/widget/app_interaction_widget.dart';
 import 'package:zerobit_player/components/widget/audio_ctrl_btn.dart';
 import 'package:zerobit_player/components/widget/covers.dart';
 import 'package:zerobit_player/components/widget/diamond_slider_thumb.dart';

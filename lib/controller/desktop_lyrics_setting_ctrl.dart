@@ -1,6 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:zerobit_player/desktop_lyrics_sever.dart';
+import 'package:zerobit_player/desktop_lyrics_server.dart';
 import 'package:zerobit_player/tools/websocket_model.dart';
 
 import '../field/shared_preferences_key.dart';
