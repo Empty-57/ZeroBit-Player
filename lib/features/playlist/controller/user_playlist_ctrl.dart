@@ -1,0 +1,315 @@
+import 'dart:async';
+
+import 'package:signals/signals_flutter.dart';
+import 'package:zerobit_player/core/constants/operate_area.dart';
+import 'package:zerobit_player/core/widgets/get_snack_bar.dart';
+import 'package:zerobit_player/features/library/controller/music_cache_ctrl.dart';
+import 'package:zerobit_player/features/player/controller/audio_ctrl.dart';
+
+import '../../../core/storage/hive_box.dart';
+import '../../../core/storage/models/music_cache_model.dart';
+import '../../../core/storage/models/user_playlist_model.dart';
+
+class UserPlayListController {
+  UserPlayListController._();
+
+  static final UserPlayListController instance = UserPlayListController._();
+
+  final items = listSignal(<UserPlayListCache>[]);
+  final _userPlayListCacheBox = HiveBox.userPlayListCacheBox;
+
+  AudioController get _audioController => AudioController.instance;
+
+  MusicCacheController get _musicCacheController =>
+      MusicCacheController.instance;
+
+  List<String> get allUserKey => items.map((e) => e.userKey).toList();
+
+  final songDeletedSignal = signal(<String>[]);
+
+  void loadData() {
+    final rawPlaylists = _userPlayListCacheBox.getAll();
+    if (rawPlaylists.isEmpty) {
+      items.value = const [];
+      return;
+    }
+    final map = _musicCacheController.itemsMap.peek();
+
+    bool hasDeadLinks = false;
+    final List<UserPlayListCache> cleanList = [];
+    final Map<String, UserPlayListCache> changedMap = {};
+
+    for (final playlist in rawPlaylists) {
+      final originalPaths = playlist.pathList;
+      final bool isDirty = originalPaths.any((p) => !map.containsKey(p));
+      if (!isDirty) {
+        cleanList.add(playlist);
+      } else {
+        hasDeadLinks = true;
+        final validPaths = [
+          for (final p in originalPaths)
+            if (map.containsKey(p)) p,
+        ];
+        final updated = UserPlayListCache(
+          userKey: playlist.userKey,
+          pathList: validPaths,
+        );
+        cleanList.add(updated);
+        changedMap[playlist.userKey] = updated;
+      }
+    }
+    items.value = cleanList;
+    if (hasDeadLinks && changedMap.isNotEmpty) {
+      unawaited(_userPlayListCacheBox.putAll(data: changedMap));
+    }
+  }
+
+  /// 从歌单键取出展示名。
+  static String displayNameOf(String userKey) {
+    final idSep = userKey.lastIndexOf('_');
+    if (idSep <= 0) return userKey;
+    final areaSep = userKey.lastIndexOf('_', idSep - 1);
+    return areaSep <= 0
+        ? userKey.substring(0, idSep)
+        : userKey.substring(0, areaSep);
+  }
+
+  bool _isValidName(String name) {
+    if (name.isEmpty) {
+      showSnackBar(title: "WARNING", msg: "歌单名称为空！");
+      return false;
+    }
+    if (name.length > 223) {
+      showSnackBar(title: "WARNING", msg: "歌单名称过长！（最大223个字符）");
+      return false;
+    }
+
+    if (items.any((e) => displayNameOf(e.userKey) == name)) {
+      showSnackBar(title: "WARNING", msg: "重复的歌单名称！");
+      return false;
+    }
+    return true;
+  }
+
+  void createPlayList({required String userKey}) {
+    final cleanName = userKey.trim();
+
+    if (!_isValidName(cleanName)) return;
+
+    final uniqueId = DateTime.now().millisecondsSinceEpoch;
+    final fullUserKey = '${cleanName}_${OperateArea.playListDetails}_$uniqueId';
+
+    final newPlaylist = UserPlayListCache(
+      pathList: <String>[],
+      userKey: fullUserKey,
+    );
+
+    unawaited(_userPlayListCacheBox.put(data: newPlaylist, key: fullUserKey));
+    items.add(newPlaylist);
+  }
+
+  void removePlayList({required String userKey}) {
+    unawaited(_userPlayListCacheBox.del(key: userKey));
+    items.removeWhere((v) => v.userKey == userKey);
+  }
+
+  Future<void> renamePlayList({
+    required String oldKey,
+    required String newKey,
+  }) async {
+    final cleanNewName = newKey.trim();
+
+    if (!_isValidName(cleanNewName)) return;
+
+    final uniqueId = DateTime.now().millisecondsSinceEpoch;
+    final fullNewKey =
+        '${cleanNewName}_${OperateArea.playListDetails}_$uniqueId';
+
+    final index = items.indexWhere((v) => v.userKey == oldKey);
+    if (index == -1) return;
+
+    final updatedPlaylist = UserPlayListCache(
+      pathList: items[index].pathList,
+      userKey: fullNewKey,
+    );
+
+    // 更新 Hive 数据库
+    await _userPlayListCacheBox.del(key: oldKey);
+    await _userPlayListCacheBox.put(data: updatedPlaylist, key: fullNewKey);
+
+    items[index] = updatedPlaylist;
+  }
+
+  /// 用于向自定义歌单添加所选的音频
+  Future<void> addToAudioList({
+    required MusicCache metadata,
+    required String userKey,
+  }) async {
+    final index = items.indexWhere((v) => v.userKey == userKey);
+    if (index == -1) return;
+
+    final targetList = items[index];
+
+    if (targetList.pathList.contains(metadata.path)) {
+      showSnackBar(
+        title: "WARNING",
+        msg: "歌单 ${displayNameOf(userKey)} 存在重复歌曲 ${metadata.title} ！",
+        duration: const Duration(milliseconds: 1500),
+      );
+      return;
+    }
+
+    targetList.pathList.add(metadata.path);
+    items[index] = targetList; // 触发 SignalBuilder 刷新
+
+    await _userPlayListCacheBox.put(data: targetList, key: userKey);
+
+    if (_audioController.currentAudioSource == userKey) {
+      if (!_audioController.playListCacheItems.any(
+        (v) => v.path == metadata.path,
+      )) {
+        _audioController.playListCacheItems.add(metadata);
+        _audioController.syncCurrentIndex();
+      }
+    }
+
+    showSnackBar(
+      title: "OK",
+      msg: "已将 ${metadata.title} 添加到歌单 ${displayNameOf(userKey)}",
+      duration: const Duration(milliseconds: 1500),
+    );
+  }
+
+  /// 用于向自定义歌单添加所选的所有音频
+  Future<void> addAllToAudioList({
+    required List<MusicCache> selectedList,
+    required String userKey,
+  }) async {
+    if (selectedList.isEmpty) {
+      showSnackBar(
+        title: "WARNING",
+        msg: "未选择音频！",
+        duration: const Duration(milliseconds: 1500),
+      );
+      return;
+    }
+
+    final index = items.indexWhere((v) => v.userKey == userKey);
+    if (index == -1) return;
+
+    final targetList = items[index];
+    final existingPathSet = targetList.pathList.toSet();
+
+    // 过滤出真正需要添加的新歌
+    final songsToAdd = selectedList
+        .where((v) => !existingPathSet.contains(v.path))
+        .toList();
+
+    if (songsToAdd.isEmpty) {
+      showSnackBar(
+        title: "WARNING",
+        msg: "重复添加！歌曲均已存在于歌单中。",
+        duration: const Duration(milliseconds: 1500),
+      );
+      return;
+    }
+
+    final addedCount = songsToAdd.length;
+
+    targetList.pathList.addAll(songsToAdd.map((v) => v.path));
+    items[index] = targetList;
+
+    await _userPlayListCacheBox.put(data: targetList, key: userKey);
+
+    if (_audioController.currentAudioSource == userKey) {
+      final currentPlaySet = _audioController.playListCacheItems
+          .map((v) => v.path)
+          .toSet();
+      final playSongsToAdd = songsToAdd
+          .where((v) => !currentPlaySet.contains(v.path))
+          .toList();
+
+      _audioController.playListCacheItems.addAll(playSongsToAdd);
+      _audioController.syncCurrentIndex();
+    }
+
+    showSnackBar(
+      title: "OK",
+      msg: "已将去重后的 $addedCount 首歌添加到歌单 ${displayNameOf(userKey)}",
+      duration: const Duration(milliseconds: 1500),
+    );
+  }
+
+  /// 用于从自定义歌单删除所选的音频
+  Future<void> audioRemove({
+    required String userKey,
+    required MusicCache metadata,
+  }) async {
+    final index = items.indexWhere((v) => v.userKey == userKey);
+    if (index != -1) {
+      final targetList = items[index];
+      targetList.pathList.remove(metadata.path);
+
+      batch(() {
+        items[index] = targetList;
+        songDeletedSignal.value = [metadata.path];
+      });
+
+      await _userPlayListCacheBox.put(data: targetList, key: userKey);
+
+      if (_audioController.currentAudioSource == userKey) {
+        _audioController.playListCacheItems.remove(metadata);
+        _audioController.syncCurrentIndex();
+      }
+
+      showSnackBar(
+        title: "OK",
+        msg: "已将 ${metadata.title} 从歌单 ${displayNameOf(userKey)}删除！",
+        duration: const Duration(milliseconds: 1500),
+      );
+    }
+  }
+
+  /// 用于从自定义歌单删除所有所选的音频
+  Future<void> audioRemoveAll({
+    required String userKey,
+    required List<MusicCache> removeList,
+  }) async {
+    if (removeList.isEmpty) {
+      showSnackBar(
+        title: "WARNING",
+        msg: "未选择音频！",
+        duration: const Duration(milliseconds: 1500),
+      );
+      return;
+    }
+
+    final index = items.indexWhere((v) => v.userKey == userKey);
+    if (index == -1) return;
+
+    final targetList = items[index];
+    final removePathSet = removeList.map((v) => v.path).toSet();
+
+    targetList.pathList.removeWhere((path) => removePathSet.contains(path));
+
+    batch(() {
+      items[index] = targetList;
+      songDeletedSignal.value = removeList.map((v) => v.path).toList();
+    });
+
+    await _userPlayListCacheBox.put(data: targetList, key: userKey);
+
+    if (_audioController.currentAudioSource == userKey) {
+      _audioController.playListCacheItems.removeWhere(
+        (v) => removePathSet.contains(v.path),
+      );
+      _audioController.syncCurrentIndex();
+    }
+
+    showSnackBar(
+      title: "OK",
+      msg: "已将去重后的 ${removeList.length} 首歌从歌单 ${displayNameOf(userKey)}删除！",
+      duration: const Duration(milliseconds: 1500),
+    );
+  }
+}

@@ -1,0 +1,336 @@
+import 'dart:async';
+
+import 'package:flutter/cupertino.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:signals/signals_flutter.dart';
+import 'package:zerobit_player/core/widgets/spring_list_view.dart';
+import 'package:zerobit_player/features/setting/controller/setting_ctrl.dart';
+
+import '../../../core/utils/func_extension.dart';
+import '../../../core/utils/logger.dart';
+import '../../player/controller/audio_ctrl.dart';
+import '../models/lyric_model.dart';
+
+class LyricController {
+  LyricController._();
+
+  static final LyricController instance = LyricController._();
+
+  final AudioController _audioController = AudioController.instance;
+  final SettingController _settingController = SettingController.instance;
+  SpringListController? springController;
+
+  final ValueNotifier<double> currentMs20Notifier = ValueNotifier<double>(0.0);
+
+  ///当前字索引
+  final ValueNotifier<int> currentWordIndexNotifier = ValueNotifier<int>(0);
+
+  /// 词动画进度
+  final ValueNotifier<double> wordProgress = ValueNotifier<double>(0.0);
+
+  /// 间奏动画进度
+  final ValueNotifier<double> interludeProcess = ValueNotifier<double>(0.0);
+
+  /// 当前行索引
+  final currentLineIndex = signal(-1);
+  final isPointerScroll = signal(false);
+  final showInterlude = signal(false);
+
+  ItemScrollController? lrcViewScrollController;
+
+  /// 词动画进度增量
+  double _wordProgressIncrement = 0;
+
+  /// 本行与下一行的间隔时间
+  double _interval = 0;
+
+  /// 当前行词数
+  int _wordsLen = 0;
+
+  /// 当前行信息
+  List<WordEntry>? _currentLine;
+
+  /// 可视区歌词行数量的一半
+  int visibleItemCount = 10;
+
+  Timer? _delayTimer;
+
+  late final void Function() pointerScrollDebounce = (() {
+    isPointerScroll.value = true;
+    _delayTimer?.cancel();
+    _delayTimer = Timer(const Duration(seconds: 3), () {
+      isPointerScroll.value = false;
+      scrollToCenter();
+    });
+  }).debounce(ms: 100);
+
+  static const double _showIntervalLowLimit =
+      0.95; // 间奏进度下限, 最后一个词过渡到 95% 就开始显示间奏, 给出场动画稍微预留一些时间
+  static const double _showIntervalHighLimit =
+      0.95; // 间奏进度上限, 间奏完成到 95% 就开始退出间奏, 给下一句歌词入场一些预留时间
+  static const int _intervalThreshold = 4; // 间奏阈值, 超过此秒数则为间奏
+  static const double _loopTime = 0.02;
+
+  void dispose() {
+    currentMs20Notifier.dispose();
+    currentWordIndexNotifier.dispose();
+    wordProgress.dispose();
+    interludeProcess.dispose();
+    isPointerScroll.dispose();
+    currentLineIndex.dispose();
+    showInterlude.dispose();
+    _delayTimer?.cancel();
+    _currentLine = null;
+    springController?.dispose();
+    springController = null;
+    lrcViewScrollController = null;
+  }
+
+  /// 同步弹性滚动控制器的存在性。
+  void syncSpringController({required bool enabled}) {
+    if (enabled) {
+      springController ??= SpringListController();
+      return;
+    }
+    final SpringListController? old = springController;
+    if (old == null) return;
+    springController = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) => old.dispose());
+  }
+
+  /// 换歌时重建 [ItemScrollController]。
+  void recreateViewScrollController() {
+    if (lrcViewScrollController == null) return; // 歌词页未挂载
+    lrcViewScrollController = ItemScrollController();
+  }
+
+  void lineUpdatedReset() {
+    _interval = 0;
+    _currentLine = null;
+    _wordsLen = 0;
+    _wordProgressIncrement = 0;
+    currentWordIndexNotifier.value = -1;
+    wordProgress.value = 0;
+  }
+
+  // 更新 _currentWord, _currentLine, _interval, _threshold
+  void _updateLyricsInfo({required bool updateLineOnly}) {
+    if ((_audioController.currentLyrics.value?.type ?? LyricFormat.lrc) ==
+        LyricFormat.lrc) {
+      return;
+    }
+
+    if (updateLineOnly) {
+      final lyrics = _audioController.currentLyrics.value?.parsedLrc;
+      final lineIndex = currentLineIndex.value;
+      if (lyrics == null || lineIndex < 0 || lineIndex >= lyrics.length) {
+        return;
+      }
+      _currentLine = lyrics[lineIndex].lyricText;
+      if (_currentLine!.isEmpty) return;
+
+      final rowCurrentLine = lyrics[lineIndex];
+      final lastWord = _currentLine![_currentLine!.length - 1];
+      if (_audioController.currentLyrics.value?.type == LyricFormat.byWordLrc) {
+        _interval =
+            rowCurrentLine.nextTime -
+            lastWord.start; // byWordLrc 每一行最后一个词为空白符 代表本行的结束时间
+      } else {
+        _interval =
+            rowCurrentLine.nextTime - (lastWord.start + lastWord.duration);
+      }
+
+      _wordsLen = _currentLine!.length;
+    } else {
+      final line = _currentLine;
+      if (line == null || line.isEmpty) return;
+
+      final wordIndex = currentWordIndexNotifier.value.clamp(
+        0,
+        line.length - 1,
+      );
+      if (wordIndex >= line.length) return;
+
+      final word = line[wordIndex];
+
+      // 增量计算: 1/(duration/loopTime)=loopTime/duration
+      // 字持续时间: duration(s) 轮询周期: loopTime=0.02(s) 1: 百分比
+      final duration = word.duration;
+      if (duration <= 0) {
+        _wordProgressIncrement = 0;
+        return;
+      }
+
+      final ms = currentMs20Notifier.value;
+
+      final diffTime = ms - word.start;
+      _wordProgressIncrement = diffTime >= _loopTime
+          ? _loopTime /
+                (duration - diffTime) // 校准分支 误差大于一个周期就校准
+          : _loopTime / duration; // 正常分支
+    }
+  }
+
+  // 判断是否显示间奏/前奏
+  void _updateInterludeState() {
+    final lyrics = _audioController.currentLyrics.value;
+    final parsedLrc = lyrics?.parsedLrc;
+    if (parsedLrc == null || parsedLrc.isEmpty) {
+      showInterlude.value = false;
+      return;
+    }
+    final lineIndex = currentLineIndex.value;
+
+    // 前奏
+    if (lineIndex < 0) {
+      _interval = parsedLrc[0].start;
+      final show =
+          _interval > _intervalThreshold &&
+          interludeProcess.value <= _showIntervalHighLimit - 0.1 &&
+          _interval < 60; // 超过1分钟认为歌词时间轴有误
+      showInterlude.value = show;
+      if (show) interludeProcess.value += _loopTime / _interval;
+      return;
+    }
+
+    // 间奏
+    if (currentWordIndexNotifier.value != _wordsLen - 1) {
+      showInterlude.value = false;
+      return;
+    }
+
+    final interlude = interludeProcess.value;
+    final double threshold = lyrics!.type == LyricFormat.byWordLrc
+        ? 0 // byWordLrc 每一行最后一个词为空白符 代表本行的结束时间 不需要预设下限 本行的结束时间就是间奏开始时间
+        : _showIntervalLowLimit;
+
+    final show =
+        _interval >= _intervalThreshold &&
+        wordProgress.value >= threshold && // 这个词过渡完才允许显示间
+        interlude <=
+            _showIntervalHighLimit && //<= _showIntervalHighLimit 是为了给动画退场一点时间
+        lineIndex < parsedLrc.length - 1;
+
+    showInterlude.value = show;
+    if (show) interludeProcess.value += _loopTime / _interval; // 算法同词增量计算
+  }
+
+  // 更新词进度
+  void updateProgress() {
+    final newLineIndex = _findLrcPos(
+      time: currentMs20Notifier.value,
+      lyrics: _audioController.currentLyrics.value?.parsedLrc,
+      hint: currentLineIndex.value,
+    );
+    if (newLineIndex != currentLineIndex.value) {
+      lineUpdatedReset();
+
+      visibleItemCount = newLineIndex <= 0
+          ? 10
+          : springController?.getVisibleItemCount() ?? 10;
+      currentLineIndex.value = newLineIndex;
+      _updateLyricsInfo(updateLineOnly: true);
+      if (!isPointerScroll.value) {
+        if (_settingController.useSpringScroll.value) {
+          _springScrollToCenter();
+        } else {
+          scrollToCenter();
+        }
+      }
+    }
+
+    if ((_audioController.currentLyrics.value?.type ?? LyricFormat.lrc) ==
+            LyricFormat.lrc ||
+        currentLineIndex.value < 0 ||
+        _currentLine == null) {
+      _updateInterludeState();
+      return;
+    }
+    final newWordIndex = _findLrcPos(
+      time: currentMs20Notifier.value,
+      lyrics: _currentLine,
+      hint: currentWordIndexNotifier.value,
+    );
+
+    if (newWordIndex != currentWordIndexNotifier.value) {
+      interludeProcess.value = 0;
+      wordProgress.value = 0;
+      currentWordIndexNotifier.value = newWordIndex;
+      _updateLyricsInfo(updateLineOnly: false);
+    }
+
+    wordProgress.value += _wordProgressIncrement;
+    _updateInterludeState();
+  }
+
+  void _springScrollToCenter() {
+    springController?.nextLyric(currentLineIndex.value);
+  }
+
+  void scrollToCenter() {
+    if (_settingController.useSpringScroll.value) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _springScrollToCenter();
+      });
+    } else {
+      if (lrcViewScrollController == null ||
+          !lrcViewScrollController!.isAttached) {
+        return;
+      }
+      try {
+        lrcViewScrollController!.scrollTo(
+          index: currentLineIndex.value.clamp(
+            0,
+            (_audioController.currentLyrics.value?.parsedLrc?.length ?? 1) - 1,
+          ),
+          duration: const Duration(milliseconds: 500),
+          alignment: 0.4,
+          curve: Curves.easeInOut,
+        );
+      } catch (e, stackTrace) {
+        LoggerUni.w("歌词回滚异常", e, stackTrace);
+      }
+    }
+  }
+
+  int _findLrcPos({
+    required double time,
+    required List<TimedEntry>? lyrics,
+    required int hint,
+  }) {
+    if (lyrics == null) return -1;
+    final n = lyrics.length;
+    if (n == 0) return -1;
+
+    // 先判断 hint 自身或 hint+1 是否命中
+    if (hint >= 0 && hint < n) {
+      final seg = lyrics[hint];
+      if (time >= seg.start && time < seg.nextTime) {
+        return hint;
+      }
+      final nextIndex = hint + 1;
+      if (nextIndex < n) {
+        final segNext = lyrics[nextIndex];
+        if (time >= segNext.start && time < segNext.nextTime) {
+          return nextIndex;
+        }
+      }
+    }
+
+    // 二分搜索
+    int low = 0, high = n - 1;
+    while (low <= high) {
+      final mid = (low + high) >> 1;
+      final segMid = lyrics[mid];
+      if (time < segMid.start) {
+        high = mid - 1;
+      } else if (time >= segMid.nextTime) {
+        low = mid + 1;
+      } else {
+        return mid;
+      }
+    }
+
+    return -1;
+  }
+}

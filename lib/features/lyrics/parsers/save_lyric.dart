@@ -1,0 +1,66 @@
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
+import 'package:zerobit_player/core/utils/logger.dart';
+
+import '../models/lyric_model.dart';
+
+const String lyricTsSuffix = LyricFormat.lrc;
+
+Future<void> saveLyrics({
+  required String? path,
+  required Get4NetLrcModel? lrcData,
+}) async {
+  if (lrcData == null || path == null || path.isEmpty) {
+    return;
+  }
+
+  try {
+    final String dir = p.dirname(path);
+    final String baseName = p.basenameWithoutExtension(path);
+
+    final String lyricType = lrcData.type.startsWith('.')
+        ? lrcData.type
+        : '.${lrcData.type}';
+    final String? lrcContent = lrcData.verbatimLrc ?? lrcData.lrc;
+
+    if (lrcContent == null || lrcContent.isEmpty) {
+      return;
+    }
+
+    final String? translateContent = lrcData.translate;
+
+    final deleteQrcFile = File(p.join(dir, '$baseName${LyricFormat.qrc}'));
+    final deleteKrcFile = File(p.join(dir, '$baseName${LyricFormat.krc}'));
+    final deleteYrcFile = File(p.join(dir, '$baseName${LyricFormat.yrc}'));
+    final deleteLrcFile = File(p.join(dir, '$baseName${LyricFormat.lrc}'));
+
+    if (await deleteQrcFile.exists()) {
+      await deleteQrcFile.delete();
+    }
+
+    if (await deleteKrcFile.exists()) {
+      await deleteKrcFile.delete();
+    }
+
+    if (await deleteYrcFile.exists()) {
+      await deleteYrcFile.delete();
+    }
+
+    if (await deleteLrcFile.exists()) {
+      await deleteLrcFile.delete();
+    }
+
+    final newLrcFile = File(p.join(dir, '$baseName$lyricType'));
+    await newLrcFile.writeAsString(lrcContent);
+
+    if (translateContent != null &&
+        translateContent.isNotEmpty &&
+        (lyricType == LyricFormat.qrc || lyricType == LyricFormat.yrc)) {
+      final newTranslateFile = File(p.join(dir, '$baseName$lyricTsSuffix'));
+      await newTranslateFile.writeAsString(translateContent);
+    }
+  } catch (e, stackTrace) {
+    LoggerUni.e("保存歌词到目录异常", e, stackTrace);
+  }
+}

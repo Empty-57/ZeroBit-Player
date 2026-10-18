@@ -1,0 +1,538 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:signals/signals_flutter.dart';
+import 'package:zerobit_player/core/theme/style_manager.dart';
+import 'package:zerobit_player/core/widgets/app_dialog.dart';
+import 'package:zerobit_player/core/widgets/app_interaction_widget.dart';
+import 'package:zerobit_player/core/widgets/diamond_slider_thumb.dart';
+import 'package:zerobit_player/features/player/controller/audio_ctrl.dart';
+import 'package:zerobit_player/features/setting/controller/setting_ctrl.dart';
+import 'package:zerobit_player/src/rust/api/bass.dart';
+
+import '../utils/format_time.dart';
+import 'app_button/app_button.dart';
+
+const _playModeIcons = [
+  PhosphorIconsFill.repeatOnce,
+  PhosphorIconsFill.repeat,
+  PhosphorIconsFill.shuffleSimple,
+];
+
+const double _iconSize = 22;
+
+class GenIconBtn extends StatelessWidget {
+  final String tooltip;
+  final IconData icon;
+  final double size;
+  final Color? color;
+  final Color backgroundColor;
+  final double iconSize;
+  final VoidCallback? fn;
+  final double? verticalOffset;
+
+  const GenIconBtn({
+    super.key,
+    required this.tooltip,
+    required this.icon,
+    required this.size,
+    this.color,
+    this.backgroundColor = Colors.transparent,
+    this.iconSize = _iconSize,
+    required this.fn,
+    this.verticalOffset,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      verticalOffset: verticalOffset,
+      waitDuration: AppDuration.tooltipWait,
+      child: HoverBuilder(
+        onPressed: fn,
+        builder: (context, hovered) {
+          final hoverColor = hovered
+              ? color?.withValues(alpha: AppAlpha.hover)
+              : Colors.transparent;
+          return Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: hoverColor,
+              borderRadius: AppRadius.smAll,
+            ),
+            child: Icon(icon, size: iconSize, color: color),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SeekSlideWidget extends StatefulWidget {
+  final AudioController audioController;
+
+  const _SeekSlideWidget({required this.audioController});
+
+  @override
+  State<_SeekSlideWidget> createState() => _SeekSlideWidgetState();
+}
+
+class _SeekSlideWidgetState extends State<_SeekSlideWidget> {
+  final _isSeekBarDragging = ValueNotifier<bool>(false);
+  final _seekDraggingValue = ValueNotifier<double>(0.0);
+  late final Listenable _mergedListenable;
+
+  @override
+  void initState() {
+    super.initState();
+    _mergedListenable = Listenable.merge([
+      widget.audioController.currentMs100,
+      _isSeekBarDragging,
+      _seekDraggingValue,
+    ]);
+  }
+
+  @override
+  void dispose() {
+    _isSeekBarDragging.dispose();
+    _seekDraggingValue.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      canRequestFocus: false,
+      descendantsAreFocusable: false,
+      child: ListenableBuilder(
+        listenable: _mergedListenable,
+        builder: (_, _) {
+          final pathIsEmpty =
+              widget.audioController.currentMetadata.value.path.isEmpty;
+          final double duration = pathIsEmpty
+              ? 9999.0
+              : widget.audioController.currentDuration.value;
+
+          final double sliderValue = pathIsEmpty
+              ? 0.0
+              : (_isSeekBarDragging.value
+                    ? _seekDraggingValue.value
+                    : widget.audioController.currentMs100.value);
+
+          return Slider(
+            min: 0.0,
+            max: duration,
+            label: _isSeekBarDragging.value
+                ? formatTime(totalSeconds: _seekDraggingValue.value)
+                : '√',
+            value: sliderValue,
+            onChangeStart: (v) {
+              _seekDraggingValue.value = v;
+              _isSeekBarDragging.value = true;
+            },
+            onChanged: (v) {
+              _seekDraggingValue.value = v;
+            },
+            onChangeEnd: (v) {
+              widget.audioController.currentMs100.value = v;
+              _isSeekBarDragging.value = false;
+              widget.audioController.audioSetPositon(pos: v);
+              _seekDraggingValue.value = 0.0;
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class AudioCtrlWidget {
+  final double size;
+  final BuildContext context;
+  final Color? color;
+
+  AudioCtrlWidget({required this.size, required this.context, this.color});
+
+  Widget get volumeSet => _VolumeSetBtn(size: size, color: color);
+
+  Widget get skipBack => _SkipBackBtn(size: size, color: color);
+
+  Widget get toggle => _PlayToggleBtn(size: size, color: color);
+
+  Widget get skipForward => _SkipForwardBtn(size: size, color: color);
+
+  Widget get changeMode => _PlayModeBtn(size: size, color: color);
+
+  Widget get seekSlide =>
+      _SeekSlideWidget(audioController: AudioController.instance);
+
+  Widget get equalizerSet => _EqualizerBtn(size: size, color: color);
+}
+
+class _VolumeSetBtn extends StatelessWidget {
+  final double size;
+  final Color? color;
+
+  const _VolumeSetBtn({required this.size, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final AudioController audioController = AudioController.instance;
+    final SettingController settingController = SettingController.instance;
+    final menuController = MenuController();
+
+    return MenuAnchor(
+      controller: menuController,
+      menuChildren: [
+        SignalBuilder(
+          builder: (context) => Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Text(
+                (settingController.volume.value * 100).round().toString(),
+                style: context.createTextStyle(
+                  size: AppFontSize.md,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.6),
+                ),
+              ),
+              RotatedBox(
+                quarterTurns: 3,
+                child: Slider(
+                  min: 0.0,
+                  max: 1.0,
+                  value: settingController.volume.value,
+                  onChanged: (v) {
+                    audioController.audioSetVolume(vol: v);
+                    settingController.volume.value = v;
+                  },
+                  onChangeEnd: (_) => settingController.putCache(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+      style: const MenuStyle(
+        padding: WidgetStatePropertyAll(EdgeInsets.only(top: 16)),
+      ),
+      builder: (ctx, MenuController controller, _) {
+        return Listener(
+          onPointerSignal: (pointerSignal) {
+            if (pointerSignal is PointerScrollEvent) {
+              final double currentVol = settingController.volume.value;
+              const double step = 0.05;
+              double newVol = currentVol;
+
+              // scrollDelta.dy < 0 表示滚轮向上推 -> 增加音量
+              // scrollDelta.dy > 0 表示滚轮向下滚 -> 减小音量
+              if (pointerSignal.scrollDelta.dy < 0) {
+                newVol = (currentVol + step).clamp(0.0, 1.0);
+              } else if (pointerSignal.scrollDelta.dy > 0) {
+                newVol = (currentVol - step).clamp(0.0, 1.0);
+              }
+
+              if (newVol != currentVol) {
+                settingController.volume.value = newVol;
+                audioController.audioSetVolume(vol: newVol);
+                settingController.putCacheDebounce();
+              }
+            }
+          },
+          child: SignalBuilder(
+            builder: (context) => GenIconBtn(
+              tooltip:
+                  "音量：${(settingController.volume.value * 100).toStringAsFixed(0)}",
+              icon: PhosphorIconsFill.speakerHigh,
+              size: size,
+              color: color,
+              fn: () =>
+                  controller.isOpen ? controller.close() : controller.open(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SkipBackBtn extends StatelessWidget {
+  final double size;
+  final Color? color;
+
+  const _SkipBackBtn({required this.size, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final AudioController audioController = AudioController.instance;
+    return GenIconBtn(
+      tooltip: "上一首",
+      icon: PhosphorIconsFill.skipBack,
+      size: size,
+      color: color,
+      fn: audioController.audioToPreviousThrottled,
+    );
+  }
+}
+
+class _PlayToggleBtn extends StatelessWidget {
+  final double size;
+  final Color? color;
+
+  const _PlayToggleBtn({required this.size, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final AudioController audioController = AudioController.instance;
+
+    return SignalBuilder(
+      builder: (_) {
+        final isPlaying =
+            audioController.currentState.value == AudioState.playing;
+
+        return Tooltip(
+          message: isPlaying ? "暂停" : "播放",
+          waitDuration: AppDuration.tooltipWait,
+          child: HoverBuilder(
+            onPressed: audioController.audioToggleThrottled,
+            builder: (context, hovered) {
+              final hoverColor = hovered
+                  ? color?.withValues(alpha: AppAlpha.hover)
+                  : Colors.transparent;
+
+              return Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  color: hoverColor,
+                  borderRadius: AppRadius.smAll,
+                ),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 100),
+                  transitionBuilder: (child, animate) {
+                    final isPauseIcon =
+                        child.key == const ValueKey('pause_btn');
+                    final endTurns = isPauseIcon ? 0.25 : -0.25;
+                    return FadeTransition(
+                      opacity: animate,
+                      child: RotationTransition(
+                        turns: Tween<double>(
+                          begin: endTurns,
+                          end: 0,
+                        ).animate(animate),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: Icon(
+                    key: ValueKey(isPlaying ? "pause_btn" : "play_btn"),
+                    isPlaying
+                        ? PhosphorIconsFill.pause
+                        : PhosphorIconsFill.play,
+                    size: _iconSize,
+                    color: color,
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SkipForwardBtn extends StatelessWidget {
+  final double size;
+  final Color? color;
+
+  const _SkipForwardBtn({required this.size, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final AudioController audioController = AudioController.instance;
+    return GenIconBtn(
+      tooltip: "下一首",
+      icon: PhosphorIconsFill.skipForward,
+      size: size,
+      color: color,
+      fn: audioController.audioToNextThrottled,
+    );
+  }
+}
+
+class _PlayModeBtn extends StatelessWidget {
+  final double size;
+  final Color? color;
+
+  const _PlayModeBtn({required this.size, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final AudioController audioController = AudioController.instance;
+    final SettingController settingController = SettingController.instance;
+    return SignalBuilder(
+      builder: (context) {
+        final mode = settingController.playMode.value;
+        return GenIconBtn(
+          tooltip: SettingController.playModeMap[mode] ?? "单曲循环",
+          icon: _playModeIcons[mode],
+          size: size,
+          color: color,
+          fn: () => audioController.changePlayMode(),
+        );
+      },
+    );
+  }
+}
+
+class _EqualizerBtn extends StatelessWidget {
+  final double size;
+  final Color? color;
+
+  const _EqualizerBtn({required this.size, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final SettingController settingController = SettingController.instance;
+    final fontStyle = context.createTextStyle(
+      size: AppFontSize.sm,
+      color: Theme.of(context).colorScheme.onSecondaryContainer,
+    );
+
+    return GenIconBtn(
+      tooltip: "均衡器",
+      icon: PhosphorIconsLight.equalizer,
+      size: size,
+      color: color,
+      fn: () => _showEqualizerDialog(context, settingController, fontStyle),
+    );
+  }
+
+  void _showEqualizerDialog(
+    BuildContext context,
+    SettingController settingController,
+    TextStyle fontStyle,
+  ) {
+    final equalizerSliders = SettingController.equalizerFCenters.indexed.map((
+      v,
+    ) {
+      return SizedBox(
+        width: 52,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          spacing: 6,
+          children: [
+            SignalBuilder(
+              builder: (context) => Text(
+                '${settingController.equalizerGains[v.$1].toStringAsFixed(1)}db',
+                style: fontStyle,
+              ),
+            ),
+            Material(
+              color: Colors.transparent,
+              child: SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  trackHeight: 4,
+                  thumbShape: const DiamondSliderThumbShape(
+                    horizontalDiagonal: 16,
+                    verticalDiagonal: 16,
+                  ),
+                ),
+                child: SignalBuilder(
+                  builder: (context) => RotatedBox(
+                    quarterTurns: 3,
+                    child: Slider(
+                      min: SettingController.minGain,
+                      max: SettingController.maxGain,
+                      value: settingController.equalizerGains[v.$1],
+                      divisions: 48,
+                      onChanged: (gain) async {
+                        final newGains = List<double>.from(
+                          settingController.equalizerGains,
+                        );
+                        newGains[v.$1] = gain;
+                        settingController.equalizerGains.value = newGains;
+                        await setEqParams(freCenterIndex: v.$1, gain: gain);
+                      },
+                      onChangeEnd: (_) => settingController.putScalableCache(),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Text(
+              '${v.$2 >= 1000 ? '${(v.$2 / 1000).toInt()}k' : v.$2.toInt()}hz',
+              style: fontStyle,
+            ),
+          ],
+        ),
+      );
+    }).toList();
+
+    showDialog<void>(
+      barrierDismissible: true,
+      context: context,
+      builder: (BuildContext context) {
+        return AppDialog(
+          title: "均衡器",
+          widthFactor: 2 / 3,
+          content: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 16,
+            children: [
+              SignalBuilder(
+                builder: (context) {
+                  // 显式读取 .value 建立依赖，避免预设为空时不产生任何读取
+                  final equalizerGains = settingController.equalizerGains.value;
+                  return Wrap(
+                    spacing: 2,
+                    runSpacing: 2,
+                    children: SettingController.equalizerGainPresets.entries
+                        .map((entry) {
+                          final isEqual = listEquals(
+                            equalizerGains,
+                            entry.value,
+                          );
+                          return AppButton.secondary(
+                            onPressed: () async {
+                              settingController.equalizerGains.value =
+                                  entry.value;
+                              await settingController.putScalableCache();
+                              for (final v in entry.value.indexed) {
+                                await setEqParams(
+                                  freCenterIndex: v.$1,
+                                  gain: v.$2,
+                                );
+                              }
+                            },
+                            selected: isEqual,
+                            label: SettingController
+                                .equalizerGainPresetsText[entry.key],
+                            width: 96,
+                          );
+                        })
+                        .toList(),
+                  );
+                },
+              ),
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: equalizerSliders,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
