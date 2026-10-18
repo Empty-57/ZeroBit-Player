@@ -366,7 +366,7 @@ void _initLeakTracking() {
         }
         //统计对象进行了内存回收,但是回收时间不及时
         for (final n in leaks.gcedLate) {
-          debugPrint(n.toYaml("内存溢出检查gcedLate:", phasesAreTests: true));
+          debugPrint(n.toYaml("内存溢出检查GCedLate:", phasesAreTests: true));
         }
       },
     ),
