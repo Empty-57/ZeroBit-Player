@@ -28,12 +28,11 @@ import 'package:zerobit_player/features/playlist/controller/user_playlist_ctrl.d
 import 'package:zerobit_player/features/setting/controller/setting_ctrl.dart';
 import 'package:zerobit_player/src/rust/api/bass.dart';
 
-import '../../../core/storage/models/music_cache_model.dart';
-import '../../../core/utils/format_time.dart';
 import '../../../core/utils/func_extension.dart';
 import '../../../core/utils/paint_cache.dart';
 import '../../../core/widgets/app_button/app_button.dart';
 import '../../../core/widgets/tilt3d.dart';
+import '../widgets/metadata_detail_side.dart';
 
 const LinearGradient _lyricsFadeGradient = LinearGradient(
   begin: Alignment.topCenter,
@@ -148,7 +147,7 @@ class _CoverSideState extends State<_CoverSide> {
                 child: ClipRRect(
                   borderRadius: PlayPageConstant.borderRadius,
                   child: AnimatedSwitcher(
-                    duration: 300.ms,
+                    duration: AppDuration.slow,
                     switchInCurve: Curves.easeOutCubic,
                     switchOutCurve: Curves.easeInCubic,
                     transitionBuilder: (child, anim) => FadeTransition(
@@ -195,12 +194,14 @@ class _CoverSideState extends State<_CoverSide> {
                 );
               }
 
-              return AnimatedScale(
-                duration: const Duration(milliseconds: 500),
-                filterQuality: .low,
-                curve: Curves.easeInOutBack,
-                scale: isPlaying ? 1.0 : 0.9,
-                child: coverWidget,
+              return RepaintBoundary(
+                child: AnimatedScale(
+                  duration: const Duration(milliseconds: 500),
+                  filterQuality: .low,
+                  curve: Curves.easeInOutBack,
+                  scale: isPlaying ? 1.0 : 0.9,
+                  child: coverWidget,
+                ),
               );
             },
           ),
@@ -257,40 +258,6 @@ class _CoverSideState extends State<_CoverSide> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _MetadataDetailSide extends StatelessWidget {
-  final MusicCache metadata;
-  final TextStyle style;
-
-  const _MetadataDetailSide({required this.metadata, required this.style});
-
-  @override
-  Widget build(BuildContext context) {
-    final items = [
-      "标题：${metadata.title}",
-      "艺术家：${metadata.artist}",
-      "专辑：${metadata.album}",
-      "流派：${metadata.genre}",
-      "时长：${formatTime(totalSeconds: metadata.duration)}",
-      "比特率：${metadata.bitrate ?? "UNKNOWN"}kbps",
-      "采样率：${metadata.sampleRate ?? "UNKNOWN"}hz",
-      "音轨号：${metadata.trackNumber}",
-      "位深度：${metadata.bitDepth}",
-      "通道数：${metadata.channels}",
-      "路径：${metadata.path}",
-    ];
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 10,
-      children: [
-        for (final text in items)
-          Text(text, style: style, maxLines: text.startsWith("路径") ? 5 : 1),
-      ],
     );
   }
 }
@@ -928,14 +895,11 @@ class _PlayPageState extends State<PlayPage> {
                                       left: detailLeft,
                                       width: detailWidth,
                                       child: SignalBuilder(
-                                        builder: (_) => _MetadataDetailSide(
+                                        builder: (_) => MetadataDetailSide(
                                           metadata: _audioController
                                               .currentMetadata
                                               .value,
-                                          style: _titleStyle.copyWith(
-                                            fontWeight: FontWeight.w300,
-                                            fontSize: _titleStyle.fontSize! - 3,
-                                          ),
+                                          mixColor: _mixColor,
                                         ),
                                       ),
                                     ),
