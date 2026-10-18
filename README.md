@@ -22,7 +22,7 @@
 <p align="center">Logo来源：阿里巴巴矢量图库</p>
 
 ---
-![show](screenshot/7.png)
+![show](screenshot/local_music_light.png)
 
 前往 **[官方文档](https://empty-57.github.io/ZeroBit-Player/)** 查看更多信息
 
@@ -122,7 +122,7 @@ flutter_rust_bridge_codegen generate --watch
 - 增强型Lrc
 
 ## 支持读写的元数据格式
-| 音频格式       | 元数据格式                        |
+| 音频格式   | 元数据格式                   |
 |------------|------------------------------|
 | AAC (ADTS) | `ID3v2`, `ID3v1`             |
 | Ape        | `APE`, `ID3v2`\*, `ID3v1`    |
@@ -175,16 +175,16 @@ flutter_rust_bridge_codegen generate --watch
 
 若要搜索歌词，请通过输入歌曲信息，搜索更精确的歌词：</br>
 
-![search](screenshot/5.png)
+![search](screenshot/lyric_search.png)
 
 手动写入内嵌歌词：</br>
 
-![editLyrics](screenshot/14.png)
+![editLyrics](screenshot/edit_lyric.png)
 
 ## 关于歌曲封面
 可以选择本地图片作为封面,也可以点击 `网络封面` 来设置封面</br>
 若使用 `网络封面` 来设置封面，会以当前设置的API源来匹配封面，请尽量正确填写元数据（标题，艺术家，专辑）以提高匹配准确率</br>
-![show](screenshot/10.png)
+![show](screenshot/edit_info.png)
 
 ## 注意
 若软件发生了严重错误，可尝试到目录 `C:\Users\<用户名>\Documents\zerobit_config` 下删除所有 `.hive` 以及同名的 `.lock` 的后缀的配置文件
@@ -214,22 +214,25 @@ flutter_rust_bridge_codegen generate --watch
 
 - [爱发电](https://ifdian.net/a/emp57)
 - 赞赏码:
-![show](screenshot/zansang.jpg)
+![show](screenshot/funding_code.png)
 
 ## 桌面歌词展示
-![show](screenshot/12.png)
-![show](screenshot/13.png)
+![show](screenshot/row_lyric.png)
+![show](screenshot/col_lyric.png)
 
 ## 软件展示
+### 播放页
+![show](screenshot/play_page.png)
+![show](screenshot/play_page2.png)
 ### 深色模式
-![show](screenshot/1.png)
-![show](screenshot/2.png)
-![show](screenshot/3.png)
-![show](screenshot/4.png)
-![show](screenshot/5.png)
-![show](screenshot/6.png)
+![show](screenshot/local_music_dark.png)
+![show](screenshot/artist_dark.png)
+![show](screenshot/album_dark.png)
+![show](screenshot/set_dark.png)
 ### 浅色模式
-![show](screenshot/7.png)
-![show](screenshot/8.png)
-![show](screenshot/9.png)
-![show](screenshot/10.png)
+![show](screenshot/local_music_light.png)
+![show](screenshot/artist_light.png)
+![show](screenshot/album_light.png)
+![show](screenshot/stat_rank_light.png)
+![show](screenshot/stat_chart_light.png)
+![show](screenshot/stat_hotmap_light.png)
