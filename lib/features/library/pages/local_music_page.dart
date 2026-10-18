@@ -11,7 +11,7 @@ class LocalMusicPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = MusicCacheController.instance;
-    return AudioGenPages(
+    return AudioListView(
       title: "音乐",
       operateArea: OperateArea.allMusic,
       audioSource: AudioSource.allMusic,

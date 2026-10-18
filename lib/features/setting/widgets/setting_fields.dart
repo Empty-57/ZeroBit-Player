@@ -42,7 +42,7 @@ class SettingFolderField extends StatelessWidget {
     final snapshot = [..._settingController.folders];
 
     final confirmed = await showDialog<bool>(
-      barrierDismissible: true,
+      barrierDismissible: false,
       context: context,
       builder: (_) => const _FolderManagerDialog(),
     );

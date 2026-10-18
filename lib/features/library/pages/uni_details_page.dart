@@ -55,7 +55,7 @@ class _UniDetailsPageState extends State<UniDetailsPage> {
   Widget build(BuildContext context) {
     return BlurWithCoverBackground(
       cover: detailsController.headCover,
-      child: AudioGenPages(
+      child: AudioListView(
         title: title,
         operateArea: operateArea,
         audioSource: audioSourceTag,

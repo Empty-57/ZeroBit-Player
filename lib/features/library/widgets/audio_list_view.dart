@@ -6,18 +6,21 @@ import 'package:zerobit_player/core/constants/operate_area.dart';
 import 'package:zerobit_player/core/theme/style_manager.dart';
 import 'package:zerobit_player/core/widgets/app_empty_state.dart';
 import 'package:zerobit_player/core/widgets/floating_button.dart';
-import 'package:zerobit_player/core/widgets/music_tile.dart';
 
 import '../../../core/storage/models/music_cache_model.dart';
 import '../../../core/utils/details_ctrl_mixin.dart';
+import '../../../core/utils/format_time.dart';
 import '../../../core/utils/func_extension.dart';
+import '../../../core/widgets/app_button/app_button.dart';
+import '../../../core/widgets/covers.dart';
+import '../../setting/widgets/setting_fields.dart';
 import 'audio_list_view/audio_list_view_args.dart';
 import 'audio_list_view/audio_list_view_constant.dart';
 import 'audio_list_view/audio_list_view_context_menu.dart';
 import 'audio_list_view/audio_page_header.dart';
 
 /// 音乐列表页
-class AudioGenPages extends StatefulWidget {
+class AudioListView extends StatefulWidget {
   final String title;
   final String operateArea;
   final String audioSource;
@@ -26,7 +29,7 @@ class AudioGenPages extends StatefulWidget {
   final double? Function({required String route, bool rw, double? offset})?
   rwScrollOffset;
 
-  const AudioGenPages({
+  const AudioListView({
     super.key,
     required this.title,
     required this.operateArea,
@@ -37,10 +40,10 @@ class AudioGenPages extends StatefulWidget {
   });
 
   @override
-  State<AudioGenPages> createState() => _AudioGenPagesState();
+  State<AudioListView> createState() => _AudioListViewState();
 }
 
-class _AudioGenPagesState extends State<AudioGenPages> {
+class _AudioListViewState extends State<AudioListView> {
   late final Signal<bool> _isMulSelect;
   late final ListSignal<MusicCache> _selectedList;
   late final ScrollController _scrollControllerList;
@@ -196,7 +199,13 @@ class _AudioGenPagesState extends State<AudioGenPages> {
             final itemCount = widget.controller.items.length;
 
             if (itemCount == 0) {
-              return const Center(child: AppEmptyState(text: '这里还没有音乐'));
+              return const Column(
+                mainAxisAlignment: .center,
+                children: [
+                  AppEmptyState(text: '这里还没有音乐'),
+                  SettingFolderField(),
+                ],
+              );
             }
 
             return AnimatedSwitcher(
@@ -269,7 +278,7 @@ class _AudioGenPagesState extends State<AudioGenPages> {
       key: ValueKey(metadata.path),
       onSecondaryTapDown: (event) =>
           _openContextMenu(event.globalPosition, metadata),
-      child: MusicTile(
+      child: _MusicTile(
         metadata: metadata,
         titleStyle: _titleStyle,
         highLightTitleStyle: _highLightTitleStyle,
@@ -281,6 +290,117 @@ class _AudioGenPagesState extends State<AudioGenPages> {
         selectedList: _selectedList,
         viewMode: isListView,
         baseController: widget.controller,
+      ),
+    );
+  }
+}
+
+class _MusicTile extends SignalWidget {
+  final MusicCache metadata;
+  final TextStyle titleStyle;
+  final TextStyle highLightTitleStyle;
+  final TextStyle subStyle;
+  final TextStyle highLightSubStyle;
+  final String audioSource;
+  final String operateArea;
+  final Signal<bool> isMulSelect;
+  final ListSignal<MusicCache> selectedList;
+  final bool viewMode;
+  final DetailsPageControllerBase baseController;
+
+  const _MusicTile({
+    required this.metadata,
+    required this.titleStyle,
+    required this.highLightTitleStyle,
+    required this.subStyle,
+    required this.highLightSubStyle,
+    required this.audioSource,
+    required this.operateArea,
+    required this.isMulSelect,
+    required this.selectedList,
+    required this.viewMode,
+    required this.baseController,
+  });
+
+  void _onTileTapped() {
+    if (isMulSelect.value) {
+      final index = selectedList.indexWhere((v) => v.path == metadata.path);
+      if (index != -1) {
+        selectedList.removeAt(index);
+      } else {
+        selectedList.add(metadata);
+      }
+    } else {
+      baseController.play(audioSource, metadata: metadata);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isPlaying =
+        baseController.audioController.currentPath.value == metadata.path;
+    final isSelected = selectedList.any((v) => v.path == metadata.path);
+
+    final textStyle = isPlaying ? highLightTitleStyle : titleStyle;
+    final subTextStyle = isPlaying ? highLightSubStyle : subStyle;
+
+    return AppButton.ghost(
+      onPressed: _onTileTapped,
+      selected: isSelected,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        spacing: AppSpacing.xl,
+        children: [
+          if (operateArea == OperateArea.albumDetails)
+            Text(
+              metadata.trackNumber.toString().padLeft(2, '0'),
+              style: subTextStyle,
+            ),
+          LoadLocalOrNetCover(music: metadata, size: AppSize.coverSm),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: AppSpacing.xxs,
+              children: [
+                Text(
+                  metadata.title,
+                  style: textStyle,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                Text(
+                  metadata.artist,
+                  style: subTextStyle,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ],
+            ),
+          ),
+          if (viewMode)
+            Expanded(
+              flex: 2,
+              child: Text(
+                metadata.album,
+                style: subTextStyle,
+                softWrap: false,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ),
+          Text(
+            formatTime(totalSeconds: metadata.duration),
+            style: subTextStyle,
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        ],
       ),
     );
   }
