@@ -2,7 +2,7 @@
 <div align="center">
   <img src="assets/app_icon.ico" alt="logo" width="130" height="130">
   <h1>ZeroBit Player</h1>
-  <p><b>基于 Flutter + Rust 的 Material 3 风格的高性能本地音乐播放器</b></p>
+  <p><b>基于 Flutter + Rust 的 Material 3 风格的多功能本地音乐播放器</b></p>
 
   <div>
     <a href="https://deepwiki.com/Empty-57/ZeroBit-Player"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
@@ -39,11 +39,11 @@
 - **专业级音频引擎**：基于 `BASS` 强大音频内核，低延迟、高保真。
 - **WASAPI 独占输出**：支持硬件独占通道输出，跳过系统混音，还原纯净音质。
 - **高级音频控制**：内置多段均衡器调节、ReplayGain 音量平衡、实时跳动音频频谱可视化。
-- **后台与系统深度集成**：完整支持 Windows 系统级媒体传输控件 (SMTC)、全局系统媒体快捷键与后台播放。
+- **系统集成**：完整支持 Windows 系统级媒体传输控件 (SMTC)、taskToolBar(系统任务栏缩略图工具栏)播放控制、全局系统媒体快捷键与后台播放。
 
 ### 完善的歌词系统
-- **全格式解密支持**：原生支持 `QRC`、`KRC`、`YRC` 加密格式，以及标准逐行、逐字与增强型 `LRC`。
-- **多语系注音支持**：支持日语分词注音、罗马音、原文与翻译同屏平滑滚动。
+- **多格式解析支持**：原生支持 `QRC`、`KRC`、`YRC` 加密格式，以及标准逐行、逐字与增强型 `LRC`。
+- **假名分析与注音支持**：支持日语分词注音、罗马音、原文与翻译同屏平滑滚动。
 - **独立悬浮桌面歌词**：基于独立进程实现的透明轻量级悬浮桌面歌词，横竖排双向随心切换。
 - **在线歌词与内嵌读写**：支持网络在线精确检索歌词，并可直接写回音频文件内嵌标签。
 
@@ -53,7 +53,7 @@
 - **自由定制**：全面支持深色/浅色模式、自定义字体、主题强调色调节。
 
 ### 本地曲库与数据处理
-- **全格式支持**：涵盖主流无损与高解析度音频格式（FLAC、DSD、APE、WavPack、Opus 等）。
+- **多格式支持**：涵盖主流无损与高解析度音频格式（FLAC、DSD、APE、WavPack、Opus 等）。
 - **元数据读写**：基于 Rust `Lofty` 库无阻塞解析与修改 ID3v1/ID3v2、Vorbis、APE 等标签。
 - **听歌数据统计**：内置本地听歌热力图、播放时段习惯分析、单曲与歌手排行榜。
 
@@ -81,7 +81,7 @@
 | **WAV**                | `ID3v2`, `RIFF INFO`        |
 | **WavPack**            | `APE`, `ID3v1`              |
 
-> **\*** 注：由于标签规范限制，标星标签为**只读**。
+> \* 由于缺乏官方支持，该标签只能被**读取**，无法被修改。
 
 ---
 
@@ -171,7 +171,7 @@ flutter build windows --release
 
 <div align="center">
   <img src="screenshot/row_lyric.png" alt="row_lyric">
-  <img src="screenshot/col_lyric.png" width="48%" height="500" alt="col_lyric">
+  <img src="screenshot/col_lyric.png" width="48%" alt="col_lyric">
   <p><sub>桌面歌词（横排 / 竖排）</sub></p>
 </div>
 
