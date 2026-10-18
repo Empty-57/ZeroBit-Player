@@ -7,7 +7,7 @@
 </p>
 </div>
 <div align="center">
-  <a href="https://deepwiki.com/Empty-57/ZeroBit-Player"><img src="https://img.shields.io/badge/DeepWiki-Zerobit--Player-blue" alt="DeepWiki"></a>
+<a href="https://deepwiki.com/Empty-57/ZeroBit-Player"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
   <img src="https://badgen.net/github/release/Empty-57/ZeroBit-Player?icon=github" alt="Version">
   <img src="https://img.shields.io/badge/Platform-Windows-blue" alt="Platform">
   <img src="https://img.shields.io/badge/Flutter-3.44+-0044aa?logo=flutter" alt="Flutter">
