@@ -33,35 +33,19 @@ class UserPlayListController {
       items.value = const [];
       return;
     }
-    final map = _musicCacheController.itemsMap.peek();
 
-    bool hasDeadLinks = false;
-    final List<UserPlayListCache> cleanList = [];
-    final Map<String, UserPlayListCache> changedMap = {};
+    final musicMap = _musicCacheController.itemsMap.peek();
 
-    for (final playlist in rawPlaylists) {
+    items.value = rawPlaylists.map((playlist) {
       final originalPaths = playlist.pathList;
-      final bool isDirty = originalPaths.any((p) => !map.containsKey(p));
-      if (!isDirty) {
-        cleanList.add(playlist);
-      } else {
-        hasDeadLinks = true;
-        final validPaths = [
-          for (final p in originalPaths)
-            if (map.containsKey(p)) p,
-        ];
-        final updated = UserPlayListCache(
-          userKey: playlist.userKey,
-          pathList: validPaths,
-        );
-        cleanList.add(updated);
-        changedMap[playlist.userKey] = updated;
+
+      final validPaths = originalPaths.where(musicMap.containsKey).toList();
+      if (validPaths.length == originalPaths.length) {
+        return playlist;
       }
-    }
-    items.value = cleanList;
-    if (hasDeadLinks && changedMap.isNotEmpty) {
-      unawaited(_userPlayListCacheBox.putAll(data: changedMap));
-    }
+
+      return UserPlayListCache(userKey: playlist.userKey, pathList: validPaths);
+    }).toList();
   }
 
   /// 从歌单键取出展示名。
