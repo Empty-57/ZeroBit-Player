@@ -7,17 +7,17 @@ import 'package:zerobit_player/core/theme/style_manager.dart';
 import 'package:zerobit_player/core/widgets/app_empty_state.dart';
 import 'package:zerobit_player/core/widgets/floating_button.dart';
 
-import '../../../core/storage/models/music_cache_model.dart';
-import '../../../core/utils/details_ctrl_mixin.dart';
-import '../../../core/utils/format_time.dart';
-import '../../../core/utils/func_extension.dart';
-import '../../../core/widgets/app_button/app_button.dart';
-import '../../../core/widgets/covers.dart';
-import '../../setting/widgets/setting_fields.dart';
-import 'audio_list_view/audio_list_view_args.dart';
-import 'audio_list_view/audio_list_view_constant.dart';
-import 'audio_list_view/audio_list_view_context_menu.dart';
-import 'audio_list_view/audio_page_header.dart';
+import '../../../../core/storage/models/music_cache_model.dart';
+import '../../../../core/utils/details_ctrl_mixin.dart';
+import '../../../../core/utils/format_time.dart';
+import '../../../../core/utils/func_extension.dart';
+import '../../../../core/widgets/app_button/app_button.dart';
+import '../../../../core/widgets/covers.dart';
+import '../../../setting/widgets/setting_fields.dart';
+import 'audio_list_view_args.dart';
+import 'audio_list_view_constant.dart';
+import 'audio_list_view_context_menu.dart';
+import 'audio_page_header.dart';
 
 /// 音乐列表页
 class AudioListView extends StatefulWidget {
@@ -358,7 +358,10 @@ class _MusicTile extends SignalWidget {
               metadata.trackNumber.toString().padLeft(2, '0'),
               style: subTextStyle,
             ),
-          LoadLocalOrNetCover(music: metadata, size: AppSize.coverSm),
+          ClipRRect(
+            borderRadius: AppRadius.smAll,
+            child: LoadLocalOrNetCover(music: metadata, size: AppSize.coverSm),
+          ),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

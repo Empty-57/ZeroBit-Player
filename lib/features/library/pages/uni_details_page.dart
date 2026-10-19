@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:zerobit_player/core/platform/blur_background.dart';
 import 'package:zerobit_player/features/library/controller/details_page_ctrl.dart';
-import 'package:zerobit_player/features/library/widgets/audio_list_view.dart';
+import 'package:zerobit_player/features/library/widgets/audio_list_view/audio_list_view.dart';
 
 class UniDetailsPage extends StatefulWidget {
   const UniDetailsPage({super.key});

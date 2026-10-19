@@ -26,6 +26,7 @@ class _LrcSearchController {
       _loadSearch(params.query, params.offset, ++_requestId, params.apiIndex);
     });
   }
+
   late final void Function() _stopSearchEffect;
 
   final AudioController _audioController = AudioController.instance;
@@ -288,6 +289,8 @@ class NetLrcDialog extends StatelessWidget {
           context: context,
           builder: (context) => AppDialog(
             title: "选择歌词",
+            widthFactor: 0.65,
+            heightFactor: 0.65,
             content: _NetLrcDialogContent(color: color),
           ),
         );
@@ -306,7 +309,6 @@ class _NetLrcDialogContent extends StatefulWidget {
 }
 
 class _NetLrcDialogContentState extends State<_NetLrcDialogContent> {
-  // 在弹窗打开时才创建 Controller，此时自动立即执行初次搜索！
   late final _LrcSearchController _controller;
   late final TextEditingController _textEditingController;
 
@@ -333,102 +335,95 @@ class _NetLrcDialogContentState extends State<_NetLrcDialogContent> {
   @override
   Widget build(BuildContext context) {
     final textStyle = context.createTextStyle(size: AppFontSize.md);
-    final height = MediaQuery.sizeOf(context).height;
-    final width = MediaQuery.sizeOf(context).width;
 
-    return SizedBox(
-      width: width * 0.65,
-      height: height * 0.65,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 8,
-        children: [
-          Row(
-            spacing: 8,
-            children: [
-              Expanded(
-                child: TextField(
-                  autofocus: true,
-                  controller: _textEditingController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: '搜索歌词',
-                  ),
-                  onChanged: _controller.onInputChangedDebounce,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: AppSpacing.md,
+      children: [
+        Row(
+          spacing: AppSpacing.sm,
+          children: [
+            Expanded(
+              child: TextField(
+                autofocus: true,
+                controller: _textEditingController,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: '搜索歌词',
                 ),
+                onChanged: _controller.onInputChangedDebounce,
               ),
+            ),
 
-              SignalBuilder(
-                builder: (_) => AppButton.icon(
-                  icon: PhosphorIconsLight.caretLeft,
-                  style: .secondary,
-                  height: PlayPageConstant.ctrlBtnMinSize * 1.25,
-                  tooltip: _controller.currentNetLrcOffset.value == 0
-                      ? null
-                      : '上一页',
-                  onPressed: _controller.currentNetLrcOffset.value == 0
-                      ? null
-                      : () {
-                          if (_controller.currentNetLrcOffset.value > 0) {
-                            _controller.currentNetLrcOffset.value--;
-                          }
-                        },
-                ),
-              ),
-
-              AppButton.icon(
-                icon: PhosphorIconsLight.caretRight,
+            SignalBuilder(
+              builder: (_) => AppButton.icon(
+                icon: PhosphorIconsLight.caretLeft,
                 style: .secondary,
                 height: PlayPageConstant.ctrlBtnMinSize * 1.25,
-                tooltip: '下一页',
-                onPressed: () => _controller.currentNetLrcOffset.value++,
+                tooltip: _controller.currentNetLrcOffset.value == 0
+                    ? null
+                    : '上一页',
+                onPressed: _controller.currentNetLrcOffset.value == 0
+                    ? null
+                    : () {
+                        if (_controller.currentNetLrcOffset.value > 0) {
+                          _controller.currentNetLrcOffset.value--;
+                        }
+                      },
+              ),
+            ),
+
+            AppButton.icon(
+              icon: PhosphorIconsLight.caretRight,
+              style: .secondary,
+              height: PlayPageConstant.ctrlBtnMinSize * 1.25,
+              tooltip: '下一页',
+              onPressed: () => _controller.currentNetLrcOffset.value++,
+            ),
+          ],
+        ),
+        Row(
+          spacing: AppSpacing.sm,
+          children: [
+            for (final key in SettingController.apiMap.keys) ...[
+              SignalBuilder(
+                builder: (context) => AppButton.secondary(
+                  label: SettingController.apiMap[key] ?? 'QQ音乐',
+                  selected: _controller.apiIndex.value == key,
+                  onPressed: () => _controller.apiIndex.value = key,
+                ),
               ),
             ],
+          ],
+        ),
+        Expanded(
+          child: SignalBuilder(
+            builder: (context) {
+              return _controller.searchResults.value.map(
+                data: (data) {
+                  if (data.isEmpty) {
+                    return Center(child: Text("没有找到歌词", style: textStyle));
+                  }
+                  return ListView.builder(
+                    itemCount: data.length,
+                    itemBuilder: (context, index) {
+                      return _SearchResultItem(
+                        lyricInfo: data[index],
+                        textStyle: textStyle,
+                        audioController: _audioController,
+                        settingController: _settingController,
+                      );
+                    },
+                  );
+                },
+                error: (_) =>
+                    Center(child: Text("网络错误或没有找到歌词", style: textStyle)),
+                loading: () => const Center(child: CircularProgressIndicator()),
+              );
+            },
           ),
-          Row(
-            spacing: AppSpacing.sm,
-            children: [
-              for (final key in SettingController.apiMap.keys) ...[
-                SignalBuilder(
-                  builder: (context) => AppButton.secondary(
-                    label: SettingController.apiMap[key] ?? 'QQ音乐',
-                    selected: _controller.apiIndex.value == key,
-                    onPressed: () => _controller.apiIndex.value = key,
-                  ),
-                ),
-              ],
-            ],
-          ),
-          Expanded(
-            child: SignalBuilder(
-              builder: (context) {
-                return _controller.searchResults.value.map(
-                  data: (data) {
-                    if (data.isEmpty) {
-                      return Center(child: Text("没有找到歌词", style: textStyle));
-                    }
-                    return ListView.builder(
-                      itemCount: data.length,
-                      itemBuilder: (context, index) {
-                        return _SearchResultItem(
-                          lyricInfo: data[index],
-                          textStyle: textStyle,
-                          audioController: _audioController,
-                          settingController: _settingController,
-                        );
-                      },
-                    );
-                  },
-                  error: (_) =>
-                      Center(child: Text("网络错误或没有找到歌词", style: textStyle)),
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

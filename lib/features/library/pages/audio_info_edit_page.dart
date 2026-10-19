@@ -11,7 +11,9 @@ import 'package:signals/signals_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/core/network/apis.dart';
 import 'package:zerobit_player/core/theme/style_manager.dart';
+import 'package:zerobit_player/core/widgets/app_button/app_tappable.dart';
 import 'package:zerobit_player/core/widgets/app_card.dart';
+import 'package:zerobit_player/core/widgets/app_dialog.dart';
 import 'package:zerobit_player/core/widgets/app_interaction_widget.dart';
 import 'package:zerobit_player/core/widgets/covers.dart';
 import 'package:zerobit_player/core/widgets/get_snack_bar.dart';
@@ -22,19 +24,289 @@ import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import '../../../core/storage/models/music_cache_model.dart';
 import '../../../core/utils/cover_lru_cache.dart';
 import '../../../core/utils/format_time.dart';
+import '../../../core/utils/func_extension.dart';
 import '../../../core/utils/logger.dart';
 import '../../../core/widgets/app_button/app_button.dart';
+import '../../setting/controller/setting_ctrl.dart';
 
 const double _coverSize = 260.0;
 
 /// 页面底部留白
 const double _bottomInset = 128.0;
 
-const double _actionButtonWidth = 108.0;
+const double _actionButtonWidth = 128.0;
 const double _actionButtonHeight = 36.0;
+const double _ctrlButtonHeight = 42.0;
 
 const double _inlineSpinnerSize = 16.0;
 const double _inlineSpinnerStroke = 2.0;
+
+class _NetworkCoverSearchController {
+  final String initialTitle;
+  final String initialArtist;
+
+  _NetworkCoverSearchController({
+    required this.initialTitle,
+    required this.initialArtist,
+  }) {
+    _stopSearchEffect = effect(() {
+      final params = _searchParams.value;
+      _loadSearch(params.query, params.offset, ++_requestId, params.apiIndex);
+    });
+  }
+
+  late final void Function() _stopSearchEffect;
+  final currentNetLrcOffset = signal(0);
+  final _queryText = signal('');
+  late final apiIndex = signal(SettingController.instance.apiIndex.value);
+
+  bool _isDisposed = false;
+  int _requestId = 0;
+
+  final searchResults = asyncSignal<List<String>>(AsyncState.data([]));
+
+  late final _searchParams =
+      computed<({String query, int offset, int apiIndex})>(
+        () => (
+          query: _queryText.value,
+          offset: currentNetLrcOffset.value,
+          apiIndex: apiIndex.value,
+        ),
+      );
+
+  late final void Function(String) onInputChangedDebounce = ((String text) {
+    if (_isDisposed) return;
+    batch(() {
+      currentNetLrcOffset.value = 0;
+      _queryText.value = text;
+    });
+  }).debounceArgs();
+
+  void setInitialQuery() {
+    if (_isDisposed) return;
+
+    final cleanArtist =
+        (initialArtist.isNotEmpty && initialArtist.toUpperCase() != 'UNKNOWN')
+        ? ' - $initialArtist'
+        : '';
+    final text = '$initialTitle$cleanArtist'.trim();
+
+    batch(() {
+      currentNetLrcOffset.value = 0;
+      _queryText.value = text;
+    });
+  }
+
+  Future<void> _loadSearch(
+    String query,
+    int offset,
+    int requestId,
+    int apiIndex,
+  ) async {
+    query = query.trim();
+    if (_isDisposed || requestId != _requestId) return;
+
+    if (query.isEmpty) {
+      searchResults.value = AsyncState.data([]);
+      return;
+    }
+
+    searchResults.value = AsyncState.loading();
+
+    try {
+      final result = await getCoverUrlByText(
+        text: query,
+        offset: offset,
+        limit: 12,
+        apiIndex: apiIndex,
+      );
+
+      if (_isDisposed || requestId != _requestId) return;
+      searchResults.value = AsyncState.data(result);
+    } catch (error, stackTrace) {
+      if (_isDisposed || requestId != _requestId) return;
+      searchResults.value = AsyncState.error(error, stackTrace);
+    }
+  }
+
+  void dispose() {
+    if (_isDisposed) return;
+    _isDisposed = true;
+    ++_requestId;
+    _stopSearchEffect();
+    searchResults.dispose();
+    _searchParams.dispose();
+    _queryText.dispose();
+    apiIndex.dispose();
+    currentNetLrcOffset.dispose();
+  }
+}
+
+class _NetworkCoverDialog extends StatefulWidget {
+  final String title;
+  final String artist;
+
+  const _NetworkCoverDialog({required this.title, required this.artist});
+
+  @override
+  State<_NetworkCoverDialog> createState() => _NetworkCoverDialogState();
+}
+
+class _NetworkCoverDialogState extends State<_NetworkCoverDialog> {
+  late final _NetworkCoverSearchController _controller;
+  late final TextEditingController _textEditingController;
+  bool _isDownloading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = _NetworkCoverSearchController(
+      initialTitle: widget.title,
+      initialArtist: widget.artist,
+    )..setInitialQuery();
+
+    _textEditingController = TextEditingController(
+      text: _controller._queryText.value,
+    );
+  }
+
+  @override
+  void dispose() {
+    _textEditingController.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectCover(String url) async {
+    if (_isDownloading) return;
+    _isDownloading = true;
+    try {
+      final bytes = await saveNetCover(
+        songPath: '',
+        picUrl: url,
+        saveCover: false,
+      );
+      if (bytes != null && mounted) {
+        Navigator.of(context).pop(bytes);
+      } else {
+        showSnackBar(type: .error, msg: '下载所选封面失败');
+      }
+    } finally {
+      _isDownloading = false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textStyle = context.createTextStyle(size: AppFontSize.md);
+    return AppDialog(
+      title: '选择网络封面',
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: AppSpacing.md,
+        children: [
+          Row(
+            spacing: AppSpacing.sm,
+            children: [
+              Expanded(
+                child: TextField(
+                  autofocus: true,
+                  controller: _textEditingController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: '搜索封面',
+                  ),
+                  onChanged: _controller.onInputChangedDebounce,
+                ),
+              ),
+              SignalBuilder(
+                builder: (_) => AppButton.icon(
+                  icon: PhosphorIconsLight.caretLeft,
+                  style: .secondary,
+                  height: _ctrlButtonHeight,
+                  tooltip: _controller.currentNetLrcOffset.value == 0
+                      ? null
+                      : '上一页',
+                  onPressed: _controller.currentNetLrcOffset.value == 0
+                      ? null
+                      : () {
+                          if (_controller.currentNetLrcOffset.value > 0) {
+                            _controller.currentNetLrcOffset.value--;
+                          }
+                        },
+                ),
+              ),
+              AppButton.icon(
+                icon: PhosphorIconsLight.caretRight,
+                style: .secondary,
+                height: _ctrlButtonHeight,
+                tooltip: '下一页',
+                onPressed: () => _controller.currentNetLrcOffset.value++,
+              ),
+            ],
+          ),
+          Row(
+            spacing: AppSpacing.sm,
+            children: [
+              for (final key in SettingController.apiMap.keys) ...[
+                SignalBuilder(
+                  builder: (context) => AppButton.secondary(
+                    label: SettingController.apiMap[key] ?? 'QQ音乐',
+                    selected: _controller.apiIndex.value == key,
+                    onPressed: () {
+                      _controller.apiIndex.value = key;
+                      _controller.currentNetLrcOffset.value = 0;
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
+          Expanded(
+            child: SignalBuilder(
+              builder: (context) {
+                return _controller.searchResults.value.map(
+                  data: (data) {
+                    if (data.isEmpty) {
+                      return Center(child: Text("没有找到封面", style: textStyle));
+                    }
+                    return GridView.builder(
+                      itemCount: data.length,
+                      itemBuilder: (context, index) {
+                        return ClipRRect(
+                          borderRadius: AppRadius.mdAll,
+                          child: AppTappable(
+                            onPressed: () =>
+                                unawaited(_selectCover(data[index])),
+                            child: LoadNetworkCover(
+                              url: data[index],
+                              coverResolutionFlag: .middle,
+                              size: 200,
+                            ),
+                          ),
+                        );
+                      },
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 4,
+                            mainAxisSpacing: AppSpacing.md,
+                            crossAxisSpacing: AppSpacing.md,
+                          ),
+                    );
+                  },
+                  error: (_) =>
+                      Center(child: Text("网络错误或没有找到封面", style: textStyle)),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 /// 封面来源
 sealed class _CoverSource {
@@ -182,42 +454,32 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
 
       final bytes = await result.readAsBytes();
       if (bytes.isEmpty) {
-        _showError('未能成功读取图片文件');
+        showSnackBar(type: .error, msg: '未能成功读取图片文件');
         return;
       }
       _coverSource.value = _PendingCover(bytes);
     } catch (e, stackTrace) {
       LoggerUni.w('选择本地封面失败', e, stackTrace);
-      _showError('选择本地封面失败: $e');
+      showSnackBar(type: .error, msg: '选择本地封面失败: $e');
     }
   }
 
   Future<void> _fetchNetworkCover() async {
-    if (_isBusy.value) return;
-    _isBusy.value = true;
+    final title = _titleCtrl.text.isNotEmpty
+        ? _titleCtrl.text
+        : _metadata.title;
+    final artist = _artistCtrl.text.isNotEmpty
+        ? _artistCtrl.text
+        : _metadata.artist;
 
-    try {
-      final artist = _artistCtrl.text;
-      final suffix = artist.isNotEmpty && artist != 'UNKNOWN'
-          ? ' - $artist'
-          : '';
+    final coverBytes = await showDialog<Uint8List>(
+      barrierDismissible: true,
+      context: context,
+      builder: (_) => _NetworkCoverDialog(title: title, artist: artist),
+    );
 
-      final coverData = await saveCoverByText(
-        text: _titleCtrl.text + suffix,
-        songPath: _metadata.path,
-        saveCover: false,
-      );
-
-      if (coverData == null || coverData.isEmpty) {
-        _showError('未找到网络封面');
-        return;
-      }
-      _coverSource.value = _PendingCover(Uint8List.fromList(coverData));
-    } catch (e, stackTrace) {
-      LoggerUni.w('获取网络封面失败', e, stackTrace);
-      _showError('获取网络封面失败: $e');
-    } finally {
-      _isBusy.value = false;
+    if (coverBytes != null && coverBytes.isNotEmpty) {
+      _coverSource.value = _PendingCover(coverBytes);
     }
   }
 
@@ -252,16 +514,12 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
       );
 
       if (mounted) context.pop();
+      showSnackBar(type: .success, msg: '保存成功');
     } catch (e, stackTrace) {
       LoggerUni.w('保存音频信息失败', e, stackTrace);
-      _showError('保存失败，请重试');
+      showSnackBar(type: .error, msg: '保存失败，请重试');
       _isBusy.value = false;
     }
-  }
-
-  void _showError(String message) {
-    if (!mounted) return;
-    showSnackBar(type: .error, msg: message);
   }
 
   Uint8List _getCoverBytes(_CoverSource source) => switch (source) {
@@ -390,10 +648,12 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
                   children: [
                     _ActionButton(
                       label: '获取网络封面',
+                      icon: PhosphorIconsLight.globe,
                       onPressed: () => unawaited(_fetchNetworkCover()),
                     ),
                     _ActionButton(
                       label: '使用本地封面',
+                      icon: PhosphorIconsLight.floppyDisk,
                       onPressed: () => unawaited(_pickLocalCover()),
                     ),
                     const Spacer(),
@@ -687,11 +947,13 @@ class _ActionButton extends StatelessWidget {
   final String label;
   final VoidCallback onPressed;
   final bool isPrimary;
+  final IconData? icon;
 
   const _ActionButton({
     required this.label,
     required this.onPressed,
     this.isPrimary = false,
+    this.icon,
   });
 
   @override
@@ -700,6 +962,7 @@ class _ActionButton extends StatelessWidget {
     return btn(
       onPressed: onPressed,
       label: label,
+      icon: icon,
       width: _actionButtonWidth,
       height: _actionButtonHeight,
     );

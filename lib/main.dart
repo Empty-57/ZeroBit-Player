@@ -151,12 +151,21 @@ Future<void> _initLog() async {
   };
 }
 
+class CustomHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..userAgent =
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36';
+  }
+}
+
 void main() async {
   if (!await FlutterSingleInstance().isFirstInstance()) {
     await FlutterSingleInstance().focus();
     exit(0);
   }
-
+  HttpOverrides.global = CustomHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
 
   await _initLog();

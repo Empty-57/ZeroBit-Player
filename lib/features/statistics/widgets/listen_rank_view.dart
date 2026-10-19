@@ -128,9 +128,12 @@ class _MusicRankList extends SignalWidget {
 
         return _RankTile(
           rank: index + 1,
-          leading: LoadLocalOrNetCover(
-            music: item.metadata,
-            size: AppSize.coverSm,
+          leading: ClipRRect(
+            borderRadius: AppRadius.smAll,
+            child: LoadLocalOrNetCover(
+              music: item.metadata,
+              size: AppSize.coverSm,
+            ),
           ),
           title: item.metadata.title,
           subtitle: item.metadata.artist,
