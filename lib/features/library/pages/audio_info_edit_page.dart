@@ -36,8 +36,6 @@ const double _actionButtonHeight = 36.0;
 const double _inlineSpinnerSize = 16.0;
 const double _inlineSpinnerStroke = 2.0;
 
-const Duration _snackDuration = Duration(milliseconds: 1000);
-
 /// 封面来源
 sealed class _CoverSource {
   const _CoverSource();
@@ -263,7 +261,7 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
 
   void _showError(String message) {
     if (!mounted) return;
-    showSnackBar(title: 'Err', msg: message, duration: _snackDuration);
+    showSnackBar(type: .error, msg: message);
   }
 
   Uint8List _getCoverBytes(_CoverSource source) => switch (source) {

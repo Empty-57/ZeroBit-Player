@@ -703,7 +703,7 @@ Future<void> _launchUrl(String url) async {
     await launchUrl(Uri.parse(url));
   } catch (e, stackTrace) {
     LoggerUni.w('跳转失败 URL: $url', e, stackTrace);
-    showSnackBar(title: 'ERROR', msg: '跳转失败！');
+    showSnackBar(type: .error, msg: '跳转失败！');
   }
 }
 

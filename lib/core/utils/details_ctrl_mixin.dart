@@ -87,11 +87,7 @@ mixin DetailsPageControllerBase {
           .toList();
     }
     if (items.isEmpty) {
-      showSnackBar(
-        title: "WARNING",
-        msg: "此歌单暂无音乐！",
-        duration: const Duration(milliseconds: 1500),
-      );
+      showSnackBar(type: .warning, msg: "此歌单暂无音乐！");
       return;
     }
 

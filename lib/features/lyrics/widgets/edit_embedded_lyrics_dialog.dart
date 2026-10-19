@@ -158,10 +158,10 @@ class _LyricsEditDialogState extends State<_LyricsEditDialog> {
       await editEmbeddedLyric(path: widget.metadata.path, lyric: payload);
       if (!mounted) return;
       Navigator.pop(context);
-      showSnackBar(title: 'OK', msg: '保存成功！');
+      showSnackBar(type: .success, msg: '保存成功！');
     } catch (e, stackTrace) {
       LoggerUni.w('保存内嵌歌词失败 Path: ${widget.metadata.path}', e, stackTrace);
-      showSnackBar(title: 'ERROR', msg: '保存失败：$e');
+      showSnackBar(type: .error, msg: '保存失败：$e');
       if (mounted) _isSaving.value = false;
     }
   }

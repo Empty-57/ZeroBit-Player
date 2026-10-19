@@ -49,20 +49,11 @@ Duration _defaultDurationOf(SnackType type) => switch (type) {
   SnackType.success || SnackType.info => AppDuration.snackBarInfo,
 };
 
-/// 从 title 推断语义
-SnackType _inferType(String title) {
-  final upper = title.toUpperCase();
-  if (upper.startsWith('ERR')) return SnackType.error;
-  if (upper.startsWith('WARN')) return SnackType.warning;
-  if (upper == 'OK') return SnackType.success;
-  return SnackType.info;
-}
-
 /// 弹出一条全局提示，防抖
 void showSnackBar({
-  required String title,
   required String msg,
-  SnackType? type,
+  required SnackType type,
+  String? title,
   SnackPosition position = SnackPosition.bottom,
   Duration? duration,
 }) {
@@ -90,18 +81,18 @@ void showSnackBar({
 }
 
 void _show({
-  required String title,
+  required String? title,
   required String msg,
-  required SnackType? type,
+  required SnackType type,
   required SnackPosition position,
   required Duration? duration,
 }) {
   final overlay = rootNavigatorKey.currentState?.overlay;
   if (overlay == null) return;
 
-  final effectiveType = type ?? _inferType(title);
-  final effectiveDuration = duration ?? _defaultDurationOf(effectiveType);
-  final signature = '$title\u0000$msg\u0000${effectiveType.index}';
+  final effectiveTitle = title ?? type.name;
+  final effectiveDuration = duration ?? _defaultDurationOf(type);
+  final signature = '$effectiveTitle\u0000$msg\u0000${type.index}';
 
   // 防抖处理
   if (_currentEntry != null && _currentSignature == signature) {
@@ -116,9 +107,9 @@ void _show({
   entry = OverlayEntry(
     builder: (_) => _SnackBarView(
       key: key,
-      title: title,
+      title: effectiveTitle,
       msg: msg,
-      type: effectiveType,
+      type: type,
       position: position,
       duration: effectiveDuration,
       onDismissed: () {

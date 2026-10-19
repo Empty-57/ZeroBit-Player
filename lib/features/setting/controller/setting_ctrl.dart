@@ -793,7 +793,7 @@ class SettingController {
       }
     } catch (e, stackTrace) {
       LoggerUni.w('设置taskBar失败', e, stackTrace);
-      showSnackBar(title: 'Err', msg: 'settingERR | $e');
+      showSnackBar(type: .error, msg: 'settingERR | $e');
     }
   }
 
@@ -913,7 +913,7 @@ class SettingController {
         e,
         stackTrace,
       );
-      showSnackBar(title: 'Err', msg: 'settingERR | $e');
+      showSnackBar(type: .error, msg: 'settingERR | $e');
       useExclusiveMode.value = prev;
       await switchExclusiveMode(exclusive: prev);
     }

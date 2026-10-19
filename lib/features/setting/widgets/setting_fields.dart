@@ -578,11 +578,7 @@ class SettingHotkeyField extends StatelessWidget {
 
     if (_settingController.checkHotConflict(hotKey.value, prefKey)) {
       hotKey.value = previous;
-      showSnackBar(
-        title: 'Err',
-        msg: '快捷键已被占用，请更换。',
-        duration: AppDuration.snackBarWarning,
-      );
+      showSnackBar(type: .error, msg: '快捷键已被占用，请更换。');
     }
 
     onRecorded(hotKey.value);
@@ -715,7 +711,7 @@ class SettingBackgroundField extends SignalWidget {
       _settingController.setBackgroundImagePath(value: path);
     } catch (e, stackTrace) {
       LoggerUni.w('FilePicker错误', e, stackTrace);
-      showSnackBar(title: 'ERR', msg: '发生错误： $e');
+      showSnackBar(type: .error, msg: '发生错误： $e');
     }
   }
 

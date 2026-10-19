@@ -414,11 +414,11 @@ class _AddToPlaylistButtonState extends State<_AddToPlaylistButton> {
 
   void _open() {
     if (_playList.allUserKey.isEmpty) {
-      showSnackBar(title: 'WARNING', msg: '未创建歌单！');
+      showSnackBar(type: .warning, msg: '未创建歌单！');
       return;
     }
     if (widget.args.selectedList.isEmpty) {
-      showSnackBar(title: 'WARNING', msg: '未选择任何音乐！');
+      showSnackBar(type: .warning, msg: '未选择任何音乐！');
       return;
     }
     if (_menuController.isOpen) {

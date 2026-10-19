@@ -132,22 +132,14 @@ class VersionChecker {
         return true;
       } else {
         if (showNoUpdateToast && context.mounted) {
-          showSnackBar(
-            title: "OK",
-            msg: "目前是最新版本",
-            duration: const Duration(milliseconds: 3000),
-          );
+          showSnackBar(type: .success, msg: "目前是最新版本");
         }
         return false;
       }
     } catch (e, stackTrace) {
       LoggerUni.w("检查更新失败", e, stackTrace);
       if (showErrorToast && context.mounted) {
-        showSnackBar(
-          title: "ERROR",
-          msg: "获取更新失败",
-          duration: const Duration(milliseconds: 3000),
-        );
+        showSnackBar(type: .error, msg: "获取更新失败");
       }
       return false;
     }
@@ -184,11 +176,7 @@ class VersionChecker {
               await launchUrl(url);
             } catch (e, stackTrace) {
               LoggerUni.w("跳转失败 URL: ${repoInfo.downloadUrl}", e, stackTrace);
-              showSnackBar(
-                title: "ERROR",
-                msg: "跳转失败，请前往浏览器下载！",
-                duration: const Duration(milliseconds: 3000),
-              );
+              showSnackBar(type: .error, msg: "跳转失败，请前往浏览器下载！");
             }
           },
         );

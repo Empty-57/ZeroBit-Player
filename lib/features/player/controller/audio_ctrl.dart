@@ -578,7 +578,7 @@ class AudioController {
       reTryCount = 0;
     } catch (e, stackTrace) {
       LoggerUni.w('播放失败 Path: ${currentPath.value}', e, stackTrace);
-      showSnackBar(title: "ERR:", msg: 'playingERR | $e');
+      showSnackBar(type: .error, msg: 'playingERR | $e');
       if (reTryCount > 4 || prevMetadata.path.isEmpty) return;
       reTryCount++;
       await audioPlay(metadata: prevMetadata);
@@ -598,7 +598,7 @@ class AudioController {
     } catch (e, stackTrace) {
       LoggerUni.w('恢复播放失败 Path: ${currentPath.value}', e, stackTrace);
       currentState.value = AudioState.stop;
-      showSnackBar(title: "ERR", msg: 'resumeERR | $e');
+      showSnackBar(type: .error, msg: 'resumeERR | $e');
     }
   }
 
@@ -615,7 +615,7 @@ class AudioController {
     } catch (e, stackTrace) {
       LoggerUni.w('暂停播放失败 Path: ${currentPath.value}', e, stackTrace);
       currentState.value = AudioState.stop;
-      showSnackBar(title: "ERR", msg: 'pauseERR | $e');
+      showSnackBar(type: .error, msg: 'pauseERR | $e');
     }
   }
 
@@ -630,7 +630,7 @@ class AudioController {
       await stop();
     } catch (e, stackTrace) {
       LoggerUni.w('停止播放失败 Path: ${currentPath.value}', e, stackTrace);
-      showSnackBar(title: "ERR", msg: 'stopERR | $e');
+      showSnackBar(type: .error, msg: 'stopERR | $e');
     }
   }
 
@@ -655,7 +655,7 @@ class AudioController {
         stackTrace,
       );
       currentState.value = AudioState.stop;
-      showSnackBar(title: "ERR", msg: e.toString());
+      showSnackBar(type: .error, msg: e.toString());
     }
   }
 
@@ -665,7 +665,7 @@ class AudioController {
       return await getVolume();
     } catch (e, stackTrace) {
       LoggerUni.w('获取音量失败 Path: ${currentPath.value}', e, stackTrace);
-      showSnackBar(title: "ERR", msg: e.toString());
+      showSnackBar(type: .error, msg: e.toString());
       return 0.0;
     }
   }
@@ -676,7 +676,7 @@ class AudioController {
       await setVolume(vol: vol);
     } catch (e, stackTrace) {
       LoggerUni.w('设置音量失败 Path: ${currentPath.value}', e, stackTrace);
-      showSnackBar(title: "ERR", msg: e.toString());
+      showSnackBar(type: .error, msg: e.toString());
     }
   }
 
@@ -688,7 +688,7 @@ class AudioController {
       await audioResume();
     } catch (e, stackTrace) {
       LoggerUni.w('设置进度失败 Path: ${currentMetadata.value.path}', e, stackTrace);
-      showSnackBar(title: "ERR", msg: e.toString());
+      showSnackBar(type: .error, msg: e.toString());
     }
   }
 
@@ -803,11 +803,7 @@ class AudioController {
   void insertNext({required MusicCache metadata}) {
     if (currentMetadata.value.path.isEmpty ||
         currentMetadata.value.path == metadata.path) {
-      showSnackBar(
-        title: "WARNING",
-        msg: "无效操作！",
-        duration: const Duration(milliseconds: 1500),
-      );
+      showSnackBar(type: .warning, msg: "无效操作！");
       return;
     }
 
@@ -821,11 +817,7 @@ class AudioController {
       syncCurrentIndex();
     });
 
-    showSnackBar(
-      title: "OK",
-      msg: "已将 ${metadata.title} 添加到下一首播放",
-      duration: const Duration(milliseconds: 1500),
-    );
+    showSnackBar(type: .success, msg: "已将 ${metadata.title} 添加到下一首播放");
     _hasNextAudioMetadata = metadata;
   }
 

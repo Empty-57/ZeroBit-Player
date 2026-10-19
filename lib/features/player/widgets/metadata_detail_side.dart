@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+
 import '../../../core/storage/models/music_cache_model.dart';
 import '../../../core/theme/style_manager.dart';
 import '../../../core/theme/theme_manager.dart';
@@ -247,7 +248,7 @@ class MetadataDetailSide extends StatelessWidget {
           HoverBuilder(
             onPressed: () {
               Clipboard.setData(ClipboardData(text: metadata.path));
-              showSnackBar(title: 'OK', msg: '路径已复制到剪贴板');
+              showSnackBar(type: .success, msg: '路径已复制到剪贴板');
             },
             builder: (context, hovered) {
               final bgColor = hovered

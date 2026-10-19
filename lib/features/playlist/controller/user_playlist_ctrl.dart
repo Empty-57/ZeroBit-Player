@@ -60,16 +60,16 @@ class UserPlayListController {
 
   bool _isValidName(String name) {
     if (name.isEmpty) {
-      showSnackBar(title: "WARNING", msg: "歌单名称为空！");
+      showSnackBar(type: .warning, msg: "歌单名称为空！");
       return false;
     }
     if (name.length > 223) {
-      showSnackBar(title: "WARNING", msg: "歌单名称过长！（最大223个字符）");
+      showSnackBar(type: .warning, msg: "歌单名称过长！（最大223个字符）");
       return false;
     }
 
     if (items.any((e) => displayNameOf(e.userKey) == name)) {
-      showSnackBar(title: "WARNING", msg: "重复的歌单名称！");
+      showSnackBar(type: .warning, msg: "重复的歌单名称！");
       return false;
     }
     return true;
@@ -136,9 +136,8 @@ class UserPlayListController {
 
     if (targetList.pathList.contains(metadata.path)) {
       showSnackBar(
-        title: "WARNING",
+        type: .warning,
         msg: "歌单 ${displayNameOf(userKey)} 存在重复歌曲 ${metadata.title} ！",
-        duration: const Duration(milliseconds: 1500),
       );
       return;
     }
@@ -158,9 +157,8 @@ class UserPlayListController {
     }
 
     showSnackBar(
-      title: "OK",
+      type: .success,
       msg: "已将 ${metadata.title} 添加到歌单 ${displayNameOf(userKey)}",
-      duration: const Duration(milliseconds: 1500),
     );
   }
 
@@ -170,11 +168,7 @@ class UserPlayListController {
     required String userKey,
   }) async {
     if (selectedList.isEmpty) {
-      showSnackBar(
-        title: "WARNING",
-        msg: "未选择音频！",
-        duration: const Duration(milliseconds: 1500),
-      );
+      showSnackBar(type: .warning, msg: "未选择音频！");
       return;
     }
 
@@ -190,11 +184,7 @@ class UserPlayListController {
         .toList();
 
     if (songsToAdd.isEmpty) {
-      showSnackBar(
-        title: "WARNING",
-        msg: "重复添加！歌曲均已存在于歌单中。",
-        duration: const Duration(milliseconds: 1500),
-      );
+      showSnackBar(type: .warning, msg: "重复添加！歌曲均已存在于歌单中。");
       return;
     }
 
@@ -218,9 +208,8 @@ class UserPlayListController {
     }
 
     showSnackBar(
-      title: "OK",
+      type: .success,
       msg: "已将去重后的 $addedCount 首歌添加到歌单 ${displayNameOf(userKey)}",
-      duration: const Duration(milliseconds: 1500),
     );
   }
 
@@ -247,9 +236,8 @@ class UserPlayListController {
       }
 
       showSnackBar(
-        title: "OK",
+        type: .success,
         msg: "已将 ${metadata.title} 从歌单 ${displayNameOf(userKey)}删除！",
-        duration: const Duration(milliseconds: 1500),
       );
     }
   }
@@ -260,11 +248,7 @@ class UserPlayListController {
     required List<MusicCache> removeList,
   }) async {
     if (removeList.isEmpty) {
-      showSnackBar(
-        title: "WARNING",
-        msg: "未选择音频！",
-        duration: const Duration(milliseconds: 1500),
-      );
+      showSnackBar(type: .warning, msg: "未选择音频！");
       return;
     }
 
@@ -291,9 +275,8 @@ class UserPlayListController {
     }
 
     showSnackBar(
-      title: "OK",
+      type: .success,
       msg: "已将去重后的 ${removeList.length} 首歌从歌单 ${displayNameOf(userKey)}删除！",
-      duration: const Duration(milliseconds: 1500),
     );
   }
 }

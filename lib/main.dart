@@ -415,7 +415,7 @@ Future<void> initStream(AudioController audioController) async {
     );
   } catch (e, stackTrace) {
     LoggerUni.e('订阅 audioEventStream 失败', e, stackTrace);
-    showSnackBar(title: "ERR:", msg: e.toString());
+    showSnackBar(type: .error, msg: e.toString());
   }
 
   // 音频进度流 (20ms一次)
@@ -449,7 +449,7 @@ Future<void> initStream(AudioController audioController) async {
     );
   } catch (e, stackTrace) {
     LoggerUni.e('订阅 progressListen 失败', e, stackTrace);
-    showSnackBar(title: "ERR:", msg: e.toString());
+    showSnackBar(type: .error, msg: e.toString());
   }
 
   // SMTC事件流

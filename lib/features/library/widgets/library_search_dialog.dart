@@ -120,11 +120,7 @@ class _SearchResultRowState extends State<_SearchResultRow> {
 
   void _openPlaylistMenu() {
     if (_playListController.allUserKey.isEmpty) {
-      showSnackBar(
-        title: 'WARNING',
-        msg: '还未创建任何歌单',
-        duration: AppDuration.slow,
-      );
+      showSnackBar(type: .warning, msg: '还未创建任何歌单');
       return;
     }
     if (_menuController.isOpen) {
