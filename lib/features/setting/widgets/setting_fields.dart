@@ -541,7 +541,7 @@ class _FontRow extends StatelessWidget {
 /// 把快捷键拆成按键名列表，供键帽展示
 List<String> _hotKeyParts(HotKey hotKey) => [
   ...?hotKey.modifiers?.map((m) => m.physicalKeys.first.keyLabel),
-  hotKey.key.keyLabel,
+  hotKey.physicalKey.keyLabel,
 ];
 
 /// 快捷键字段
@@ -564,9 +564,9 @@ class SettingHotkeyField extends StatelessWidget {
     final previous = hotKey.value;
 
     // 录制期间必须先放开注册
-    await hotKeyManager.unregisterAll();
+    await _settingController.pauseHotKeysForRecord();
     if (!context.mounted) {
-      await _settingController.initHotKey();
+      await _settingController.resumeHotKeysAfterRecord();
       return;
     }
 
@@ -578,11 +578,11 @@ class SettingHotkeyField extends StatelessWidget {
 
     if (_settingController.checkHotConflict(hotKey.value, prefKey)) {
       hotKey.value = previous;
-      showSnackBar(type: .error, msg: '快捷键已被占用，请更换。');
+      showSnackBar(type: .warning, msg: '快捷键已被占用，请更换。');
     }
 
     onRecorded(hotKey.value);
-    await _settingController.initHotKey();
+    await _settingController.resumeHotKeysAfterRecord();
   }
 
   @override

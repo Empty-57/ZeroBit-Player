@@ -80,7 +80,7 @@ class SettingController {
   final volume = signal(1.0);
   final playMode = signal(0);
   final useExclusiveMode = signal(false);
-  final equalizerGains = listSignal(List.generate(10, (_) => 0.0).toList());
+  final equalizerGains = listSignal(List.generate(10, (_) => 0.0));
   final useReplayGain = signal(false);
   final useTaskBarCtrl = signal(true);
   final useVolumeFade = signal(true);
@@ -245,6 +245,7 @@ class SettingController {
   SharedPreferences? prefs;
 
   bool _isHotKeyRegistered = false;
+  bool isRecordingHotKey = false;
 
   /// 检查当前是否在输入框内，防止快捷键冲突
   static bool get isTextFieldFocused {
@@ -268,19 +269,23 @@ class SettingController {
 
   void _initBassSet() {
     unawaited(() async {
-      await setVolume(vol: volume.value);
+      try {
+        await setVolume(vol: volume.value);
 
-      for (final v in equalizerGains.indexed) {
-        await setEqParams(freCenterIndex: v.$1, gain: v.$2);
+        for (final (index, gain) in equalizerGains.indexed) {
+          await setEqParams(freCenterIndex: index, gain: gain);
+        }
+
+        await bass.setUseVolumeFade(value: useVolumeFade.value);
+        await setUseCrossfade(value: useCrossfade.value);
+        await bass.setCrossfadeDuration(
+          durationMs: crossfadeDuration.value.toInt(),
+        );
+        await setSkipSilence(enabled: useSkipSilence.value);
+        await setSilenceThreshold(thresholdDb: silenceThresholdDb.value);
+      } catch (e, stackTrace) {
+        LoggerUni.e('初始化 BASS 音频设置失败', e, stackTrace);
       }
-
-      await bass.setUseVolumeFade(value: useVolumeFade.value);
-      await setUseCrossfade(value: useCrossfade.value);
-      await bass.setCrossfadeDuration(
-        durationMs: crossfadeDuration.value.toInt(),
-      );
-      await setSkipSilence(enabled: useSkipSilence.value);
-      await setSilenceThreshold(thresholdDb: silenceThresholdDb.value);
     }());
   }
 
@@ -309,11 +314,14 @@ class SettingController {
 
       sortMap.value = Map.of(_defaultSortMap)
         ..addAll(cache.sortMap.cast<dynamic, dynamic>());
-      if (sortMap.length > cache.sortMap.length) await putCache();
-
       viewModeMap.value = Map.of(_defaultViewModeMap)
         ..addAll(cache.viewModeMap.cast<dynamic, dynamic>());
-      if (viewModeMap.length > cache.viewModeMap.length) await putCache();
+
+      // 仅在默认设置补充了新项时合并写入一次
+      final needsUpdate =
+          sortMap.length > cache.sortMap.length ||
+          viewModeMap.length > cache.viewModeMap.length;
+      if (needsUpdate) await putCache();
     } else {
       batch(() {
         sortMap.value = Map.of(_defaultSortMap);
@@ -383,8 +391,6 @@ class SettingController {
           prefs?.getDouble(SharedPreferencesKey.lrcLetterSpacing) ?? 0.0;
       lyricSource.value = prefs?.getInt(SharedPreferencesKey.lyricSource) ?? 0;
       showKana.value = prefs?.getBool(SharedPreferencesKey.showKana) ?? true;
-      useCrossfade.value =
-          prefs?.getBool(SharedPreferencesKey.useCrossfade) ?? false;
       crossfadeDuration.value =
           prefs?.getDouble(SharedPreferencesKey.crossfadeDuration) ?? 2000.0;
       useSkipSilence.value =
@@ -465,6 +471,7 @@ class SettingController {
   }
 
   void _handleFocusChange() {
+    if (isRecordingHotKey) return;
     final shouldRegister = !isTextFieldFocused;
     if (shouldRegister == _isHotKeyRegistered) return;
     if (shouldRegister && !_isHotKeyRegistered) {
@@ -508,12 +515,7 @@ class SettingController {
   }
 
   Future<void> _registerHotKey(HotKey hotKey, VoidCallback action) async {
-    await hotKeyManager.register(
-      hotKey,
-      keyDownHandler: (_) {
-        action();
-      },
-    );
+    await hotKeyManager.register(hotKey, keyDownHandler: (_) => action());
   }
 
   Future<void> _registerAllHotKeys() async {
@@ -542,6 +544,16 @@ class SettingController {
     if (!_isHotKeyRegistered) return;
     _isHotKeyRegistered = false;
     await hotKeyManager.unregisterAll();
+  }
+
+  Future<void> pauseHotKeysForRecord() async {
+    isRecordingHotKey = true;
+    await _unregisterAllHotKeys();
+  }
+
+  Future<void> resumeHotKeysAfterRecord() async {
+    isRecordingHotKey = false;
+    await initHotKey();
   }
 
   // 数据保存与业务方法
@@ -585,18 +597,25 @@ class SettingController {
     );
   }
 
-  // 辅助方法：保存 Bool 到 SharedPreferences
-  void _setBoolPref(
-    String key,
-    Signal<bool> boolSignal, {
-    bool? overrideValue,
-  }) {
-    if (overrideValue != null) {
-      boolSignal.value = overrideValue;
-    } else {
-      boolSignal.value = !boolSignal.value;
-    }
-    prefs?.setBool(key, boolSignal.value);
+  // 辅助方法：保存偏好设置到 SharedPreferences
+  void _setBoolPref(String key, Signal<bool> signal, {bool? overrideValue}) {
+    signal.value = overrideValue ?? !signal.value;
+    prefs?.setBool(key, signal.value);
+  }
+
+  void _setDoublePref(String key, Signal<double> signal, double value) {
+    signal.value = value;
+    prefs?.setDouble(key, value);
+  }
+
+  void _setIntPref(String key, Signal<int> signal, int value) {
+    signal.value = value;
+    prefs?.setInt(key, value);
+  }
+
+  void _setStringPref(String key, Signal<String> signal, String value) {
+    signal.value = value;
+    prefs?.setString(key, value);
   }
 
   void setShowTranslate() =>
@@ -668,38 +687,30 @@ class SettingController {
     final (newMainHid, newModifiers) = _extractHid(newKey);
     final newSig = _generateHotKeySignature(newMainHid, newModifiers);
 
-    final toggleSig = _generateHotKeySignature(
-      hotKeyToggleHid,
-      modifierToggleHidList,
-    );
-    final nextSig = _generateHotKeySignature(
-      hotKeyNextHid,
-      modifierNextHidList,
-    );
-    final prevSig = _generateHotKeySignature(
-      hotKeyPreviousHid,
-      modifierPreviousHidList,
-    );
-    final fullScreenSig = _generateHotKeySignature(
-      hotKeyFullScreenHid,
-      modifierFullScreenHidList,
-    );
+    final currentShortcuts = {
+      SharedPreferencesKey.toggleHidString: _generateHotKeySignature(
+        hotKeyToggleHid,
+        modifierToggleHidList,
+      ),
+      SharedPreferencesKey.nextHidString: _generateHotKeySignature(
+        hotKeyNextHid,
+        modifierNextHidList,
+      ),
+      SharedPreferencesKey.previousHidString: _generateHotKeySignature(
+        hotKeyPreviousHid,
+        modifierPreviousHidList,
+      ),
+      SharedPreferencesKey.fullScreenHidString: _generateHotKeySignature(
+        hotKeyFullScreenHid,
+        modifierFullScreenHidList,
+      ),
+    };
 
     // 如果不是当前正在修改的快捷键，且签名相同，则说明冲突
-    if (actionType != SharedPreferencesKey.toggleHidString &&
-        newSig == toggleSig) {
-      return true;
-    }
-    if (actionType != SharedPreferencesKey.nextHidString && newSig == nextSig) {
-      return true;
-    }
-    if (actionType != SharedPreferencesKey.previousHidString &&
-        newSig == prevSig) {
-      return true;
-    }
-    if (actionType != SharedPreferencesKey.fullScreenHidString &&
-        newSig == fullScreenSig) {
-      return true;
+    for (final entry in currentShortcuts.entries) {
+      if (entry.key != actionType && entry.value == newSig) {
+        return true;
+      }
     }
 
     return false;
@@ -712,20 +723,17 @@ class SettingController {
     HotKey key,
     void Function(int hid) updateHid,
   ) {
-    modifierList.clear();
-    final keys = <int>[];
-
-    key.modifiers?.forEach((v) {
-      final hid = v.physicalKeys.first.usbHidUsage;
-      modifierList.add(hid);
-      keys.add(hid);
-    });
+    final modifiers =
+        key.modifiers?.map((v) => v.physicalKeys.first.usbHidUsage).toList() ??
+        const [];
+    modifierList
+      ..clear()
+      ..addAll(modifiers);
 
     final mainHid = key.physicalKey.usbHidUsage;
-    keys.add(mainHid);
     updateHid(mainHid);
 
-    prefs?.setString(prefKey, keys.join('_'));
+    prefs?.setString(prefKey, [...modifiers, mainHid].join('_'));
   }
 
   void setToggleHid({required HotKey key}) => _saveHotKeyPref(
@@ -757,12 +765,7 @@ class SettingController {
   );
 
   Future<void> setShowDesktopLyrics([bool? value]) async {
-    if (value != null) {
-      showDesktopLyrics.value = value;
-    } else {
-      showDesktopLyrics.value = !showDesktopLyrics.value;
-    }
-
+    showDesktopLyrics.value = value ?? !showDesktopLyrics.value;
     await putScalableCache();
 
     if (showDesktopLyrics.value) {
@@ -797,53 +800,38 @@ class SettingController {
     }
   }
 
-  void setBackgroundImageOpacity({required double value}) {
-    backgroundImageOpacity.value = value;
-    if (prefs == null) {
-      return;
-    }
-    prefs!.setDouble(SharedPreferencesKey.backgroundImageOpacity, value);
-  }
+  void setBackgroundImageOpacity({required double value}) => _setDoublePref(
+    SharedPreferencesKey.backgroundImageOpacity,
+    backgroundImageOpacity,
+    value,
+  );
 
-  void setBackgroundImageBlur({required double value}) {
-    backgroundImageBlur.value = value;
-    if (prefs == null) {
-      return;
-    }
-    prefs!.setDouble(SharedPreferencesKey.backgroundImageBlur, value);
-  }
+  void setBackgroundImageBlur({required double value}) => _setDoublePref(
+    SharedPreferencesKey.backgroundImageBlur,
+    backgroundImageBlur,
+    value,
+  );
 
-  void setLrcLetterSpacing({required double value}) {
-    lrcLetterSpacing.value = value;
-    if (prefs == null) {
-      return;
-    }
-    prefs!.setDouble(SharedPreferencesKey.lrcLetterSpacing, value);
-  }
+  void setLrcLetterSpacing({required double value}) => _setDoublePref(
+    SharedPreferencesKey.lrcLetterSpacing,
+    lrcLetterSpacing,
+    value,
+  );
 
-  void setBackgroundImagePath({required String value}) {
-    backgroundImagePath.value = value;
-    if (prefs == null) {
-      return;
-    }
-    prefs!.setString(SharedPreferencesKey.backgroundImagePath, value);
-  }
+  void setBackgroundImagePath({required String value}) => _setStringPref(
+    SharedPreferencesKey.backgroundImagePath,
+    backgroundImagePath,
+    value,
+  );
 
-  void setSpectrogramStyle({required int value}) {
-    spectrogramStyle.value = value;
-    if (prefs == null) {
-      return;
-    }
-    prefs!.setInt(SharedPreferencesKey.spectrogramStyle, value);
-  }
+  void setSpectrogramStyle({required int value}) => _setIntPref(
+    SharedPreferencesKey.spectrogramStyle,
+    spectrogramStyle,
+    value,
+  );
 
-  void setLyricSource({required int value}) {
-    lyricSource.value = value;
-    if (prefs == null) {
-      return;
-    }
-    prefs!.setInt(SharedPreferencesKey.lyricSource, value);
-  }
+  void setLyricSource({required int value}) =>
+      _setIntPref(SharedPreferencesKey.lyricSource, lyricSource, value);
 
   void setUseAutoUpdate({required bool value}) => _setBoolPref(
     SharedPreferencesKey.useAutoUpdate,
@@ -882,8 +870,11 @@ class SettingController {
   }
 
   void setCrossfadeDuration({required double value}) {
-    crossfadeDuration.value = value;
-    prefs?.setDouble(SharedPreferencesKey.crossfadeDuration, value);
+    _setDoublePref(
+      SharedPreferencesKey.crossfadeDuration,
+      crossfadeDuration,
+      value,
+    );
     unawaited(bass.setCrossfadeDuration(durationMs: value.toInt()));
   }
 
@@ -897,8 +888,11 @@ class SettingController {
   }
 
   void setSilenceThresholdDb({required double value}) {
-    silenceThresholdDb.value = value;
-    prefs?.setDouble(SharedPreferencesKey.silenceThresholdDb, value);
+    _setDoublePref(
+      SharedPreferencesKey.silenceThresholdDb,
+      silenceThresholdDb,
+      value,
+    );
     unawaited(setSilenceThreshold(thresholdDb: value));
   }
 
