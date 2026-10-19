@@ -245,7 +245,7 @@ class SettingController {
   SharedPreferences? prefs;
 
   bool _isHotKeyRegistered = false;
-  bool isRecordingHotKey = false;
+  bool _isRecordingHotKey = false;
 
   /// 检查当前是否在输入框内，防止快捷键冲突
   static bool get isTextFieldFocused {
@@ -471,7 +471,7 @@ class SettingController {
   }
 
   void _handleFocusChange() {
-    if (isRecordingHotKey) return;
+    if (_isRecordingHotKey) return;
     final shouldRegister = !isTextFieldFocused;
     if (shouldRegister == _isHotKeyRegistered) return;
     if (shouldRegister && !_isHotKeyRegistered) {
@@ -547,12 +547,12 @@ class SettingController {
   }
 
   Future<void> pauseHotKeysForRecord() async {
-    isRecordingHotKey = true;
+    _isRecordingHotKey = true;
     await _unregisterAllHotKeys();
   }
 
   Future<void> resumeHotKeysAfterRecord() async {
-    isRecordingHotKey = false;
+    _isRecordingHotKey = false;
     await initHotKey();
   }
 

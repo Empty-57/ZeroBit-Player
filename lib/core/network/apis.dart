@@ -628,9 +628,13 @@ Future<List<SearchLrcModel?>> getLrcBySearch({
   required String text,
   required int offset,
   required int limit,
+  int? apiIndex,
 }) async {
   final handlers = [_qmGetLrcBySearch, _neGetLrcBySearch, _kgGetLrcBySearch];
 
-  final index = _settingController.apiIndex.value.clamp(0, handlers.length - 1);
+  final index = (apiIndex ?? _settingController.apiIndex.value).clamp(
+    0,
+    handlers.length - 1,
+  );
   return await handlers[index](text: text, offset: offset, limit: limit);
 }

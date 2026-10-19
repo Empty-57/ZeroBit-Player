@@ -20,37 +20,85 @@ import '../../lyrics/parsers/parse_lyrics.dart';
 import '../../lyrics/parsers/save_lyric.dart';
 
 class _LrcSearchController {
+  _LrcSearchController() {
+    _stopSearchEffect = effect(() {
+      final params = _searchParams.value;
+      _loadSearch(params.query, params.offset, ++_requestId, params.apiIndex);
+    });
+  }
+  late final void Function() _stopSearchEffect;
+
   final AudioController _audioController = AudioController.instance;
-  final SettingController _settingController = SettingController.instance;
 
   final currentNetLrcOffset = signal(0);
-  final _queryText = signal("");
+  final _queryText = signal('');
 
-  late final _searchParams = computed<({String query, int offset})>(
-    () => (query: _queryText.value, offset: currentNetLrcOffset.value),
-  );
+  late final apiIndex = signal(SettingController.instance.apiIndex.value);
+
+  bool _isDisposed = false;
+  int _requestId = 0;
+
+  final searchResults = asyncSignal<List<SearchLrcModel>>(AsyncState.data([]));
+
+  late final _searchParams =
+      computed<({String query, int offset, int apiIndex})>(
+        () => (
+          query: _queryText.value,
+          offset: currentNetLrcOffset.value,
+          apiIndex: apiIndex.value,
+        ),
+      );
 
   late final void Function(String) onInputChangedDebounce = ((String text) {
+    if (_isDisposed) return;
+
     batch(() {
       currentNetLrcOffset.value = 0;
       _queryText.value = text;
     });
   }).debounceArgs();
 
-  late final searchResults = computedAsync<List<SearchLrcModel>>(
-    () async {
-      final params = _searchParams.peek();
-      final query = params.query.trim();
-      final offset = params.offset;
+  void setInitialQuery() {
+    if (_isDisposed) return;
 
-      if (query.isEmpty) return const [];
+    final text =
+        '${_audioController.currentMetadata.value.title} - '
+        '${_audioController.currentMetadata.value.artist}';
 
+    batch(() {
+      currentNetLrcOffset.value = 0;
+      _queryText.value = text;
+    });
+  }
+
+  Future<void> _loadSearch(
+    String query,
+    int offset,
+    int requestId,
+    int apiIndex,
+  ) async {
+    query = query.trim();
+
+    if (_isDisposed || requestId != _requestId) return;
+
+    if (query.isEmpty) {
+      searchResults.value = AsyncState.data([]);
+      return;
+    }
+
+    searchResults.value = AsyncState.loading();
+
+    try {
       final result = await getLrcBySearch(
         text: query,
         offset: offset,
         limit: 5,
+        apiIndex: apiIndex,
       );
-      return result
+
+      if (_isDisposed || requestId != _requestId) return;
+
+      final filtered = result
           .whereType<SearchLrcModel>()
           .where(
             (v) =>
@@ -58,26 +106,24 @@ class _LrcSearchController {
                 (v.lyric!.lrc != null || v.lyric!.verbatimLrc != null),
           )
           .toList();
-    },
-    options: AsyncSignalOptions(
-      dependencies: [_searchParams, _settingController.apiIndex],
-    ),
-  );
 
-  void setInitialQuery() {
-    final text =
-        "${_audioController.currentMetadata.value.title} - ${_audioController.currentMetadata.value.artist}";
-    batch(() {
-      currentNetLrcOffset.value = 0;
-      _queryText.value = text;
-    });
+      searchResults.value = AsyncState.data(filtered);
+    } catch (error, stackTrace) {
+      if (_isDisposed || requestId != _requestId) return;
+      searchResults.value = AsyncState.error(error, stackTrace);
+    }
   }
 
   void dispose() {
+    if (_isDisposed) return;
+    _isDisposed = true;
+    ++_requestId;
+    _stopSearchEffect();
     searchResults.dispose();
     _searchParams.dispose();
     _queryText.dispose();
-    currentNetLrcOffset.dispose(); // 最后释放被依赖的signals
+    apiIndex.dispose();
+    currentNetLrcOffset.dispose();
   }
 }
 
@@ -346,8 +392,8 @@ class _NetLrcDialogContentState extends State<_NetLrcDialogContent> {
                 SignalBuilder(
                   builder: (context) => AppButton.secondary(
                     label: SettingController.apiMap[key] ?? 'QQ音乐',
-                    selected: _settingController.apiIndex.value == key,
-                    onPressed: () => _settingController.apiIndex.value = key,
+                    selected: _controller.apiIndex.value == key,
+                    onPressed: () => _controller.apiIndex.value = key,
                   ),
                 ),
               ],
