@@ -199,11 +199,12 @@ class _AudioListViewState extends State<AudioListView> {
             final itemCount = widget.controller.items.length;
 
             if (itemCount == 0) {
-              return const Column(
+              return Column(
                 mainAxisAlignment: .center,
                 children: [
-                  AppEmptyState(text: '这里还没有音乐'),
-                  SettingFolderField(),
+                  const AppEmptyState(text: '这里还没有音乐'),
+                  if (widget.operateArea == OperateArea.allMusic)
+                    const SettingFolderField(),
                 ],
               );
             }
