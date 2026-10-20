@@ -189,6 +189,7 @@ class _NetworkCoverDialogState extends State<_NetworkCoverDialog> {
       );
       if (bytes != null && mounted) {
         Navigator.of(context).pop(bytes);
+        LoggerUni.d('下载了封面: $url');
       } else {
         showSnackBar(type: .error, msg: '下载所选封面失败');
       }
