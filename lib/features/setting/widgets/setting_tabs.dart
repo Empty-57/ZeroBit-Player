@@ -17,6 +17,7 @@ import 'package:zerobit_player/features/setting/widgets/setting_fields.dart';
 import 'package:zerobit_player/features/setting/widgets/setting_surface.dart';
 
 import '../../../core/utils/logger.dart';
+import '../tools/hotkey_extension.dart';
 
 final SettingController _setting = SettingController.instance;
 final DesktopLyricsSettingController _desktopLyrics =

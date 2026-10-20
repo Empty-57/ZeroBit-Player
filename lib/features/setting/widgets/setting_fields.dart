@@ -21,6 +21,7 @@ import 'package:zerobit_player/src/rust/api/get_fonts.dart';
 import '../../../core/utils/logger.dart';
 import '../../../core/widgets/app_button/app_button.dart';
 import '../../../core/widgets/app_button/app_tappable.dart';
+import '../tools/hotkey_extension.dart';
 
 final SettingController _settingController = SettingController.instance;
 
@@ -565,24 +566,25 @@ class SettingHotkeyField extends StatelessWidget {
 
     // 录制期间必须先放开注册
     await _settingController.pauseHotKeysForRecord();
-    if (!context.mounted) {
+    try {
+      if (!context.mounted) return;
+
+      await showDialog<void>(
+        barrierDismissible: true,
+        context: context,
+        builder: (_) => _HotkeyRecorderDialog(hotKey: hotKey),
+      );
+
+      if (_settingController.checkHotConflict(hotKey.value, prefKey)) {
+        hotKey.value = previous;
+        showSnackBar(type: .warning, msg: '快捷键已被占用，请更换。');
+        return;
+      }
+
+      onRecorded(hotKey.value);
+    } finally {
       await _settingController.resumeHotKeysAfterRecord();
-      return;
     }
-
-    await showDialog<void>(
-      barrierDismissible: true,
-      context: context,
-      builder: (_) => _HotkeyRecorderDialog(hotKey: hotKey),
-    );
-
-    if (_settingController.checkHotConflict(hotKey.value, prefKey)) {
-      hotKey.value = previous;
-      showSnackBar(type: .warning, msg: '快捷键已被占用，请更换。');
-    }
-
-    onRecorded(hotKey.value);
-    await _settingController.resumeHotKeysAfterRecord();
   }
 
   @override

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,6 +23,7 @@ import '../../../core/utils/logger.dart';
 import '../../../src/rust/api/bass.dart' as bass;
 import '../../lyrics/server/desktop_lyrics_server.dart';
 import '../../player/controller/audio_ctrl.dart';
+import '../tools/hotkey_extension.dart';
 
 class SettingController {
   SettingController._();
@@ -226,15 +226,28 @@ class SettingController {
     HotKey(key: PhysicalKeyboardKey.f1, scope: HotKeyScope.inapp),
   );
 
-  List<int> modifierToggleHidList = [];
-  List<int> modifierNextHidList = [];
-  List<int> modifierPreviousHidList = [];
-  List<int> modifierFullScreenHidList = [];
-
-  int hotKeyToggleHid = PhysicalKeyboardKey.space.usbHidUsage;
-  int hotKeyNextHid = PhysicalKeyboardKey.arrowRight.usbHidUsage;
-  int hotKeyPreviousHid = PhysicalKeyboardKey.arrowLeft.usbHidUsage;
-  int hotKeyFullScreenHid = PhysicalKeyboardKey.f1.usbHidUsage;
+  late final Map<String, HotKeyBinding> hotKeyBindings = {
+    SharedPreferencesKey.toggleHidString: (
+      key: hotKeyToggle,
+      defaultKey: PhysicalKeyboardKey.space,
+      action: _audioController.audioToggleThrottled,
+    ),
+    SharedPreferencesKey.nextHidString: (
+      key: hotKeyNext,
+      defaultKey: PhysicalKeyboardKey.arrowRight,
+      action: _audioController.audioToNextThrottled,
+    ),
+    SharedPreferencesKey.previousHidString: (
+      key: hotKeyPrevious,
+      defaultKey: PhysicalKeyboardKey.arrowLeft,
+      action: _audioController.audioToPreviousThrottled,
+    ),
+    SharedPreferencesKey.fullScreenHidString: (
+      key: hotKeyFullScreen,
+      defaultKey: PhysicalKeyboardKey.f1,
+      action: _myWindowListener.toggleFullScreen,
+    ),
+  };
 
   // 服务与依赖
   final String _key = 'setting';
@@ -244,18 +257,6 @@ class SettingController {
 
   SharedPreferences? prefs;
 
-  bool _isHotKeyRegistered = false;
-  bool _isRecordingHotKey = false;
-
-  /// 检查当前是否在输入框内，防止快捷键冲突
-  static bool get isTextFieldFocused {
-    final primaryFocus = FocusManager.instance.primaryFocus;
-    if (primaryFocus == null || !primaryFocus.hasFocus) return false;
-    return primaryFocus.context
-            ?.findAncestorWidgetOfExactType<EditableText>() !=
-        null;
-  }
-
   late final void Function() putCacheDebounce = putCache.debounce();
 
   Future<void> init() async {
@@ -263,7 +264,6 @@ class SettingController {
     await _initPrefs();
     _initBassSet();
 
-    _initFocusListener();
     await initHotKey();
   }
 
@@ -400,160 +400,6 @@ class SettingController {
       useTilt3DCover.value =
           prefs?.getBool(SharedPreferencesKey.useTilt3DCover) ?? true;
     });
-
-    // 提取快捷键解析逻辑，消除冗余
-    _loadKeyConfig(SharedPreferencesKey.toggleHidString, hotKeyToggleHid, (
-      hid,
-      modifiers,
-    ) {
-      hotKeyToggleHid = hid;
-      modifierToggleHidList = modifiers;
-    });
-    _loadKeyConfig(SharedPreferencesKey.nextHidString, hotKeyNextHid, (
-      hid,
-      modifiers,
-    ) {
-      hotKeyNextHid = hid;
-      modifierNextHidList = modifiers;
-    });
-    _loadKeyConfig(SharedPreferencesKey.previousHidString, hotKeyPreviousHid, (
-      hid,
-      modifiers,
-    ) {
-      hotKeyPreviousHid = hid;
-      modifierPreviousHidList = modifiers;
-    });
-    _loadKeyConfig(
-      SharedPreferencesKey.fullScreenHidString,
-      hotKeyFullScreenHid,
-      (hid, modifiers) {
-        hotKeyFullScreenHid = hid;
-        modifierFullScreenHidList = modifiers;
-      },
-    );
-  }
-
-  /// 辅助方法：解析存入的快捷键配置
-  void _loadKeyConfig(
-    String prefKey,
-    int defaultHid,
-    void Function(int hid, List<int> modifiers) onLoaded,
-  ) {
-    try {
-      final rawStr = prefs?.getString(prefKey);
-      final keys = (rawStr != null)
-          ? rawStr.split('_').map(int.parse).toList()
-          : [defaultHid];
-      onLoaded(
-        keys.last,
-        keys.length > 1 ? keys.sublist(0, keys.length - 1) : [],
-      );
-    } catch (e, stackTrace) {
-      LoggerUni.w('加载快捷键失败', e, stackTrace);
-      onLoaded(defaultHid, []);
-    }
-  }
-
-  // 快捷键管理
-  List<HotKeyModifier>? _getModifier(List<int> hidList) {
-    if (hidList.isEmpty) return null;
-    return hidList
-        .map(
-          (v) => HotKeyModifier.values.firstWhere(
-            (k) => k.physicalKeys.first.usbHidUsage == v,
-          ),
-        )
-        .toList();
-  }
-
-  void _initFocusListener() {
-    FocusManager.instance.addListener(_handleFocusChange);
-  }
-
-  void _handleFocusChange() {
-    if (_isRecordingHotKey) return;
-    final shouldRegister = !isTextFieldFocused;
-    if (shouldRegister == _isHotKeyRegistered) return;
-    if (shouldRegister && !_isHotKeyRegistered) {
-      _registerAllHotKeys();
-    } else if (!shouldRegister && _isHotKeyRegistered) {
-      _unregisterAllHotKeys();
-    }
-  }
-
-  Future<void> initHotKey() async {
-    const scope = HotKeyScope.inapp; //目前只在应用范围内生效
-    // final scope=hotKeyScope.value? HotKeyScope.system:HotKeyScope.inapp;
-    batch(() {
-      hotKeyToggle.value = HotKey(
-        modifiers: _getModifier(modifierToggleHidList),
-        key: PhysicalKeyboardKey(hotKeyToggleHid),
-        scope: scope,
-      );
-      hotKeyNext.value = HotKey(
-        modifiers: _getModifier(modifierNextHidList),
-        key: PhysicalKeyboardKey(hotKeyNextHid),
-        scope: scope,
-      );
-      hotKeyPrevious.value = HotKey(
-        modifiers: _getModifier(modifierPreviousHidList),
-        key: PhysicalKeyboardKey(hotKeyPreviousHid),
-        scope: scope,
-      );
-      hotKeyFullScreen.value = HotKey(
-        modifiers: _getModifier(modifierFullScreenHidList),
-        key: PhysicalKeyboardKey(hotKeyFullScreenHid),
-        scope: scope,
-      );
-    });
-
-    await _unregisterAllHotKeys();
-
-    if (!isTextFieldFocused) {
-      await _registerAllHotKeys();
-    }
-  }
-
-  Future<void> _registerHotKey(HotKey hotKey, VoidCallback action) async {
-    await hotKeyManager.register(hotKey, keyDownHandler: (_) => action());
-  }
-
-  Future<void> _registerAllHotKeys() async {
-    if (_isHotKeyRegistered) return;
-    _isHotKeyRegistered = true;
-
-    await _registerHotKey(
-      hotKeyToggle.value,
-      _audioController.audioToggleThrottled,
-    );
-    await _registerHotKey(
-      hotKeyNext.value,
-      _audioController.audioToNextThrottled,
-    );
-    await _registerHotKey(
-      hotKeyPrevious.value,
-      _audioController.audioToPreviousThrottled,
-    );
-    await _registerHotKey(
-      hotKeyFullScreen.value,
-      _myWindowListener.toggleFullScreen,
-    );
-  }
-
-  Future<void> _unregisterAllHotKeys() async {
-    if (!_isHotKeyRegistered) return;
-    _isHotKeyRegistered = false;
-    await hotKeyManager.unregisterAll();
-  }
-
-  Future<void> pauseHotKeysForRecord() async {
-    _isRecordingHotKey = true;
-    await _unregisterAllHotKeys();
-  }
-
-  Future<void> resumeHotKeysAfterRecord() async {
-    _isRecordingHotKey = false;
-    await initHotKey();
   }
 
   // 数据保存与业务方法
@@ -625,11 +471,15 @@ class SettingController {
 
   void setShowKana() => _setBoolPref(SharedPreferencesKey.showKana, showKana);
 
-  void setHotKeyScope({required bool value}) => _setBoolPref(
-    SharedPreferencesKey.hotKeyScope,
-    hotKeyScope,
-    overrideValue: value,
-  );
+  void setHotKeyScope({required bool value}) {
+    // 暂不使用，目前只支持应用内快捷键
+    _setBoolPref(
+      SharedPreferencesKey.hotKeyScope,
+      hotKeyScope,
+      overrideValue: value,
+    );
+    unawaited(initHotKey());
+  }
 
   void setUseMesh({required bool value}) =>
       _setBoolPref(SharedPreferencesKey.useMesh, useMesh, overrideValue: value);
@@ -663,105 +513,6 @@ class SettingController {
     SharedPreferencesKey.autoGetLyrics,
     autoGetLyrics,
     overrideValue: value,
-  );
-
-  /// 提取 HotKey 的主键和修饰键 (HID)
-  (int, List<int>) _extractHid(HotKey key) {
-    final modifiers =
-        key.modifiers?.map((e) => e.physicalKeys.first.usbHidUsage).toList() ??
-        <int>[];
-    final mainHid = key.physicalKey.usbHidUsage;
-    return (mainHid, modifiers);
-  }
-
-  /// 生成快捷键的唯一签名 (对修饰键排序，确保 Ctrl+Alt+A 和 Alt+Ctrl+A 视为相同)
-  String _generateHotKeySignature(int mainHid, List<int> modifiers) {
-    final sortedMods = List<int>.from(modifiers)..sort();
-    return sortedMods.isEmpty
-        ? mainHid.toString()
-        : '${sortedMods.join('_')}_$mainHid';
-  }
-
-  /// 检查新设置的快捷键是否与现有的发生冲突
-  bool checkHotConflict(HotKey newKey, String actionType) {
-    final (newMainHid, newModifiers) = _extractHid(newKey);
-    final newSig = _generateHotKeySignature(newMainHid, newModifiers);
-
-    final currentShortcuts = {
-      SharedPreferencesKey.toggleHidString: _generateHotKeySignature(
-        hotKeyToggleHid,
-        modifierToggleHidList,
-      ),
-      SharedPreferencesKey.nextHidString: _generateHotKeySignature(
-        hotKeyNextHid,
-        modifierNextHidList,
-      ),
-      SharedPreferencesKey.previousHidString: _generateHotKeySignature(
-        hotKeyPreviousHid,
-        modifierPreviousHidList,
-      ),
-      SharedPreferencesKey.fullScreenHidString: _generateHotKeySignature(
-        hotKeyFullScreenHid,
-        modifierFullScreenHidList,
-      ),
-    };
-
-    // 如果不是当前正在修改的快捷键，且签名相同，则说明冲突
-    for (final entry in currentShortcuts.entries) {
-      if (entry.key != actionType && entry.value == newSig) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  // 快捷键保存逻辑合并
-  void _saveHotKeyPref(
-    String prefKey,
-    List<int> modifierList,
-    HotKey key,
-    void Function(int hid) updateHid,
-  ) {
-    final modifiers =
-        key.modifiers?.map((v) => v.physicalKeys.first.usbHidUsage).toList() ??
-        const [];
-    modifierList
-      ..clear()
-      ..addAll(modifiers);
-
-    final mainHid = key.physicalKey.usbHidUsage;
-    updateHid(mainHid);
-
-    prefs?.setString(prefKey, [...modifiers, mainHid].join('_'));
-  }
-
-  void setToggleHid({required HotKey key}) => _saveHotKeyPref(
-    SharedPreferencesKey.toggleHidString,
-    modifierToggleHidList,
-    key,
-    (hid) => hotKeyToggleHid = hid,
-  );
-
-  void setNextHid({required HotKey key}) => _saveHotKeyPref(
-    SharedPreferencesKey.nextHidString,
-    modifierNextHidList,
-    key,
-    (hid) => hotKeyNextHid = hid,
-  );
-
-  void setPreviousHid({required HotKey key}) => _saveHotKeyPref(
-    SharedPreferencesKey.previousHidString,
-    modifierPreviousHidList,
-    key,
-    (hid) => hotKeyPreviousHid = hid,
-  );
-
-  void setFullScreenHid({required HotKey key}) => _saveHotKeyPref(
-    SharedPreferencesKey.fullScreenHidString,
-    modifierFullScreenHidList,
-    key,
-    (hid) => hotKeyFullScreenHid = hid,
   );
 
   Future<void> setShowDesktopLyrics([bool? value]) async {
@@ -911,10 +662,5 @@ class SettingController {
       useExclusiveMode.value = prev;
       await switchExclusiveMode(exclusive: prev);
     }
-    // _setBoolPref(
-    //     SharedPreferencesKey.useExclusiveMode,
-    //     useExclusiveMode,
-    //     overrideValue: use,
-    //   );
   }
 }

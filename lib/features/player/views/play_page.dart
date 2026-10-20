@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
@@ -319,9 +318,15 @@ class _PlayPageState extends State<PlayPage> {
         : _themeService.darkTheme.colorScheme;
     final primaryColor = darkColorScheme.primary;
 
-    _mixColor = Color.lerp(primaryColor, Colors.white, 0.3) ?? primaryColor;
+    _mixColor =
+        Color.lerp(primaryColor, darkColorScheme.onSurface, 0.3) ??
+        primaryColor;
     _mixSubColor =
-        Color.lerp(primaryColor.withValues(alpha: 0.8), Colors.white, 0.3) ??
+        Color.lerp(
+          primaryColor.withValues(alpha: 0.8),
+          darkColorScheme.onSurface,
+          0.3,
+        ) ??
         primaryColor;
 
     _activeTrackCover = _mixColor;
@@ -862,7 +867,7 @@ class _PlayPageState extends State<PlayPage> {
                                   required Widget child,
                                 }) {
                                   return AnimatedPositioned(
-                                    duration: 300.ms,
+                                    duration: AppDuration.slow,
                                     curve: Curves.fastOutSlowIn,
                                     top: 0,
                                     bottom: 0,
@@ -921,10 +926,8 @@ class _PlayPageState extends State<PlayPage> {
                                     final isHover =
                                         _isCoverViewModeBarHover.value;
                                     return AnimatedOpacity(
-                                      opacity: isHover ? 1.0 : 0.0,
-                                      duration: const Duration(
-                                        milliseconds: 150,
-                                      ),
+                                      opacity: isHover ? 1.0 : 0.2,
+                                      duration: AppDuration.fast,
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
