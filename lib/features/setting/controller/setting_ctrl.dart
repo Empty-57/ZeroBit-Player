@@ -651,7 +651,7 @@ class SettingController {
     final prev = useExclusiveMode.value;
     useExclusiveMode.value = use;
     try {
-      unawaited(switchExclusiveMode(exclusive: use));
+      await switchExclusiveMode(exclusive: use);
     } catch (e, stackTrace) {
       LoggerUni.w(
         '启用独占模式失败 Path: ${_audioController.currentPath.value}',
@@ -662,5 +662,11 @@ class SettingController {
       useExclusiveMode.value = prev;
       await switchExclusiveMode(exclusive: prev);
     }
+    // 不保存独占模式的配置
+    // _setBoolPref(
+    //     SharedPreferencesKey.useExclusiveMode,
+    //     useExclusiveMode,
+    //     overrideValue: use,
+    //   );
   }
 }
