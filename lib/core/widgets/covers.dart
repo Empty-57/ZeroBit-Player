@@ -139,8 +139,6 @@ class _LoadU8CoverState extends State<LoadU8Cover> {
   void didUpdateWidget(LoadU8Cover oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.data != oldWidget.data ||
-        widget.width != oldWidget.width ||
-        widget.height != oldWidget.height ||
         widget.coverResolutionFlag != oldWidget.coverResolutionFlag) {
       if (widget.evictOnDispose) {
         unawaited(_imageProvider?.evict());
@@ -213,8 +211,6 @@ class _LoadLocalOrNetCoverState extends State<LoadLocalOrNetCover> {
   void didUpdateWidget(LoadLocalOrNetCover oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.music.path != oldWidget.music.path ||
-        widget.width != oldWidget.width ||
-        widget.height != oldWidget.height ||
         widget.coverQuality != oldWidget.coverQuality ||
         widget.coverResolutionFlag != oldWidget.coverResolutionFlag) {
       if (widget.evictOnDispose) {
@@ -252,7 +248,7 @@ class _LoadLocalOrNetCoverState extends State<LoadLocalOrNetCover> {
     });
   }
 
-  void _triggerLoad({bool isInit = false}) {
+  void _triggerLoad() {
     _debounceTimer?.cancel();
 
     final targetPath = widget.music.path;
@@ -393,8 +389,6 @@ class _LoadNetworkCoverState extends State<LoadNetworkCover> {
   void didUpdateWidget(LoadNetworkCover oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.url != oldWidget.url ||
-        widget.width != oldWidget.width ||
-        widget.height != oldWidget.height ||
         widget.coverResolutionFlag != oldWidget.coverResolutionFlag) {
       if (widget.evictOnDispose) {
         unawaited(_imageProvider?.evict());
