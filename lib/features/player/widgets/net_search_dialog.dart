@@ -6,8 +6,10 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/core/network/apis.dart';
 import 'package:zerobit_player/core/theme/style_manager.dart';
+import 'package:zerobit_player/core/widgets/app_card.dart';
 import 'package:zerobit_player/core/widgets/app_dialog.dart';
 import 'package:zerobit_player/core/widgets/audio_ctrl_btn.dart';
+import 'package:zerobit_player/core/widgets/get_snack_bar.dart';
 import 'package:zerobit_player/features/player/controller/audio_ctrl.dart';
 import 'package:zerobit_player/features/player/widgets/play_page_constant.dart';
 import 'package:zerobit_player/features/setting/controller/setting_ctrl.dart';
@@ -15,6 +17,7 @@ import 'package:zerobit_player/features/setting/controller/setting_ctrl.dart';
 import '../../../core/utils/func_extension.dart';
 import '../../../core/utils/logger.dart';
 import '../../../core/widgets/app_button/app_button.dart';
+import '../../../core/widgets/app_text_field.dart';
 import '../../lyrics/models/lyric_model.dart';
 import '../../lyrics/parsers/parse_lyrics.dart';
 import '../../lyrics/parsers/save_lyric.dart';
@@ -142,6 +145,85 @@ class _SearchResultItem extends StatelessWidget {
     required this.settingController,
   });
 
+  Widget _buildTag(
+    BuildContext context, {
+    required String label,
+    bool isHighlight = false,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xxs,
+      ),
+      decoration: BoxDecoration(
+        color: isHighlight
+            ? scheme.primary.withValues(alpha: AppAlpha.fillStrong)
+            : scheme.onSurface.withValues(alpha: AppAlpha.controlFill),
+        borderRadius: AppRadius.xsAll,
+        border: Border.all(
+          color: isHighlight
+              ? scheme.primary.withValues(alpha: AppAlpha.borderStrong)
+              : scheme.outlineVariant.withValues(alpha: AppAlpha.border),
+          width: AppSize.hairline,
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: AppFontSize.xs,
+          fontWeight: isHighlight ? FontWeight.w600 : FontWeight.normal,
+          color: isHighlight
+              ? scheme.primary
+              : scheme.onSurface.withValues(alpha: AppAlpha.textSecondary),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onUseAndSaveToLocal(
+    SearchLrcModel data,
+    BuildContext context,
+  ) async {
+    await _onUse(data, context);
+    await saveLyrics(
+      path: audioController.currentPath.value,
+      lrcData: data.lyric,
+    );
+    showSnackBar(msg: '歌词已成功切换并保存', type: .success);
+  }
+
+  Future<void> _onUse(SearchLrcModel data, BuildContext context) async {
+    final lyric = data.lyric;
+    if (lyric == null) return;
+
+    final type = lyric.type;
+
+    Navigator.pop(context);
+    if (type == LyricFormat.lrc) {
+      audioController.currentLyrics.value = ParsedLyricModel(
+        parsedLrc: await parseLrc(
+          lyricData: lyric.lrc,
+          lyricDataTs: lyric.translate,
+        ),
+        type: type,
+      );
+    } else if (type == LyricFormat.yrc ||
+        type == LyricFormat.qrc ||
+        type == LyricFormat.krc) {
+      audioController.currentLyrics.value = ParsedLyricModel(
+        parsedLrc: await parseKaraOkLyric(
+          lyricData: lyric.verbatimLrc,
+          lyricDataTs: lyric.translate,
+          type: type,
+        ),
+        type: type,
+      );
+    }
+    audioController.refreshLyrics();
+    showSnackBar(msg: '歌词已成功切换', type: .success);
+  }
+
   @override
   Widget build(BuildContext context) {
     final v = lyricInfo;
@@ -170,101 +252,114 @@ class _SearchResultItem extends StatelessWidget {
       }
     }
 
-    return AppButton.ghost(
-      onPressed: () async {
-        final type = v.lyric!.type;
-        if (type == LyricFormat.lrc) {
-          audioController.currentLyrics.value = ParsedLyricModel(
-            parsedLrc: await parseLrc(
-              lyricData: v.lyric!.lrc,
-              lyricDataTs: v.lyric!.translate,
-            ),
-            type: type,
-          );
-        } else if (type == LyricFormat.yrc ||
-            type == LyricFormat.qrc ||
-            type == LyricFormat.krc) {
-          Navigator.pop(context);
-          audioController.currentLyrics.value = ParsedLyricModel(
-            parsedLrc: await parseKaraOkLyric(
-              lyricData: v.lyric!.verbatimLrc,
-              lyricDataTs: v.lyric!.translate,
-              type: type,
-            ),
-            type: type,
-          );
-        }
-        audioController.refreshLyrics();
+    final isVerbatim = verbatimLrc != null && verbatimLrc.isNotEmpty;
+    final hasTranslation = ts != null && ts.isNotEmpty;
+    final previewContent = ts ?? verbatimLrc ?? v.lyric!.lrc ?? '暂无歌词内容';
 
-        if (settingController.autoDownloadLrc.value) {
-          unawaited(
-            saveLyrics(
-              path: audioController.currentPath.value,
-              lrcData: v.lyric,
-            ),
-          );
-        }
-      },
-      child: FractionallySizedBox(
-        widthFactor: 1,
-        child: Padding(
-          padding: const EdgeInsetsGeometry.symmetric(vertical: AppSpacing.md),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 8,
-            children: [
-              Column(
-                children: [
-                  Text(
-                    verbatimLrc != null && verbatimLrc.isNotEmpty
-                        ? '逐字'
-                        : 'Lrc',
-                    style: textStyle,
-                  ),
-                  Text(
-                    ts != null && ts.isNotEmpty ? '有翻译' : '无翻译',
-                    style: textStyle,
-                  ),
-                ],
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      softWrap: false,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textStyle,
-                    ),
-                    Text(
-                      artist,
-                      softWrap: false,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textStyle,
-                    ),
-                    Container(
-                      margin: const EdgeInsets.only(top: 16),
-                      constraints: const BoxConstraints(maxHeight: 200),
-                      child: FractionallySizedBox(
-                        widthFactor: 0.8,
-                        child: SingleChildScrollView(
-                          child: Text(
-                            "歌词: \n${ts ?? verbatimLrc ?? ''}",
-                            softWrap: true,
-                            overflow: TextOverflow.fade,
-                            style: textStyle,
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: AppCard(
+        borderRadius: AppRadius.xsAll,
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.createTextStyle(
+                          size: AppFontSize.md,
+                          weight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xxs),
+                      Text(
+                        artist,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.createTextStyle(
+                          size: AppFontSize.sm,
+                          color: scheme.onSurface.withValues(
+                            alpha: AppAlpha.textSecondary,
                           ),
                         ),
                       ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Row(
+                  spacing: AppSpacing.xs,
+                  children: [
+                    _buildTag(
+                      context,
+                      label: isVerbatim ? '逐字' : 'LRC',
+                      isHighlight: isVerbatim,
                     ),
+                    if (hasTranslation)
+                      _buildTag(context, label: '翻译', isHighlight: true),
                   ],
                 ),
+              ],
+            ),
+
+            const SizedBox(height: AppSpacing.md),
+
+            Container(
+              width: double.infinity,
+              height: 200,
+              alignment: .topLeft,
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerHighest.withValues(
+                  alpha: AppAlpha.surfaceSubtle,
+                ),
+                borderRadius: AppRadius.mdAll,
               ),
-            ],
-          ),
+              child: FractionallySizedBox(
+                widthFactor: 0.5,
+                child: SingleChildScrollView(
+                  child: Text(
+                    previewContent.trim(),
+                    style: context.createTextStyle(
+                      size: AppFontSize.sm,
+                      color: scheme.onSurface.withValues(
+                        alpha: AppAlpha.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: AppSpacing.md),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                AppButton.secondary(
+                  label: '使用',
+                  onPressed: () => unawaited(_onUse(v, context)),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                AppButton.filled(
+                  label: '使用并保存',
+                  onPressed: () => unawaited(_onUseAndSaveToLocal(v, context)),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -344,13 +439,11 @@ class _NetLrcDialogContentState extends State<_NetLrcDialogContent> {
           spacing: AppSpacing.sm,
           children: [
             Expanded(
-              child: TextField(
+              child: AppTextField(
                 autofocus: true,
                 controller: _textEditingController,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: '搜索歌词',
-                ),
+                label: '搜索封面',
+                icon: PhosphorIconsLight.magnifyingGlass,
                 onChanged: _controller.onInputChangedDebounce,
               ),
             ),

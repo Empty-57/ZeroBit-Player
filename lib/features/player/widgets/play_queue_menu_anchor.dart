@@ -10,6 +10,7 @@ import '../../../core/storage/models/music_cache_model.dart';
 import '../../../core/utils/func_extension.dart';
 import '../../../core/utils/fuzzy_search.dart';
 import '../../../core/widgets/app_button/app_button.dart';
+import '../../../core/widgets/app_text_field.dart';
 
 /// 可复用的播放队列
 class PlayQueueMenuAnchor extends StatefulWidget {
@@ -150,38 +151,29 @@ class _PlayQueueMenuAnchorState extends State<PlayQueueMenuAnchor> {
               SizedBox(
                 height: 36,
                 child: DefaultTextEditingShortcuts(
-                  child: TextField(
+                  child: AppTextField(
                     controller: _searchController,
-                    style: context.createTextStyle(size: AppFontSize.sm),
-                    cursorHeight: 16,
-                    decoration: InputDecoration(
-                      hintText: '搜索歌名、歌手或专辑...',
-                      hintStyle: context.createTextStyle(
-                        size: AppFontSize.sm,
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.4,
-                        ),
-                      ),
-                      prefixIcon: const Icon(Icons.search, size: 18),
-                      suffixIcon: SignalBuilder(
-                        builder: (context) {
-                          if (_searchQuery.value.isEmpty) {
-                            return const SizedBox.shrink();
-                          }
+                    hintText: '搜索歌名、歌手或专辑...',
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                    ),
+                    icon: Icons.search,
+                    suffixIcon: SignalBuilder(
+                      builder: (context) {
+                        if (_searchQuery.value.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
 
-                          return AppButton.icon(
-                            icon: Icons.clear,
-                            size: .small,
-                            borderRadius: AppRadius.pillAll,
-                            onPressed: () {
-                              _searchController.clear();
-                              _searchQuery.value = '';
-                            },
-                          );
-                        },
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                      border: const OutlineInputBorder(),
+                        return AppButton.icon(
+                          icon: Icons.clear,
+                          size: .small,
+                          borderRadius: AppRadius.pillAll,
+                          onPressed: () {
+                            _searchController.clear();
+                            _searchQuery.value = '';
+                          },
+                        );
+                      },
                     ),
                     onChanged: onInputChangedDebounce,
                   ),

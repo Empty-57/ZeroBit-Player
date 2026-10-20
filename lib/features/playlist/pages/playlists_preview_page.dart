@@ -14,6 +14,7 @@ import 'package:zerobit_player/features/playlist/controller/user_playlist_ctrl.d
 import '../../../core/storage/models/user_playlist_model.dart';
 import '../../../core/widgets/app_button/app_button.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/app_text_field.dart';
 
 const double _itemHeight = 64.0;
 
@@ -31,14 +32,14 @@ class PlayListPreviewPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return const Padding(
       padding: AppSpacing.pagePadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: AppSpacing.xl,
         children: [
-          const _Header(),
-          Expanded(child: SignalBuilder(builder: (_) => const _PlayListView())),
+          _Header(),
+          Expanded(child: _PlayListView()),
         ],
       ),
     );
@@ -51,7 +52,7 @@ class _Header extends StatelessWidget {
   Future<void> _create(BuildContext context) async {
     final name = await showPlaylistNameDialog(context, title: '新建歌单');
     if (name == null) return;
-    UserPlayListController.instance.createPlayList(userKey: name);
+    await UserPlayListController.instance.createPlayList(userKey: name);
   }
 
   @override
@@ -104,35 +105,38 @@ class _PlayListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = UserPlayListController.instance;
-    final items = controller.items;
+    return SignalBuilder(
+      builder: (context) {
+        final items = controller.items;
+        if (items.isEmpty) {
+          return const AppEmptyState(
+            text: '还没有歌单，点右上角新建一个',
+            icon: PhosphorIconsLight.playlist,
+          );
+        }
 
-    if (items.isEmpty) {
-      return const AppEmptyState(
-        text: '还没有歌单，点右上角新建一个',
-        icon: PhosphorIconsLight.playlist,
-      );
-    }
+        final titleStyle = context.createTextStyle(size: AppFontSize.md);
+        final subStyle = context.createTextStyle(
+          size: AppFontSize.sm,
+          opacity: AppAlpha.textTertiary,
+        );
 
-    final titleStyle = context.createTextStyle(size: AppFontSize.md);
-    final subStyle = context.createTextStyle(
-      size: AppFontSize.sm,
-      opacity: AppAlpha.textTertiary,
-    );
-
-    return ListView.builder(
-      scrollCacheExtent: const ScrollCacheExtent.pixels(_itemHeight * 4),
-      itemCount: items.length,
-      itemExtent: _itemHeight,
-      padding: const EdgeInsets.only(bottom: _bottomInset),
-      addAutomaticKeepAlives: false,
-      addSemanticIndexes: false,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return _PlayListTile(
-          key: ValueKey(item.userKey),
-          item: item,
-          titleStyle: titleStyle,
-          subStyle: subStyle,
+        return ListView.builder(
+          scrollCacheExtent: const ScrollCacheExtent.pixels(_itemHeight * 4),
+          itemCount: items.length,
+          itemExtent: _itemHeight,
+          padding: const EdgeInsets.only(bottom: _bottomInset),
+          addAutomaticKeepAlives: false,
+          addSemanticIndexes: false,
+          itemBuilder: (context, index) {
+            final item = items[index];
+            return _PlayListTile(
+              key: ValueKey(item.userKey),
+              item: item,
+              titleStyle: titleStyle,
+              subStyle: subStyle,
+            );
+          },
         );
       },
     );
@@ -181,7 +185,7 @@ class _PlayListTile extends StatelessWidget {
   Future<void> _delete(BuildContext context) async {
     final confirmed = await showDeleteConfirmDialog(context, _displayName);
     if (!confirmed) return;
-    UserPlayListController.instance.removePlayList(userKey: item.userKey);
+    await UserPlayListController.instance.removePlayList(userKey: item.userKey);
   }
 
   @override
@@ -248,7 +252,7 @@ class _PlayListTile extends StatelessWidget {
   }
 }
 
-/// 重命名/新歌单建的对话框
+/// 重命名/新建歌单的对话框
 Future<String?> showPlaylistNameDialog(
   BuildContext context, {
   required String title,
@@ -300,18 +304,10 @@ class _PlaylistNameDialogState extends State<_PlaylistNameDialog> {
       widthFactor: null,
       content: SizedBox(
         width: _dialogContentWidth,
-        child: TextField(
+        child: AppTextField(
           autofocus: true,
           controller: _textController,
-          style: context.createTextStyle(size: AppFontSize.md),
-          decoration: InputDecoration(
-            labelText: '歌单名称',
-            labelStyle: context.createTextStyle(
-              size: AppFontSize.md,
-              opacity: AppAlpha.textSecondary,
-            ),
-            border: const OutlineInputBorder(borderRadius: AppRadius.xsAll),
-          ),
+          label: '歌单名称',
           onSubmitted: (_) => _submit(),
         ),
       ),
@@ -325,7 +321,7 @@ class _PlaylistNameDialogState extends State<_PlaylistNameDialog> {
 Future<bool> showDeleteConfirmDialog(BuildContext context, String name) async {
   final confirmed = await showDialog<bool>(
     context: context,
-    builder: (_) => AppDialog.confirm(
+    builder: (dialogContext) => AppDialog.confirm(
       title: '删除歌单',
       widthFactor: null,
       heightFactor: null,
@@ -333,12 +329,12 @@ Future<bool> showDeleteConfirmDialog(BuildContext context, String name) async {
         width: _dialogContentWidth,
         child: Text(
           '确定要删除歌单「$name」吗？此操作无法撤销。',
-          style: context.createTextStyle(size: AppFontSize.md),
+          style: dialogContext.createTextStyle(size: AppFontSize.md),
         ),
       ),
       confirmLabel: '删除',
       isDangerous: true,
-      onConfirm: () => Navigator.pop(context, true),
+      onConfirm: () => Navigator.pop(dialogContext, true),
     ),
   );
   return confirmed ?? false;

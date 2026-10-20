@@ -12,6 +12,7 @@ import 'package:zerobit_player/features/playlist/controller/user_playlist_ctrl.d
 
 import '../../../core/storage/models/music_cache_model.dart';
 import '../../../core/widgets/app_button/app_button.dart';
+import '../../../core/widgets/app_text_field.dart';
 
 const double _resultRowHeight = 56.0;
 
@@ -56,23 +57,12 @@ class _LibrarySearchDialogState extends State<_LibrarySearchDialog> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: AppSpacing.lg,
         children: [
-          TextField(
+          AppTextField(
             autofocus: true,
             controller: _searchController,
-            style: context.createTextStyle(size: AppFontSize.md),
-            decoration: InputDecoration(
-              border: const OutlineInputBorder(borderRadius: AppRadius.xsAll),
-              hintText: '搜索曲名、艺术家或专辑',
-              hintStyle: context.createTextStyle(
-                size: AppFontSize.md,
-                opacity: AppAlpha.textFaint,
-              ),
-              prefixIcon: const Icon(
-                PhosphorIconsLight.magnifyingGlass,
-                size: AppIconSize.sm,
-              ),
-            ),
+            hintText: '搜索曲名、艺术家或专辑',
             onChanged: _cacheController.onInputChangedDebounce,
+            icon: PhosphorIconsLight.magnifyingGlass,
           ),
           Expanded(
             child: SignalBuilder(

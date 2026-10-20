@@ -21,6 +21,7 @@ import 'package:zerobit_player/src/rust/api/get_fonts.dart';
 import '../../../core/utils/logger.dart';
 import '../../../core/widgets/app_button/app_button.dart';
 import '../../../core/widgets/app_button/app_tappable.dart';
+import '../../../core/widgets/app_text_field.dart';
 import '../tools/hotkey_extension.dart';
 
 final SettingController _settingController = SettingController.instance;
@@ -309,13 +310,11 @@ class _ColorPickerDialogState extends State<_ColorPickerDialog> {
         mainAxisSize: MainAxisSize.min,
         spacing: AppSpacing.md,
         children: [
-          TextField(
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: 'Hex RGB',
-            ),
-            controller: _hexController,
+          AppTextField(
             autofocus: true,
+            controller: _hexController,
+            label: 'Hex RGB',
+            icon: PhosphorIconsLight.palette,
             inputFormatters: [
               UpperCaseTextFormatter(),
               FilteringTextInputFormatter.allow(RegExp(kValidHexPattern)),
@@ -417,25 +416,11 @@ class _FontPickerDialogState extends State<_FontPickerDialog> {
         children: [
           SizedBox(
             height: AppDialogSpec.searchFieldHeight,
-            child: TextField(
+            child: AppTextField(
               controller: _searchController,
-              style: context.createTextStyle(size: AppFontSize.sm),
-              decoration: InputDecoration(
-                hintText: '搜索字体名称',
-                hintStyle: context.createTextStyle(
-                  size: AppFontSize.sm,
-                  opacity: AppAlpha.textFaint,
-                ),
-                prefixIcon: const Icon(
-                  PhosphorIconsLight.magnifyingGlass,
-                  size: AppIconSize.xs,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                ),
-                border: const OutlineInputBorder(borderRadius: AppRadius.xsAll),
-              ),
+              hintText: '搜索曲名、艺术家或专辑',
               onChanged: (value) => _query.value = value.trim().toLowerCase(),
+              icon: PhosphorIconsLight.magnifyingGlass,
             ),
           ),
           Expanded(

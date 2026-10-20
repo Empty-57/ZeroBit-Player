@@ -27,15 +27,16 @@ import '../../../core/utils/format_time.dart';
 import '../../../core/utils/func_extension.dart';
 import '../../../core/utils/logger.dart';
 import '../../../core/widgets/app_button/app_button.dart';
+import '../../../core/widgets/app_text_field.dart';
 import '../../setting/controller/setting_ctrl.dart';
 
-const double _coverSize = 260.0;
+const double _coverSize = 250.0;
 
 /// 页面底部留白
 const double _bottomInset = 128.0;
 
-const double _actionButtonWidth = 128.0;
-const double _actionButtonHeight = 36.0;
+const double _actionButtonWidth = 132.0;
+const double _actionButtonHeight = 38.0;
 const double _ctrlButtonHeight = 42.0;
 
 const double _inlineSpinnerSize = 16.0;
@@ -179,7 +180,7 @@ class _NetworkCoverDialogState extends State<_NetworkCoverDialog> {
 
   Future<void> _selectCover(String url) async {
     if (_isDownloading) return;
-    _isDownloading = true;
+    setState(() => _isDownloading = true);
     try {
       final bytes = await saveNetCover(
         songPath: '',
@@ -192,116 +193,222 @@ class _NetworkCoverDialogState extends State<_NetworkCoverDialog> {
         showSnackBar(type: .error, msg: '下载所选封面失败');
       }
     } finally {
-      _isDownloading = false;
+      if (mounted) setState(() => _isDownloading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final textStyle = context.createTextStyle(size: AppFontSize.md);
+
     return AppDialog(
       title: '选择网络封面',
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: AppSpacing.md,
+      content: Stack(
         children: [
-          Row(
-            spacing: AppSpacing.sm,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: AppSpacing.md,
             children: [
-              Expanded(
-                child: TextField(
-                  autofocus: true,
-                  controller: _textEditingController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: '搜索封面',
+              Row(
+                spacing: AppSpacing.sm,
+                children: [
+                  Expanded(
+                    child: AppTextField(
+                      autofocus: true,
+                      controller: _textEditingController,
+                      label: '搜索封面',
+                      icon: PhosphorIconsLight.magnifyingGlass,
+                    ),
                   ),
-                  onChanged: _controller.onInputChangedDebounce,
-                ),
+                  SignalBuilder(
+                    builder: (_) => AppButton.icon(
+                      icon: PhosphorIconsLight.caretLeft,
+                      style: .secondary,
+                      height: _ctrlButtonHeight,
+                      tooltip: _controller.currentNetLrcOffset.value == 0
+                          ? null
+                          : '上一页',
+                      onPressed: _controller.currentNetLrcOffset.value == 0
+                          ? null
+                          : () {
+                              if (_controller.currentNetLrcOffset.value > 0) {
+                                _controller.currentNetLrcOffset.value--;
+                              }
+                            },
+                    ),
+                  ),
+                  AppButton.icon(
+                    icon: PhosphorIconsLight.caretRight,
+                    style: .secondary,
+                    height: _ctrlButtonHeight,
+                    tooltip: '下一页',
+                    onPressed: () => _controller.currentNetLrcOffset.value++,
+                  ),
+                ],
               ),
-              SignalBuilder(
-                builder: (_) => AppButton.icon(
-                  icon: PhosphorIconsLight.caretLeft,
-                  style: .secondary,
-                  height: _ctrlButtonHeight,
-                  tooltip: _controller.currentNetLrcOffset.value == 0
-                      ? null
-                      : '上一页',
-                  onPressed: _controller.currentNetLrcOffset.value == 0
-                      ? null
-                      : () {
-                          if (_controller.currentNetLrcOffset.value > 0) {
-                            _controller.currentNetLrcOffset.value--;
-                          }
+              Row(
+                spacing: AppSpacing.sm,
+                children: [
+                  for (final key in SettingController.apiMap.keys) ...[
+                    SignalBuilder(
+                      builder: (context) => AppButton.secondary(
+                        label: SettingController.apiMap[key] ?? 'QQ音乐',
+                        selected: _controller.apiIndex.value == key,
+                        onPressed: () {
+                          _controller.apiIndex.value = key;
+                          _controller.currentNetLrcOffset.value = 0;
                         },
-                ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              AppButton.icon(
-                icon: PhosphorIconsLight.caretRight,
-                style: .secondary,
-                height: _ctrlButtonHeight,
-                tooltip: '下一页',
-                onPressed: () => _controller.currentNetLrcOffset.value++,
-              ),
-            ],
-          ),
-          Row(
-            spacing: AppSpacing.sm,
-            children: [
-              for (final key in SettingController.apiMap.keys) ...[
-                SignalBuilder(
-                  builder: (context) => AppButton.secondary(
-                    label: SettingController.apiMap[key] ?? 'QQ音乐',
-                    selected: _controller.apiIndex.value == key,
-                    onPressed: () {
-                      _controller.apiIndex.value = key;
-                      _controller.currentNetLrcOffset.value = 0;
-                    },
-                  ),
-                ),
-              ],
-            ],
-          ),
-          Expanded(
-            child: SignalBuilder(
-              builder: (context) {
-                return _controller.searchResults.value.map(
-                  data: (data) {
-                    if (data.isEmpty) {
-                      return Center(child: Text("没有找到封面", style: textStyle));
-                    }
-                    return GridView.builder(
-                      itemCount: data.length,
-                      itemBuilder: (context, index) {
-                        return ClipRRect(
-                          borderRadius: AppRadius.mdAll,
-                          child: AppTappable(
-                            onPressed: () =>
-                                unawaited(_selectCover(data[index])),
-                            child: LoadNetworkCover(
-                              url: data[index],
-                              coverResolutionFlag: .middle,
-                              size: 200,
+              Expanded(
+                child: SignalBuilder(
+                  builder: (context) {
+                    return _controller.searchResults.value.map(
+                      data: (data) {
+                        if (data.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              spacing: AppSpacing.sm,
+                              children: [
+                                Icon(
+                                  PhosphorIconsLight.imageBroken,
+                                  size: AppFontSize.title * 1.5,
+                                  color: scheme.onSurfaceVariant.withValues(
+                                    alpha: AppAlpha.textFaint,
+                                  ),
+                                ),
+                                Text(
+                                  '没有找到封面',
+                                  style: textStyle.copyWith(
+                                    color: scheme.onSurfaceVariant.withValues(
+                                      alpha: AppAlpha.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
+                          );
+                        }
+                        return GridView.builder(
+                          itemCount: data.length,
+                          itemBuilder: (context, index) {
+                            return HoverBuilder(
+                              builder: (context, hovered) => AnimatedContainer(
+                                duration: AppDuration.fast,
+                                decoration: BoxDecoration(
+                                  borderRadius: AppRadius.xsAll,
+                                  border: Border.all(
+                                    color: hovered
+                                        ? scheme.primary
+                                        : scheme.outlineVariant.withValues(
+                                            alpha: AppAlpha.border,
+                                          ),
+                                    width: hovered
+                                        ? AppSize.trackThin
+                                        : AppSize.hairline,
+                                  ),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: AppRadius.xsAll,
+                                  child: AppTappable(
+                                    onPressed: () =>
+                                        unawaited(_selectCover(data[index])),
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        LoadNetworkCover(
+                                          url: data[index],
+                                          coverResolutionFlag: .middle,
+                                          size: 200,
+                                        ),
+                                        if (hovered)
+                                          ColoredBox(
+                                            color: Colors.black.withValues(
+                                              alpha: AppAlpha.surfaceSubtle,
+                                            ),
+                                            child: Center(
+                                              child: Container(
+                                                padding: const EdgeInsets.all(
+                                                  AppSpacing.sm,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: scheme.primary,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(
+                                                  PhosphorIconsLight
+                                                      .downloadSimple,
+                                                  size: AppIconSize.sm,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 4,
+                                mainAxisSpacing: AppSpacing.md,
+                                crossAxisSpacing: AppSpacing.md,
+                              ),
                         );
                       },
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 4,
-                            mainAxisSpacing: AppSpacing.md,
-                            crossAxisSpacing: AppSpacing.md,
-                          ),
+                      error: (_) =>
+                          Center(child: Text("网络错误或没有找到封面", style: textStyle)),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
                     );
                   },
-                  error: (_) =>
-                      Center(child: Text("网络错误或没有找到封面", style: textStyle)),
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           ),
+          if (_isDownloading)
+            Positioned.fill(
+              child: ColoredBox(
+                color: Colors.black.withValues(alpha: AppAlpha.surface),
+                child: Center(
+                  child: AppCard(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xl,
+                      vertical: AppSpacing.lg,
+                    ),
+                    borderRadius: AppRadius.xsAll,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: AppSpacing.md,
+                      children: [
+                        const SizedBox.square(
+                          dimension: _inlineSpinnerSize,
+                          child: CircularProgressIndicator(
+                            strokeWidth: _inlineSpinnerStroke,
+                          ),
+                        ),
+                        Text(
+                          '正在下载并应用封面……',
+                          style: context.createTextStyle(
+                            size: AppFontSize.sm,
+                            weight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -398,7 +505,6 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
 
   @override
   void dispose() {
-    // 释放控制器
     _titleCtrl.dispose();
     _artistCtrl.dispose();
     _albumCtrl.dispose();
@@ -544,25 +650,29 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
           spacing: AppSpacing.xl,
           children: [
             _buildHeader(),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: AppSpacing.xl,
-              children: [
-                SignalBuilder(
-                  builder: (_) {
-                    final source = _coverSource.value;
-                    return _CoverPanel(
-                      bytes: _getCoverBytes(source),
-                      isLoading: _isCoverLoading.value,
-                      hasCover: source is! _NoCover,
-                      onTap: _isBusy.value
-                          ? null
-                          : () => unawaited(_pickLocalCover()),
-                    );
-                  },
-                ),
-                Expanded(child: _buildForm()),
-              ],
+            AppCard(
+              borderRadius: AppRadius.xsAll,
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: AppSpacing.xxl,
+                children: [
+                  SignalBuilder(
+                    builder: (_) {
+                      final source = _coverSource.value;
+                      return _CoverPanel(
+                        bytes: _getCoverBytes(source),
+                        isLoading: _isCoverLoading.value,
+                        hasCover: source is! _NoCover,
+                        onTap: _isBusy.value
+                            ? null
+                            : () => unawaited(_pickLocalCover()),
+                      );
+                    },
+                  ),
+                  Expanded(child: _buildForm()),
+                ],
+              ),
             ),
             _buildActions(),
             _buildInfoCards(),
@@ -574,27 +684,67 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
 
   Widget _buildHeader() {
     final fileName = _metadata.path.isEmpty ? '' : p.basename(_metadata.path);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: AppSpacing.xs,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          '编辑音频信息',
-          style: context.createTextStyle(
-            size: AppFontSize.subtitle,
-            weight: FontWeight.w600,
-          ),
-        ),
-        Text(
-          fileName,
-          style: context.createTextStyle(
-            size: AppFontSize.sm,
-            opacity: AppAlpha.textTertiary,
-          ),
-          maxLines: 1,
-          softWrap: false,
-          overflow: TextOverflow.ellipsis,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: AppSpacing.xs,
+          children: [
+            Text(
+              '编辑音频信息',
+              style: context.createTextStyle(
+                size: AppFontSize.subtitle,
+                weight: FontWeight.w600,
+              ),
+            ),
+            if (fileName.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.xxs,
+                ),
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerHighest.withValues(
+                    alpha: AppAlpha.controlFill,
+                  ),
+                  borderRadius: AppRadius.xsAll,
+                  border: Border.all(
+                    color: scheme.outlineVariant.withValues(
+                      alpha: AppAlpha.border,
+                    ),
+                    width: AppSize.hairline,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      PhosphorIconsLight.fileAudio,
+                      size: AppIconSize.xs,
+                      color: scheme.primary,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      child: Text(
+                        fileName,
+                        style: context.createTextStyle(
+                          size: AppFontSize.xs,
+                          opacity: AppAlpha.textSecondary,
+                        ),
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
       ],
     );
@@ -603,12 +753,28 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
   Widget _buildForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: AppSpacing.xl,
+      spacing: AppSpacing.lg,
       children: [
-        _MetadataField(controller: _titleCtrl, label: '标题'),
-        _MetadataField(controller: _artistCtrl, label: '艺术家'),
-        _MetadataField(controller: _albumCtrl, label: '专辑'),
-        _MetadataField(controller: _genreCtrl, label: '流派'),
+        AppTextField(
+          controller: _titleCtrl,
+          label: '标题',
+          icon: PhosphorIconsLight.musicNote,
+        ),
+        AppTextField(
+          controller: _artistCtrl,
+          label: '艺术家',
+          icon: PhosphorIconsLight.user,
+        ),
+        AppTextField(
+          controller: _albumCtrl,
+          label: '专辑',
+          icon: PhosphorIconsLight.disc,
+        ),
+        AppTextField(
+          controller: _genreCtrl,
+          label: '流派',
+          icon: PhosphorIconsLight.tag,
+        ),
       ],
     );
   }
@@ -634,10 +800,11 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
                       ),
                     ),
                     Text(
-                      '执行中……',
+                      '正在保存修改……',
                       style: context.createTextStyle(
                         size: AppFontSize.md,
                         color: colorScheme.primary,
+                        weight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -653,7 +820,7 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
                     ),
                     _ActionButton(
                       label: '使用本地封面',
-                      icon: PhosphorIconsLight.floppyDisk,
+                      icon: PhosphorIconsLight.folderOpen,
                       onPressed: () => unawaited(_pickLocalCover()),
                     ),
                     const Spacer(),
@@ -661,6 +828,7 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
                     _ActionButton(
                       label: '保存',
                       isPrimary: true,
+                      icon: PhosphorIconsLight.check,
                       onPressed: () => unawaited(_saveChanges()),
                     ),
                   ],
@@ -677,25 +845,25 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
       children: [
         Expanded(
           child: _InfoCard(
-            icon: PhosphorIconsFill.musicNoteSimple,
+            icon: PhosphorIconsFill.waveform,
             title: '音频参数',
             entries: [
               ('时长', formatTime(totalSeconds: _metadata.duration)),
               ('比特率', '${_metadata.bitrate ?? "UNKNOWN"} kbps'),
               ('采样率', '${_metadata.sampleRate ?? "UNKNOWN"} Hz'),
-              ('位深度', '${_metadata.bitDepth}'),
-              ('通道数', '${_metadata.channels}'),
+              ('位深度', '${_metadata.bitDepth} bit'),
+              ('通道数', '${_metadata.channels} 声道'),
             ],
           ),
         ),
         Expanded(
           child: _InfoCard(
-            icon: PhosphorIconsLight.hash,
-            title: '音频标签',
+            icon: PhosphorIconsLight.slidersHorizontal,
+            title: '电平与增益',
             entries: [
-              ('音轨号', '${_metadata.trackNumber}'),
-              ('峰值', _metadata.trackPeak.toStringAsFixed(2)),
-              ('增益', _metadata.trackGain.toStringAsFixed(2)),
+              ('音轨编号', '${_metadata.trackNumber}'),
+              ('音轨峰值', _metadata.trackPeak.toStringAsFixed(2)),
+              ('音轨增益', '${_metadata.trackGain.toStringAsFixed(2)} dB'),
             ],
           ),
         ),
@@ -704,11 +872,11 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
             builder: (_) {
               final info = _fileInfo.value;
               return _InfoCard(
-                icon: PhosphorIconsFill.folderSimple,
-                title: '文件信息',
+                icon: PhosphorIconsFill.fileText,
+                title: '存储信息',
                 entries: [
                   (
-                    '格式',
+                    '文件格式',
                     p
                         .extension(_metadata.path)
                         .replaceFirst('.', '')
@@ -717,9 +885,9 @@ class _AudioInfoEditorPageState extends State<AudioInfoEditorPage> {
                   ('文件大小', info.$1),
                   ('修改时间', info.$2),
                   ('变更时间', info.$3),
-                  ('路径', _metadata.path),
+                  ('完整路径', _metadata.path),
                 ],
-                lastEntryMaxLines: 5,
+                lastEntryMaxLines: 4,
               );
             },
           ),
@@ -748,9 +916,16 @@ class _CoverPanel extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     if (isLoading) {
-      return const SizedBox.square(
-        dimension: _coverSize,
-        child: Center(child: CircularProgressIndicator()),
+      return Container(
+        width: _coverSize,
+        height: _coverSize,
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withValues(
+            alpha: AppAlpha.surfaceSubtle,
+          ),
+          borderRadius: AppRadius.xsAll,
+        ),
+        child: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -758,84 +933,98 @@ class _CoverPanel extends StatelessWidget {
       onPressed: onTap,
       builder: (context, hovered) => SizedBox.square(
         dimension: _coverSize,
-        child: ClipRRect(
-          borderRadius: AppRadius.smAll,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (hasCover)
-                LoadU8Cover(
-                  data: bytes,
-                  coverResolutionFlag: CoverResolutionFlag.big,
-                  size: _coverSize,
-                )
-              else
-                ColoredBox(
-                  color: colorScheme.surfaceContainerHighest.withValues(
-                    alpha: AppAlpha.surface,
-                  ),
-                  child: Icon(
-                    PhosphorIconsLight.image,
-                    size: AppFontSize.title,
-                    color: colorScheme.onSurfaceVariant.withValues(
-                      alpha: AppAlpha.textFaint,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.xsAll,
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(
+                alpha: AppAlpha.border,
+              ),
+              width: AppSize.hairline,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: AppRadius.xsAll,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (hasCover)
+                  LoadU8Cover(
+                    data: bytes,
+                    coverResolutionFlag: CoverResolutionFlag.big,
+                    size: _coverSize,
+                  )
+                else
+                  ColoredBox(
+                    color: colorScheme.surfaceContainerHighest.withValues(
+                      alpha: AppAlpha.controlFill,
                     ),
-                  ),
-                ),
-              // 悬停时压一层提示
-              AnimatedOpacity(
-                duration: AppDuration.instant,
-                opacity: hovered && onTap != null ? 1 : 0,
-                child: ColoredBox(
-                  color: Colors.black.withValues(alpha: AppAlpha.surface),
-                  child: Center(
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      spacing: AppSpacing.md,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      spacing: AppSpacing.sm,
                       children: [
                         Icon(
-                          PhosphorIconsLight.image,
-                          size: AppIconSize.lg,
-                          color: colorScheme.onPrimary,
+                          PhosphorIconsLight.imageSquare,
+                          size: AppFontSize.title * 1.5,
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: AppAlpha.textFaint,
+                          ),
                         ),
                         Text(
-                          '更换封面',
+                          '暂无封面\n点击选择本地图片',
+                          textAlign: TextAlign.center,
                           style: context.createTextStyle(
-                            size: AppFontSize.sm,
-                            color: colorScheme.onPrimary,
+                            size: AppFontSize.xs,
+                            opacity: AppAlpha.textTertiary,
                           ),
                         ),
                       ],
                     ),
                   ),
+
+                AnimatedOpacity(
+                  duration: AppDuration.fast,
+                  opacity: hovered && onTap != null ? 1.0 : 0.0,
+                  child: ColoredBox(
+                    color: Colors.black.withValues(
+                      alpha: AppAlpha.surfaceStrong,
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: AppSpacing.sm,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(
+                                alpha: AppAlpha.fillStrong,
+                              ),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              PhosphorIconsLight.cameraRotate,
+                              size: AppIconSize.md,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            '更换本地封面',
+                            style: context.createTextStyle(
+                              size: AppFontSize.sm,
+                              weight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _MetadataField extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-
-  const _MetadataField({required this.controller, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      style: context.createTextStyle(size: AppFontSize.md),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: context.createTextStyle(
-          size: AppFontSize.md,
-          opacity: AppAlpha.textSecondary,
-        ),
-        border: const OutlineInputBorder(borderRadius: AppRadius.xsAll),
       ),
     );
   }
@@ -863,20 +1052,35 @@ class _InfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final labelStyle = context.createTextStyle(
-      size: AppFontSize.sm,
+      size: AppFontSize.xs,
       opacity: AppAlpha.textTertiary,
     );
-    final valueStyle = context.createTextStyle(size: AppFontSize.md);
+    final valueStyle = context.createTextStyle(
+      size: AppFontSize.sm,
+      weight: FontWeight.w500,
+    );
 
     return AppCard(
+      borderRadius: AppRadius.xsAll,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: AppSpacing.lg,
+        spacing: AppSpacing.md,
         children: [
           Row(
-            spacing: AppSpacing.md,
+            spacing: AppSpacing.sm,
             children: [
-              Icon(icon, size: AppIconSize.sm, color: colorScheme.primary),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.xs),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: AppAlpha.fill),
+                  borderRadius: AppRadius.xsAll,
+                ),
+                child: Icon(
+                  icon,
+                  size: AppIconSize.xs,
+                  color: colorScheme.primary,
+                ),
+              ),
               Text(
                 title,
                 style: context.createTextStyle(
@@ -926,19 +1130,22 @@ class _InfoEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: AppSpacing.xxs,
-      children: [
-        Text(label, style: labelStyle, maxLines: 1, softWrap: false),
-        Text(
-          value.isEmpty ? '—' : value,
-          style: valueStyle,
-          maxLines: maxLines,
-          softWrap: maxLines > 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: AppSpacing.xxs,
+        children: [
+          Text(label, style: labelStyle, maxLines: 1, softWrap: false),
+          Text(
+            value.isEmpty ? '—' : value,
+            style: valueStyle,
+            maxLines: maxLines,
+            softWrap: maxLines > 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 }

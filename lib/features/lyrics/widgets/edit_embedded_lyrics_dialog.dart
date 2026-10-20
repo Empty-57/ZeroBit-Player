@@ -14,6 +14,7 @@ import 'package:zerobit_player/src/rust/api/music_tag_tool.dart';
 import '../../../core/storage/models/music_cache_model.dart';
 import '../../../core/utils/logger.dart';
 import '../../../core/widgets/app_button/app_button.dart';
+import '../../../core/widgets/app_text_field.dart';
 import '../models/lyric_model.dart';
 
 const double _dialogSizeFactor = 2 / 3;
@@ -325,22 +326,15 @@ class _LyricsField extends StatelessWidget {
             weight: FontWeight.w600,
           ),
         ),
-        TextField(
+        AppTextField(
           controller: controller,
           minLines: _editorMinLines,
+          hintText: hint,
           maxLines: null,
+          hintMaxLines: 2,
           style: context.createTextStyle(
             size: AppFontSize.sm,
             tabularFigures: true,
-          ),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: context.createTextStyle(
-              size: AppFontSize.sm,
-              opacity: AppAlpha.textFaint,
-            ),
-            hintMaxLines: 2,
-            border: const OutlineInputBorder(borderRadius: AppRadius.xsAll),
           ),
         ),
       ],

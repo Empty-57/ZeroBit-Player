@@ -75,7 +75,7 @@ class UserPlayListController {
     return true;
   }
 
-  void createPlayList({required String userKey}) {
+  Future<void> createPlayList({required String userKey}) async {
     final cleanName = userKey.trim();
 
     if (!_isValidName(cleanName)) return;
@@ -88,12 +88,12 @@ class UserPlayListController {
       userKey: fullUserKey,
     );
 
-    unawaited(_userPlayListCacheBox.put(data: newPlaylist, key: fullUserKey));
+    await _userPlayListCacheBox.put(data: newPlaylist, key: fullUserKey);
     items.add(newPlaylist);
   }
 
-  void removePlayList({required String userKey}) {
-    unawaited(_userPlayListCacheBox.del(key: userKey));
+  Future<void> removePlayList({required String userKey}) async {
+    await _userPlayListCacheBox.del(key: userKey);
     items.removeWhere((v) => v.userKey == userKey);
   }
 
