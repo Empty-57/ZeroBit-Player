@@ -60,7 +60,7 @@ enum AppButtonType {
     return AppButtonStyles(
       background: this == filled
           ? scheme.onSurface.withValues(alpha: AppAlpha.controlFill)
-          : null,
+          : scheme.surfaceContainer.withValues(alpha: AppAlpha.textFaint),
       foreground: scheme.onSurface.withValues(alpha: AppAlpha.textFaint),
     );
   }

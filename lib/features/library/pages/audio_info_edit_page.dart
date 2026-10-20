@@ -202,6 +202,11 @@ class _NetworkCoverDialogState extends State<_NetworkCoverDialog> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final textStyle = context.createTextStyle(size: AppFontSize.md);
+    final pageNumStyle = context.createTextStyle(
+      size: AppFontSize.sm,
+      opacity: AppAlpha.textTertiary,
+      tabularFigures: true,
+    );
 
     return AppDialog(
       title: '选择网络封面',
@@ -212,7 +217,7 @@ class _NetworkCoverDialogState extends State<_NetworkCoverDialog> {
             spacing: AppSpacing.md,
             children: [
               Row(
-                spacing: AppSpacing.sm,
+                spacing: AppSpacing.md,
                 children: [
                   Expanded(
                     child: AppTextField(
@@ -239,6 +244,14 @@ class _NetworkCoverDialogState extends State<_NetworkCoverDialog> {
                             },
                     ),
                   ),
+                  SignalBuilder(
+                    builder: (_) {
+                      return Text(
+                        '第 ${_controller.currentNetLrcOffset.value + 1} 页',
+                        style: pageNumStyle,
+                      );
+                    },
+                  ),
                   AppButton.icon(
                     icon: PhosphorIconsLight.caretRight,
                     style: .secondary,
@@ -256,10 +269,10 @@ class _NetworkCoverDialogState extends State<_NetworkCoverDialog> {
                       builder: (context) => AppButton.secondary(
                         label: SettingController.apiMap[key] ?? 'QQ音乐',
                         selected: _controller.apiIndex.value == key,
-                        onPressed: () {
+                        onPressed: () => batch(() {
                           _controller.apiIndex.value = key;
                           _controller.currentNetLrcOffset.value = 0;
-                        },
+                        }),
                       ),
                     ),
                   ],

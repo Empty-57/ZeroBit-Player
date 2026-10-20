@@ -430,13 +430,18 @@ class _NetLrcDialogContentState extends State<_NetLrcDialogContent> {
   @override
   Widget build(BuildContext context) {
     final textStyle = context.createTextStyle(size: AppFontSize.md);
+    final pageNumStyle = context.createTextStyle(
+      size: AppFontSize.sm,
+      opacity: AppAlpha.textTertiary,
+      tabularFigures: true,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: AppSpacing.md,
       children: [
         Row(
-          spacing: AppSpacing.sm,
+          spacing: AppSpacing.md,
           children: [
             Expanded(
               child: AppTextField(
@@ -466,6 +471,15 @@ class _NetLrcDialogContentState extends State<_NetLrcDialogContent> {
               ),
             ),
 
+            SignalBuilder(
+              builder: (_) {
+                return Text(
+                  '第 ${_controller.currentNetLrcOffset.value + 1} 页',
+                  style: pageNumStyle,
+                );
+              },
+            ),
+
             AppButton.icon(
               icon: PhosphorIconsLight.caretRight,
               style: .secondary,
@@ -483,7 +497,10 @@ class _NetLrcDialogContentState extends State<_NetLrcDialogContent> {
                 builder: (context) => AppButton.secondary(
                   label: SettingController.apiMap[key] ?? 'QQ音乐',
                   selected: _controller.apiIndex.value == key,
-                  onPressed: () => _controller.apiIndex.value = key,
+                  onPressed: () => batch(() {
+                    _controller.apiIndex.value = key;
+                    _controller.currentNetLrcOffset.value = 0;
+                  }),
                 ),
               ),
             ],
