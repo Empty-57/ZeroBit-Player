@@ -16,6 +16,8 @@ migrate_working_dir/
 node_modules
 docs/.vitepress/dist
 docs/.vitepress/cache
+.claude/
+.codex/
 
 # IntelliJ related
 *.iml

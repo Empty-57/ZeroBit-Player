@@ -74,6 +74,7 @@ class RenderProgressShaderMask extends RenderProxyBox {
   });
 
   ValueListenable<double> _progressListenable;
+  double _paintedProgress = 0.0;
 
   set progressListenable(ValueListenable<double> value) {
     if (identical(_progressListenable, value)) return;
@@ -83,7 +84,9 @@ class RenderProgressShaderMask extends RenderProxyBox {
     _markShaderDirty();
   }
 
-  void _onProgress() => _markShaderDirty();
+  void _onProgress() {
+    if (_paintedProgress != _progressListenable.value) _markShaderDirty();
+  }
 
   @override
   void attach(PipelineOwner owner) {
@@ -135,15 +138,13 @@ class RenderProgressShaderMask extends RenderProxyBox {
   @override
   ShaderMaskLayer? get layer => super.layer as ShaderMaskLayer?;
 
-  ui.Shader _buildShader(Rect bounds) {
+  ui.Shader _buildShader(Rect bounds, double progress) {
     // 颜色平均分三段：高亮区 过渡区 透明区
     // 在动画开始的时候，覆盖到 Text 上的应该是透明区，应该先把整个遮罩层应该向左移动
     // 但是因为遮罩层放大了3倍，所以应该用 -0.666 * bounds.width 得到透明区位置，负号为向左
     // 随着 progress 增大 遮罩会逐渐向右移动
     final double dx =
-        LyricConstants.shaderOffsetFactor *
-        bounds.width *
-        (1 - _progressListenable.value);
+        LyricConstants.shaderOffsetFactor * bounds.width * (1 - progress);
     return LinearGradient(
       begin: Alignment.centerLeft,
       end: Alignment.centerRight,
@@ -165,9 +166,11 @@ class RenderProgressShaderMask extends RenderProxyBox {
     if (_shaderDirty || _shader == null || _shaderBounds != bounds) {
       // 更新shader之前先释放
       _shader?.dispose();
-      _shader = _buildShader(bounds);
+      final progress = _progressListenable.value;
+      _shader = _buildShader(bounds, progress);
       _shaderBounds = bounds;
       _shaderDirty = false;
+      _paintedProgress = progress;
     }
 
     layer ??= ShaderMaskLayer();

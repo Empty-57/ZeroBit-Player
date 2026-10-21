@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -259,7 +260,10 @@ class LyricController {
       _updateLyricsInfo(updateLineOnly: false);
     }
 
-    wordProgress.value += _wordProgressIncrement;
+    wordProgress.value = math.min(
+      1.0,
+      wordProgress.value + _wordProgressIncrement,
+    );
     _updateInterludeState();
   }
 
