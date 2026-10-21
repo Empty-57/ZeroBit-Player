@@ -291,7 +291,7 @@ void main() async {
   //   );
   // }
 
-  debugRepaintRainbowEnabled = false;
+  debugRepaintRainbowEnabled = true;
   if (kDebugMode) {
     // _initLeakTracking();
   }

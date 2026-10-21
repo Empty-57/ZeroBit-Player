@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:zerobit_player/core/constants/ui_constants.dart';
 
 abstract class LyricConstants {
   static const double audioCtrlBarHeight = 96;
@@ -7,7 +8,7 @@ abstract class LyricConstants {
   static const double currentAlpha = 0.4;
   static const double notPlayedLightAlpha = 0.25;
   static const double notPlayedDarkAlpha = 0.15;
-  static const BorderRadius borderRadius = BorderRadius.all(Radius.circular(4));
+  static const BorderRadius borderRadius = AppRadius.xsAll;
   static const double ctrlBtnMinSize = 32.0;
   static const double floatingY = -2.0;
   static const double rippleThreshold = 1.5;

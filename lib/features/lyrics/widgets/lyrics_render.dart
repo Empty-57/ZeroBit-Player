@@ -5,6 +5,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:zerobit_player/core/theme/style_manager.dart';
 import 'package:zerobit_player/core/theme/theme_manager.dart';
+import 'package:zerobit_player/core/widgets/app_interaction_widget.dart';
 import 'package:zerobit_player/core/widgets/spring_list_view.dart';
 import 'package:zerobit_player/features/lyrics/controller/lyric_ctrl.dart';
 import 'package:zerobit_player/features/lyrics/widgets/blur_widget.dart';
@@ -550,7 +551,7 @@ class _StaggeredLyricItem extends StatelessWidget {
   }
 }
 
-class _LyricLineContainer extends StatefulWidget {
+class _LyricLineContainer extends StatelessWidget {
   final VoidCallback onTap;
   final EdgeInsets padding;
   final Color hoverColor;
@@ -564,30 +565,19 @@ class _LyricLineContainer extends StatefulWidget {
   });
 
   @override
-  State<_LyricLineContainer> createState() => _LyricLineContainerState();
-}
-
-class _LyricLineContainerState extends State<_LyricLineContainer> {
-  bool _isHovered = false;
-
-  @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onTap,
-        child: Container(
-          padding: widget.padding,
+    return HoverBuilder(
+      onPressed: onTap,
+      builder: (ctx, hovered) {
+        return Container(
+          padding: padding,
           decoration: BoxDecoration(
-            color: _isHovered ? widget.hoverColor : Colors.transparent,
+            color: hovered ? hoverColor : Colors.transparent,
             borderRadius: LyricConstants.borderRadius,
           ),
-          child: widget.child,
-        ),
-      ),
+          child: child,
+        );
+      },
     );
   }
 }
