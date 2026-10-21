@@ -356,7 +356,7 @@ class _SyllableFloatWidgetState extends State<_SyllableFloatWidget>
         )!;
         return Transform.translate(
           filterQuality: .low,
-          offset: Offset(0, dy), // 直接应用物理控制器的值
+          offset: Offset(0, dy),
           child: child,
         );
       },
