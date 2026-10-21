@@ -17,7 +17,7 @@ class _FeedTickerProvider implements TickerProvider {
   Ticker createTicker(TickerCallback onTick) => Ticker(onTick);
 }
 
-/// 频谱数据源：集中负责「拉取 FFT -> 帧间插值 -> 通知重绘」
+/// 频谱数据源
 ///
 /// 所有可视化组件共享同一个实例（引用计数），即使同时挂载柱状频谱和波形图，
 /// 也只有一个拉取定时器、一份插值缓冲区
