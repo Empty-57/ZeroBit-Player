@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
+import 'package:signals/signals.dart';
 import 'package:zerobit_player/core/utils/paint_cache.dart';
 
 import '../../src/rust/api/trim_memory.dart' as rust_api;
@@ -12,16 +13,24 @@ import 'logger.dart';
 class MemoryManager {
   const MemoryManager._();
 
-  static Timer? _timer;
-  static Timer? _loopTimer;
-  static const int _baseDuration = 60;
-  static const Duration _maxTrimWaitDuration = Duration(seconds: _baseDuration);
-  static const Duration _maxLoopTrimCycleDuration = Duration(
+  static Timer? _trimTimer;
+  static Timer? _loopTrimTimer;
+  static Timer? _disableTickerTimer;
+  static const int _baseDuration = 30;
+  static const Duration _maxDisableTickerWaitDuration = Duration(
+    seconds: _baseDuration,
+  );
+  static const Duration _maxTrimWaitDuration = Duration(
     seconds: _baseDuration * 2,
+  );
+  static const Duration _maxLoopTrimCycleDuration = Duration(
+    seconds: _baseDuration * 4,
   );
   static const int _trimLimitOnBlur = 150;
   static const int _trimLimitOnFocus = 230;
   static int _lastRss = 0;
+
+  static final tickerEnable = signal(true);
 
   static double _toMB(int bytes) => (bytes / (1 << 20));
 
@@ -55,10 +64,30 @@ class MemoryManager {
     LoggerUni.d(info);
   }
 
+  /// 会在 [_maxDisableTickerWaitDuration] s 之后禁用主要动画资源
+  static void startDisableTicker() {
+    _disableTickerTimer?.cancel();
+    _disableTickerTimer = Timer(_maxDisableTickerWaitDuration, () async {
+      _disableTickerTimer = null;
+      if (await windowManager.isMinimized()) {
+        MemoryManager.tickerEnable.value = false;
+      } else {
+        MemoryManager.tickerEnable.value = await windowManager.isVisible();
+      }
+    });
+  }
+
+  /// 立即取消 [startDisableTicker]
+  static void cancelDisableTicker() {
+    tickerEnable.value = true;
+    _disableTickerTimer?.cancel();
+    _disableTickerTimer = null;
+  }
+
   /// 启动循环修剪 每 [_maxLoopTrimCycleDuration] s 尝试修剪一次
   static void startLoopTrim([String label = 'Status']) {
-    _loopTimer?.cancel();
-    _loopTimer = Timer.periodic(_maxLoopTrimCycleDuration, (_) async {
+    _loopTrimTimer?.cancel();
+    _loopTrimTimer = Timer.periodic(_maxLoopTrimCycleDuration, (_) async {
       final limit = await windowManager.isFocused()
           ? _trimLimitOnFocus
           : _trimLimitOnBlur;
@@ -73,9 +102,9 @@ class MemoryManager {
   /// 会在 [_maxTrimWaitDuration] s 之后调用 [trimMemory] 方法
   static void startTrim([String label = 'Status']) {
     printUsage(label);
-    _timer?.cancel();
-    _timer = Timer(_maxTrimWaitDuration, () {
-      _timer = null;
+    _trimTimer?.cancel();
+    _trimTimer = Timer(_maxTrimWaitDuration, () {
+      _trimTimer = null;
       if (_toMB(_currentRss) < _trimLimitOnBlur) {
         trimMemory(label);
       }
@@ -85,8 +114,8 @@ class MemoryManager {
   /// 停止将要进行的 [trimMemory] 方法
   static void cancelTrim([String label = 'Status']) {
     printUsage(label);
-    _timer?.cancel();
-    _timer = null;
+    _trimTimer?.cancel();
+    _trimTimer = null;
   }
 
   /// 立即执行一次内存裁剪

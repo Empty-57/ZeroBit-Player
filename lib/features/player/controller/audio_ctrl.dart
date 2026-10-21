@@ -24,6 +24,7 @@ import '../../../core/storage/models/music_cache_model.dart';
 import '../../../core/utils/cover_lru_cache.dart';
 import '../../../core/utils/func_extension.dart';
 import '../../../core/utils/logger.dart';
+import '../../../core/utils/memory_manager.dart';
 import '../../library/controller/music_cache_ctrl.dart';
 import '../../lyrics/controller/desktop_lyrics_setting_ctrl.dart';
 import '../../lyrics/models/lyric_model.dart';
@@ -407,6 +408,8 @@ class AudioController {
 
   /// 获取音频FFT数据
   Future<void> getAudioFFt() async {
+    if (!MemoryManager.tickerEnable.value) return;
+
     if (currentState.value != AudioState.playing) {
       if (!_isFftCleared) {
         audioFFT.value = _defaultFFT;

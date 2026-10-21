@@ -67,11 +67,13 @@ class WindowController with WindowListener {
 
   @override
   void onWindowBlur() {
+    MemoryManager.startDisableTicker();
     MemoryManager.startTrim('onWindowBlur');
   }
 
   @override
   void onWindowFocus() {
+    MemoryManager.cancelDisableTicker();
     MemoryManager.cancelTrim('onWindowFocus');
   }
 

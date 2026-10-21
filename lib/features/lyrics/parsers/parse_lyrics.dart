@@ -7,8 +7,6 @@ import '../models/lyric_model.dart';
 import 'furigana_alignment.dart';
 import 'japanese_analyzer.dart';
 
-// ─────────────────────────── 正则表达式 ───────────────────────────
-
 /// 解析 LRC 行的正则： [mm:ss.xx]text
 final RegExp _lrcLineRegex = RegExp(
   r'\[(\d{2}):(\d{2}\.\d{2,3})](.*?)(\r?\n|$)',
@@ -44,8 +42,6 @@ final RegExp _wordByWordLrcWordRegex = RegExp(
   r'\[(\d{2}):(\d{2}\.\d{2,3})]([^\[]*)',
 );
 
-// ─────────────────────────── 枚举 ───────────────────────────
-
 enum LrcType {
   /// 逐行Lrc: [00:24.212]歌词
   lineByLine,
@@ -60,8 +56,6 @@ enum LrcType {
   unknown,
 }
 
-// ─────────────────────────── 工具函数 ───────────────────────────
-
 /// 把 mm 和 ss.xx 转成秒数
 double _parseTime(String m, String s) {
   final minutes = int.tryParse(m) ?? 0;
@@ -69,7 +63,7 @@ double _parseTime(String m, String s) {
   return minutes * 60 + seconds;
 }
 
-/// 毫秒转秒（保留 3 位小数）
+/// 毫秒转秒
 double _msToSec(String msStr) {
   final ms = int.tryParse(msStr) ?? 0;
   return double.parse((ms / 1000).toStringAsFixed(3));
