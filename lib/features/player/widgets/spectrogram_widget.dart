@@ -10,8 +10,6 @@ import 'package:zerobit_player/features/player/widgets/play_page_constant.dart';
 import '../../../core/utils/logger.dart';
 import '../tools/fft_feed.dart';
 
-/// 共享数据源专用的极简 TickerProvider
-/// 插值动画在数据稳定后会自己停下来，不需要 TickerMode 的静音管理
 class _FeedTickerProvider implements TickerProvider {
   @override
   Ticker createTicker(TickerCallback onTick) => Ticker(onTick);
