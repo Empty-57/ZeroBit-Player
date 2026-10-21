@@ -90,11 +90,15 @@ class KaraOkLyricWidget extends StatelessWidget {
     final double dura = entry.duration;
 
     if (isCurrentLine && wordIndex == currentIndex) {
-      gradientColors[2] = style.color!.withValues(
-        alpha: wordIndex == 0
-            ? LyricConstants.currentAlpha - 0.15
-            : LyricConstants.currentAlpha,
-      ); // 视觉欺骗，防止颜色突变
+      final List<Color> currentGradient = [
+        gradientColors[0],
+        gradientColors[1],
+        style.color!.withValues(
+          alpha: wordIndex == 0
+              ? LyricConstants.currentAlpha - 0.15
+              : LyricConstants.currentAlpha,
+        ),
+      ]; // 视觉欺骗，防止颜色突变
 
       final translateGradientScale = dura >= 1.0 ? 3.0 : 2.0; // 动态改变渐变区宽度
       double ripplesScaleMax = LyricConstants.ripplesScaleMin;
@@ -117,7 +121,7 @@ class KaraOkLyricWidget extends StatelessWidget {
         progressListenable: lyricController.wordProgress,
         style: style,
         strutStyle: strutStyle,
-        gradientColors: gradientColors,
+        gradientColors: currentGradient,
         duration: dura,
         ripplesScaleMax: ripplesScaleMax,
         glowAlphaMax: glowAlphaMax,
@@ -150,7 +154,6 @@ class KaraOkLyricWidget extends StatelessWidget {
       }
 
       return TweenAnimationBuilder<Color?>(
-        key: ValueKey('word_$wordIndex'),
         duration: const Duration(milliseconds: 600),
         curve: Curves.easeInOut,
         tween: ColorTween(begin: beginColor, end: targetColor),
