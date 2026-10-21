@@ -407,8 +407,7 @@ class AudioController {
 
   /// 获取音频FFT数据
   Future<void> getAudioFFt() async {
-    if (currentState.value == AudioState.pause ||
-        currentState.value == AudioState.stop) {
+    if (currentState.value != AudioState.playing) {
       if (!_isFftCleared) {
         audioFFT.value = _defaultFFT;
         _isFftCleared = true;
