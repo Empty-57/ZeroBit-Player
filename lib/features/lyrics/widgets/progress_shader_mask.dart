@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
@@ -34,20 +35,20 @@ class _ProgressGradientTransform extends GradientTransform {
 class ProgressShaderMask extends SingleChildRenderObjectWidget {
   const ProgressShaderMask({
     super.key,
-    required this.progress,
+    required this.progressListenable,
     required this.scale,
     required this.gradientColors,
     required Widget super.child,
   });
 
-  final double progress;
+  final ValueListenable<double> progressListenable;
   final double scale;
   final List<Color> gradientColors;
 
   @override
   RenderProgressShaderMask createRenderObject(BuildContext context) =>
       RenderProgressShaderMask(
-        progress: progress,
+        progressListenable: progressListenable,
         scale: scale,
         gradientColors: gradientColors,
       );
@@ -58,7 +59,7 @@ class ProgressShaderMask extends SingleChildRenderObjectWidget {
     RenderProgressShaderMask renderObject,
   ) {
     renderObject
-      ..progress = progress
+      ..progressListenable = progressListenable
       ..scale = scale
       ..gradientColors = gradientColors;
   }
@@ -67,19 +68,35 @@ class ProgressShaderMask extends SingleChildRenderObjectWidget {
 /// [ProgressShaderMask] 的渲染对象，负责着色器的复用与释放。
 class RenderProgressShaderMask extends RenderProxyBox {
   RenderProgressShaderMask({
-    required this._progress,
+    required this._progressListenable,
     required this._scale,
     required this._gradientColors,
   });
 
-  double _progress;
+  ValueListenable<double> _progressListenable;
 
-  double get progress => _progress;
-
-  set progress(double value) {
-    if (_progress == value) return;
-    _progress = value;
+  set progressListenable(ValueListenable<double> value) {
+    if (identical(_progressListenable, value)) return;
+    if (attached) _progressListenable.removeListener(_onProgress);
+    _progressListenable = value;
+    if (attached) _progressListenable.addListener(_onProgress);
     _markShaderDirty();
+  }
+
+  void _onProgress() => _markShaderDirty();
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    _progressListenable.addListener(_onProgress);
+    // 离树期间进度可能已改变。
+    _shaderDirty = true;
+  }
+
+  @override
+  void detach() {
+    _progressListenable.removeListener(_onProgress);
+    super.detach();
   }
 
   double _scale;
@@ -97,7 +114,7 @@ class RenderProgressShaderMask extends RenderProxyBox {
   List<Color> get gradientColors => _gradientColors;
 
   set gradientColors(List<Color> value) {
-    if (_gradientColors == value) return;
+    if (listEquals(_gradientColors, value)) return;
     _gradientColors = value;
     _markShaderDirty();
   }
@@ -124,7 +141,9 @@ class RenderProgressShaderMask extends RenderProxyBox {
     // 但是因为遮罩层放大了3倍，所以应该用 -0.666 * bounds.width 得到透明区位置，负号为向左
     // 随着 progress 增大 遮罩会逐渐向右移动
     final double dx =
-        LyricConstants.shaderOffsetFactor * bounds.width * (1 - _progress);
+        LyricConstants.shaderOffsetFactor *
+        bounds.width *
+        (1 - _progressListenable.value);
     return LinearGradient(
       begin: Alignment.centerLeft,
       end: Alignment.centerRight,

@@ -215,21 +215,16 @@ class _BreathingDotsState extends State<_BreathingDots>
           child: child,
         );
       },
-      child: ValueListenableBuilder(
-        valueListenable: widget.lyricController.interludeProcess,
-        builder: (context, progress, child) {
-          return HighlightedWord(
-            text: "  ● ● ●  ",
-            progress: progress,
-            style: widget.interludeLyricStyle,
-            strutStyle: widget.strutStyle,
-            gradientColors: widget.gradientColors,
-            duration: 0,
-            ripplesScaleMax: 1.1,
-            glowAlphaMax: 0.2,
-            translateGradientScale: 2.0,
-          );
-        },
+      child: HighlightedWord(
+        text: "  ● ● ●  ",
+        progressListenable: widget.lyricController.interludeProcess,
+        style: widget.interludeLyricStyle,
+        strutStyle: widget.strutStyle,
+        gradientColors: widget.gradientColors,
+        duration: 0,
+        ripplesScaleMax: 1.1,
+        glowAlphaMax: 0.2,
+        translateGradientScale: 2.0,
       ),
     );
   }

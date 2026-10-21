@@ -112,21 +112,16 @@ class KaraOkLyricWidget extends StatelessWidget {
       }
 
       // 正在唱的字
-      return ValueListenableBuilder<double>(
-        valueListenable: lyricController.wordProgress,
-        builder: (context, progress, child) {
-          return HighlightedWord(
-            text: word,
-            progress: progress,
-            style: style,
-            strutStyle: strutStyle,
-            gradientColors: gradientColors,
-            duration: dura,
-            ripplesScaleMax: ripplesScaleMax,
-            glowAlphaMax: glowAlphaMax,
-            translateGradientScale: translateGradientScale,
-          );
-        },
+      return HighlightedWord(
+        text: word,
+        progressListenable: lyricController.wordProgress,
+        style: style,
+        strutStyle: strutStyle,
+        gradientColors: gradientColors,
+        duration: dura,
+        ripplesScaleMax: ripplesScaleMax,
+        glowAlphaMax: glowAlphaMax,
+        translateGradientScale: translateGradientScale,
       );
     } else {
       // 目标颜色

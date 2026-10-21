@@ -18,7 +18,10 @@ class BlurLine extends StatelessWidget {
       return child;
     }
     return ImageFiltered(
-      imageFilter: ImageFilterCache.imageFilter(sigma: blurSigma.toDouble()),
+      imageFilter: ImageFilterCache.imageFilter(
+        sigma: blurSigma.toDouble(),
+        tileMode: TileMode.decal,
+      ),
       enabled: blurSigma != 0,
       child: child,
     );

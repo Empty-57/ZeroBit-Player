@@ -1,12 +1,13 @@
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:zerobit_player/features/lyrics/widgets/lyric_arg_constants.dart';
 import 'package:zerobit_player/features/lyrics/widgets/progress_shader_mask.dart';
 
 class HighlightedWord extends StatefulWidget {
   final String text;
-  final double progress;
+  final ValueListenable<double> progressListenable;
   final TextStyle style;
   final StrutStyle strutStyle;
   final List<Color> gradientColors;
@@ -18,7 +19,7 @@ class HighlightedWord extends StatefulWidget {
   const HighlightedWord({
     super.key,
     required this.text,
-    required this.progress,
+    required this.progressListenable,
     required this.style,
     required this.strutStyle,
     required this.gradientColors,
@@ -101,7 +102,7 @@ class HighlightedWordState extends State<HighlightedWord> {
 
   Widget _shaderMaskWrap(Widget child) {
     return ProgressShaderMask(
-      progress: widget.progress,
+      progressListenable: widget.progressListenable,
       scale: widget.translateGradientScale,
       gradientColors: widget.gradientColors,
       child: child,
@@ -139,6 +140,15 @@ class HighlightedWordState extends State<HighlightedWord> {
       );
     }
 
+    return _shaderMaskWrap(
+      ValueListenableBuilder<double>(
+        valueListenable: widget.progressListenable,
+        builder: (context, progress, child) => _buildRipple(progress),
+      ),
+    );
+  }
+
+  Widget _buildRipple(double progress) {
     final List<Widget> glowChildren = List<Widget>.filled(
       _charCount,
       const SizedBox.shrink(),
@@ -152,7 +162,7 @@ class HighlightedWordState extends State<HighlightedWord> {
       // 将 progress 进度分别映射到每个字的进度上
       final double charProgress =
           // 这个字动画持续的时间为 _waveWidth
-          ((widget.progress - _windowStarts[i]) / _waveWidth).clamp(0.0, 1.0);
+          ((progress - _windowStarts[i]) / _waveWidth).clamp(0.0, 1.0);
 
       // 使用非对称曲线，设置 animatedRatio 可控制放大与缩小所占的时间比例
       double animationCurve;
@@ -192,28 +202,28 @@ class HighlightedWordState extends State<HighlightedWord> {
         child: Text(
           char,
           style: _normalStyle.copyWith(
-            shadows: [
-              Shadow(
-                color: _baseColor.withValues(alpha: glowAlpha * 0.6),
-                blurRadius: 4,
-              ),
-              Shadow(
-                color: _baseColor.withValues(alpha: glowAlpha),
-                blurRadius: 8,
-              ),
-            ],
+            shadows: glowAlpha <= 0
+                ? const []
+                : [
+                    Shadow(
+                      color: _baseColor.withValues(alpha: glowAlpha * 0.6),
+                      blurRadius: 4,
+                    ),
+                    Shadow(
+                      color: _baseColor.withValues(alpha: glowAlpha),
+                      blurRadius: 8,
+                    ),
+                  ],
           ),
           strutStyle: widget.strutStyle,
         ),
       );
     }
 
-    return _shaderMaskWrap(
-      Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: glowChildren,
-      ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: glowChildren,
     );
   }
 }
