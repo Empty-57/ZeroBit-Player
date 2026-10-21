@@ -218,9 +218,10 @@ class LyricController {
 
   // 更新词进度
   void updateProgress() {
+    final lyrics = _audioController.currentLyrics.value;
     final newLineIndex = _findLrcPos(
       time: currentMs20Notifier.value,
-      lyrics: _audioController.currentLyrics.value?.parsedLrc,
+      lyrics: lyrics?.parsedLrc,
       hint: currentLineIndex.value,
     );
     if (newLineIndex != currentLineIndex.value) {
@@ -240,8 +241,7 @@ class LyricController {
       }
     }
 
-    if ((_audioController.currentLyrics.value?.type ?? LyricFormat.lrc) ==
-            LyricFormat.lrc ||
+    if ((lyrics?.type ?? LyricFormat.lrc) == LyricFormat.lrc ||
         currentLineIndex.value < 0 ||
         _currentLine == null) {
       _updateInterludeState();
