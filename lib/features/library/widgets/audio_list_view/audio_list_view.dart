@@ -212,9 +212,12 @@ class _AudioListViewState extends State<AudioListView> {
             return AnimatedSwitcher(
               duration: AppDuration.fast,
               child: isListView
-                  ? _buildList(key: const ValueKey(true), itemCount: itemCount)
+                  ? _buildList(
+                      key: const ValueKey('list_view'),
+                      itemCount: itemCount,
+                    )
                   : _buildGrid(
-                      key: const ValueKey(false),
+                      key: const ValueKey('grid_view'),
                       itemCount: itemCount,
                       columns: columns,
                     ),
