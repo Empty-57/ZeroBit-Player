@@ -17,7 +17,7 @@ import '../../../setting/widgets/setting_fields.dart';
 import 'audio_list_view_args.dart';
 import 'audio_list_view_constant.dart';
 import 'audio_list_view_context_menu.dart';
-import 'audio_page_header.dart';
+import 'audio_list_view_header.dart';
 
 /// 音乐列表页
 class AudioListView extends StatefulWidget {
@@ -362,9 +362,10 @@ class _MusicTile extends SignalWidget {
               metadata.trackNumber.toString().padLeft(2, '0'),
               style: subTextStyle,
             ),
-          ClipRRect(
+          LoadLocalOrNetCover(
+            music: metadata,
+            size: AppSize.coverSm,
             borderRadius: AppRadius.smAll,
-            child: LoadLocalOrNetCover(music: metadata, size: AppSize.coverSm),
           ),
           Expanded(
             child: Column(

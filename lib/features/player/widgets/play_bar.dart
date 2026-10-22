@@ -238,14 +238,12 @@ class _CoverAndInfo extends StatelessWidget {
             tag: 'playingCover',
             createRectTween: (begin, end) =>
                 MaterialRectArcTween(begin: begin, end: end),
-            child: ClipRRect(
-              borderRadius: PlayBarSpec.radiusAll,
-              child: SignalBuilder(
-                builder: (_) => LoadU8Cover(
-                  data: controller.currentSmallCover.value,
-                  size: AppSize.coverSm,
-                  evictOnDispose: false,
-                ),
+            child: SignalBuilder(
+              builder: (_) => LoadU8Cover(
+                data: controller.currentSmallCover.value,
+                size: AppSize.coverSm,
+                evictOnDispose: false,
+                borderRadius: PlayBarSpec.radiusAll,
               ),
             ),
           ),

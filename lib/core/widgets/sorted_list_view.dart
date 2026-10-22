@@ -425,14 +425,12 @@ class _AlbumTile extends StatelessWidget {
               aspectRatio: 1,
               child: item.coverMusic == null
                   ? const SizedBox.shrink()
-                  : ClipRRect(
+                  : LoadLocalOrNetCover(
+                      music: item.coverMusic!,
+                      coverResolutionFlag: CoverResolutionFlag.middle,
+                      size: _albumTileWidth,
+                      evictOnDispose: false,
                       borderRadius: AppRadius.smAll,
-                      child: LoadLocalOrNetCover(
-                        music: item.coverMusic!,
-                        coverResolutionFlag: CoverResolutionFlag.middle,
-                        size: _albumTileWidth,
-                        evictOnDispose: false,
-                      ),
                     ),
             ),
           ),
@@ -493,13 +491,11 @@ class _ArtistTile extends StatelessWidget {
               dimension: _artistTileHeight,
               child: item.coverMusic == null
                   ? const SizedBox.shrink()
-                  : ClipRRect(
+                  : LoadLocalOrNetCover(
+                      music: item.coverMusic!,
+                      size: _artistTileHeight,
+                      evictOnDispose: false,
                       borderRadius: AppRadius.smAll,
-                      child: LoadLocalOrNetCover(
-                        music: item.coverMusic!,
-                        size: _artistTileHeight,
-                        evictOnDispose: false,
-                      ),
                     ),
             ),
           ),

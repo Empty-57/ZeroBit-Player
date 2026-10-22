@@ -163,37 +163,35 @@ class _Tilt3DState extends State<Tilt3D> {
                             ),
                           ],
                         ),
-                        child: ClipRRect(
-                          borderRadius: widget.borderRadius,
-                          child: Stack(
-                            fit: StackFit.passthrough,
-                            children: [
-                              child!,
-                              // 反光层
-                              if (widget.enableGlare && progress > 0.01)
-                                Positioned.fill(
-                                  child: IgnorePointer(
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        gradient: RadialGradient(
-                                          center: Alignment(
-                                            current.offset.dx,
-                                            current.offset.dy,
-                                          ),
-                                          radius: 1.2,
-                                          colors: [
-                                            widget.glareColor.withValues(
-                                              alpha: 0.2 * progress,
-                                            ),
-                                            Colors.transparent,
-                                          ],
+                        child: Stack(
+                          fit: StackFit.passthrough,
+                          children: [
+                            child!,
+                            // 反光层
+                            if (widget.enableGlare && progress > 0.01)
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: widget.borderRadius,
+                                      gradient: RadialGradient(
+                                        center: Alignment(
+                                          current.offset.dx,
+                                          current.offset.dy,
                                         ),
+                                        radius: 1.2,
+                                        colors: [
+                                          widget.glareColor.withValues(
+                                            alpha: 0.2 * progress,
+                                          ),
+                                          Colors.transparent,
+                                        ],
                                       ),
                                     ),
                                   ),
                                 ),
-                            ],
-                          ),
+                              ),
+                          ],
                         ),
                       ),
                     );

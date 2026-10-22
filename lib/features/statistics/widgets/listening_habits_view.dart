@@ -97,12 +97,10 @@ class _TopSongCard extends StatelessWidget {
           : () => AudioController.instance.audioPlay(metadata: metadata),
       leading: metadata == null
           ? const _FallbackSquare(icon: PhosphorIconsLight.musicNote)
-          : ClipRRect(
+          : LoadLocalOrNetCover(
+              music: metadata,
+              size: AppSize.coverMd,
               borderRadius: AppRadius.smAll,
-              child: LoadLocalOrNetCover(
-                music: metadata,
-                size: AppSize.coverMd,
-              ),
             ),
       title: song.title,
       subtitle: song.artist,

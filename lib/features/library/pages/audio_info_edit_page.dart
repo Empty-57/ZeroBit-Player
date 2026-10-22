@@ -313,6 +313,8 @@ class _NetworkCoverDialogState extends State<_NetworkCoverDialog> {
                           itemCount: data.length,
                           itemBuilder: (context, index) {
                             return HoverBuilder(
+                              onPressed: () =>
+                                  unawaited(_selectCover(data[index])),
                               builder: (context, hovered) => AnimatedContainer(
                                 duration: AppDuration.fast,
                                 decoration: BoxDecoration(
@@ -323,50 +325,14 @@ class _NetworkCoverDialogState extends State<_NetworkCoverDialog> {
                                         : scheme.outlineVariant.withValues(
                                             alpha: AppAlpha.border,
                                           ),
-                                    width: hovered
-                                        ? AppSize.trackThin
-                                        : AppSize.hairline,
+                                    width: AppSize.trackThin,
                                   ),
                                 ),
-                                child: ClipRRect(
+                                child: LoadNetworkCover(
+                                  url: data[index],
+                                  coverResolutionFlag: .middle,
+                                  size: 200,
                                   borderRadius: AppRadius.xsAll,
-                                  child: AppTappable(
-                                    onPressed: () =>
-                                        unawaited(_selectCover(data[index])),
-                                    child: Stack(
-                                      fit: StackFit.expand,
-                                      children: [
-                                        LoadNetworkCover(
-                                          url: data[index],
-                                          coverResolutionFlag: .middle,
-                                          size: 200,
-                                        ),
-                                        if (hovered)
-                                          ColoredBox(
-                                            color: Colors.black.withValues(
-                                              alpha: AppAlpha.surfaceSubtle,
-                                            ),
-                                            child: Center(
-                                              child: Container(
-                                                padding: const EdgeInsets.all(
-                                                  AppSpacing.sm,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: scheme.primary,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: const Icon(
-                                                  PhosphorIconsLight
-                                                      .downloadSimple,
-                                                  size: AppIconSize.sm,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
                                 ),
                               ),
                             );
@@ -374,8 +340,8 @@ class _NetworkCoverDialogState extends State<_NetworkCoverDialog> {
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 4,
-                                mainAxisSpacing: AppSpacing.md,
-                                crossAxisSpacing: AppSpacing.md,
+                                mainAxisSpacing: AppSpacing.sm,
+                                crossAxisSpacing: AppSpacing.sm,
                               ),
                         );
                       },
@@ -957,86 +923,87 @@ class _CoverPanel extends StatelessWidget {
               width: AppSize.hairline,
             ),
           ),
-          child: ClipRRect(
-            borderRadius: AppRadius.xsAll,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (hasCover)
-                  LoadU8Cover(
-                    data: bytes,
-                    coverResolutionFlag: CoverResolutionFlag.big,
-                    size: _coverSize,
-                  )
-                else
-                  ColoredBox(
-                    color: colorScheme.surfaceContainerHighest.withValues(
-                      alpha: AppAlpha.controlFill,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (hasCover)
+                LoadU8Cover(
+                  data: bytes,
+                  coverResolutionFlag: CoverResolutionFlag.big,
+                  size: _coverSize,
+                  borderRadius: AppRadius.xsAll,
+                )
+              else
+                ColoredBox(
+                  color: colorScheme.surfaceContainerHighest.withValues(
+                    alpha: AppAlpha.controlFill,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    spacing: AppSpacing.sm,
+                    children: [
+                      Icon(
+                        PhosphorIconsLight.imageSquare,
+                        size: AppFontSize.title * 1.5,
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: AppAlpha.textFaint,
+                        ),
+                      ),
+                      Text(
+                        '暂无封面\n点击选择本地图片',
+                        textAlign: TextAlign.center,
+                        style: context.createTextStyle(
+                          size: AppFontSize.xs,
+                          opacity: AppAlpha.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              AnimatedOpacity(
+                duration: AppDuration.fast,
+                opacity: hovered && onTap != null ? 1.0 : 0.0,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: AppRadius.xsAll,
+                    color: Colors.black.withValues(
+                      alpha: AppAlpha.surfaceStrong,
                     ),
+                  ),
+                  child: Center(
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       spacing: AppSpacing.sm,
                       children: [
-                        Icon(
-                          PhosphorIconsLight.imageSquare,
-                          size: AppFontSize.title * 1.5,
-                          color: colorScheme.onSurfaceVariant.withValues(
-                            alpha: AppAlpha.textFaint,
+                        Container(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(
+                              alpha: AppAlpha.fillStrong,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            PhosphorIconsLight.cameraRotate,
+                            size: AppIconSize.md,
+                            color: Colors.white,
                           ),
                         ),
                         Text(
-                          '暂无封面\n点击选择本地图片',
-                          textAlign: TextAlign.center,
+                          '更换本地封面',
                           style: context.createTextStyle(
-                            size: AppFontSize.xs,
-                            opacity: AppAlpha.textTertiary,
+                            size: AppFontSize.sm,
+                            weight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
                       ],
                     ),
                   ),
-
-                AnimatedOpacity(
-                  duration: AppDuration.fast,
-                  opacity: hovered && onTap != null ? 1.0 : 0.0,
-                  child: ColoredBox(
-                    color: Colors.black.withValues(
-                      alpha: AppAlpha.surfaceStrong,
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        spacing: AppSpacing.sm,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(AppSpacing.md),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(
-                                alpha: AppAlpha.fillStrong,
-                              ),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              PhosphorIconsLight.cameraRotate,
-                              size: AppIconSize.md,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            '更换本地封面',
-                            style: context.createTextStyle(
-                              size: AppFontSize.sm,
-                              weight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

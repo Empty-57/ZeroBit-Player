@@ -41,12 +41,14 @@ class _CoverImageFrame extends StatelessWidget {
   final double? width;
   final double? height;
   final bool useFrameBuilderCallback;
+  final BorderRadiusGeometry borderRadius;
 
   const _CoverImageFrame({
     required this.imageProvider,
     this.width,
     this.height,
     required this.useFrameBuilderCallback,
+    required this.borderRadius,
   });
 
   @override
@@ -54,13 +56,16 @@ class _CoverImageFrame extends StatelessWidget {
     final placeholder = Container(
       width: width,
       height: height,
-      decoration: const BoxDecoration(color: Color(0x1A808080)),
+      decoration: BoxDecoration(
+        color: const Color(0x1A808080),
+        borderRadius: borderRadius,
+      ),
     );
 
     final provider = imageProvider;
     if (provider == null) return placeholder;
 
-    return Image(
+    final cover = Image(
       image: provider,
       width: width,
       height: height,
@@ -80,6 +85,16 @@ class _CoverImageFrame extends StatelessWidget {
             }
           : null,
     );
+
+    if (borderRadius == AppRadius.zeroAll) {
+      return cover;
+    } else {
+      return ClipRRect(
+        clipBehavior: .antiAlias,
+        borderRadius: borderRadius,
+        child: cover,
+      );
+    }
   }
 }
 
@@ -90,6 +105,7 @@ class LoadU8Cover extends StatefulWidget {
   final double? height;
   final bool useFrameBuilderCallback;
   final bool evictOnDispose;
+  final BorderRadiusGeometry borderRadius;
 
   const LoadU8Cover({
     super.key,
@@ -100,6 +116,7 @@ class LoadU8Cover extends StatefulWidget {
     double? height,
     this.useFrameBuilderCallback = true,
     this.evictOnDispose = true,
+    this.borderRadius = AppRadius.zeroAll,
   }) : assert(
          size == null || (width == null && height == null),
          '[参数冲突]：size 与 (width/height) 互斥，不可同时设置',
@@ -162,6 +179,7 @@ class _LoadU8CoverState extends State<LoadU8Cover> {
       width: widget.width,
       height: widget.height,
       useFrameBuilderCallback: widget.useFrameBuilderCallback,
+      borderRadius: widget.borderRadius,
     );
   }
 }
@@ -174,6 +192,7 @@ class LoadLocalOrNetCover extends StatefulWidget {
   final double? height;
   final bool useFrameBuilderCallback;
   final bool evictOnDispose;
+  final BorderRadiusGeometry borderRadius;
 
   const LoadLocalOrNetCover({
     super.key,
@@ -185,6 +204,7 @@ class LoadLocalOrNetCover extends StatefulWidget {
     double? height,
     this.useFrameBuilderCallback = true,
     this.evictOnDispose = true,
+    this.borderRadius = AppRadius.zeroAll,
   }) : assert(
          size == null || (width == null && height == null),
          '[参数冲突]：size 与 (width/height) 互斥，不可同时设置',
@@ -324,6 +344,7 @@ class _LoadLocalOrNetCoverState extends State<LoadLocalOrNetCover> {
       width: widget.width,
       height: widget.height,
       useFrameBuilderCallback: widget.useFrameBuilderCallback,
+      borderRadius: widget.borderRadius,
     );
   }
 }
@@ -335,6 +356,7 @@ class LoadNetworkCover extends StatefulWidget {
   final double? height;
   final bool useFrameBuilderCallback;
   final bool evictOnDispose;
+  final BorderRadiusGeometry borderRadius;
 
   const LoadNetworkCover({
     super.key,
@@ -345,6 +367,7 @@ class LoadNetworkCover extends StatefulWidget {
     double? height,
     this.useFrameBuilderCallback = true,
     this.evictOnDispose = true,
+    this.borderRadius = AppRadius.zeroAll,
   }) : assert(
          size == null || (width == null && height == null),
          '[参数冲突]：size 与 (width/height) 互斥，不可同时设置',
@@ -412,6 +435,7 @@ class _LoadNetworkCoverState extends State<LoadNetworkCover> {
       width: widget.width,
       height: widget.height,
       useFrameBuilderCallback: widget.useFrameBuilderCallback,
+      borderRadius: widget.borderRadius,
     );
   }
 }

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
+import '../../../core/constants/ui_constants.dart';
+
 abstract class PlayPageConstant {
   static const double ctrlBtnMinSize = 34.0;
   static const double thumbRadius = 10.0;
-  static const borderRadius = BorderRadius.all(Radius.circular(4));
+  static const borderRadius = BorderRadius.all(Radius.circular(AppRadius.xs));
   static const double audioCtrlBarHeight = 96;
   static const double spectrogramHeight = 100.0;
   static const double spectrogramWidthFactor = 0.94;

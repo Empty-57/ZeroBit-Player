@@ -57,14 +57,12 @@ class BlurWithCoverBackground extends StatelessWidget {
         : Theme.of(context).colorScheme.surface;
     return Stack(
       children: [
-        ClipRRect(
-          child: Container(
-            color:
-                _settingController.backgroundImagePath.value.isNotEmpty ||
-                    _settingController.useTransparencyBackground.value
-                ? null
-                : backgroundColor,
-          ),
+        Container(
+          color:
+              _settingController.backgroundImagePath.value.isNotEmpty ||
+                  _settingController.useTransparencyBackground.value
+              ? null
+              : backgroundColor,
         ),
 
         RepaintBoundary(

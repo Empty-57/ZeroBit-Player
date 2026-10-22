@@ -71,15 +71,13 @@ class _HeaderCover extends StatelessWidget {
       tag: args.title + args.operateArea,
       createRectTween: (begin, end) =>
           MaterialRectArcTween(begin: begin, end: end),
-      child: ClipRRect(
-        borderRadius: AppRadius.smAll,
-        child: SignalBuilder(
-          builder: (context) => LoadU8Cover(
-            data: args.controller.headCover.value,
-            coverResolutionFlag: CoverResolutionFlag.middle,
-            size: AudioListViewSpec.headerCoverSize,
-            evictOnDispose: false,
-          ),
+      child: SignalBuilder(
+        builder: (context) => LoadU8Cover(
+          data: args.controller.headCover.value,
+          coverResolutionFlag: CoverResolutionFlag.middle,
+          size: AudioListViewSpec.headerCoverSize,
+          evictOnDispose: false,
+          borderRadius: AppRadius.smAll,
         ),
       ),
     );
