@@ -17,6 +17,9 @@ class LrcLyricWidget extends StatelessWidget {
   final TextAlign textAlign;
   final double highLightAlpha;
   final int blurSigma;
+  final List<WordEntry>? furiganaWords;
+  final TextStyle? furiganaLyricStyle;
+  final bool showKana;
 
   const LrcLyricWidget({
     super.key,
@@ -26,6 +29,9 @@ class LrcLyricWidget extends StatelessWidget {
     required this.textAlign,
     this.highLightAlpha = LyricConstants.highLightAlpha,
     this.blurSigma = 0,
+    this.furiganaWords,
+    this.furiganaLyricStyle,
+    required this.showKana,
   });
 
   @override
@@ -37,9 +43,82 @@ class LrcLyricWidget extends StatelessWidget {
             ? style.color?.withValues(alpha: highLightAlpha)
             : style.color,
       ),
-      child: BlurText(text, textAlign: textAlign, blurSigma: blurSigma),
+      child: furiganaWords == null || furiganaWords!.isEmpty
+          ? BlurText(text, textAlign: textAlign, blurSigma: blurSigma)
+          : _buildFuriganaLine(
+              words: furiganaWords!,
+              showKana: showKana,
+              furiganaLyricStyle: furiganaLyricStyle ?? style,
+              blurSigma: blurSigma,
+              alignment: switch (textAlign) {
+                TextAlign.center => WrapAlignment.center,
+                TextAlign.right || TextAlign.end => WrapAlignment.end,
+                _ => WrapAlignment.start,
+              },
+              build: (_, entry) =>
+                  BlurText(entry.lyricWord, blurSigma: blurSigma),
+            ),
     );
   }
+}
+
+/// 按注音组排版，供逐行和逐字歌词复用。
+Widget _buildFuriganaLine({
+  required List<WordEntry> words,
+  required bool showKana,
+  required TextStyle furiganaLyricStyle,
+  required int blurSigma,
+  required WrapAlignment alignment,
+  required Widget Function(int, WordEntry) build,
+}) {
+  final lineChildren = <Widget>[];
+  var i = 0;
+  while (i < words.length) {
+    final entry = words[i];
+    final groupLen = entry.furigana.isNotEmpty && entry.furiganaGroupLength > 1
+        ? entry.furiganaGroupLength
+        : 1;
+    final end = (i + groupLen).clamp(0, words.length);
+    final children = [for (var j = i; j < end; j++) build(j, words[j])];
+    final wordWidget = children.length == 1
+        ? children.first
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: children,
+          );
+    lineChildren.add(
+      entry.furigana.isEmpty
+          ? wordWidget
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  alignment: Alignment.bottomCenter,
+                  clipBehavior: .none,
+                  child: showKana
+                      ? BlurText(
+                          entry.furigana,
+                          style: furiganaLyricStyle,
+                          textAlign: TextAlign.center,
+                          blurSigma: blurSigma,
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                wordWidget,
+              ],
+            ),
+    );
+    i = end;
+  }
+  return Wrap(
+    alignment: alignment,
+    crossAxisAlignment: WrapCrossAlignment.end,
+    children: lineChildren,
+  );
 }
 
 /// 单个音节在当前时刻的渲染状态
@@ -203,7 +282,7 @@ class KaraOkLyricWidget extends StatelessWidget {
 
   /// 构建静态行（非当前行且非上一行）
   Widget _buildStaticLine() {
-    return _buildFuriganaLine((wordIndex, entry) {
+    return _buildLine((wordIndex, entry) {
       return BlurText(
         entry.lyricWord,
         style: style,
@@ -214,61 +293,14 @@ class KaraOkLyricWidget extends StatelessWidget {
   }
 
   /// 构建注音行
-  Widget _buildFuriganaLine(Widget Function(int, WordEntry) build) {
-    final List<Widget> lineChildren = [];
-    int i = 0;
-
-    while (i < text.length) {
-      final entry = text[i];
-
-      final groupLen =
-          (entry.furigana.isNotEmpty && entry.furiganaGroupLength > 1)
-          ? entry.furiganaGroupLength
-          : 1;
-      final end = (i + groupLen).clamp(0, text.length);
-
-      final words = [for (int j = i; j < end; j++) build(j, text[j])];
-      final wordWidget = words.length == 1
-          ? words.first
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: words,
-            );
-
-      lineChildren.add(
-        entry.furigana.isEmpty
-            ? wordWidget
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOutCubic,
-                    alignment: Alignment.bottomCenter,
-                    clipBehavior: .none,
-                    child: showKana
-                        ? BlurText(
-                            entry.furigana,
-                            style: furiganaLyricStyle,
-                            textAlign: TextAlign.center,
-                            blurSigma: blurSigma,
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                  wordWidget,
-                ],
-              ),
-      );
-
-      i = end;
-    }
-
-    return Wrap(
+  Widget _buildLine(Widget Function(int, WordEntry) build) {
+    return _buildFuriganaLine(
+      words: text,
+      showKana: showKana,
+      furiganaLyricStyle: furiganaLyricStyle,
+      blurSigma: blurSigma,
       alignment: LyricConstants.lrcWrapAlign[lrcAlignment],
-      crossAxisAlignment: WrapCrossAlignment.end,
-      children: lineChildren,
+      build: build,
     );
   }
 
@@ -288,7 +320,7 @@ class KaraOkLyricWidget extends StatelessWidget {
       valueListenable: lyricController.currentWordIndexNotifier,
       builder: (_, currentIndex, _) {
         // 以下只会在“当前行”和“刚唱完的上一行”执行，保证了动画平滑且不被打断
-        return _buildFuriganaLine((wordIndex, entry) {
+        return _buildLine((wordIndex, entry) {
           final double dura = entry.duration;
           final bool isFloating = isCurrentLine && wordIndex <= currentIndex;
           final floatingDuration = dura * (1000 * 1.8) + 50;

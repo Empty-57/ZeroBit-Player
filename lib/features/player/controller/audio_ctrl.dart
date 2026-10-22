@@ -117,6 +117,7 @@ class AudioController {
   List<String> translateList = [];
   List<double> startTime = [];
   List<String> romaList = [];
+  List<List<WordEntry>?> furiganaWordsList = [];
 
   bool showLyricRender = false;
   String currentLyricType = LyricFormat.lrc;
@@ -296,12 +297,14 @@ class AudioController {
       translateList = parsedLrc.map((v) => v.translate).toList();
       startTime = parsedLrc.map((v) => v.start).toList();
       romaList = parsedLrc.map((v) => v.roma).toList();
+      furiganaWordsList = parsedLrc.map((v) => v.furiganaWords).toList();
     } else {
       currentLyricType = LyricFormat.lrc;
       lineTextList.clear();
       translateList.clear();
       startTime.clear();
       romaList.clear();
+      furiganaWordsList.clear();
     }
     _lyricController.springController?.clearState();
   }
@@ -387,6 +390,7 @@ class AudioController {
     translateList = [];
     startTime = [];
     romaList = [];
+    furiganaWordsList = [];
     currentCover = kTransparentImage;
     coverRevision.dispose();
     currentMs100.dispose();

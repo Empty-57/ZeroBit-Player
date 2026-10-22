@@ -217,6 +217,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                       lyricController: _lyricController,
                       lrcType: c.currentLyricType,
                       lineText: c.lineTextList[index],
+                      furiganaWords: c.furiganaWordsList[index],
                       translateText: c.translateList[index],
                       romaText: c.romaList[index],
                       startTime: c.startTime[index],
@@ -361,6 +362,7 @@ class _StaggeredLyricItem extends StatelessWidget {
 
   final String lrcType;
   final dynamic lineText;
+  final List<WordEntry>? furiganaWords;
   final String translateText;
   final String romaText;
   final double startTime;
@@ -390,6 +392,7 @@ class _StaggeredLyricItem extends StatelessWidget {
     required this.lyricController,
     required this.lrcType,
     required this.lineText,
+    required this.furiganaWords,
     required this.translateText,
     required this.romaText,
     required this.startTime,
@@ -480,6 +483,9 @@ class _StaggeredLyricItem extends StatelessWidget {
                 _createAnimatedScaleWidget(
                   child: LrcLyricWidget(
                     text: lineText as String,
+                    furiganaWords: furiganaWords,
+                    furiganaLyricStyle: furiganaLyricStyle,
+                    showKana: showKana,
                     style: lyricStyle,
                     isCurrent: isCurrent,
                     textAlign: textAlign,
@@ -513,6 +519,7 @@ class _StaggeredLyricItem extends StatelessWidget {
                   textAlign: textAlign,
                   highLightAlpha: LyricConstants.currentAlpha,
                   blurSigma: blurSigma,
+                  showKana: false,
                 ),
               ),
 
@@ -525,6 +532,7 @@ class _StaggeredLyricItem extends StatelessWidget {
                   textAlign: textAlign,
                   highLightAlpha: LyricConstants.currentAlpha,
                   blurSigma: blurSigma,
+                  showKana: false,
                 ),
               ),
               if (isCurrent || isPrevLine)

@@ -185,8 +185,6 @@ class JapaneseDetector {
   }
 }
 
-// ─────────────────────────── 日文逐字注音核心处理 ───────────────────────────
-
 /// 遍历逐字歌词行并注入假名。
 Future<void> _applyJapaneseFurigana(
   List<LyricEntry<dynamic>> entries,
@@ -195,6 +193,13 @@ Future<void> _applyJapaneseFurigana(
   // 解析期间复用副歌分析结果，结束后释放缓存。
   final cache = <String, List<JapanesePhoneticModel>>{};
   for (final entry in entries) {
+    final lyricText = entry.lyricText;
+    if (lyricText is! List<WordEntry> || lyricText.isEmpty) continue;
+    // 文件提供的唱法优先；已有注音的行无需再调用原生分析器。
+    if (extractInlineFurigana(lyricText) ||
+        lyricText.any((word) => word.furigana.isNotEmpty)) {
+      continue;
+    }
     if (!JapaneseDetector.shouldAnnotateLine(
       entry: entry,
       isSongJapanese: isSongJapanese,
@@ -202,8 +207,6 @@ Future<void> _applyJapaneseFurigana(
       continue;
     }
 
-    final lyricText = entry.lyricText;
-    if (lyricText is! List<WordEntry> || lyricText.isEmpty) continue;
     await _annotateWordsForLine(lyricText, cache);
   }
 }
@@ -445,6 +448,24 @@ Future<List<LyricEntry<dynamic>>> _mergeTranslations(
       mainEntries,
       JapaneseDetector.isJapaneseSong(mainEntries),
     );
+  } else {
+    for (final entry in mainEntries) {
+      final text = entry.lyricText;
+      if (text is! String) continue;
+      final words = [
+        for (final rune in text.runes)
+          WordEntry(
+            start: entry.start,
+            duration: 0,
+            lyricWord: String.fromCharCode(rune),
+            furigana: '',
+          ),
+      ];
+      if (extractInlineFurigana(words)) {
+        entry.furiganaWords = words;
+        entry.lyricText = words.map((word) => word.lyricWord).join();
+      }
+    }
   }
 
   return mainEntries;

@@ -14,12 +14,16 @@ class LyricEntry<T> implements TimedEntry {
   String translate;
   String roma;
 
+  /// 逐行歌词的文件内假名标注，不改变原有逐行时间轴。
+  List<WordEntry>? furiganaWords;
+
   LyricEntry({
     required this.start,
     this.nextTime = double.infinity,
     required this.lyricText,
     this.translate = '',
     this.roma = '',
+    this.furiganaWords,
   });
 
   @override

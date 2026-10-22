@@ -4,6 +4,11 @@ import 'japanese_analyzer.dart';
 final _kanji = RegExp(r'[\p{Script=Han}々〆〻]', unicode: true);
 final _multiKanji = RegExp(r'[\p{Script=Han}々〆〻]{2,}', unicode: true);
 final _separators = RegExp(r'^[\s\p{P}\p{S}]*$', unicode: true);
+final RegExp _inlineRuby = RegExp(
+  r'([\p{Script=Han}々〆〻]+)(?:\(([\u3041-\u3096\u3099-\u309E\u30A1-\u30FA\u30FC-\u30FE\uFF66-\uFF9F\s]+)\)|（([\u3041-\u3096\u3099-\u309E\u30A1-\u30FA\u30FC-\u30FE\uFF66-\uFF9F\s]+)）)',
+  unicode: true,
+);
+final RegExp _rubyWhitespace = RegExp(r'\s+');
 
 /// 等长规范化，先把全角字符转换成半角，再把日语片假名转换成平假名
 String _normalize(String text) => String.fromCharCodes(
@@ -12,6 +17,85 @@ String _normalize(String text) => String.fromCharCodes(
 
 /// 注音区间：原文 [start, end) 整体读作 reading，中间不可再切分。
 typedef _RubySpan = (int start, int end, String reading);
+
+/// 提取全/半角括号内的行内振假名；括号可跨越多个时间块。
+/// 只移除有效读音，保留正文时间轴，并把整词注音写到对应汉字组。
+bool extractInlineFurigana(List<WordEntry> words) {
+  final source = words.map((word) => word.lyricWord).join();
+  final matches = _inlineRuby.allMatches(source).toList();
+  if (matches.isEmpty) return false;
+
+  final spans = <_RubySpan>[];
+  final removals = <(int, int)>[];
+  var removedLength = 0;
+  for (final match in matches) {
+    final baseEnd = match.start + match[1]!.length;
+    final reading = (match[2] ?? match[3]!).replaceAll(_rubyWhitespace, '');
+    // 空白括号不是读音，不能删除原歌词。
+    if (reading.isEmpty) continue;
+    spans.add((match.start - removedLength, baseEnd - removedLength, reading));
+    removals.add((baseEnd, match.end));
+    removedLength += match.end - baseEnd;
+  }
+  if (spans.isEmpty) return false;
+
+  final retained = <WordEntry>[];
+  var offset = 0;
+  var removalIndex = 0;
+  for (final word in words) {
+    final text = word.lyricWord;
+    final end = offset + text.length;
+    final cleaned = StringBuffer();
+    var cursor = offset;
+    while (removalIndex < removals.length &&
+        removals[removalIndex].$2 <= offset) {
+      removalIndex++;
+    }
+    var index = removalIndex;
+    while (index < removals.length && removals[index].$1 < end) {
+      final (left, right) = removals[index];
+      if (left > cursor) {
+        cleaned.write(text.substring(cursor - offset, left - offset));
+      }
+      cursor = right.clamp(cursor, end);
+      if (right > end) break;
+      index++;
+    }
+    if (cursor < end) cleaned.write(text.substring(cursor - offset));
+    word.lyricWord = cleaned.toString();
+    if (text.isNotEmpty && word.lyricWord.isEmpty) {
+      // 标注的时间属于前面的正文，不让逐字高亮在括号处停顿。
+      if (retained.isNotEmpty) {
+        final previous = retained.last;
+        final extended = word.start + word.duration - previous.start;
+        if (extended > previous.duration) previous.duration = extended;
+      }
+    } else {
+      retained.add(word); // 保留原有空时间块，包括 LRC 行结束标记。
+    }
+    offset = end;
+  }
+  words
+    ..clear()
+    ..addAll(retained);
+
+  final starts = <int>[];
+  offset = 0;
+  for (var i = 0; i < words.length; i++) {
+    starts.add(offset);
+    offset += words[i].lyricWord.length;
+    words[i].nextTime = i + 1 < words.length
+        ? words[i + 1].start
+        : double.infinity;
+  }
+  _writeFurigana(
+    words,
+    starts,
+    _normalize(words.map((word) => word.lyricWord).join()),
+    spans,
+  );
+  return true;
+}
 
 /// 按原文定位整词读音，并把假名写回对应的时间块。
 ///
