@@ -260,7 +260,7 @@ class ControlBar extends StatelessWidget {
                     ),
                     Expanded(
                       child: SignalBuilder(
-                        builder: (context) => AnimatedOpacity(
+                        builder: (_) => AnimatedOpacity(
                           opacity: isBarHover.value ? 1.0 : 0.0,
                           duration: 150.ms,
                           child: Row(
@@ -284,7 +284,7 @@ class ControlBar extends StatelessWidget {
                         spacing: 8,
                         children: [
                           SignalBuilder(
-                            builder: (context) => GenIconBtn(
+                            builder: (_) => GenIconBtn(
                               tooltip:
                                   SettingController
                                       .lrcAlignmentMap[settingController
@@ -325,7 +325,7 @@ class ControlBar extends StatelessWidget {
                           ),
                           audioCtrlWidget.equalizerSet,
                           SignalBuilder(
-                            builder: (context) => GenIconBtn(
+                            builder: (_) => GenIconBtn(
                               tooltip: '桌面歌词',
                               icon: settingController.showDesktopLyrics.value
                                   ? PhosphorIconsFill.creditCard

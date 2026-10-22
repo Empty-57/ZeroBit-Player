@@ -141,7 +141,7 @@ class _LyricsRenderState extends State<LyricsRender> {
               ).copyWith(scrollbars: false),
               child: SignalBuilder(
                 dependencies: [_audioController.lyricRenderRevision],
-                builder: (context) {
+                builder: (_) {
                   final c = _audioController;
                   // 将 style 定义在SignalBuilder内以接收样式更改信号
                   final lyricsStyle = lrcStylePackage.lyricStyle;
@@ -269,7 +269,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                                       LyricConstants.controllerBarHeight) /
                                   2,
                             ),
-                            itemBuilder: (BuildContext context, int index) {
+                            itemBuilder: (_, int index) {
                               return creatLyricItem(index);
                             },
                           ),
@@ -282,11 +282,11 @@ class _LyricsRenderState extends State<LyricsRender> {
               bottom: 100,
               right: 8,
               child: SignalBuilder(
-                builder: (context) => AnimatedOpacity(
+                builder: (_) => AnimatedOpacity(
                   opacity: _isHover.value ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 150),
                   child: Column(
-                    spacing: 4.0,
+                    spacing: AppSpacing.xs,
                     children: [
                       GenIconBtn(
                         tooltip: '翻译',

@@ -209,7 +209,7 @@ class _CoverSide extends StatelessWidget {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: .end,
-                      spacing: AppSpacing.xs,
+                      spacing: 2,
                       children: [
                         hovered
                             ? _ScrollTextWidget(
@@ -281,7 +281,6 @@ class _PlayPageState extends State<PlayPage> {
   // 0: 默认（封面+歌词）, 1: 仅封面, 2: 封面+详情, 3: 仅歌词
   final _coverViewMode = signal(0);
   final _isBarHover = signal(false);
-  final _isCoverViewModeBarHover = signal(false);
 
   late final VoidCallback _fontSizeAddFn;
   late final VoidCallback _fontSizeDecFn;
@@ -417,7 +416,6 @@ class _PlayPageState extends State<PlayPage> {
     _playQueueScrollController.dispose();
     _coverViewMode.dispose();
     _isBarHover.dispose();
-    _isCoverViewModeBarHover.dispose();
     super.dispose();
   }
 
@@ -822,7 +820,7 @@ class _PlayPageState extends State<PlayPage> {
                         child: Stack(
                           children: [
                             SignalBuilder(
-                              builder: (context) {
+                              builder: (_) {
                                 final mode = _coverViewMode.value;
                                 final coverOffsetInHalf =
                                     (halfWidth - coverSize) / 2;
@@ -907,54 +905,50 @@ class _PlayPageState extends State<PlayPage> {
                             Positioned(
                               left: 8,
                               top: height / 2 - 36 * 4,
-                              child: MouseRegion(
-                                onEnter: (_) =>
-                                    _isCoverViewModeBarHover.value = true,
-                                onExit: (_) =>
-                                    _isCoverViewModeBarHover.value = false,
-                                child: SignalBuilder(
-                                  builder: (_) {
-                                    final isHover =
-                                        _isCoverViewModeBarHover.value;
-                                    return AnimatedOpacity(
-                                      opacity: isHover ? 1.0 : 0.2,
-                                      duration: AppDuration.fast,
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          _buildModeBtn(
-                                            '封面+歌词',
-                                            PhosphorIconsFill.textbox,
-                                            PhosphorIconsLight.textbox,
-                                            0,
-                                            _mixColor,
-                                          ),
-                                          _buildModeBtn(
-                                            '仅封面',
-                                            PhosphorIconsFill.image,
-                                            PhosphorIconsLight.image,
-                                            1,
-                                            _mixColor,
-                                          ),
-                                          _buildModeBtn(
-                                            '详情',
-                                            PhosphorIconsFill.note,
-                                            PhosphorIconsLight.note,
-                                            2,
-                                            _mixColor,
-                                          ),
-                                          _buildModeBtn(
-                                            '仅歌词',
-                                            PhosphorIconsFill.articleNyTimes,
-                                            PhosphorIconsLight.articleNyTimes,
-                                            3,
-                                            _mixColor,
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                ),
+                              child: HoverBuilder(
+                                builder: (_, hovered) {
+                                  return SignalBuilder(
+                                    builder: (_) {
+                                      return AnimatedOpacity(
+                                        opacity: hovered ? 1.0 : 0.2,
+                                        duration: AppDuration.fast,
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            _buildModeBtn(
+                                              '封面+歌词',
+                                              PhosphorIconsFill.textbox,
+                                              PhosphorIconsLight.textbox,
+                                              0,
+                                              _mixColor,
+                                            ),
+                                            _buildModeBtn(
+                                              '仅封面',
+                                              PhosphorIconsFill.image,
+                                              PhosphorIconsLight.image,
+                                              1,
+                                              _mixColor,
+                                            ),
+                                            _buildModeBtn(
+                                              '详情',
+                                              PhosphorIconsFill.note,
+                                              PhosphorIconsLight.note,
+                                              2,
+                                              _mixColor,
+                                            ),
+                                            _buildModeBtn(
+                                              '仅歌词',
+                                              PhosphorIconsFill.articleNyTimes,
+                                              PhosphorIconsLight.articleNyTimes,
+                                              3,
+                                              _mixColor,
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
                               ),
                             ),
 
@@ -963,7 +957,7 @@ class _PlayPageState extends State<PlayPage> {
                               left: 0,
                               bottom: 0,
                               child: SignalBuilder(
-                                builder: (context) {
+                                builder: (_) {
                                   final style =
                                       _settingController.spectrogramStyle.value;
                                   return switch (style) {

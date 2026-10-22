@@ -194,7 +194,7 @@ class _AudioListViewState extends State<AudioListView> {
       child: NotificationListener<ScrollEndNotification>(
         onNotification: _onScrollEnd,
         child: SignalBuilder(
-          builder: (context) {
+          builder: (_) {
             final isListView = _args.isListView;
             final itemCount = widget.controller.items.length;
 
