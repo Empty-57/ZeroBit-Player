@@ -86,13 +86,13 @@ class _FolderManagerDialog extends StatelessWidget {
     return AppDialog(
       title: '文件夹管理',
       content: SignalBuilder(
-        builder: (context) {
+        builder: (ctx) {
           final folders = _settingController.folders;
           if (folders.isEmpty) {
             return Center(
               child: Text(
                 '还没有添加任何文件夹',
-                style: context.createTextStyle(
+                style: ctx.createTextStyle(
                   size: AppFontSize.md,
                   opacity: AppAlpha.textTertiary,
                 ),
@@ -114,7 +114,7 @@ class _FolderManagerDialog extends StatelessWidget {
         },
       ),
       footer: SignalBuilder(
-        builder: (context) {
+        builder: (ctx) {
           final scanning = musicCacheController.currentScanAudio.value;
           if (scanning.isNotEmpty) {
             return Row(
@@ -129,7 +129,7 @@ class _FolderManagerDialog extends StatelessWidget {
                 Expanded(
                   child: Text(
                     '已扫描到：$scanning',
-                    style: context.createTextStyle(
+                    style: ctx.createTextStyle(
                       size: AppFontSize.sm,
                       opacity: AppAlpha.textTertiary,
                     ),
@@ -148,8 +148,8 @@ class _FolderManagerDialog extends StatelessWidget {
               icon: PhosphorIconsLight.plus,
               onPressed: () => unawaited(_addFolder()),
             ),
-            onCancel: () => Navigator.pop(context, false),
-            onConfirm: () => unawaited(_confirm(context)),
+            onCancel: () => Navigator.pop(ctx, false),
+            onConfirm: () => unawaited(_confirm(ctx)),
           );
         },
       ),
@@ -425,7 +425,7 @@ class _FontPickerDialogState extends State<_FontPickerDialog> {
           ),
           Expanded(
             child: SignalBuilder(
-              builder: (context) {
+              builder: (ctx) {
                 if (fontsList.isEmpty) {
                   return const Center(
                     child: SizedBox.square(
@@ -442,7 +442,7 @@ class _FontPickerDialogState extends State<_FontPickerDialog> {
                   return Center(
                     child: Text(
                       '未找到匹配字体',
-                      style: context.createTextStyle(
+                      style: ctx.createTextStyle(
                         size: AppFontSize.md,
                         opacity: AppAlpha.textTertiary,
                       ),

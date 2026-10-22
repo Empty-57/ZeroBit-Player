@@ -196,7 +196,7 @@ class _FoldersPreviewPageState extends State<FoldersPreviewPage> {
           _buildHeader(),
           Expanded(
             child: SignalBuilder(
-              builder: (context) => AnimatedSwitcher(
+              builder: (_) => AnimatedSwitcher(
                 duration: AppDuration.fast,
                 child: _isTreeView.value
                     ? _buildTreeView(
@@ -233,14 +233,14 @@ class _FoldersPreviewPageState extends State<FoldersPreviewPage> {
               ),
             ),
             SignalBuilder(
-              builder: (context) {
+              builder: (ctx) {
                 final total = _settingController.folders.length;
                 final scanned = _folderPathMap.value.length;
                 final suffix = scanned < total ? ' · 正在扫描 $scanned/$total' : '';
 
                 return Text(
                   '共 $total 个文件夹$suffix',
-                  style: context.createTextStyle(
+                  style: ctx.createTextStyle(
                     size: AppFontSize.md,
                     opacity: AppAlpha.textSecondary,
                     tabularFigures: true,

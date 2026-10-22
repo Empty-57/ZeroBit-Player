@@ -188,15 +188,15 @@ class _VolumeSetBtn extends StatelessWidget {
       controller: menuController,
       menuChildren: [
         SignalBuilder(
-          builder: (context) => Column(
+          builder: (ctx) => Column(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Text(
                 (settingController.volume.value * 100).round().toString(),
-                style: context.createTextStyle(
+                style: ctx.createTextStyle(
                   size: AppFontSize.md,
                   color: Theme.of(
-                    context,
+                    ctx,
                   ).colorScheme.primary.withValues(alpha: 0.6),
                 ),
               ),
@@ -244,7 +244,7 @@ class _VolumeSetBtn extends StatelessWidget {
             }
           },
           child: SignalBuilder(
-            builder: (context) => GenIconBtn(
+            builder: (_) => GenIconBtn(
               tooltip:
                   "音量：${(settingController.volume.value * 100).toStringAsFixed(0)}",
               icon: PhosphorIconsFill.speakerHigh,
@@ -376,7 +376,7 @@ class _PlayModeBtn extends StatelessWidget {
     final AudioController audioController = AudioController.instance;
     final SettingController settingController = SettingController.instance;
     return SignalBuilder(
-      builder: (context) {
+      builder: (_) {
         final mode = settingController.playMode.value;
         return GenIconBtn(
           tooltip: SettingController.playModeMap[mode] ?? "单曲循环",
@@ -429,7 +429,7 @@ class _EqualizerBtn extends StatelessWidget {
           spacing: 6,
           children: [
             SignalBuilder(
-              builder: (context) => Text(
+              builder: (_) => Text(
                 '${settingController.equalizerGains[v.$1].toStringAsFixed(1)}db',
                 style: fontStyle,
               ),
@@ -445,7 +445,7 @@ class _EqualizerBtn extends StatelessWidget {
                   ),
                 ),
                 child: SignalBuilder(
-                  builder: (context) => RotatedBox(
+                  builder: (_) => RotatedBox(
                     quarterTurns: 3,
                     child: Slider(
                       min: SettingController.minGain,
@@ -488,7 +488,7 @@ class _EqualizerBtn extends StatelessWidget {
             spacing: 16,
             children: [
               SignalBuilder(
-                builder: (context) {
+                builder: (_) {
                   // 显式读取 .value 建立依赖，避免预设为空时不产生任何读取
                   final equalizerGains = settingController.equalizerGains.value;
                   return Wrap(

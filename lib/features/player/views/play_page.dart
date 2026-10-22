@@ -127,7 +127,7 @@ class _CoverSide extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SignalBuilder(
-            builder: (context) {
+            builder: (_) {
               final useTilt = SettingController.instance.useTilt3DCover.value;
               final isPlaying = audioController.currentState.value == .playing;
 
@@ -549,11 +549,11 @@ class _PlayPageState extends State<PlayPage> {
       ),
       divider,
       SignalBuilder(
-        builder: (context) {
+        builder: (ctx) {
           final album = _audioController.currentMetadata.value.album;
           final albumWithLetter =
               _musicCacheController.getLetter(str: album) + album;
-          final router = GoRouter.of(context);
+          final router = GoRouter.of(ctx);
           return _createMenuBtn(
             fn: () {
               final extra = {
@@ -574,13 +574,13 @@ class _PlayPageState extends State<PlayPage> {
         },
       ),
       SignalBuilder(
-        builder: (context) {
+        builder: (ctx) {
           final artistList = _audioController.currentMetadata.value.artist
               .split('/');
           final artistFirst = artistList.first;
           final artistFirstWithLetter =
               _musicCacheController.getLetter(str: artistFirst) + artistFirst;
-          final router = GoRouter.of(context);
+          final router = GoRouter.of(ctx);
 
           if (artistList.length == 1) {
             return _createMenuBtn(

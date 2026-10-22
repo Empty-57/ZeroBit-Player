@@ -13,7 +13,7 @@ class WindowBackgroundImage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Positioned.fill(
       child: SignalBuilder(
-        builder: (context) {
+        builder: (_) {
           final path = SettingController.instance.backgroundImagePath.value;
           if (path.isEmpty ||
               SettingController.instance.useTransparencyBackground.value) {
@@ -56,14 +56,14 @@ class WindowBackgroundOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Positioned.fill(
       child: SignalBuilder(
-        builder: (context) {
+        builder: (ctx) {
           final hasImage =
               SettingController.instance.backgroundImagePath.value.isNotEmpty;
           final opacity =
               SettingController.instance.backgroundImageOpacity.value;
 
           return ColoredBox(
-            color: Theme.of(context).colorScheme.surface.withValues(
+            color: Theme.of(ctx).colorScheme.surface.withValues(
               alpha:
                   hasImage ||
                       SettingController.instance.useTransparencyBackground.value

@@ -66,7 +66,7 @@ class _LibrarySearchDialogState extends State<_LibrarySearchDialog> {
           ),
           Expanded(
             child: SignalBuilder(
-              builder: (context) {
+              builder: (_) {
                 final results = _cacheController.searchResult.value;
                 if (results.isEmpty) {
                   return const AppEmptyState(

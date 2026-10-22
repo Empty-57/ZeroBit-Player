@@ -113,7 +113,7 @@ class InterludeWidget extends StatelessWidget {
     ];
 
     return SignalBuilder(
-      builder: (context) {
+      builder: (_) {
         final bool show = lyricController.showInterlude.value;
         final bool isVisible = isCurrent && show;
 

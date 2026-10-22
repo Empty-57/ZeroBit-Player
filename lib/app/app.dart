@@ -308,7 +308,7 @@ class MainFrame extends StatelessWidget {
     // issue #175041 / #192689 / #193410 / #193715，以及 PR #190903
     return ExcludeSemantics(
       child: SignalBuilder(
-        builder: (context) => MaterialApp.router(
+        builder: (_) => MaterialApp.router(
           routerConfig: _router,
           theme: themeService.lightTheme,
           darkTheme: themeService.darkTheme,

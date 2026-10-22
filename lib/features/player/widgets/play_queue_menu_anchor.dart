@@ -136,9 +136,9 @@ class _PlayQueueMenuAnchorState extends State<PlayQueueMenuAnchor> {
                     ),
                   ),
                   SignalBuilder(
-                    builder: (context) => Text(
+                    builder: (ctx) => Text(
                       "${_filteredList.value.length} 首",
-                      style: context.createTextStyle(
+                      style: ctx.createTextStyle(
                         size: AppFontSize.sm,
                         color: theme.colorScheme.onSurface.withValues(
                           alpha: 0.5,
@@ -159,7 +159,7 @@ class _PlayQueueMenuAnchorState extends State<PlayQueueMenuAnchor> {
                     ),
                     icon: Icons.search,
                     suffixIcon: SignalBuilder(
-                      builder: (context) {
+                      builder: (_) {
                         if (_searchQuery.value.isEmpty) {
                           return const SizedBox.shrink();
                         }
@@ -181,14 +181,14 @@ class _PlayQueueMenuAnchorState extends State<PlayQueueMenuAnchor> {
               ),
               Expanded(
                 child: SignalBuilder(
-                  builder: (context) {
+                  builder: (ctx) {
                     final items = _filteredList.value;
 
                     if (items.isEmpty) {
                       return Center(
                         child: Text(
                           "无匹配歌曲",
-                          style: context.createTextStyle(
+                          style: ctx.createTextStyle(
                             size: AppFontSize.md,
                             color: theme.colorScheme.onSurface,
                           ),

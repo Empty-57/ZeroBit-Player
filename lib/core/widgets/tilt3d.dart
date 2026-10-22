@@ -109,7 +109,7 @@ class _Tilt3DState extends State<Tilt3D> {
             onExit: _onExit,
             cursor: SystemMouseCursors.basic,
             child: SignalBuilder(
-              builder: (context) {
+              builder: (_) {
                 final target = _targetData.value;
                 final isHovering = _isHover.value;
 

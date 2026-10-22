@@ -42,9 +42,9 @@ class AudioPageHeader extends StatelessWidget {
                 maxLines: 1,
               ),
               SignalBuilder(
-                builder: (context) => Text(
+                builder: (ctx) => Text(
                   '共 ${args.controller.items.length} 首',
-                  style: context.createTextStyle(
+                  style: ctx.createTextStyle(
                     size: AppFontSize.md,
                     opacity: AppAlpha.textSecondary,
                     tabularFigures: true,
@@ -72,7 +72,7 @@ class _HeaderCover extends StatelessWidget {
       createRectTween: (begin, end) =>
           MaterialRectArcTween(begin: begin, end: end),
       child: SignalBuilder(
-        builder: (context) => LoadU8Cover(
+        builder: (_) => LoadU8Cover(
           data: args.controller.headCover.value,
           coverResolutionFlag: CoverResolutionFlag.middle,
           size: AudioListViewSpec.headerCoverSize,

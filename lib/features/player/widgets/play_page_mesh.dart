@@ -20,7 +20,7 @@ class PlayPageMesh extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SignalBuilder(
-      builder: (context) => MemoryManager.tickerEnable.value
+      builder: (_) => MemoryManager.tickerEnable.value
           ? AnimatedMeshGradient(
               colors: AudioController.instance.coverPalette.value,
               options: _meshOptions,

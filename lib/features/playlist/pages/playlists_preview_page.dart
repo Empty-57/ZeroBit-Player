@@ -74,9 +74,9 @@ class _Header extends StatelessWidget {
               ),
             ),
             SignalBuilder(
-              builder: (context) => Text(
+              builder: (ctx) => Text(
                 '共 ${controller.items.length} 个歌单',
-                style: context.createTextStyle(
+                style: ctx.createTextStyle(
                   size: AppFontSize.md,
                   opacity: AppAlpha.textSecondary,
                   tabularFigures: true,
@@ -106,7 +106,7 @@ class _PlayListView extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = UserPlayListController.instance;
     return SignalBuilder(
-      builder: (context) {
+      builder: (ctx) {
         final items = controller.items;
         if (items.isEmpty) {
           return const AppEmptyState(
@@ -115,8 +115,8 @@ class _PlayListView extends StatelessWidget {
           );
         }
 
-        final titleStyle = context.createTextStyle(size: AppFontSize.md);
-        final subStyle = context.createTextStyle(
+        final titleStyle = ctx.createTextStyle(size: AppFontSize.md);
+        final subStyle = ctx.createTextStyle(
           size: AppFontSize.sm,
           opacity: AppAlpha.textTertiary,
         );

@@ -266,7 +266,7 @@ class _NetworkCoverDialogState extends State<_NetworkCoverDialog> {
                 children: [
                   for (final key in SettingController.apiMap.keys) ...[
                     SignalBuilder(
-                      builder: (context) => AppButton.secondary(
+                      builder: (_) => AppButton.secondary(
                         label: SettingController.apiMap[key] ?? 'QQ音乐',
                         selected: _controller.apiIndex.value == key,
                         onPressed: () => batch(() {
@@ -280,7 +280,7 @@ class _NetworkCoverDialogState extends State<_NetworkCoverDialog> {
               ),
               Expanded(
                 child: SignalBuilder(
-                  builder: (context) {
+                  builder: (_) {
                     return _controller.searchResults.value.map(
                       data: (data) {
                         if (data.isEmpty) {

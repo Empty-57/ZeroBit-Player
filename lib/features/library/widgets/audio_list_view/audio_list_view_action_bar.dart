@@ -367,7 +367,7 @@ class _SortButtonState extends State<_SortButton> {
           ),
       ],
       child: SignalBuilder(
-        builder: (context) {
+        builder: (_) {
           final label =
               SettingController.sortType[widget.args.sortType] ?? '未指定';
           return _ActionButton(

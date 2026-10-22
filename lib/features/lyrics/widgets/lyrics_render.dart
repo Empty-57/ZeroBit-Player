@@ -443,7 +443,7 @@ class _StaggeredLyricItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SignalBuilder(
-      builder: (context) {
+      builder: (_) {
         final int currentLineIndex = lyricController.currentLineIndex.value;
         final int distance = (currentLineIndex - index).abs();
         final renderWidget = distance <= lyricController.visibleItemCount;

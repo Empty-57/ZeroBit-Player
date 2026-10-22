@@ -34,11 +34,11 @@ class PlayBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SignalBuilder(
-      builder: (context) => AnimatedPositioned(
+      builder: (ctx) => AnimatedPositioned(
         duration: PlayBarSpec.repositionDuration,
         curve: AppCurve.standard,
         bottom: PlayBarSpec.bottomInset,
-        right: _rightOffset(context),
+        right: _rightOffset(ctx),
         child: const Column(
           mainAxisSize: MainAxisSize.min,
           children: [_SeekSlider(), _PlayBarBody()],

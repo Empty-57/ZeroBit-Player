@@ -235,7 +235,7 @@ class ControlBar extends StatelessWidget {
                       height: PlayPageConstant.audioCtrlBarHeight - 24,
                       child: RepaintBoundary(
                         child: SignalBuilder(
-                          builder: (context) => Column(
+                          builder: (_) => Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [

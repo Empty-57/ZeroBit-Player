@@ -50,11 +50,11 @@ class BlurWithCoverBackground extends StatelessWidget {
   Widget build(BuildContext context) =>
       SignalBuilder(builder: _buildBackground);
 
-  Widget _buildBackground(BuildContext context) {
+  Widget _buildBackground(BuildContext ctx) {
     final useMesh = _settingController.useMesh.value && meshEnable;
     final backgroundColor = onlyDarkMode
         ? ThemeService.instance.darkTheme.colorScheme.surface
-        : Theme.of(context).colorScheme.surface;
+        : Theme.of(ctx).colorScheme.surface;
     return Stack(
       children: [
         Container(
@@ -78,7 +78,7 @@ class BlurWithCoverBackground extends StatelessWidget {
             }
 
             return SignalBuilder(
-              builder: (context) {
+              builder: (_) {
                 final String themeMode = _settingController.themeMode.value;
                 final Uint8List coverBytes = cover.value;
 

@@ -410,10 +410,10 @@ class _LyricsPreview extends StatelessWidget {
             borderRadius: AppRadius.mdAll,
           ),
           child: SignalBuilder(
-            builder: (context) {
+            builder: (ctx) {
               final isDark = _setting.themeMode.value == 'dark';
               final fontSize = _setting.lrcFontSize.value.toDouble();
-              final baseStyle = context.createTextStyle(
+              final baseStyle = ctx.createTextStyle(
                 size: fontSize,
                 color: colorScheme.onSecondaryContainer.withValues(
                   alpha: isDark ? 0.2 : 0.3,
