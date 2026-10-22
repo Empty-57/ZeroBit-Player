@@ -12,6 +12,7 @@ abstract class LyricConstants {
   static const double ctrlBtnMinSize = 32.0;
   static const double floatingY = -2.0;
   static const double rippleThreshold = 1.5;
+  static const double rippleThresholdWindow = 3.0;
   static const double ripplesScaleMin = 1.1;
   static const double ripplesScaleExtra = 0.1;
   static const double glowAlphaMin = 0.2;

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:zerobit_player/features/lyrics/controller/lyric_ctrl.dart';
 import 'package:zerobit_player/features/lyrics/widgets/blur_widget.dart';
@@ -41,6 +42,139 @@ class LrcLyricWidget extends StatelessWidget {
   }
 }
 
+/// 单个音节在当前时刻的渲染状态
+enum _WordPhase {
+  /// 当前行，正在唱的字
+  singing,
+
+  /// 当前行，已经唱过的字
+  sung,
+
+  /// 当前行，还没唱到的字
+  pending,
+
+  /// 上一行
+  previous,
+}
+
+/// 渲染单个音节
+class _WordSpan extends StatelessWidget {
+  const _WordSpan({
+    required this.entry,
+    required this.wordIndex,
+    required this.phase,
+    required this.gradientColors,
+    required this.style,
+    required this.strutStyle,
+    required this.blurSigma,
+    required this.wordProgress,
+  });
+
+  final WordEntry entry;
+  final int wordIndex;
+  final _WordPhase phase;
+  final List<Color> gradientColors;
+  final TextStyle style;
+  final StrutStyle strutStyle;
+  final int blurSigma;
+  final ValueListenable<double> wordProgress;
+
+  @override
+  Widget build(BuildContext context) {
+    return switch (phase) {
+      _WordPhase.singing => _buildSinging(),
+      _WordPhase.sung => _buildFading(
+        begin: style.color!.withValues(alpha: LyricConstants.highLightAlpha),
+        end: style.color!.withValues(alpha: LyricConstants.highLightAlpha),
+      ),
+      _WordPhase.pending => _buildFading(
+        begin: style.color!.withValues(
+          alpha: LyricConstants.notPlayedDarkAlpha,
+        ),
+        end: style.color!.withValues(alpha: LyricConstants.currentAlpha),
+      ),
+      _WordPhase.previous => _buildFading(
+        begin: style.color!.withValues(alpha: LyricConstants.highLightAlpha),
+        end: style.color!,
+      ),
+    };
+  }
+
+  /// 正在唱的字
+  Widget _buildSinging() {
+    final double dura = entry.duration;
+
+    final List<Color> currentGradient = [
+      gradientColors[0],
+      gradientColors[1],
+      style.color!.withValues(
+        alpha: wordIndex == 0
+            ? LyricConstants.currentAlpha - 0.15
+            : LyricConstants.currentAlpha,
+      ), // 视觉欺骗，防止颜色突变
+    ];
+
+    final translateGradientScale = dura >= 1.0 ? 3.0 : 2.0;
+
+    double ripplesScaleMax = LyricConstants.ripplesScaleMin;
+    double glowAlphaMax = LyricConstants.glowAlphaMin;
+
+    if (dura >= LyricConstants.rippleThreshold) {
+      // 将词的持续时间 dura 在 [LyricConstants.rippleThreshold, LyricConstants.rippleThresholdWindow] 区间内归一化为 [0.0, 1.0] 的比例值
+      // 时间参数，根据dura的大小影响缩放和辉光效果的最大值
+      final effectRatio =
+          ((dura - LyricConstants.rippleThreshold) /
+                  (LyricConstants.rippleThresholdWindow -
+                      LyricConstants.rippleThreshold))
+              .clamp(0.0, 1.0);
+      ripplesScaleMax += LyricConstants.ripplesScaleExtra * effectRatio;
+      glowAlphaMax += LyricConstants.glowAlphaExtra * effectRatio;
+    }
+
+    return HighlightedWord(
+      text: entry.lyricWord,
+      progressListenable: wordProgress,
+      style: style,
+      strutStyle: strutStyle,
+      gradientColors: currentGradient,
+      duration: dura,
+      ripplesScaleMax: ripplesScaleMax,
+      glowAlphaMax: glowAlphaMax,
+      translateGradientScale: translateGradientScale,
+    );
+  }
+
+  /// 非正在唱的字
+  Widget _buildFading({required Color begin, required Color end}) {
+    return TweenAnimationBuilder<Color?>(
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeInOut,
+      tween: ColorTween(begin: begin, end: end),
+      builder: (_, color, _) {
+        return BlurText(
+          entry.lyricWord,
+          style: style.copyWith(color: color),
+          strutStyle: strutStyle,
+          blurSigma: blurSigma,
+        );
+      },
+    );
+
+    // 这套方案的问题：在歌词换行的时候最后一个词偶尔会直接跳变为透明色 但性能较优
+    // return AnimatedDefaultTextStyle(
+    //   key: ValueKey('word_$wordIndex'),
+    //   duration: const Duration(milliseconds: 600),
+    //   curve: Curves.easeInOut,
+    //   style: style.copyWith(color: end),
+    //   child: BlurText(
+    //     entry.lyricWord,
+    //     strutStyle: strutStyle,
+    //     blurSigma: blurSigma,
+    //   ),
+    // );
+  }
+}
+
 class KaraOkLyricWidget extends StatelessWidget {
   final List<WordEntry> text;
   final TextStyle style;
@@ -77,109 +211,6 @@ class KaraOkLyricWidget extends StatelessWidget {
         blurSigma: blurSigma,
       );
     });
-  }
-
-  /// 构建单字内容组件（负责高亮渐变、涟漪、颜色过渡）
-  Widget _buildWordWidget({
-    required int wordIndex,
-    required int currentIndex,
-    required WordEntry entry,
-    required List<Color> gradientColors,
-  }) {
-    final word = entry.lyricWord;
-    final double dura = entry.duration;
-
-    if (isCurrentLine && wordIndex == currentIndex) {
-      final List<Color> currentGradient = [
-        gradientColors[0],
-        gradientColors[1],
-        style.color!.withValues(
-          alpha: wordIndex == 0
-              ? LyricConstants.currentAlpha - 0.15
-              : LyricConstants.currentAlpha,
-        ),
-      ]; // 视觉欺骗，防止颜色突变
-
-      final translateGradientScale = dura >= 1.0 ? 3.0 : 2.0; // 动态改变渐变区宽度
-      double ripplesScaleMax = LyricConstants.ripplesScaleMin;
-      double glowAlphaMax = LyricConstants.glowAlphaMin;
-
-      if (dura >= LyricConstants.rippleThreshold) {
-        // 将词的持续时间 dura 在 [LyricConstants.rippleThreshold, 3] 区间内归一化为 [0.0, 1.0] 的比例值
-        // 时间参数，根据dura的大小影响缩放和辉光效果的最大值
-        final effectRatio =
-            (((dura - LyricConstants.rippleThreshold) /
-                    (3 - LyricConstants.rippleThreshold))) // 最大观测长度 3s
-                .clamp(0.0, 1.0);
-        ripplesScaleMax += LyricConstants.ripplesScaleExtra * effectRatio;
-        glowAlphaMax += LyricConstants.glowAlphaExtra * effectRatio;
-      }
-
-      // 正在唱的字
-      return HighlightedWord(
-        text: word,
-        progressListenable: lyricController.wordProgress,
-        style: style,
-        strutStyle: strutStyle,
-        gradientColors: currentGradient,
-        duration: dura,
-        ripplesScaleMax: ripplesScaleMax,
-        glowAlphaMax: glowAlphaMax,
-        translateGradientScale: translateGradientScale,
-      );
-    } else {
-      // 目标颜色
-      Color targetColor;
-      Color beginColor;
-
-      if (isCurrentLine) {
-        if (wordIndex < currentIndex) {
-          targetColor = style.color!.withValues(
-            alpha: LyricConstants.highLightAlpha,
-          );
-          beginColor = targetColor; // 已经唱过的字，保持高亮
-        } else {
-          targetColor = style.color!.withValues(
-            alpha: LyricConstants.currentAlpha,
-          );
-          beginColor = style.color!.withValues(
-            alpha: LyricConstants.notPlayedDarkAlpha,
-          ); // 还没唱到的字，从暗色过渡到稍微高亮的颜色
-        }
-      } else {
-        targetColor = style.color!;
-        beginColor = style.color!.withValues(
-          alpha: LyricConstants.highLightAlpha,
-        ); // 刚唱完的上一行，最终褪回普通颜色
-      }
-
-      return TweenAnimationBuilder<Color?>(
-        duration: const Duration(milliseconds: 600),
-        curve: Curves.easeInOut,
-        tween: ColorTween(begin: beginColor, end: targetColor),
-        builder: (_, color, _) {
-          return BlurText(
-            word,
-            style: style.copyWith(color: color),
-            strutStyle: strutStyle,
-            blurSigma: blurSigma,
-          );
-        },
-      );
-
-      // 这套方案的问题： 在歌词换行的时候最后一个词偶尔会直接跳变为透明色 但性能较优
-      // wordWidget = AnimatedDefaultTextStyle(
-      //   key: ValueKey('word_$wordIndex'),
-      //   duration: const Duration(milliseconds: 600),
-      //   curve: Curves.easeInOut,
-      //   style: style.copyWith(color: targetColor),
-      //   child: BlurableText(
-      //     word,
-      //     strutStyle: strutStyle,
-      //     blurSigma: blurSigma,
-      //   ),
-      // );
-    }
   }
 
   /// 构建注音行
@@ -268,16 +299,27 @@ class KaraOkLyricWidget extends StatelessWidget {
             isFloating: isFloating,
             duration: isFloating ? floatingDuration : 600,
             delay: isFloating ? floatingDelay : 0,
-            child: _buildWordWidget(
-              wordIndex: wordIndex,
-              currentIndex: currentIndex,
+            child: _WordSpan(
               entry: entry,
+              wordIndex: wordIndex,
+              phase: _phaseOf(wordIndex, currentIndex),
               gradientColors: gradientColors,
+              style: style,
+              strutStyle: strutStyle,
+              blurSigma: blurSigma,
+              wordProgress: lyricController.wordProgress,
             ),
           );
         });
       },
     );
+  }
+
+  _WordPhase _phaseOf(int wordIndex, int currentIndex) {
+    if (!isCurrentLine) return _WordPhase.previous;
+    if (wordIndex < currentIndex) return _WordPhase.sung;
+    if (wordIndex == currentIndex) return _WordPhase.singing;
+    return _WordPhase.pending;
   }
 }
 
