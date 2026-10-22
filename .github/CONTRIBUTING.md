@@ -53,15 +53,15 @@
 
 PR 标题使用 `type(scope): 简要说明`；`scope` 可省略，说明可用中文。Git commit 信息建议采用相同格式，清楚表达每次提交的目的。
 
-| 类型 | 用途 | 示例 |
-| --- | --- | --- |
-| `fix` | Bug 修复 | `fix(audio): 修复切换输出设备后无声` |
-| `feat` | 新功能或功能增强 | `feat(library): 添加音频格式筛选` |
-| `refactor` | 不改变对外行为的重构 | `refactor(lyrics): 简化歌词解析流程` |
-| `perf` | 性能优化 | `perf(lyrics): 减少滚动时的重复布局` |
-| `docs` | 文档与模板 | `docs: 完善贡献指南` |
-| `test` | 测试改动 | `test(lyrics): 补充歌词解析边界用例` |
-| `chore` | 依赖、配置或开发工具维护 | `chore: 更新开发工具配置` |
+| 类型       | 用途                     | 示例                                 |
+|------------|--------------------------|--------------------------------------|
+| `fix`      | Bug 修复                 | `fix(audio): 修复切换输出设备后无声` |
+| `feat`     | 新功能或功能增强         | `feat(library): 添加音频格式筛选`    |
+| `refactor` | 不改变对外行为的重构     | `refactor(lyrics): 简化歌词解析流程` |
+| `perf`     | 性能优化                 | `perf(lyrics): 减少滚动时的重复布局` |
+| `docs`     | 文档与模板               | `docs: 完善贡献指南`                 |
+| `test`     | 测试改动                 | `test(lyrics): 补充歌词解析边界用例` |
+| `chore`    | 依赖、配置或开发工具维护 | `chore: 更新开发工具配置`            |
 
 ### PR 描述与改动要求
 
@@ -76,14 +76,14 @@ PR 标题使用 `type(scope): 简要说明`；`scope` 可省略，说明可用�
 
 在仓库根目录执行与改动有关的检查，并在 PR 中记录命令、结果和手动验证环境。下面的路径占位符需要替换成实际修改的文件或目录。
 
-| 改动范围 | 建议验证 |
-| --- | --- |
-| 所有改动 | `git diff --check`；检查提交范围和文档链接 |
-| Dart / Flutter | `dart format <修改的文件或目录>`；`flutter analyze` |
-| Rust | `cargo fmt --manifest-path rust/Cargo.toml -- --check`；`cargo check --manifest-path rust/Cargo.toml` |
-| Rust API / FRB 绑定 | `flutter_rust_bridge_codegen generate`；再检查 Dart 与 Rust |
-| 新增或修改的自动化测试 | `flutter test <相关测试路径>` 或 `cargo test --manifest-path rust/Cargo.toml <相关测试名>` |
+| 改动范围                         | 建议验证                                                                                                      |
+|----------------------------------|---------------------------------------------------------------------------------------------------------------|
+| 所有改动                         | `git diff --check`；检查提交范围和文档链接                                                                    |
+| Dart / Flutter                   | `dart format <修改的文件或目录>`；`flutter analyze`                                                           |
+| Rust                             | `cargo fmt --manifest-path rust/Cargo.toml -- --check`；`cargo check --manifest-path rust/Cargo.toml`         |
+| Rust API / FRB 绑定              | `flutter_rust_bridge_codegen generate`；再检查 Dart 与 Rust                                                   |
+| 新增或修改的自动化测试           | `flutter test <相关测试路径>` 或 `cargo test --manifest-path rust/Cargo.toml <相关测试名>`                    |
 | 播放、原生库、系统集成或桌面歌词 | 在 Windows 上配置 README 所列原生依赖，运行并验证受影响流程；涉及构建时运行 `flutter build windows --release` |
-| 文档或 GitHub 模板 | 检查 Markdown 链接、YAML 语法及表单字段，无需运行应用测试 |
+| 文档或 GitHub 模板               | 检查 Markdown 链接、YAML 语法及表单字段，无需运行应用测试                                                     |
 
 Bug 修复优先补充能防止问题再次出现的测试；不适合自动化的场景请提供手动验证步骤。仅修改文档无需新增测试。无法执行某项检查时，明确说明原因和未验证范围，不要将未运行的检查标为通过。
