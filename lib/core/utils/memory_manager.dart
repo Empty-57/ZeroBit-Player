@@ -106,8 +106,9 @@ class MemoryManager {
     _trimTimer = Timer(_maxTrimWaitDuration, () {
       _trimTimer = null;
       if (_toMB(_currentRss) < _trimLimitOnBlur) {
-        trimMemory(label);
+        return;
       }
+      unawaited(trimMemory(label));
     });
   }
 
