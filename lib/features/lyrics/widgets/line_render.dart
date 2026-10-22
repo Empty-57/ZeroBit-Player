@@ -295,7 +295,6 @@ class KaraOkLyricWidget extends StatelessWidget {
           final floatingDelay = dura * (1000 * 0.2);
 
           return _SyllableFloatWidget(
-            key: ValueKey('float_${entry.lyricWord}_$wordIndex'),
             isFloating: isFloating,
             duration: isFloating ? floatingDuration : 600,
             delay: isFloating ? floatingDelay : 0,
