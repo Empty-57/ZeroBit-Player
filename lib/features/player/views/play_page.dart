@@ -13,6 +13,7 @@ import 'package:zerobit_player/core/platform/blur_background.dart';
 import 'package:zerobit_player/core/platform/window_ctrl_bar.dart';
 import 'package:zerobit_player/core/theme/style_manager.dart';
 import 'package:zerobit_player/core/theme/theme_manager.dart';
+import 'package:zerobit_player/core/widgets/app_interaction_widget.dart';
 import 'package:zerobit_player/core/widgets/audio_ctrl_btn.dart';
 import 'package:zerobit_player/core/widgets/covers.dart';
 import 'package:zerobit_player/core/widgets/scroll_text.dart';
@@ -96,7 +97,7 @@ class _ScrollTextWidget extends StatelessWidget {
   }
 }
 
-class _CoverSide extends StatefulWidget {
+class _CoverSide extends StatelessWidget {
   final double coverSize;
   final TextStyle titleStyle;
   final TextStyle subTitleStyle;
@@ -108,32 +109,19 @@ class _CoverSide extends StatefulWidget {
   });
 
   @override
-  State<_CoverSide> createState() => _CoverSideState();
-}
-
-class _CoverSideState extends State<_CoverSide> {
-  final _isHeadHover = signal(false);
-
-  @override
-  void dispose() {
-    _isHeadHover.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final audioController = AudioController.instance;
     final titleStrut = StrutStyle(
-      fontSize: widget.titleStyle.fontSize,
+      fontSize: titleStyle.fontSize,
       forceStrutHeight: true,
     );
     final subTitleStrut = StrutStyle(
-      fontSize: widget.subTitleStyle.fontSize,
+      fontSize: subTitleStyle.fontSize,
       forceStrutHeight: true,
     );
 
     return SizedBox(
-      width: widget.coverSize,
+      width: coverSize,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,7 +153,7 @@ class _CoverSideState extends State<_CoverSide> {
                       key: ValueKey(audioController.coverRevision.value),
                       data: audioController.currentCover,
                       coverResolutionFlag: CoverResolutionFlag.big,
-                      size: widget.coverSize,
+                      size: coverSize,
                       evictOnDispose: false,
                     ),
                   ),
@@ -176,9 +164,9 @@ class _CoverSideState extends State<_CoverSide> {
 
               if (useTilt) {
                 coverWidget = Tilt3D(
-                  width: widget.coverSize,
-                  height: widget.coverSize,
-                  glareColor: widget.titleStyle.color ?? Colors.white,
+                  width: coverSize,
+                  height: coverSize,
+                  glareColor: titleStyle.color ?? Colors.white,
                   child: innerContent,
                 );
               } else {
@@ -208,54 +196,54 @@ class _CoverSideState extends State<_CoverSide> {
             },
           ),
           Container(
-            width: widget.coverSize - 24,
+            width: coverSize - 24,
             margin: const EdgeInsets.only(top: 24),
-            child: MouseRegion(
-              onEnter: (_) => _isHeadHover.value = true,
-              onExit: (_) => _isHeadHover.value = false,
-              child: SignalBuilder(
-                builder: (context) {
-                  final meta = audioController.currentMetadata.value;
-                  final title = meta.title;
-                  final artistAndAlbum = "${meta.artist} - ${meta.album}";
-                  final isHover = _isHeadHover.value;
+            child: HoverBuilder(
+              builder: (_, hovered) {
+                return SignalBuilder(
+                  builder: (_) {
+                    final meta = audioController.currentMetadata.value;
+                    final title = meta.title;
+                    final artistAndAlbum = "${meta.artist} - ${meta.album}";
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 2,
-                    children: [
-                      isHover
-                          ? _ScrollTextWidget(
-                              text: title,
-                              style: widget.titleStyle,
-                              strutStyle: titleStrut,
-                            )
-                          : Text(
-                              title,
-                              style: widget.titleStyle,
-                              softWrap: false,
-                              strutStyle: titleStrut,
-                              overflow: TextOverflow.fade,
-                              maxLines: 1,
-                            ),
-                      isHover
-                          ? _ScrollTextWidget(
-                              text: artistAndAlbum,
-                              style: widget.subTitleStyle,
-                              strutStyle: subTitleStrut,
-                            )
-                          : Text(
-                              artistAndAlbum,
-                              style: widget.subTitleStyle,
-                              softWrap: false,
-                              strutStyle: subTitleStrut,
-                              overflow: TextOverflow.fade,
-                              maxLines: 1,
-                            ),
-                    ],
-                  );
-                },
-              ),
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: .end,
+                      spacing: AppSpacing.xs,
+                      children: [
+                        hovered
+                            ? _ScrollTextWidget(
+                                text: title,
+                                style: titleStyle,
+                                strutStyle: titleStrut,
+                              )
+                            : Text(
+                                title,
+                                style: titleStyle,
+                                softWrap: false,
+                                strutStyle: titleStrut,
+                                overflow: TextOverflow.fade,
+                                maxLines: 1,
+                              ),
+                        hovered
+                            ? _ScrollTextWidget(
+                                text: artistAndAlbum,
+                                style: subTitleStyle,
+                                strutStyle: subTitleStrut,
+                              )
+                            : Text(
+                                artistAndAlbum,
+                                style: subTitleStyle,
+                                softWrap: false,
+                                strutStyle: subTitleStrut,
+                                overflow: TextOverflow.fade,
+                                maxLines: 1,
+                              ),
+                      ],
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],

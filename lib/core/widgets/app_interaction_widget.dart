@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 class HoverBuilder extends StatefulWidget {
   final Widget Function(BuildContext context, bool hovered) builder;
 
-  /// [onPressed] 为 null 则 [hovered] 恒为false
   final VoidCallback? onPressed;
 
   const HoverBuilder({super.key, required this.builder, this.onPressed});
@@ -23,15 +22,7 @@ class _HoverBuilderState extends State<HoverBuilder> {
   }
 
   @override
-  void didUpdateWidget(HoverBuilder oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.onPressed == null) _hovered = false;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (widget.onPressed == null) return widget.builder(context, false);
-
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => _setHovered(true),
