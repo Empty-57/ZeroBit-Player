@@ -85,6 +85,20 @@ class _CoverImageFrame extends StatelessWidget {
             }
           : null,
     );
+    //
+    // final DecorationCover = Container(
+    //   width: width,
+    //   height: height,
+    //   decoration: BoxDecoration(
+    //     borderRadius: borderRadius,
+    //     image: DecorationImage(
+    //       image: provider,
+    //       fit: .cover,
+    //       filterQuality: .medium,
+    //     ),
+    //   ),
+    // );
+    // return DecorationCover;
 
     if (borderRadius == AppRadius.zeroAll) {
       return cover;

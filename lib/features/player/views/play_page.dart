@@ -148,24 +148,26 @@ class _CoverSideState extends State<_CoverSide> {
                 createRectTween: (begin, end) {
                   return MaterialRectArcTween(begin: begin, end: end);
                 },
-                child: AnimatedSwitcher(
-                  duration: AppDuration.slow,
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: (child, anim) => FadeTransition(
-                    opacity: Tween(begin: 0.5, end: 1.0).animate(anim),
-                    child: ScaleTransition(
-                      scale: Tween(begin: 1.15, end: 1.0).animate(anim),
-                      child: child,
+                child: ClipRRect(
+                  borderRadius: PlayPageConstant.borderRadius,
+                  child: AnimatedSwitcher(
+                    duration: AppDuration.slow,
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    transitionBuilder: (child, anim) => FadeTransition(
+                      opacity: Tween(begin: 0.5, end: 1.0).animate(anim),
+                      child: ScaleTransition(
+                        scale: Tween(begin: 1.15, end: 1.0).animate(anim),
+                        child: child,
+                      ),
                     ),
-                  ),
-                  child: LoadU8Cover(
-                    key: ValueKey(audioController.coverRevision.value),
-                    data: audioController.currentCover,
-                    coverResolutionFlag: CoverResolutionFlag.big,
-                    size: widget.coverSize,
-                    evictOnDispose: false,
-                    borderRadius: PlayPageConstant.borderRadius,
+                    child: LoadU8Cover(
+                      key: ValueKey(audioController.coverRevision.value),
+                      data: audioController.currentCover,
+                      coverResolutionFlag: CoverResolutionFlag.big,
+                      size: widget.coverSize,
+                      evictOnDispose: false,
+                    ),
                   ),
                 ),
               );
@@ -183,7 +185,6 @@ class _CoverSideState extends State<_CoverSide> {
               } else {
                 coverWidget = DecoratedBox(
                   decoration: BoxDecoration(
-                    // borderRadius: PlayPageConstant.borderRadius,
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.2),
