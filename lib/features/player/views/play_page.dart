@@ -178,7 +178,6 @@ class _CoverSideState extends State<_CoverSide> {
                 coverWidget = Tilt3D(
                   width: widget.coverSize,
                   height: widget.coverSize,
-                  borderRadius: PlayPageConstant.borderRadius,
                   glareColor: widget.titleStyle.color ?? Colors.white,
                   child: innerContent,
                 );
