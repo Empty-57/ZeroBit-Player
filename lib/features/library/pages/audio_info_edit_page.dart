@@ -11,7 +11,6 @@ import 'package:signals/signals_flutter.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:zerobit_player/core/network/apis.dart';
 import 'package:zerobit_player/core/theme/style_manager.dart';
-import 'package:zerobit_player/core/widgets/app_button/app_tappable.dart';
 import 'package:zerobit_player/core/widgets/app_card.dart';
 import 'package:zerobit_player/core/widgets/app_dialog.dart';
 import 'package:zerobit_player/core/widgets/app_interaction_widget.dart';

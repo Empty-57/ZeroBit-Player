@@ -329,7 +329,6 @@ class _SyllableFloatWidget extends StatefulWidget {
   final Widget child;
 
   const _SyllableFloatWidget({
-    super.key,
     required this.isFloating,
     required this.duration,
     required this.delay,
