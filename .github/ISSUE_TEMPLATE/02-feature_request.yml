@@ -1,5 +1,5 @@
 name: 新功能请求
-description: 请求为程序添加新功能
+description: 提出新功能或对现有功能的改进建议
 title: "[新功能] "
 labels: [enhancement]
 
@@ -7,37 +7,67 @@ body:
   - type: markdown
     attributes:
       value: |
-        **请描述你想要添加的新功能，并指出它可以带来什么。**
+        请先阅读 [Issue 提交规范](https://github.com/Empty-57/ZeroBit-Player/blob/master/.github/CONTRIBUTING.md#issue-提交规范)，并搜索已有的 Issue。
+        标题请保留 `[新功能]` 前缀，简要说明需求，例如：`[新功能] 支持按音频格式筛选本地曲库`。
+        一份请求只讨论一个需求；无需具备开发经验或提供实现代码。
 
-  - type: dropdown
-    id: pull_request
+  - type: checkboxes
+    id: prerequisites
     attributes:
-      label: 附带PR？
-      description: |
-        是否自行提交Pull Request解决此issue
-        如果你不是开发者，请忽略此项
+      label: 提交前确认
       options:
-        - "否"
-        - "是"
+        - label: 我已阅读 Issue 提交规范，并搜索了已有的 Issue，未找到相同需求；如有相关讨论，会在下方关联。
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 使用场景与现有问题
+      description: 你在什么场景下遇到了什么困难？说明现有功能为什么无法满足需要，以及该功能会帮助哪些用户。
+      placeholder: "例如：曲库里同时有无损和有损版本，想只查看 FLAC 文件，目前需要逐个查看歌曲详情。"
     validations:
       required: true
 
   - type: textarea
     id: description
     attributes:
-      label: 功能描述
-      description: 描述你想要添加的新功能
+      label: 期望的功能与效果
+      description: 描述期望的操作方式和结果，给出具体例子；如计划提交 PR，可以补充实现思路。
       placeholder: |
-        描述你想要添加的新功能
-        如果附带PR，请说明你要如何实现这个功能
+        希望在……增加……
+        用户执行……后，可以……
+        满足需求的具体例子：……
     validations:
       required: true
 
   - type: input
     id: type
     attributes:
-      label: 新功能的分类（选填）
-      description: 功能属于哪个分类
-      placeholder: 如：UI、桌面歌词、专辑、播放列表等
+      label: 涉及模块（选填）
+      description: 说明该需求涉及的功能区域。
+      placeholder: "例如：音频播放、歌词、桌面歌词、曲库、播放列表、设置、界面"
     validations:
       required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 已考虑的替代方案（选填）
+      description: 是否尝试过现有设置、其他操作方式或工具？它们有什么不足？
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: 参考与补充信息（选填）
+      description: 可以附上示意图、截图、相关 Issue 或参考链接，并说明希望借鉴的具体行为。
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: 参与实现（选填）
+      options:
+        - label: 我愿意提交 PR 实现此功能。

@@ -216,6 +216,8 @@ flutter build windows --release
 
 欢迎提交 [Issue](https://github.com/Empty-57/ZeroBit-Player/issues) 反馈 Bug，或直接发起 [Pull Request](https://github.com/Empty-57/ZeroBit-Player/pulls) 参与贡献！
 
+提交前请阅读 [贡献指南](.github/CONTRIBUTING.md)，了解 [Issue 提交规范](.github/CONTRIBUTING.md#issue-提交规范) 和 [PR 提交规范](.github/CONTRIBUTING.md#pr-提交规范)。
+
 如果你认可这个项目并希望它变得更好，欢迎请作者喝杯咖啡：
 
 <div align="center">

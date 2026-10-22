@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Issue 与 PR 提交规范
+    url: https://github.com/Empty-57/ZeroBit-Player/blob/master/.github/CONTRIBUTING.md
+    about: 提交前了解反馈要求、贡献流程和验证方式。
+  - name: 使用文档
+    url: https://empty-57.github.io/ZeroBit-Player/
+    about: 查看功能说明和使用方法，先排查常见使用问题。
