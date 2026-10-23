@@ -5,16 +5,13 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:zerobit_player/core/theme/style_manager.dart';
 import 'package:zerobit_player/features/player/widgets/play_bar_constant.dart';
 
+import '../../app/router.dart';
+
 /// 提示条的弹出位置
 enum SnackPosition { top, bottom }
 
 /// 提示语义
 enum SnackType { info, success, warning, error }
-
-/// 根导航器 Key，用于在没有 BuildContext 的场景下取得 Overlay 与主题
-final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(
-  debugLabel: 'root',
-);
 
 const double _edgeInset = AppSpacing.md;
 
