@@ -190,16 +190,20 @@ Future<void> _applyJapaneseFurigana(
   List<LyricEntry<dynamic>> entries,
   bool isSongJapanese,
 ) async {
+  if (!await JapaneseAnalyzer.isAvailable()) return;
+
   // 解析期间复用副歌分析结果，结束后释放缓存。
   final cache = <String, List<JapanesePhoneticModel>>{};
   for (final entry in entries) {
     final lyricText = entry.lyricText;
     if (lyricText is! List<WordEntry> || lyricText.isEmpty) continue;
+
     // 文件提供的唱法优先；已有注音的行无需再调用原生分析器。
     if (extractInlineFurigana(lyricText) ||
         lyricText.any((word) => word.furigana.isNotEmpty)) {
       continue;
     }
+
     if (!JapaneseDetector.shouldAnnotateLine(
       entry: entry,
       isSongJapanese: isSongJapanese,
@@ -238,8 +242,7 @@ Future<void> _annotateWordsForLine(
   alignJapaneseFurigana(words, phonemes);
 }
 
-// ─────────────────────────── 基础 LRC 解析 ───────────────────────────
-
+//基础 LRC 解析
 /// 将整首 LRC 文本解析成时间 + 文本的列表
 List<LyricEntry<dynamic>> _parseLyrics(String text) {
   // 用于剥离行内时间戳的正则
@@ -266,8 +269,7 @@ List<LyricEntry<dynamic>> _parseLyrics(String text) {
       .toList();
 }
 
-// ─────────────────────────── 增强 / 逐字 LRC 解析 ───────────────────────────
-
+// 增强 / 逐字 LRC 解析
 List<WordEntry> _enhancedAndWordByWordLrcAnalysis(
   RegExpMatch matchedContent,
   bool isWordByWord,
@@ -356,8 +358,7 @@ List<WordEntry> _enhancedAndWordByWordLrcAnalysis(
   return (segments, LyricFormat.byWordLrc);
 }
 
-// ─────────────────────────── 逐字歌词解析（KRC / QRC / YRC）───────────────────────────
-
+// 逐字歌词解析（KRC / QRC / YRC）
 /// 获取按类型对应的单词级别正则与索引
 class _WordRegexConfig {
   final RegExp regex;
@@ -413,8 +414,6 @@ List<WordEntry> _processWords(
 
   return words;
 }
-
-// ─────────────────────────── 翻译合并 ───────────────────────────
 
 /// 合并主歌词与翻译歌词
 Future<List<LyricEntry<dynamic>>> _mergeTranslations(

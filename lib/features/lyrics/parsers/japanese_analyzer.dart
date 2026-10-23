@@ -1,8 +1,5 @@
 import 'dart:io';
-
 import 'package:flutter/services.dart';
-
-import '../../../core/utils/logger.dart';
 
 /// 分词结果对象
 ///
@@ -56,6 +53,30 @@ class JapaneseAnalyzer {
     'japanese_analyzer_channel',
   );
 
+  /// 系统是否支持日语解析器
+  static bool? _isSupported;
+
+  /// 检查当前系统环境是否支持日语分词注音
+  static Future<bool> isAvailable() async {
+    if (_isSupported != null) return _isSupported!;
+    if (!Platform.isWindows) {
+      _isSupported = false;
+      return false;
+    }
+
+    try {
+      final List<dynamic>? test = await _channel.invokeMethod('getWords', {
+        'text': '日本語',
+        'monoRuby': false,
+      });
+      _isSupported = test != null && test.isNotEmpty;
+    } catch (_) {
+      _isSupported = false;
+    }
+
+    return _isSupported!;
+  }
+
   /// 将日文文本转为带假名注音的列表
   ///
   /// `monoRuby`:
@@ -65,7 +86,10 @@ class JapaneseAnalyzer {
     String text, {
     bool monoRuby = true,
   }) async {
-    if (!Platform.isWindows || text.trim().isEmpty || text.length > 100) {
+    if (_isSupported == false ||
+        !Platform.isWindows ||
+        text.trim().isEmpty ||
+        text.length > 100) {
       return const [];
     }
 
@@ -85,8 +109,8 @@ class JapaneseAnalyzer {
           isPhraseStart: map['isPhraseStart'] as bool,
         );
       }).toList();
-    } catch (e, stackTrace) {
-      LoggerUni.w('调用Windows原生日语分析器转换失败', e, stackTrace);
+    } catch (_) {
+      _isSupported = false;
       return [];
     }
   }
