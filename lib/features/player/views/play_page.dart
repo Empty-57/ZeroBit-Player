@@ -59,8 +59,6 @@ class _LyricsSide extends StatelessWidget {
     return SignalBuilder(
       builder: (_) => Visibility(
         visible: MemoryManager.tickerEnable.value,
-        maintainState: true,
-        maintainAnimation: false,
         child: RepaintBoundary(
           child: ShaderMask(
             shaderCallback: (rect) => _lyricsFadeShaderCache.shader(
@@ -567,7 +565,9 @@ class _PlayPageState extends State<PlayPage> {
               };
               _menuController.close();
               SchedulerBinding.instance.addPostFrameCallback((_) {
-                unawaited(router.replace(AppRoutes.details, extra: extra));
+                unawaited(
+                  router.pushReplacement(AppRoutes.details, extra: extra),
+                );
               });
             },
             text: album,
@@ -596,7 +596,9 @@ class _PlayPageState extends State<PlayPage> {
                 };
                 _menuController.close();
                 SchedulerBinding.instance.addPostFrameCallback((_) {
-                  unawaited(router.replace(AppRoutes.details, extra: extra));
+                  unawaited(
+                    router.pushReplacement(AppRoutes.details, extra: extra),
+                  );
                 });
               },
               text: artistFirst,
@@ -623,7 +625,9 @@ class _PlayPageState extends State<PlayPage> {
                   };
                   _menuController.close();
                   SchedulerBinding.instance.addPostFrameCallback((_) {
-                    unawaited(router.replace(AppRoutes.details, extra: extra));
+                    unawaited(
+                      router.pushReplacement(AppRoutes.details, extra: extra),
+                    );
                   });
                 },
                 child: Center(child: Text(v)),

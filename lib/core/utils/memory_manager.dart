@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
-import 'package:mesh_gradient/mesh_gradient.dart';
 import 'package:signals/signals.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/core/utils/paint_cache.dart';
@@ -33,9 +32,6 @@ class MemoryManager {
   static int _lastRss = 0;
 
   static final tickerEnable = signal(true);
-
-  static final animatedMeshGradientController =
-      AnimatedMeshGradientController();
 
   static double _toMB(int bytes) => (bytes / (1 << 20));
 
@@ -80,9 +76,6 @@ class MemoryManager {
       final visible = await windowManager.isVisible();
       if (generation != _tickerCheckGeneration) return;
       tickerEnable.value = !minimized && visible;
-      if (!tickerEnable.value) {
-        animatedMeshGradientController.stop();
-      }
     });
   }
 
@@ -92,7 +85,6 @@ class MemoryManager {
     _disableTickerTimer?.cancel();
     _disableTickerTimer = null;
     tickerEnable.value = true;
-    animatedMeshGradientController.start();
   }
 
   /// 启动循环修剪 每 [_maxLoopTrimCycleDuration] s 尝试修剪一次
@@ -112,11 +104,11 @@ class MemoryManager {
 
   /// 会在 [_maxTrimWaitDuration] s 之后调用 [trimMemory] 方法
   static void startTrim([String label = 'Status']) {
-    _printUsage(label);
     _trimTimer?.cancel();
     _trimTimer = Timer(_maxTrimWaitDuration, () {
       _trimTimer = null;
       if (_toMB(_currentRss) < _trimLimitOnBlur) {
+        _printUsage(label);
         return;
       }
       unawaited(trimMemory(label));
@@ -125,7 +117,6 @@ class MemoryManager {
 
   /// 停止将要进行的 [trimMemory] 方法
   static void cancelTrim([String label = 'Status']) {
-    _printUsage(label);
     _trimTimer?.cancel();
     _trimTimer = null;
   }
