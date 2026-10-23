@@ -223,7 +223,7 @@ class _NetworkCoverDialogState extends State<_NetworkCoverDialog> {
                     child: AppTextField(
                       autofocus: true,
                       controller: _textEditingController,
-                      label: '搜索歌词',
+                      label: '搜索封面',
                       icon: PhosphorIconsLight.magnifyingGlass,
                     ),
                   ),
