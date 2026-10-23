@@ -447,7 +447,7 @@ class _NetLrcDialogContentState extends State<_NetLrcDialogContent> {
               child: AppTextField(
                 autofocus: true,
                 controller: _textEditingController,
-                label: '搜索封面',
+                label: '搜索歌词',
                 icon: PhosphorIconsLight.magnifyingGlass,
                 onChanged: _controller.onInputChangedDebounce,
               ),
