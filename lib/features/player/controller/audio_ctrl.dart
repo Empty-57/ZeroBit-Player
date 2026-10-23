@@ -412,7 +412,7 @@ class AudioController {
 
   /// 获取音频FFT数据
   Future<void> getAudioFFt() async {
-    if (!MemoryManager.tickerEnable.value) return;
+    if (!MemoryManager.tickerEnable.peek()) return;
 
     if (currentState.value != AudioState.playing) {
       if (!_isFftCleared) {

@@ -57,18 +57,21 @@ class _LyricsSide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SignalBuilder(
-      builder: (_) => MemoryManager.tickerEnable.value
-          ? RepaintBoundary(
-              child: ShaderMask(
-                shaderCallback: (rect) => _lyricsFadeShaderCache.shader(
-                  gradient: _lyricsFadeGradient,
-                  rect: rect,
-                ),
-                blendMode: BlendMode.dstIn,
-                child: const LyricsRender(),
-              ),
-            )
-          : const SizedBox.shrink(),
+      builder: (_) => Visibility(
+        visible: MemoryManager.tickerEnable.value,
+        maintainState: true,
+        maintainAnimation: false,
+        child: RepaintBoundary(
+          child: ShaderMask(
+            shaderCallback: (rect) => _lyricsFadeShaderCache.shader(
+              gradient: _lyricsFadeGradient,
+              rect: rect,
+            ),
+            blendMode: BlendMode.dstIn,
+            child: const LyricsRender(),
+          ),
+        ),
+      ),
     );
   }
 }

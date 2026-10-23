@@ -2,8 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
-import 'package:flutter_single_instance/flutter_single_instance.dart';
+import 'package:mesh_gradient/mesh_gradient.dart';
 import 'package:signals/signals.dart';
+import 'package:window_manager/window_manager.dart';
 import 'package:zerobit_player/core/utils/paint_cache.dart';
 
 import '../../src/rust/api/trim_memory.dart' as rust_api;
@@ -16,6 +17,7 @@ class MemoryManager {
   static Timer? _trimTimer;
   static Timer? _loopTrimTimer;
   static Timer? _disableTickerTimer;
+  static int _tickerCheckGeneration = 0;
   static const int _baseDuration = 30;
   static const Duration _maxDisableTickerWaitDuration = Duration(
     seconds: _baseDuration,
@@ -32,11 +34,14 @@ class MemoryManager {
 
   static final tickerEnable = signal(true);
 
+  static final animatedMeshGradientController =
+      AnimatedMeshGradientController();
+
   static double _toMB(int bytes) => (bytes / (1 << 20));
 
   static int get _currentRss => ProcessInfo.currentRss;
 
-  static void printUsage([String label = 'Status']) {
+  static void _printUsage([String label = 'Status']) {
     // 获取当前进程占用的物理内存
     final currentRss = _currentRss;
     final maxRss = ProcessInfo.maxRss;
@@ -66,22 +71,28 @@ class MemoryManager {
 
   /// 会在 [_maxDisableTickerWaitDuration] s 之后禁用主要动画资源
   static void startDisableTicker() {
+    final generation = ++_tickerCheckGeneration;
     _disableTickerTimer?.cancel();
     _disableTickerTimer = Timer(_maxDisableTickerWaitDuration, () async {
       _disableTickerTimer = null;
-      if (await windowManager.isMinimized()) {
-        MemoryManager.tickerEnable.value = false;
-      } else {
-        MemoryManager.tickerEnable.value = await windowManager.isVisible();
+      final minimized = await windowManager.isMinimized();
+      if (generation != _tickerCheckGeneration) return;
+      final visible = await windowManager.isVisible();
+      if (generation != _tickerCheckGeneration) return;
+      tickerEnable.value = !minimized && visible;
+      if (!tickerEnable.value) {
+        animatedMeshGradientController.stop();
       }
     });
   }
 
   /// 立即取消 [startDisableTicker]
   static void cancelDisableTicker() {
-    tickerEnable.value = true;
+    _tickerCheckGeneration++;
     _disableTickerTimer?.cancel();
     _disableTickerTimer = null;
+    tickerEnable.value = true;
+    animatedMeshGradientController.start();
   }
 
   /// 启动循环修剪 每 [_maxLoopTrimCycleDuration] s 尝试修剪一次
@@ -92,7 +103,7 @@ class MemoryManager {
           ? _trimLimitOnFocus
           : _trimLimitOnBlur;
       if (_toMB(_currentRss) < limit) {
-        printUsage('$label Trim Canceled');
+        _printUsage('$label Trim Canceled');
         return;
       }
       unawaited(trimMemory(label));
@@ -101,7 +112,7 @@ class MemoryManager {
 
   /// 会在 [_maxTrimWaitDuration] s 之后调用 [trimMemory] 方法
   static void startTrim([String label = 'Status']) {
-    printUsage(label);
+    _printUsage(label);
     _trimTimer?.cancel();
     _trimTimer = Timer(_maxTrimWaitDuration, () {
       _trimTimer = null;
@@ -114,7 +125,7 @@ class MemoryManager {
 
   /// 停止将要进行的 [trimMemory] 方法
   static void cancelTrim([String label = 'Status']) {
-    printUsage(label);
+    _printUsage(label);
     _trimTimer?.cancel();
     _trimTimer = null;
   }
@@ -138,6 +149,6 @@ class MemoryManager {
     } catch (e, s) {
       LoggerUni.e('强制修剪工作集内存失败', e, s);
     }
-    printUsage('$label After Trim');
+    _printUsage('$label After Trim');
   }
 }

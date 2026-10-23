@@ -20,13 +20,12 @@ class PlayPageMesh extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SignalBuilder(
-      builder: (_) => MemoryManager.tickerEnable.value
-          ? AnimatedMeshGradient(
-              colors: AudioController.instance.coverPalette.value,
-              options: _meshOptions,
-              child: _meshChild,
-            )
-          : const SizedBox.shrink(),
+      builder: (_) => AnimatedMeshGradient(
+        controller: MemoryManager.animatedMeshGradientController,
+        colors: AudioController.instance.coverPalette.value,
+        options: _meshOptions,
+        child: _meshChild,
+      ),
     );
   }
 }
