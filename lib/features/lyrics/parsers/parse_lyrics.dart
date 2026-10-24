@@ -190,8 +190,10 @@ Future<void> _applyJapaneseFurigana(
 ) async {
   if (!await JapaneseAnalyzer.isAvailable()) return;
 
-  // 解析期间复用副歌分析结果，结束后释放缓存。
-  final cache = <String, List<JapanesePhoneticModel>>{};
+  // 提取所有需要注音的有效行与文本
+  final validEntries = <LyricEntry<dynamic>>[];
+  final textsToAnalyze = <String>[];
+
   for (final entry in entries) {
     final lyricText = entry.lyricText;
     if (lyricText is! List<WordEntry> || lyricText.isEmpty) continue;
@@ -209,35 +211,53 @@ Future<void> _applyJapaneseFurigana(
       continue;
     }
 
-    await _annotateWordsForLine(lyricText, cache);
+    final text = lyricText.map((w) => w.lyricWord).join();
+    if (text.trim().isEmpty) continue;
+
+    validEntries.add(entry);
+    textsToAnalyze.add(text);
   }
-}
 
-/// 对单行的 WordEntry 集合进行 Windows 原生假名匹配对齐
-Future<void> _annotateWordsForLine(
-  List<WordEntry> words,
-  Map<String, List<JapanesePhoneticModel>> cache,
-) async {
-  if (words.isEmpty) return;
-  final text = words.map((w) => w.lyricWord).join();
-  if (text.trim().isEmpty) return;
+  if (textsToAnalyze.isEmpty) return;
 
-  var phonemes = cache[text];
-  if (phonemes == null) {
-    // 整词分析保留熟字训和连浊，同时保留上下文，使分析更精确。
-    phonemes = await JapaneseAnalyzer.getWords(text, monoRuby: false);
-    // 连续汉字的复合词再用单字分析细化，让假名落到各自的汉字上；
-    // 细分读音与整词读音不一致时自动回退，熟字训仍按整词注音。
-    if (canRefinePhonemes(phonemes)) {
-      phonemes = refinePhonemes(
-        phonemes,
-        await JapaneseAnalyzer.getWords(text, monoRuby: true),
+  // 批量进行整词分析
+  final batchPhonemes = await JapaneseAnalyzer.getWordsBatch(
+    textsToAnalyze,
+    monoRuby: false,
+  );
+
+  // 收集需要细化分析的行，进行第二次的批量细化
+  final monoIndex = <int>[];
+  final monoTexts = <String>[];
+  for (int i = 0; i < batchPhonemes.length; i++) {
+    if (canRefinePhonemes(batchPhonemes[i])) {
+      monoIndex.add(i);
+      monoTexts.add(textsToAnalyze[i]);
+    }
+  }
+
+  if (monoTexts.isNotEmpty) {
+    final refinedBatch = await JapaneseAnalyzer.getWordsBatch(
+      monoTexts,
+      monoRuby: true,
+    );
+    for (int j = 0; j < monoIndex.length; j++) {
+      final originIdx = monoIndex[j];
+      batchPhonemes[originIdx] = refinePhonemes(
+        batchPhonemes[originIdx],
+        refinedBatch[j],
       );
     }
-    cache[text] = phonemes;
   }
 
-  alignJapaneseFurigana(words, phonemes);
+  // 对齐注音
+  for (int i = 0; i < validEntries.length; i++) {
+    final words = validEntries[i].lyricText as List<WordEntry>;
+    final phonemes = batchPhonemes[i];
+    if (phonemes.isNotEmpty) {
+      alignJapaneseFurigana(words, phonemes);
+    }
+  }
 }
 
 //基础 LRC 解析

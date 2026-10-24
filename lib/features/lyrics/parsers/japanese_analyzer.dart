@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/services.dart';
+import 'package:zerobit_player/core/utils/logger.dart';
 
 /// 分词结果对象
 ///
@@ -64,15 +65,30 @@ class JapaneseAnalyzer {
       return false;
     }
 
+    String text = '';
+    String yomi = '';
+
     try {
       final List<dynamic>? test = await _channel.invokeMethod('getWords', {
         'text': '日本語',
         'monoRuby': false,
       });
-      _isSupported = test != null && test.isNotEmpty;
+      if (test != null && test.isNotEmpty) {
+        final first = Map<String, dynamic>.from(test.first as Map);
+        text = first['text'] ?? '';
+        yomi = first['yomi'] ?? '';
+
+        _isSupported = text != yomi && yomi.isNotEmpty;
+      } else {
+        _isSupported = false;
+      }
     } catch (_) {
       _isSupported = false;
     }
+
+    LoggerUni.w(
+      '此用户 ${_isSupported == true ? '支持' : '不支持'} 原生假名分析 | text: $text, yomi: $yomi',
+    );
 
     return _isSupported!;
   }
@@ -112,6 +128,42 @@ class JapaneseAnalyzer {
     } catch (_) {
       _isSupported = false;
       return [];
+    }
+  }
+
+  /// 批量将多行日文文本转为带假名注音的列表集合
+  static Future<List<List<JapanesePhoneticModel>>> getWordsBatch(
+    List<String> texts, {
+    bool monoRuby = true,
+  }) async {
+    if (_isSupported == false || !Platform.isWindows || texts.isEmpty) {
+      return List.generate(texts.length, (_) => const []);
+    }
+
+    try {
+      final List<dynamic>? batchResult = await _channel.invokeMethod(
+        'getWordsBatch',
+        {'texts': texts, 'monoRuby': monoRuby},
+      );
+
+      if (batchResult == null) {
+        return List.generate(texts.length, (_) => const []);
+      }
+
+      return batchResult.map((lineItem) {
+        if (lineItem is! List) return <JapanesePhoneticModel>[];
+        return lineItem.map((item) {
+          final map = Map<String, dynamic>.from(item as Map);
+          return JapanesePhoneticModel(
+            text: toHalfWidth(map['text'] as String),
+            yomi: toHalfWidth(map['yomi'] as String),
+            isPhraseStart: map['isPhraseStart'] as bool,
+          );
+        }).toList();
+      }).toList();
+    } catch (_) {
+      _isSupported = false;
+      return List.generate(texts.length, (_) => const []);
     }
   }
 }
