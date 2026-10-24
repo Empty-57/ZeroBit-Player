@@ -225,6 +225,7 @@ class _NetworkCoverDialogState extends State<_NetworkCoverDialog> {
                       controller: _textEditingController,
                       label: '搜索封面',
                       icon: PhosphorIconsLight.magnifyingGlass,
+                      onChanged: _controller.onInputChangedDebounce,
                     ),
                   ),
                   SignalBuilder(
