@@ -743,8 +743,6 @@ List<LyricEntry<dynamic>> _mergeByTimeMatch(
   return mainEntries;
 }
 
-// ─────────────────────────── 公开 API ───────────────────────────
-
 /// 解析 LRC 格式歌词并合并翻译
 Future<List<LyricEntry<dynamic>>?> parseLrc({
   String? lyricData,
