@@ -527,8 +527,6 @@ class AudioController {
   void _setThemeColor({required int color}) {
     if (!_settingController.dynamicThemeColor.value) return;
 
-    // 同色直接跳过：themeColor 变更会让 ThemeData 重算并触发整棵 widget 树重建，
-    // 相邻歌曲主色相同时没必要付这个代价
     if (_settingController.themeColor.value == color) return;
 
     _settingController.themeColor.value = color;
