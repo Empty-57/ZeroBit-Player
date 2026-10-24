@@ -163,22 +163,36 @@ class AudioController {
       final path = metadata.path;
 
       final durationFuture = getLen().catchError((_) => 999.0);
-      final localCoverFuture = _loadLocalCovers(path); // 先获取本地封面和歌词
+      final coverAndPaletteFuture = _loadLocalCovers(path).then((
+        localCovers,
+      ) async {
+        final Uint8List smallCover =
+            localCovers.smallCover ?? kTransparentImage;
+        final palette = await _computePalette(path, smallCover, generation);
+        return (covers: localCovers, palette: palette);
+      }); // 先获取本地封面和歌词，以及计算调色板
       final lyricFuture = getParsedLyric(filePath: path);
 
       final results = await Future.wait([
         durationFuture,
-        localCoverFuture,
+        coverAndPaletteFuture,
         lyricFuture,
       ]);
       if (generation != _metadataGeneration) return;
 
       currentDuration.value = results[0] as double;
-      final localCovers = results[1] as (Uint8List?, Uint8List?);
+      final coverAndPalette =
+          results[1]
+              as ({
+                ({Uint8List? bigCover, Uint8List? smallCover}) covers,
+                List<Color>? palette,
+              });
       ParsedLyricModel? lyrics = results[2] as ParsedLyricModel?;
 
-      Uint8List? bigCover = localCovers.$1;
-      final Uint8List smallCover = localCovers.$2 ?? kTransparentImage;
+      Uint8List? bigCover = coverAndPalette.covers.bigCover;
+      final Uint8List smallCover =
+          coverAndPalette.covers.smallCover ?? kTransparentImage;
+      final List<Color>? palette = coverAndPalette.palette;
 
       // 更新系统UI
       final title = metadata.title;
@@ -194,9 +208,6 @@ class AudioController {
           WindowsTaskbarThumbnail.setThumbnail(smallCover).catchError((_) {}),
         );
       }
-
-      List<Color>? palette;
-      palette = await _computePalette(path, smallCover, generation);
 
       if (bigCover == null || bigCover.isEmpty) {
         // 无大图则从网络后台获取
@@ -246,7 +257,9 @@ class AudioController {
   }
 
   /// 读本地封面
-  Future<(Uint8List?, Uint8List?)> _loadLocalCovers(String path) async {
+  Future<({Uint8List? bigCover, Uint8List? smallCover})> _loadLocalCovers(
+    String path,
+  ) async {
     final Uint8List? smallCover = CoverLRUCache.get(path);
 
     final bigFuture = getCover(path: path, sizeFlag: CoverQuality.high);
@@ -255,7 +268,7 @@ class AudioController {
         : getCover(path: path, sizeFlag: CoverQuality.low);
 
     final results = await Future.wait([bigFuture, smallFuture]);
-    return (results[0], results[1]);
+    return (bigCover: results[0], smallCover: results[1]);
   }
 
   /// 后台静默下载网络封面
@@ -289,6 +302,7 @@ class AudioController {
     _lyricController.interludeProcess.value = 0;
     _lyricController.showInterlude.value = false;
     _lyricController.recreateViewScrollController();
+    _lyricController.springController?.clearState();
     final parsedLrc = lyrics?.parsedLrc;
     showLyricRender = parsedLrc?.isNotEmpty ?? false;
     if (showLyricRender) {
@@ -306,7 +320,6 @@ class AudioController {
       romaList.clear();
       furiganaWordsList.clear();
     }
-    _lyricController.springController?.clearState();
   }
 
   /// 计算调色板
