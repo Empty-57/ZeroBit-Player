@@ -19,27 +19,25 @@ final RegExp _karaOkLineRegex = RegExp(
 
 /// 解析 yrc 逐字的正则
 final RegExp _yrcWordRegex = RegExp(
-  r'\((\d+),(\d+),\d+\)[^(]*?((?:.(?!\(\d+,))*.)',
-); // /\((\d+),(\d+),\d+\)[^(]*?((?:.(?!\(\d+,))*.)/g
+  r'\((\d+),(\d+),\d+\)(.*?)(?=\(\d+,\d+,\d+\)|\r?\n|$)',
+);
 
 /// 解析 qrc 逐字的正则
-final RegExp _qrcWordRegex = RegExp(
-  r'[^(]*?((?:.(?!\(\d+,))*.)\((\d+),(\d+)\)',
-); // /[^(]*?((?:.(?!\(\d+,))*.)\((\d+),(\d+)\)/g
+final RegExp _qrcWordRegex = RegExp(r'(.*?)\((\d+),(\d+)\)');
 
 /// 解析 krc 逐字的正则
 final RegExp _krcWordRegex = RegExp(
-  r'<(\d+),(\d+),\d+>[^<]*?((?:.(?!<\d+,))*.)',
+  r'<(\d+),(\d+),\d+>(.*?)(?=<\d+,\d+,\d+>|\r?\n|$)',
 );
 
 /// 解析增强型 LRC 逐字的正则
 final RegExp _enhancedLrcWordRegex = RegExp(
-  r'<(\d{2}):(\d{2}\.\d{2,3})>([^<]*)',
+  r'<(\d{2}):(\d{2}\.\d{2,3})>(.*?)(?=<\d{2}:\d{2}\.\d{2,3}>|\r?\n|$)',
 );
 
 /// 解析逐字 LRC 逐字的正则
 final RegExp _wordByWordLrcWordRegex = RegExp(
-  r'\[(\d{2}):(\d{2}\.\d{2,3})]([^\[]*)',
+  r'\[(\d{2}):(\d{2}\.\d{2,3})](.*?)(?=\[\d{2}:\d{2}\.\d{2,3}]|\r?\n|$)',
 );
 
 enum LrcType {
