@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:core';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+
 import '../../../core/utils/logger.dart';
 import '../models/lyric_model.dart';
 import 'furigana_alignment.dart';
@@ -183,18 +185,23 @@ class JapaneseDetector {
   }
 }
 
-/// 遍历逐字歌词行并注入假名。
-Future<void> _applyJapaneseFurigana(
+typedef _FuriganaPreparation = ({
   List<LyricEntry<dynamic>> entries,
-  bool isSongJapanese,
-) async {
-  if (!await JapaneseAnalyzer.isAvailable()) return;
+  List<int> indices,
+  List<String> texts,
+});
 
+/// 文件注音提取
+_FuriganaPreparation _prepareJapaneseFurigana(
+  (List<LyricEntry<dynamic>>, bool) input,
+) {
+  final (entries, isSongJapanese) = input;
   // 提取所有需要注音的有效行与文本
-  final validEntries = <LyricEntry<dynamic>>[];
+  final indices = <int>[];
   final textsToAnalyze = <String>[];
 
-  for (final entry in entries) {
+  for (var i = 0; i < entries.length; i++) {
+    final entry = entries[i];
     final lyricText = entry.lyricText;
     if (lyricText is! List<WordEntry> || lyricText.isEmpty) continue;
 
@@ -214,15 +221,59 @@ Future<void> _applyJapaneseFurigana(
     final text = lyricText.map((w) => w.lyricWord).join();
     if (text.trim().isEmpty) continue;
 
-    validEntries.add(entry);
+    indices.add(i);
     textsToAnalyze.add(text);
   }
 
-  if (textsToAnalyze.isEmpty) return;
+  return (entries: entries, indices: indices, texts: textsToAnalyze);
+}
+
+List<LyricEntry<dynamic>> _alignJapaneseFuriganaBatch(
+  (
+    _FuriganaPreparation,
+    List<List<JapanesePhoneticModel>>,
+    List<int>,
+    List<List<JapanesePhoneticModel>>,
+  )
+  input,
+) {
+  final (prepared, batchPhonemes, monoIndex, refinedBatch) = input;
+  for (var j = 0; j < monoIndex.length; j++) {
+    final originIdx = monoIndex[j];
+    batchPhonemes[originIdx] = refinePhonemes(
+      batchPhonemes[originIdx],
+      refinedBatch[j],
+    );
+  }
+  for (var i = 0; i < prepared.indices.length; i++) {
+    final words =
+        prepared.entries[prepared.indices[i]].lyricText as List<WordEntry>;
+
+    final phonemes = batchPhonemes[i];
+    if (phonemes.isNotEmpty) {
+      alignJapaneseFurigana(words, phonemes);
+    }
+  }
+  return prepared.entries;
+}
+
+///历逐字歌词行并注入假名。
+Future<List<LyricEntry<dynamic>>> _applyJapaneseFurigana(
+  List<LyricEntry<dynamic>> entries,
+  bool isSongJapanese,
+) async {
+  final prepared = await compute(_prepareJapaneseFurigana, (
+    entries,
+    isSongJapanese,
+  ));
+
+  if (prepared.texts.isEmpty || !await JapaneseAnalyzer.isAvailable()) {
+    return prepared.entries;
+  }
 
   // 批量进行整词分析
   final batchPhonemes = await JapaneseAnalyzer.getWordsBatch(
-    textsToAnalyze,
+    prepared.texts,
     monoRuby: false,
   );
 
@@ -232,32 +283,19 @@ Future<void> _applyJapaneseFurigana(
   for (int i = 0; i < batchPhonemes.length; i++) {
     if (canRefinePhonemes(batchPhonemes[i])) {
       monoIndex.add(i);
-      monoTexts.add(textsToAnalyze[i]);
+      monoTexts.add(prepared.texts[i]);
     }
   }
 
-  if (monoTexts.isNotEmpty) {
-    final refinedBatch = await JapaneseAnalyzer.getWordsBatch(
-      monoTexts,
-      monoRuby: true,
-    );
-    for (int j = 0; j < monoIndex.length; j++) {
-      final originIdx = monoIndex[j];
-      batchPhonemes[originIdx] = refinePhonemes(
-        batchPhonemes[originIdx],
-        refinedBatch[j],
-      );
-    }
-  }
-
-  // 对齐注音
-  for (int i = 0; i < validEntries.length; i++) {
-    final words = validEntries[i].lyricText as List<WordEntry>;
-    final phonemes = batchPhonemes[i];
-    if (phonemes.isNotEmpty) {
-      alignJapaneseFurigana(words, phonemes);
-    }
-  }
+  final refinedBatch = monoTexts.isEmpty
+      ? <List<JapanesePhoneticModel>>[]
+      : await JapaneseAnalyzer.getWordsBatch(monoTexts, monoRuby: true);
+  return compute(_alignJapaneseFuriganaBatch, (
+    prepared,
+    batchPhonemes,
+    monoIndex,
+    refinedBatch,
+  ));
 }
 
 //基础 LRC 解析
@@ -461,7 +499,7 @@ Future<List<LyricEntry<dynamic>>> _mergeTranslations(
 
   if (isVerbatimFormat) {
     // 翻译、注音行已从 mainEntries 中剥离，此时统计假名占比才不会被稀释
-    await _applyJapaneseFurigana(
+    return await _applyJapaneseFurigana(
       mainEntries,
       JapaneseDetector.isJapaneseSong(mainEntries),
     );

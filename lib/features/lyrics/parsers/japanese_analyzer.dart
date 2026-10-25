@@ -82,7 +82,8 @@ class JapaneseAnalyzer {
       } else {
         _isSupported = false;
       }
-    } catch (_) {
+    } catch (e, s) {
+      LoggerUni.w('原生分析错误', e, s);
       _isSupported = false;
     }
 
@@ -102,32 +103,10 @@ class JapaneseAnalyzer {
     String text, {
     bool monoRuby = true,
   }) async {
-    if (_isSupported == false ||
-        !Platform.isWindows ||
-        text.trim().isEmpty ||
-        text.length > 100) {
-      return const [];
-    }
-
     try {
-      final List<dynamic>? result = await _channel.invokeMethod('getWords', {
-        'text': text,
-        'monoRuby': monoRuby,
-      });
-
-      if (result == null) return [];
-
-      return result.map((item) {
-        final map = Map<String, dynamic>.from(item as Map);
-        return JapanesePhoneticModel(
-          text: toHalfWidth(map['text'] as String),
-          yomi: toHalfWidth(map['yomi'] as String),
-          isPhraseStart: map['isPhraseStart'] as bool,
-        );
-      }).toList();
+      return (await getWordsBatch([text], monoRuby: monoRuby)).single;
     } catch (_) {
-      _isSupported = false;
-      return [];
+      return const [];
     }
   }
 
