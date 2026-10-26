@@ -4,12 +4,14 @@
 #include <flutter/standard_method_codec.h>
 #include <flutter/encodable_value.h>
 
-#include <iostream>
 #include <thread>
 #include <vector>
 #include <string>
 #include <memory>
-#include <utility>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+#include <functional>
 
 #include <winrt/base.h>
 #include <winrt/Windows.Foundation.Collections.h>
@@ -17,74 +19,100 @@
 
 #pragma comment(lib, "windowsapp.lib")
 
-namespace japanese_analyzer {
-
 namespace {
-    struct ApartmentScope {
-        explicit ApartmentScope(winrt::apartment_type type = winrt::apartment_type::single_threaded) {
-            winrt::init_apartment(type);
-        }
 
-        ~ApartmentScope() {
-            winrt::uninit_apartment();
-        }
+const flutter::EncodableValue kKeyText("text");
+const flutter::EncodableValue kKeyYomi("yomi");
+const flutter::EncodableValue kKeyIsPhraseStart("isPhraseStart");
 
-        ApartmentScope(const ApartmentScope&) = delete;
-        ApartmentScope& operator=(const ApartmentScope&) = delete;
-        ApartmentScope(ApartmentScope&&) = delete;
-        ApartmentScope& operator=(ApartmentScope&&) = delete;
-    };
+flutter::EncodableList AnalyzeLine(const std::string& text, bool mono_ruby) {
+    flutter::EncodableList line_result;
+    if (text.empty()) return line_result;
 
-    flutter::EncodableList AnalyzeLine(const std::string& text, bool mono_ruby) {
-        flutter::EncodableList line_result;
-        if (text.empty()) {
-            return line_result;
-        }
-
-        winrt::hstring win_text = winrt::to_hstring(text);
-        if (win_text.size() > 100) {
-            return line_result;
-        }
-
-        auto words = winrt::Windows::Globalization::JapanesePhoneticAnalyzer::GetWords(win_text, mono_ruby);
-
-        for (const auto& word : words) {
-            flutter::EncodableMap item;
-            item[flutter::EncodableValue("text")] =
-                flutter::EncodableValue(winrt::to_string(word.DisplayText()));
-            item[flutter::EncodableValue("yomi")] =
-                flutter::EncodableValue(winrt::to_string(word.YomiText()));
-            item[flutter::EncodableValue("isPhraseStart")] =
-                flutter::EncodableValue(word.IsPhraseStart());
-
-            line_result.push_back(std::move(item));
-        }
-
+    winrt::hstring win_text;
+    try {
+        win_text = winrt::to_hstring(text);
+    } catch (...) {
         return line_result;
     }
 
-    template <typename TaskFunc>
-    void RunInWorkerThread(std::unique_ptr<flutter::MethodResult<>> result, TaskFunc&& task) {
-        std::thread([res = std::shared_ptr<flutter::MethodResult<>>(std::move(result)),
-                     task = std::forward<TaskFunc>(task)]() mutable {
-            try {
-               ApartmentScope apartment{winrt::apartment_type::single_threaded};
-               {
-                   task(res.get());
-               }
-            } catch (const winrt::hresult_error& ex) {
-                res->Error(std::to_string(ex.code()), winrt::to_string(ex.message()));
-            } catch (const std::exception& e) {
-                res->Error("STD_EXCEPTION", e.what());
-            } catch (...) {
-                res->Error("UNKNOWN_ERROR", "Crash inside background JapanesePhoneticAnalyzer");
-            }
-        }).detach();
+    // 微软限制单句不得超 100 字符
+    if (win_text.size() > 100) return line_result;
+
+    auto words = winrt::Windows::Globalization::JapanesePhoneticAnalyzer::GetWords(win_text, mono_ruby);
+
+    line_result.reserve(words.Size());
+
+    for (const auto& word : words) {
+        flutter::EncodableMap item;
+        item.emplace(kKeyText, winrt::to_string(word.DisplayText()));
+        item.emplace(kKeyYomi, winrt::to_string(word.YomiText()));
+        item.emplace(kKeyIsPhraseStart, word.IsPhraseStart());
+
+        line_result.push_back(std::move(item));
     }
+
+    return line_result;
 }
 
+// 常驻单例工作线程
+class Worker {
+public:
+    static Worker& Instance() {
+        static Worker s_instance;
+        return s_instance;
+    }
 
+    void Post(std::function<void()> task) {
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            tasks_.push(std::move(task));
+        }
+        cv_.notify_one();
+    }
 
+private:
+    Worker() : stop_(false) {
+        thread_ = std::thread([this]() {
+            winrt::init_apartment(winrt::apartment_type::single_threaded);
+
+            while (true) {
+                std::function<void()> task;
+                {
+                    std::unique_lock<std::mutex> lock(mutex_);
+                    cv_.wait(lock, [this]() { return stop_ || !tasks_.empty(); });
+                    if (stop_ && tasks_.empty()) break;
+
+                    task = std::move(tasks_.front());
+                    tasks_.pop();
+                }
+
+                if (task) task();
+            }
+
+            winrt::uninit_apartment();
+        });
+    }
+
+    ~Worker() {
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            stop_ = true;
+        }
+        cv_.notify_one();
+        if (thread_.joinable()) thread_.join();
+    }
+
+    std::thread thread_;
+    std::mutex mutex_;
+    std::condition_variable cv_;
+    std::queue<std::function<void()>> tasks_;
+    bool stop_;
+};
+
+} // namespace
+
+namespace japanese_analyzer {
 
 void RegisterChannel(flutter::BinaryMessenger* messenger) {
     auto channel = std::make_unique<flutter::MethodChannel<>>(
@@ -98,46 +126,49 @@ void RegisterChannel(flutter::BinaryMessenger* messenger) {
            std::unique_ptr<flutter::MethodResult<>> result) {
             if (call.method_name() == "getWords") {
                 const auto* args = std::get_if<flutter::EncodableMap>(call.arguments());
-                if (!args) {
-                    result->Error("INVALID_ARGUMENTS", "Arguments must be a Map");
+                if (!args) { result->Error("INVALID_ARGUMENTS", "Args must be Map");
                     return;
                 }
 
                 auto text_it = args->find(flutter::EncodableValue("text"));
                 auto mono_it = args->find(flutter::EncodableValue("monoRuby"));
-
                 if (text_it == args->end() || mono_it == args->end()) {
-                    result->Error("MISSING_ARGUMENTS", "Missing 'text' or 'monoRuby'");
+                    result->Error("MISSING_ARGUMENTS", "Missing text or monoRuby");
                     return;
                 }
 
                 std::string text = std::get<std::string>(text_it->second);
                 bool mono_ruby = std::get<bool>(mono_it->second);
 
-                RunInWorkerThread(std::move(result),
-                    [text = std::move(text), mono_ruby](flutter::MethodResult<>* res) {
+                Worker::Instance().Post([res = std::shared_ptr<flutter::MethodResult<>>(std::move(result)),
+                                         text = std::move(text), mono_ruby]() {
+                    try {
                         res->Success(AnalyzeLine(text, mono_ruby));
-                    });
+                    } catch (const winrt::hresult_error& e) {
+                        res->Error("ANALYZER_UNAVAILABLE", winrt::to_string(e.message()));
+                    } catch (const std::exception& e) {
+                        res->Error("ANALYZER_UNAVAILABLE", e.what());
+                    } catch (...) {
+                        res->Error("ANALYZER_UNAVAILABLE", "Crash inside worker thread");
+                    }
+                });
             }
 
             else if (call.method_name() == "getWordsBatch") {
                 const auto* args = std::get_if<flutter::EncodableMap>(call.arguments());
                 if (!args) {
-                    result->Error("INVALID_ARGUMENTS", "Arguments must be a Map");
-                    return;
+                    result->Error("INVALID_ARGUMENTS", "Args must be Map"); return;
                 }
 
                 auto texts_it = args->find(flutter::EncodableValue("texts"));
                 auto mono_it = args->find(flutter::EncodableValue("monoRuby"));
-
                 if (texts_it == args->end() || mono_it == args->end()) {
-                    result->Error("MISSING_ARGUMENTS", "Missing 'texts' or 'monoRuby'");
+                    result->Error("MISSING_ARGUMENTS", "Missing texts or monoRuby");
                     return;
                 }
 
                 const auto* texts_list = std::get_if<flutter::EncodableList>(&texts_it->second);
-                if (!texts_list) {
-                    result->Error("INVALID_ARGUMENTS", "'texts' must be a List");
+                if (!texts_list) { result->Error("INVALID_ARGUMENTS", "texts must be List");
                     return;
                 }
 
@@ -152,17 +183,23 @@ void RegisterChannel(flutter::BinaryMessenger* messenger) {
                 }
                 bool mono_ruby = std::get<bool>(mono_it->second);
 
-                RunInWorkerThread(std::move(result),
-                    [texts = std::move(texts), mono_ruby](flutter::MethodResult<>* res) {
+                Worker::Instance().Post([res = std::shared_ptr<flutter::MethodResult<>>(std::move(result)),
+                                         texts = std::move(texts), mono_ruby]() {
+                    try {
                         flutter::EncodableList batch_response;
                         batch_response.reserve(texts.size());
-
                         for (const auto& text : texts) {
                             batch_response.push_back(AnalyzeLine(text, mono_ruby));
                         }
-
                         res->Success(batch_response);
-                    });
+                    } catch (const winrt::hresult_error& e) {
+                        res->Error("ANALYZER_UNAVAILABLE", winrt::to_string(e.message()));
+                    } catch (const std::exception& e) {
+                        res->Error("ANALYZER_UNAVAILABLE", e.what());
+                    } catch (...) {
+                        res->Error("ANALYZER_UNAVAILABLE", "Crash inside worker thread batch");
+                    }
+                });
             } else {
                 result->NotImplemented();
             }
