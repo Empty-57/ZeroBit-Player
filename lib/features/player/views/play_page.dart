@@ -366,11 +366,8 @@ class _PlayPageState extends State<PlayPage> {
     _fontSizeAddFn = () {
       if (_settingController.lrcFontSize.value <
           SettingController.lrcFontSizeMax) {
-        batch(() {
-          _settingController.lrcFontSize.value++;
-          _audioController.lyricRenderRevision.value++;
-          _lyricController.springController?.cachedScreenHeight = 0.0;
-        });
+        _settingController.lrcFontSize.value++;
+        _lyricController.springController?.cachedScreenHeight = 0.0;
         _settingController.putCache(isSaveFolders: false);
       }
     }.throttle(ms: 300);
@@ -378,11 +375,8 @@ class _PlayPageState extends State<PlayPage> {
     _fontSizeDecFn = () {
       if (_settingController.lrcFontSize.value >
           SettingController.lrcFontSizeMin) {
-        batch(() {
-          _settingController.lrcFontSize.value--;
-          _audioController.lyricRenderRevision.value++;
-          _lyricController.springController?.cachedScreenHeight = 0.0;
-        });
+        _settingController.lrcFontSize.value--;
+        _lyricController.springController?.cachedScreenHeight = 0.0;
         _settingController.putCache(isSaveFolders: false);
       }
     }.throttle(ms: 300);
@@ -390,10 +384,7 @@ class _PlayPageState extends State<PlayPage> {
     _fontWeightAddFn = () {
       if (_settingController.lrcFontWeight.value <
           SettingController.lrcFontWeightMax) {
-        batch(() {
-          _settingController.lrcFontWeight.value++;
-          _audioController.lyricRenderRevision.value++;
-        });
+        _settingController.lrcFontWeight.value++;
         _settingController.putCache(isSaveFolders: false);
       }
     }.throttle(ms: 300);
@@ -401,10 +392,7 @@ class _PlayPageState extends State<PlayPage> {
     _fontWeightDecFn = () {
       if (_settingController.lrcFontWeight.value >
           SettingController.lrcFontWeightMin) {
-        batch(() {
-          _settingController.lrcFontWeight.value--;
-          _audioController.lyricRenderRevision.value++;
-        });
+        _settingController.lrcFontWeight.value--;
         _settingController.putCache(isSaveFolders: false);
       }
     }.throttle(ms: 300);

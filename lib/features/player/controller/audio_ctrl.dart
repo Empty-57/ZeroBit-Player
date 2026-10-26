@@ -168,14 +168,11 @@ class AudioController {
     });
   }
 
-  /// 原子化资源更新
   Future<void> _handleResourceUpdate(
     MusicCache metadata,
     int generation,
   ) async {
     try {
-      final path = metadata.path;
-
       unawaited(() async {
         try {
           final len = await getLen();
@@ -189,64 +186,9 @@ class AudioController {
         }
       }());
 
-      final coverAndPaletteFuture = _loadLocalCovers(path).then((
-        localCovers,
-      ) async {
-        final Uint8List smallCover =
-            localCovers.smallCover ?? kTransparentImage;
-        Uint8List? bigCover = localCovers.bigCover;
+      // 封面与调色板完成后立即显示，不等待歌词及日语注音。
+      unawaited(_updateCoverResources(metadata, generation));
 
-        if (bigCover == null || bigCover.isEmpty) {
-          // 无大图则从网络后台获取
-          unawaited(_fetchNetworkCoverInBackground(metadata, path, generation));
-          bigCover = smallCover;
-        }
-
-        batch(() {
-          currentCover = bigCover!;
-          currentSmallCover.value = smallCover;
-          coverRevision.value++;
-        });
-
-        //更新SMTC
-        unawaited(
-          smtcUpdateMetadata(
-            title: metadata.title,
-            artist: metadata.artist,
-            album: metadata.album,
-            coverSrc: bigCover,
-          ).catchError((_) async {
-            await smtcClear();
-            await initSmtc();
-          }),
-        );
-
-        if (_settingController.useTaskBarCtrl.value) {
-          unawaited(
-            WindowsTaskbarThumbnail.setThumbnail(smallCover).catchError((_) {}),
-          );
-        }
-
-        final palette = await _computePalette(path, smallCover, generation);
-        return (covers: localCovers, palette: palette);
-      });
-
-      final lyricFuture = getParsedLyric(filePath: path);
-
-      final results = await Future.wait([coverAndPaletteFuture, lyricFuture]);
-      if (generation != _metadataGeneration) return;
-
-      final coverAndPalette =
-          results[0]
-              as ({
-                ({Uint8List? bigCover, Uint8List? smallCover}) covers,
-                List<Color>? palette,
-              });
-      ParsedLyricModel? lyrics = results[1] as ParsedLyricModel?;
-
-      final List<Color>? palette = coverAndPalette.palette;
-
-      // 更新系统UI
       final title = metadata.title;
       final artist =
           (metadata.artist.isNotEmpty && metadata.artist != 'UNKNOWN')
@@ -256,21 +198,17 @@ class AudioController {
       unawaited(windowManager.setTitle(fullTitle).catchError((_) {}));
       unawaited(trayManager.setToolTip(fullTitle).catchError((_) {}));
 
+      ParsedLyricModel? lyrics = await getParsedLyric(filePath: metadata.path);
       if (generation != _metadataGeneration) return;
 
-      // 歌词解析
       lyrics = await _checkAndGetLyrics4Net(lyrics, metadata);
       if (generation != _metadataGeneration) return;
 
-      // 原子提交
+      // 重置状态和提交完整歌词在同一批次，列表只更新一次。
       batch(() {
-        if (palette != null) {
-          _applyCoverPalette(palette);
-        }
-
         _parseLyricLists(lyrics);
         currentLyrics.value = lyrics;
-        lyricRenderRevision.value++; // 触发构建
+        lyricRenderRevision.value++;
       });
 
       _settingController.lastAudioInfo[SettingController.lastAudioMetadataKey] =
@@ -278,6 +216,64 @@ class AudioController {
       unawaited(_settingController.putScalableCache());
     } catch (e, stackTrace) {
       LoggerUni.w("切歌流程异常", e, stackTrace);
+    }
+  }
+
+  Future<void> _updateCoverResources(
+    MusicCache metadata,
+    int generation,
+  ) async {
+    try {
+      final path = metadata.path;
+      final localCovers = await _loadLocalCovers(path);
+      // 封面提前提交后，每次 await 都必须防止旧歌覆盖新歌。
+      if (generation != _metadataGeneration) return;
+
+      final smallCover = localCovers.smallCover ?? kTransparentImage;
+      final needsNetworkCover =
+          localCovers.bigCover == null || localCovers.bigCover!.isEmpty;
+      final bigCover = needsNetworkCover ? smallCover : localCovers.bigCover!;
+
+      batch(() {
+        currentCover = bigCover;
+        currentSmallCover.value = smallCover;
+        coverRevision.value++;
+      });
+
+      if (needsNetworkCover) {
+        unawaited(
+          _fetchNetworkCoverInBackground(metadata, path, generation).catchError(
+            (Object error, StackTrace stackTrace) {
+              LoggerUni.w("获取网络封面失败", error, stackTrace);
+            },
+          ),
+        );
+      }
+
+      unawaited(
+        smtcUpdateMetadata(
+          title: metadata.title,
+          artist: metadata.artist,
+          album: metadata.album,
+          coverSrc: bigCover,
+        ).catchError((_) async {
+          if (generation != _metadataGeneration) return;
+          await smtcClear();
+          if (generation != _metadataGeneration) return;
+          await initSmtc();
+        }),
+      );
+      if (_settingController.useTaskBarCtrl.value) {
+        unawaited(
+          WindowsTaskbarThumbnail.setThumbnail(smallCover).catchError((_) {}),
+        );
+      }
+
+      final palette = await _computePalette(path, smallCover, generation);
+      if (generation != _metadataGeneration || palette == null) return;
+      batch(() => _applyCoverPalette(palette));
+    } catch (e, stackTrace) {
+      LoggerUni.w("更新封面和调色板失败", e, stackTrace);
     }
   }
 
@@ -733,7 +729,6 @@ class AudioController {
     _settingController.lrcAlignment.value =
         (_settingController.lrcAlignment.value + 1) % 3;
     _settingController.putCache();
-    lyricRenderRevision.value++;
   }
 
   int? pickNextRandomIndex() {

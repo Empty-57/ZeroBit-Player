@@ -21,60 +21,73 @@ import '../../../core/widgets/audio_ctrl_btn.dart';
 import '../../../core/widgets/nil.dart';
 import '../models/lyric_model.dart';
 
+class _LyricsStyleData {
+  final TextStyle lyricStyle;
+  final TextStyle tsLyricStyle;
+  final TextStyle romaLyricStyle;
+  final TextStyle furiganaLyricStyle;
+  final TextStyle interludeLyricStyle;
+  final StrutStyle strutStyle;
+  final Color hoverColor;
+  final Color? mixColor;
+
+  const _LyricsStyleData({
+    required this.lyricStyle,
+    required this.tsLyricStyle,
+    required this.romaLyricStyle,
+    required this.furiganaLyricStyle,
+    required this.interludeLyricStyle,
+    required this.strutStyle,
+    required this.hoverColor,
+    required this.mixColor,
+  });
+}
+
 class _LyricsStyle {
-  final SettingController _settingsController = SettingController.instance;
+  final _styles = computed(_createStyles);
 
-  final _themeService = ThemeService.instance;
+  _LyricsStyleData get value => _styles.value;
 
-  // 提取基础参数
-  double get _baseSize => _settingsController.lrcFontSize.value.toDouble();
+  static _LyricsStyleData _createStyles() {
+    final settings = SettingController.instance;
+    final scheme = ThemeService.instance.darkTheme.colorScheme;
+    final baseSize = settings.lrcFontSize.value.toDouble();
+    final lyricStyle = AppTextStyle.create(
+      size: baseSize,
+      color: scheme.onSecondaryContainer.withValues(
+        alpha: LyricConstants.notPlayedDarkAlpha,
+      ),
+      weight: FontWeight.values[settings.lrcFontWeight.value],
+      letterSpacing: settings.lrcLetterSpacing.value,
+    );
+    return _LyricsStyleData(
+      lyricStyle: lyricStyle,
+      tsLyricStyle: lyricStyle.copyWith(fontSize: baseSize * 0.9),
+      romaLyricStyle: lyricStyle.copyWith(fontSize: baseSize * 0.8),
+      furiganaLyricStyle: lyricStyle.copyWith(
+        fontSize: baseSize * 0.6,
+        height: 1,
+      ),
+      interludeLyricStyle: lyricStyle.copyWith(
+        fontFamily: 'Microsoft YaHei Light',
+      ),
+      strutStyle: StrutStyle(
+        fontSize: baseSize,
+        height: 1,
+        forceStrutHeight: false,
+      ),
+      hoverColor: scheme.onSurface.withValues(
+        alpha: LyricConstants.notPlayedDarkAlpha,
+      ),
+      mixColor: Color.lerp(
+        scheme.primary,
+        scheme.onSurface,
+        LyricConstants.notPlayedLightAlpha,
+      ),
+    );
+  }
 
-  FontWeight get _weight =>
-      FontWeight.values[_settingsController.lrcFontWeight.value];
-
-  Color get _primaryColor => _themeService.darkTheme.colorScheme.primary;
-
-  Color get _onContainerColor =>
-      _themeService.darkTheme.colorScheme.onSecondaryContainer;
-
-  double get _letterSpacing => _settingsController.lrcLetterSpacing.value;
-
-  // StrutStyle 行高一致，防止跳动
-  StrutStyle get strutStyle => StrutStyle(
-    fontSize: _baseSize.toDouble(),
-    height: 1,
-    forceStrutHeight: false,
-  );
-
-  // 核心样式生成
-  TextStyle get lyricStyle => AppTextStyle.create(
-    size: _baseSize,
-    color: _onContainerColor.withValues(
-      alpha: LyricConstants.notPlayedDarkAlpha,
-    ),
-    weight: _weight,
-    letterSpacing: _letterSpacing,
-  );
-
-  TextStyle get tsLyricStyle => lyricStyle.copyWith(fontSize: _baseSize * 0.9);
-
-  TextStyle get romaLyricStyle =>
-      lyricStyle.copyWith(fontSize: _baseSize * 0.8);
-
-  TextStyle get furiganaLyricStyle =>
-      lyricStyle.copyWith(fontSize: _baseSize * 0.6, height: 1);
-
-  TextStyle get interludeLyricStyle =>
-      lyricStyle.copyWith(fontFamily: 'Microsoft YaHei Light');
-
-  Color get hoverColor => _themeService.darkTheme.colorScheme.onSurface
-      .withValues(alpha: LyricConstants.notPlayedDarkAlpha);
-
-  Color? get mixColor => Color.lerp(
-    _primaryColor,
-    _themeService.darkTheme.colorScheme.onSurface,
-    LyricConstants.notPlayedLightAlpha,
-  );
+  void dispose() => _styles.dispose();
 }
 
 class LyricsRender extends StatefulWidget {
@@ -113,12 +126,12 @@ class _LyricsRenderState extends State<LyricsRender> {
     _lyricController.springController = null;
     _lyricController.lrcViewScrollController = null;
     _isHover.dispose();
+    lrcStylePackage.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    Color? mixColor = lrcStylePackage.mixColor;
     final size = MediaQuery.sizeOf(context);
     final height = size.height;
     final width = size.width;
@@ -140,33 +153,19 @@ class _LyricsRenderState extends State<LyricsRender> {
                 context,
               ).copyWith(scrollbars: false),
               child: SignalBuilder(
-                dependencies: [_audioController.lyricRenderRevision],
+                // 只订阅歌词和影响排版的设置，颜色由每行独立订阅。
+                dependencies: [
+                  _audioController.lyricRenderRevision,
+                  _settingController.lrcFontSize,
+                  _settingController.lrcFontWeight,
+                  // _settingController.lrcLetterSpacing,
+                  // _settingController.fontFamily,
+                ],
                 builder: (_) {
                   final c = _audioController;
-                  // 将 style 定义在SignalBuilder内以接收样式更改信号
-                  final lyricsStyle = lrcStylePackage.lyricStyle;
-                  final tsLyricStyle = lrcStylePackage.tsLyricStyle;
-                  final romaLyricStyle = lrcStylePackage.romaLyricStyle;
-                  final furiganaLyricStyle = lrcStylePackage.furiganaLyricStyle;
-                  final strutStyle = lrcStylePackage.strutStyle;
-                  final interludeLyricStyle =
-                      lrcStylePackage.interludeLyricStyle;
-                  final hoverColor = lrcStylePackage.hoverColor;
-                  mixColor = lrcStylePackage.mixColor;
-
                   LoggerUni.i("LyricRenderReBuild");
                   if (!c.showLyricRender) {
-                    return Center(
-                      key: const ValueKey('no_lyrics_placeholder'),
-                      child: Text(
-                        "无歌词",
-                        style: lyricsStyle.copyWith(
-                          color: lyricsStyle.color?.withValues(
-                            alpha: LyricConstants.highLightAlpha,
-                          ),
-                        ),
-                      ),
-                    );
+                    return _NoLyricsPlaceholder(stylePackage: lrcStylePackage);
                   }
 
                   // 接受这些信号也重建
@@ -179,8 +178,9 @@ class _LyricsRenderState extends State<LyricsRender> {
                   final lrcAlignment = _settingController.lrcAlignment.value;
                   final showRoma = _settingController.showRoma.value;
                   final showTranslate = _settingController.showTranslate.value;
-                  final useBlur = _settingController.useBlur.value;
                   final showKana = _settingController.showKana.value;
+                  final useBlur = _settingController.useBlur.value;
+
                   final currentSongPath = c.currentPath.peek();
 
                   final lrcPadding = EdgeInsets.only(
@@ -221,13 +221,7 @@ class _LyricsRenderState extends State<LyricsRender> {
                       translateText: c.translateList[index],
                       romaText: c.romaList[index],
                       startTime: c.startTime[index],
-                      lyricStyle: lyricsStyle,
-                      tsLyricStyle: tsLyricStyle,
-                      romaLyricStyle: romaLyricStyle,
-                      furiganaLyricStyle: furiganaLyricStyle,
-                      interludeLyricStyle: interludeLyricStyle,
-                      strutStyle: strutStyle,
-                      hoverColor: hoverColor,
+                      stylePackage: lrcStylePackage,
                       lrcAlignment: lrcAlignment,
                       lrcPadding: lrcPadding,
                       textAlign: textAlign,
@@ -282,74 +276,94 @@ class _LyricsRenderState extends State<LyricsRender> {
               bottom: 100,
               right: 8,
               child: SignalBuilder(
-                builder: (_) => AnimatedOpacity(
-                  opacity: _isHover.value ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 150),
-                  child: Column(
-                    spacing: AppSpacing.xs,
-                    children: [
-                      GenIconBtn(
-                        tooltip: '翻译',
-                        icon: _settingController.showTranslate.value
-                            ? PhosphorIconsFill.translate
-                            : PhosphorIconsLight.translate,
-                        size: LyricConstants.ctrlBtnMinSize,
-                        color: mixColor,
-                        fn: () {
-                          batch(() {
+                builder: (_) {
+                  final mixColor = lrcStylePackage.value.mixColor;
+                  return AnimatedOpacity(
+                    opacity: _isHover.value ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 150),
+                    child: Column(
+                      spacing: AppSpacing.xs,
+                      children: [
+                        GenIconBtn(
+                          tooltip: '翻译',
+                          icon: _settingController.showTranslate.value
+                              ? PhosphorIconsFill.translate
+                              : PhosphorIconsLight.translate,
+                          size: LyricConstants.ctrlBtnMinSize,
+                          color: mixColor,
+                          fn: () {
                             _settingController.setShowTranslate();
-                            _audioController.lyricRenderRevision.value++;
-                          });
-                          _lyricController
-                                  .springController
-                                  ?.cachedScreenHeight =
-                              0.0; // 重置缓存
-                        },
-                      ),
-                      GenIconBtn(
-                        tooltip: '注音',
-                        icon: _settingController.showRoma.value
-                            ? PhosphorIconsFill.textAUnderline
-                            : PhosphorIconsLight.textAUnderline,
-                        size: LyricConstants.ctrlBtnMinSize,
-                        color: mixColor,
-                        fn: () {
-                          batch(() {
+                            _lyricController
+                                    .springController
+                                    ?.cachedScreenHeight =
+                                0.0; // 重置缓存
+                          },
+                        ),
+                        GenIconBtn(
+                          tooltip: '注音',
+                          icon: _settingController.showRoma.value
+                              ? PhosphorIconsFill.textAUnderline
+                              : PhosphorIconsLight.textAUnderline,
+                          size: LyricConstants.ctrlBtnMinSize,
+                          color: mixColor,
+                          fn: () {
                             _settingController.setShowRoma();
-                            _audioController.lyricRenderRevision.value++;
-                          });
-                          _lyricController
-                                  .springController
-                                  ?.cachedScreenHeight =
-                              0.0; // 重置缓存
-                        },
-                      ),
-                      GenIconBtn(
-                        tooltip: '假名',
-                        icon: _settingController.showKana.value
-                            ? PhosphorIconsFill.textAa
-                            : PhosphorIconsLight.textAa,
-                        size: LyricConstants.ctrlBtnMinSize,
-                        color: mixColor,
-                        fn: () {
-                          batch(() {
+                            _lyricController
+                                    .springController
+                                    ?.cachedScreenHeight =
+                                0.0; // 重置缓存
+                          },
+                        ),
+                        GenIconBtn(
+                          tooltip: '假名',
+                          icon: _settingController.showKana.value
+                              ? PhosphorIconsFill.textAa
+                              : PhosphorIconsLight.textAa,
+                          size: LyricConstants.ctrlBtnMinSize,
+                          color: mixColor,
+                          fn: () {
                             _settingController.setShowKana();
-                            _audioController.lyricRenderRevision.value++;
-                          });
-                          _lyricController
-                                  .springController
-                                  ?.cachedScreenHeight =
-                              0.0; // 重置缓存
-                        },
-                      ),
-                    ],
-                  ),
-                ),
+                            _lyricController
+                                    .springController
+                                    ?.cachedScreenHeight =
+                                0.0; // 重置缓存
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _NoLyricsPlaceholder extends StatelessWidget {
+  const _NoLyricsPlaceholder({required this.stylePackage});
+
+  final _LyricsStyle stylePackage;
+
+  @override
+  Widget build(BuildContext context) {
+    return SignalBuilder(
+      builder: (_) {
+        final style = stylePackage.value.lyricStyle;
+        return Center(
+          key: const ValueKey('no_lyrics_placeholder'),
+          child: Text(
+            '无歌词',
+            style: style.copyWith(
+              color: style.color?.withValues(
+                alpha: LyricConstants.highLightAlpha,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -376,13 +390,7 @@ class _StaggeredLyricItem extends StatelessWidget {
   final bool useBlur;
   final bool showKana;
 
-  final TextStyle lyricStyle;
-  final TextStyle tsLyricStyle;
-  final TextStyle romaLyricStyle;
-  final TextStyle interludeLyricStyle;
-  final TextStyle furiganaLyricStyle;
-  final StrutStyle strutStyle;
-  final Color hoverColor;
+  final _LyricsStyle stylePackage;
 
   final void Function(double) onClick;
 
@@ -396,12 +404,7 @@ class _StaggeredLyricItem extends StatelessWidget {
     required this.translateText,
     required this.romaText,
     required this.startTime,
-    required this.lyricStyle,
-    required this.tsLyricStyle,
-    required this.romaLyricStyle,
-    required this.interludeLyricStyle,
-    required this.strutStyle,
-    required this.hoverColor,
+    required this.stylePackage,
     required this.lrcAlignment,
     required this.lrcPadding,
     required this.textAlign,
@@ -410,7 +413,6 @@ class _StaggeredLyricItem extends StatelessWidget {
     required this.useSpringScroll,
     required this.useBlur,
     required this.onClick,
-    required this.furiganaLyricStyle,
     required this.showKana,
   });
 
@@ -452,6 +454,16 @@ class _StaggeredLyricItem extends StatelessWidget {
         if (!renderWidget && useSpringScroll && !isPointerScrolling) {
           return nil; // ?
         }
+
+        // 颜色变化只更新已渲染行的样式
+        final styles = stylePackage.value;
+        final lyricStyle = styles.lyricStyle;
+        final tsLyricStyle = styles.tsLyricStyle;
+        final romaLyricStyle = styles.romaLyricStyle;
+        final interludeLyricStyle = styles.interludeLyricStyle;
+        final furiganaLyricStyle = styles.furiganaLyricStyle;
+        final strutStyle = styles.strutStyle;
+        final hoverColor = styles.hoverColor;
 
         final isCurrent = index == currentLineIndex;
         final bool isPrevLine = (currentLineIndex - index == 1);
