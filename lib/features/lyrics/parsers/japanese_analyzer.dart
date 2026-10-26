@@ -115,34 +115,81 @@ class JapaneseAnalyzer {
     List<String> texts, {
     bool monoRuby = true,
   }) async {
+    final results = List.generate(
+      texts.length,
+      (_) => <JapanesePhoneticModel>[],
+    );
+
     if (_isSupported == false || !Platform.isWindows || texts.isEmpty) {
-      return List.generate(texts.length, (_) => const []);
+      return results;
     }
+
+    // 歌曲内去重，副歌重复的句子只分析一次
+    final textPositions = <String, List<int>>{};
+    for (var i = 0; i < texts.length; i++) {
+      final text = texts[i];
+      if (_isValidInput(text)) {
+        textPositions.putIfAbsent(text, () => []).add(i);
+      }
+    }
+    if (textPositions.isEmpty) return results;
+    final uniqueTexts = textPositions.keys.toList();
 
     try {
-      final List<dynamic>? batchResult = await _channel.invokeMethod(
-        'getWordsBatch',
-        {'texts': texts, 'monoRuby': monoRuby},
-      );
+      final rawBatch = await _channel.invokeMethod('getWordsBatch', {
+        'texts': uniqueTexts,
+        'monoRuby': monoRuby,
+      });
 
-      if (batchResult == null) {
-        return List.generate(texts.length, (_) => const []);
+      if (rawBatch is! List || rawBatch.length != uniqueTexts.length) {
+        return results;
       }
 
-      return batchResult.map((lineItem) {
-        if (lineItem is! List) return <JapanesePhoneticModel>[];
-        return lineItem.map((item) {
-          final map = Map<String, dynamic>.from(item as Map);
-          return JapanesePhoneticModel(
-            text: toHalfWidth(map['text'] as String),
-            yomi: toHalfWidth(map['yomi'] as String),
-            isPhraseStart: map['isPhraseStart'] as bool,
-          );
-        }).toList();
-      }).toList();
+      // 解析结果并分发回原位置
+      for (var i = 0; i < rawBatch.length; i++) {
+        final models = _parsePhonemeList(rawBatch[i]);
+        if (models == null) continue;
+
+        // 将去重分析出的这句注音，一次性回填给所有相同歌词的行
+        for (final index in textPositions[uniqueTexts[i]]!) {
+          results[index] = List.of(models);
+        }
+      }
+    } on PlatformException catch (e) {
+      // 只有在明确报告分析器不可用时才彻底禁用
+      if (e.code == 'ANALYZER_UNAVAILABLE') _isSupported = false;
     } catch (_) {
-      _isSupported = false;
-      return List.generate(texts.length, (_) => const []);
+      // 偶发异常不影响后续歌曲解析
     }
+
+    return results;
+  }
+
+  /// 校验输入文本是否合法
+  static bool _isValidInput(String text) {
+    return text.trim().isNotEmpty && text.length <= 100;
+  }
+
+  static List<JapanesePhoneticModel>? _parsePhonemeList(dynamic rawLine) {
+    if (rawLine is! List) return null;
+    final result = <JapanesePhoneticModel>[];
+    for (final item in rawLine) {
+      if (item case {
+        'text': final String text,
+        'yomi': final String yomi,
+        'isPhraseStart': final bool isPhraseStart,
+      }) {
+        result.add(
+          JapanesePhoneticModel(
+            text: toHalfWidth(text),
+            yomi: toHalfWidth(yomi),
+            isPhraseStart: isPhraseStart,
+          ),
+        );
+      } else {
+        return null;
+      }
+    }
+    return result;
   }
 }
